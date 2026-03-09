@@ -112,6 +112,8 @@ pnpm db:migrate
 pnpm dev
 ```
 
+For the actual repo startup paths, required system tools, and the steps missing from this quick-start, see [docs/local-development-setup.md](docs/local-development-setup.md).
+
 ### Open the App
 
 Once it's running, open your browser to:
