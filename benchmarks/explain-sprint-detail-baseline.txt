@@ -1,0 +1,136 @@
+                                                                                        QUERY PLAN                                                                                        
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop Left Join  (cost=0.82..176.11 rows=1 width=474) (actual time=0.093..0.096 rows=1 loops=1)
+   Join Filter: ((((d.properties -> 'assignee_ids'::text) ->> 0))::uuid = u.id)
+   Rows Removed by Join Filter: 21
+   Buffers: shared hit=20
+   ->  Nested Loop  (cost=0.82..25.94 rows=1 width=396) (actual time=0.051..0.052 rows=1 loops=1)
+         Buffers: shared hit=10
+         ->  Nested Loop Left Join  (cost=0.82..24.93 rows=1 width=392) (actual time=0.040..0.041 rows=1 loops=1)
+               Buffers: shared hit=9
+               ->  Nested Loop Left Join  (cost=0.55..16.61 rows=1 width=220) (actual time=0.035..0.036 rows=1 loops=1)
+                     Buffers: shared hit=6
+                     ->  Index Scan using documents_pkey on documents d  (cost=0.28..8.30 rows=1 width=204) (actual time=0.017..0.017 rows=1 loops=1)
+                           Index Cond: (id = '9b2abdb8-4530-49b7-b0d3-b3e485461cc1'::uuid)
+                           Filter: ((workspace_id = '07497cfa-486e-49f9-ad21-73eb973a541a'::uuid) AND (document_type = 'sprint'::document_type))
+                           Buffers: shared hit=3
+                     ->  Index Only Scan using unique_association on document_associations prog_da  (cost=0.27..8.30 rows=1 width=32) (actual time=0.017..0.017 rows=1 loops=1)
+                           Index Cond: ((document_id = '9b2abdb8-4530-49b7-b0d3-b3e485461cc1'::uuid) AND (relationship_type = 'program'::relationship_type))
+                           Heap Fetches: 1
+                           Buffers: shared hit=3
+               ->  Index Scan using documents_pkey on documents p  (cost=0.28..8.29 rows=1 width=188) (actual time=0.004..0.004 rows=1 loops=1)
+                     Index Cond: (id = prog_da.related_id)
+                     Buffers: shared hit=3
+         ->  Seq Scan on workspaces w  (cost=0.00..1.00 rows=1 width=20) (actual time=0.010..0.011 rows=1 loops=1)
+               Filter: (id = '07497cfa-486e-49f9-ad21-73eb973a541a'::uuid)
+               Buffers: shared hit=1
+   ->  Seq Scan on users u  (cost=0.00..1.00 rows=1 width=80) (actual time=0.002..0.003 rows=21 loops=1)
+         Buffers: shared hit=1
+   SubPlan 1
+     ->  Result  (cost=0.28..8.31 rows=1 width=32) (actual time=0.004..0.004 rows=0 loops=1)
+           One-Time Filter: ((d.properties ->> 'owner_id'::text) IS NOT NULL)
+           Buffers: shared hit=2
+           ->  Index Scan using documents_pkey on documents op  (cost=0.28..8.31 rows=1 width=156) (actual time=0.003..0.003 rows=0 loops=1)
+                 Index Cond: (id = ((d.properties ->> 'owner_id'::text))::uuid)
+                 Filter: ((document_type = 'person'::document_type) AND (workspace_id = d.workspace_id))
+                 Buffers: shared hit=2
+   SubPlan 2
+     ->  Aggregate  (cost=25.84..25.85 rows=1 width=8) (actual time=0.004..0.004 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Nested Loop  (cost=4.45..25.83 rows=1 width=0) (actual time=0.002..0.003 rows=0 loops=1)
+                 Buffers: shared hit=1
+                 ->  Bitmap Heap Scan on document_associations ida  (cost=4.17..9.20 rows=2 width=16) (actual time=0.002..0.002 rows=0 loops=1)
+                       Recheck Cond: ((related_id = d.id) AND (relationship_type = 'sprint'::relationship_type))
+                       Buffers: shared hit=1
+                       ->  Bitmap Index Scan on idx_document_associations_related_type  (cost=0.00..4.17 rows=2 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+                             Index Cond: ((related_id = d.id) AND (relationship_type = 'sprint'::relationship_type))
+                             Buffers: shared hit=1
+                 ->  Memoize  (cost=0.29..8.30 rows=1 width=16) (never executed)
+                       Cache Key: ida.document_id
+                       Cache Mode: logical
+                       ->  Index Scan using documents_pkey on documents i  (cost=0.28..8.29 rows=1 width=16) (never executed)
+                             Index Cond: (id = ida.document_id)
+                             Filter: (document_type = 'issue'::document_type)
+   SubPlan 3
+     ->  Aggregate  (cost=25.85..25.86 rows=1 width=8) (actual time=0.001..0.001 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Nested Loop  (cost=4.45..25.84 rows=1 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+                 Buffers: shared hit=1
+                 ->  Bitmap Heap Scan on document_associations ida_1  (cost=4.17..9.20 rows=2 width=16) (actual time=0.001..0.001 rows=0 loops=1)
+                       Recheck Cond: ((related_id = d.id) AND (relationship_type = 'sprint'::relationship_type))
+                       Buffers: shared hit=1
+                       ->  Bitmap Index Scan on idx_document_associations_related_type  (cost=0.00..4.17 rows=2 width=0) (actual time=0.000..0.000 rows=0 loops=1)
+                             Index Cond: ((related_id = d.id) AND (relationship_type = 'sprint'::relationship_type))
+                             Buffers: shared hit=1
+                 ->  Memoize  (cost=0.29..8.31 rows=1 width=16) (never executed)
+                       Cache Key: ida_1.document_id
+                       Cache Mode: logical
+                       ->  Index Scan using documents_pkey on documents i_1  (cost=0.28..8.30 rows=1 width=16) (never executed)
+                             Index Cond: (id = ida_1.document_id)
+                             Filter: ((document_type = 'issue'::document_type) AND ((properties ->> 'state'::text) = 'done'::text))
+   SubPlan 4
+     ->  Aggregate  (cost=25.85..25.86 rows=1 width=8) (actual time=0.001..0.001 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Nested Loop  (cost=4.45..25.84 rows=1 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+                 Buffers: shared hit=1
+                 ->  Bitmap Heap Scan on document_associations ida_2  (cost=4.17..9.20 rows=2 width=16) (actual time=0.000..0.000 rows=0 loops=1)
+                       Recheck Cond: ((related_id = d.id) AND (relationship_type = 'sprint'::relationship_type))
+                       Buffers: shared hit=1
+                       ->  Bitmap Index Scan on idx_document_associations_related_type  (cost=0.00..4.17 rows=2 width=0) (actual time=0.000..0.000 rows=0 loops=1)
+                             Index Cond: ((related_id = d.id) AND (relationship_type = 'sprint'::relationship_type))
+                             Buffers: shared hit=1
+                 ->  Memoize  (cost=0.29..8.31 rows=1 width=16) (never executed)
+                       Cache Key: ida_2.document_id
+                       Cache Mode: logical
+                       ->  Index Scan using documents_pkey on documents i_2  (cost=0.28..8.30 rows=1 width=16) (never executed)
+                             Index Cond: (id = ida_2.document_id)
+                             Filter: ((document_type = 'issue'::document_type) AND ((properties ->> 'state'::text) = ANY ('{in_progress,in_review}'::text[])))
+   SubPlan 5
+     ->  Aggregate  (cost=8.19..8.21 rows=1 width=1) (actual time=0.010..0.010 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Index Scan using idx_documents_parent_id on documents pl  (cost=0.15..8.19 rows=1 width=0) (actual time=0.010..0.010 rows=0 loops=1)
+                 Index Cond: (parent_id = d.id)
+                 Filter: (document_type = 'weekly_plan'::document_type)
+                 Buffers: shared hit=1
+   SubPlan 6
+     ->  Aggregate  (cost=25.82..25.84 rows=1 width=1) (actual time=0.001..0.001 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Nested Loop  (cost=4.44..25.82 rows=2 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+                 Buffers: shared hit=1
+                 ->  Bitmap Heap Scan on document_associations rda  (cost=4.17..9.20 rows=2 width=16) (actual time=0.001..0.001 rows=0 loops=1)
+                       Recheck Cond: ((related_id = d.id) AND (relationship_type = 'sprint'::relationship_type))
+                       Buffers: shared hit=1
+                       ->  Bitmap Index Scan on idx_document_associations_related_type  (cost=0.00..4.17 rows=2 width=0) (actual time=0.000..0.000 rows=0 loops=1)
+                             Index Cond: ((related_id = d.id) AND (relationship_type = 'sprint'::relationship_type))
+                             Buffers: shared hit=1
+                 ->  Index Scan using documents_pkey on documents rt  (cost=0.28..8.29 rows=1 width=16) (never executed)
+                       Index Cond: (id = rda.document_id)
+                       Filter: ((properties ->> 'outcome'::text) IS NOT NULL)
+   SubPlan 7
+     ->  Limit  (cost=0.42..14.62 rows=1 width=32) (actual time=0.003..0.003 rows=0 loops=1)
+           Buffers: shared hit=1
+           ->  Nested Loop  (cost=0.42..28.81 rows=2 width=32) (actual time=0.003..0.003 rows=0 loops=1)
+                 Buffers: shared hit=1
+                 ->  Index Scan using idx_document_associations_related_type on document_associations rda_1  (cost=0.15..12.19 rows=2 width=16) (actual time=0.003..0.003 rows=0 loops=1)
+                       Index Cond: ((related_id = d.id) AND (relationship_type = 'sprint'::relationship_type))
+                       Buffers: shared hit=1
+                 ->  Index Scan using documents_pkey on documents rt_1  (cost=0.28..8.29 rows=1 width=172) (never executed)
+                       Index Cond: (id = rda_1.document_id)
+                       Filter: ((properties ->> 'outcome'::text) IS NOT NULL)
+   SubPlan 8
+     ->  Limit  (cost=0.42..14.61 rows=1 width=16) (actual time=0.002..0.002 rows=0 loops=1)
+           Buffers: shared hit=1
+           ->  Nested Loop  (cost=0.42..28.81 rows=2 width=16) (actual time=0.002..0.002 rows=0 loops=1)
+                 Buffers: shared hit=1
+                 ->  Index Scan using idx_document_associations_related_type on document_associations rda_2  (cost=0.15..12.19 rows=2 width=16) (actual time=0.001..0.001 rows=0 loops=1)
+                       Index Cond: ((related_id = d.id) AND (relationship_type = 'sprint'::relationship_type))
+                       Buffers: shared hit=1
+                 ->  Index Scan using documents_pkey on documents rt_2  (cost=0.28..8.29 rows=1 width=16) (never executed)
+                       Index Cond: (id = rda_2.document_id)
+                       Filter: ((properties ->> 'outcome'::text) IS NOT NULL)
+ Planning:
+   Buffers: shared hit=828
+ Planning Time: 1.704 ms
+ Execution Time: 0.493 ms
+(132 rows)
+

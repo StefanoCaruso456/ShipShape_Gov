@@ -1,0 +1,15 @@
+                                                             QUERY PLAN                                                             
+------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=72.74..74.07 rows=532 width=274) (actual time=0.687..0.700 rows=532 loops=1)
+   Sort Key: "position", created_at DESC
+   Sort Method: quicksort  Memory: 177kB
+   Buffers: shared hit=48
+   ->  Seq Scan on documents  (cost=0.00..48.65 rows=532 width=274) (actual time=0.017..0.346 rows=532 loops=1)
+         Filter: ((archived_at IS NULL) AND (deleted_at IS NULL) AND (workspace_id = '07497cfa-486e-49f9-ad21-73eb973a541a'::uuid))
+         Buffers: shared hit=42
+ Planning:
+   Buffers: shared hit=353
+ Planning Time: 0.897 ms
+ Execution Time: 0.771 ms
+(11 rows)
+
