@@ -1,0 +1,42 @@
+                                                                                         QUERY PLAN                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=96.23..96.49 rows=104 width=635) (actual time=0.591..0.595 rows=104 loops=1)
+   Sort Key: (CASE (d.properties ->> 'priority'::text) WHEN 'urgent'::text THEN 1 WHEN 'high'::text THEN 2 WHEN 'medium'::text THEN 3 WHEN 'low'::text THEN 4 ELSE 5 END), d.updated_at DESC
+   Sort Method: quicksort  Memory: 64kB
+   Buffers: shared hit=27
+   ->  Hash Left Join  (cost=46.41..92.75 rows=104 width=635) (actual time=0.246..0.406 rows=104 loops=1)
+         Hash Cond: ((d.properties ->> 'assignee_id'::text) = (person_doc.properties ->> 'user_id'::text))
+         Buffers: shared hit=21
+         ->  Hash Left Join  (cost=5.97..49.85 rows=104 width=646) (actual time=0.106..0.234 rows=104 loops=1)
+               Hash Cond: (((d.properties ->> 'assignee_id'::text))::uuid = u.id)
+               Buffers: shared hit=9
+               ->  Bitmap Heap Scan on documents d  (cost=4.96..48.52 rows=104 width=614) (actual time=0.040..0.112 rows=104 loops=1)
+                     Recheck Cond: (document_type = 'issue'::document_type)
+                     Filter: ((archived_at IS NULL) AND (deleted_at IS NULL) AND (workspace_id = '07497cfa-486e-49f9-ad21-73eb973a541a'::uuid))
+                     Heap Blocks: exact=7
+                     Buffers: shared hit=8
+                     ->  Bitmap Index Scan on idx_documents_document_type  (cost=0.00..4.93 rows=104 width=0) (actual time=0.020..0.020 rows=104 loops=1)
+                           Index Cond: (document_type = 'issue'::document_type)
+                           Buffers: shared hit=1
+               ->  Hash  (cost=1.00..1.00 rows=1 width=48) (actual time=0.015..0.015 rows=21 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on users u  (cost=0.00..1.00 rows=1 width=48) (actual time=0.008..0.009 rows=21 loops=1)
+                           Buffers: shared hit=1
+         ->  Hash  (cost=40.18..40.18 rows=21 width=180) (actual time=0.106..0.106 rows=21 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 12kB
+               Buffers: shared hit=12
+               ->  Bitmap Heap Scan on documents person_doc  (cost=4.31..40.18 rows=21 width=180) (actual time=0.026..0.085 rows=21 loops=1)
+                     Recheck Cond: (document_type = 'person'::document_type)
+                     Filter: (workspace_id = '07497cfa-486e-49f9-ad21-73eb973a541a'::uuid)
+                     Heap Blocks: exact=11
+                     Buffers: shared hit=12
+                     ->  Bitmap Index Scan on idx_documents_document_type  (cost=0.00..4.31 rows=21 width=0) (actual time=0.023..0.023 rows=32 loops=1)
+                           Index Cond: (document_type = 'person'::document_type)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=650
+ Planning Time: 4.688 ms
+ Execution Time: 0.792 ms
+(38 rows)
+

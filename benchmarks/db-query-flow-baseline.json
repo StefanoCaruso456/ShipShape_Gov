@@ -1,0 +1,469 @@
+[
+  {
+    "flow": "Load main page",
+    "request_count": 2,
+    "requests": [
+      "http://localhost:3000/api/auth/me",
+      "http://localhost:3000/api/dashboard/my-week"
+    ],
+    "total_queries": 14,
+    "slowest_query_ms": 0.423,
+    "slowest_statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+    "slowest_parameters": "$1 = '2026-03-10 05:12:03.436+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'",
+    "execute_entries": [
+      {
+        "duration_ms": 0.262,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.423,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:03.436+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.013,
+        "statement": "SELECT id, email, name, is_super_admin FROM users WHERE id = $1",
+        "parameters": "$1 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.204,
+        "statement": "SELECT w.id, w.name, wm.role FROM workspaces w JOIN workspace_memberships wm ON w.id = wm.workspace_id WHERE wm.user_id = $1 AND w.archived_at IS NULL ORDER BY w.name",
+        "parameters": "$1 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.006,
+        "statement": "SELECT w.id, w.name, wm.role FROM workspaces w LEFT JOIN workspace_memberships wm ON w.id = wm.workspace_id AND wm.user_id = $2 WHERE w.id = $1",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.03,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.056,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:03.453+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.081,
+        "statement": "SELECT id, title FROM documents WHERE workspace_id = $1 AND document_type = 'person' AND (properties->>'user_id') = $2 LIMIT 1",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.008,
+        "statement": "SELECT sprint_start_date FROM workspaces WHERE id = $1",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a'"
+      },
+      {
+        "duration_ms": 0.286,
+        "statement": "SELECT id, title, content, properties, created_at, updated_at FROM documents WHERE workspace_id = $1 AND document_type = 'weekly_plan' AND (properties->>'person_id') = $2 AND (properties->>'week_number')::int = $3 AND archived_at IS NULL AND deleted_at IS NULL LIMIT 1",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = '8260dd4e-f158-4e64-86d4-f5c4fb0964e1', $3 = '14'"
+      },
+      {
+        "duration_ms": 0.113,
+        "statement": "SELECT id, title, content, properties, created_at, updated_at FROM documents WHERE workspace_id = $1 AND document_type = 'weekly_retro' AND (properties->>'person_id') = $2 AND (properties->>'week_number')::int = $3 AND archived_at IS NULL AND deleted_at IS NULL LIMIT 1",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = '8260dd4e-f158-4e64-86d4-f5c4fb0964e1', $3 = '14'"
+      },
+      {
+        "duration_ms": 0.019,
+        "statement": "SELECT id, title, properties FROM documents WHERE workspace_id = $1 AND document_type = 'weekly_retro' AND (properties->>'person_id') = $2 AND (properties->>'week_number')::int = $3 AND archived_at IS NULL AND deleted_at IS NULL LIMIT 1",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = '8260dd4e-f158-4e64-86d4-f5c4fb0964e1', $3 = '13'"
+      },
+      {
+        "duration_ms": 0.077,
+        "statement": "SELECT id, title, properties, created_at, updated_at FROM documents WHERE workspace_id = $1 AND document_type = 'standup' AND (properties->>'author_id') = $2 AND (properties->>'date') = ANY($3) AND deleted_at IS NULL ORDER BY (properties->>'date') ASC",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = '{2026-03-10,2026-03-11,2026-03-12,2026-03-13,2026-03-14,2026-03-15,2026-03-16}'"
+      },
+      {
+        "duration_ms": 0.133,
+        "statement": "SELECT DISTINCT proj.id as project_id, proj.title as project_title, prog.title as program_name FROM documents s JOIN documents proj ON (s.properties->>'project_id')::uuid = proj.id AND proj.document_type = 'project' LEFT JOIN document_associations prog_da ON proj.id = prog_da.document_id AND prog_da.relationship_type = 'program' LEFT JOIN documents prog ON prog_da.related_id = prog.id AND prog.document_type = 'program' WHERE s.workspace_id = $1 AND s.document_type = 'sprint' AND s.properties->'assignee_ids' ? $2 AND (s.properties->>'sprint_number')::int = $3 AND s.deleted_at IS NULL AND proj.archived_at IS NULL",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = '8260dd4e-f158-4e64-86d4-f5c4fb0964e1', $3 = '14'"
+      }
+    ]
+  },
+  {
+    "flow": "View a document",
+    "request_count": 4,
+    "requests": [
+      "http://localhost:3000/api/documents/ba5e0de1-f8dc-400d-85e9-c5117d820a0a",
+      "http://localhost:3000/api/team/people",
+      "http://localhost:3000/api/programs",
+      "http://localhost:3000/api/projects"
+    ],
+    "total_queries": 16,
+    "slowest_query_ms": 1.972,
+    "slowest_statement": " SELECT d.id, d.title, d.properties, prog_da.related_id as program_id, d.archived_at, d.created_at, d.updated_at, d.converted_from_id, (d.properties->>'owner_id')::uuid as owner_id, u.name as owner_name, u.email as owner_email, (SELECT COUNT(*) FROM documents s JOIN document_associations da ON da.document_id = s.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE s.document_type = 'sprint') as sprint_count, (SELECT COUNT(*) FROM documents i JOIN document_associations da ON da.document_id = i.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE i.document_type = 'issue') as issue_count, ( CASE WHEN d.archived_at IS NOT NULL THEN 'archived' WHEN d.properties->>'plan_validated' IS NOT NULL THEN 'completed' ELSE COALESCE( ( SELECT CASE MAX( CASE -- Compute sprint timing: current=3, future=2, past=1 WHEN CURRENT_DATE BETWEEN (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) AND (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7 + 6) THEN 3  -- current sprint WHEN CURRENT_DATE < (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) THEN 2  -- future sprint ELSE 1  -- past sprint END ) WHEN 3 THEN 'active' WHEN 2 THEN 'planned' ELSE NULL  -- past allocations don't count END FROM documents sprint JOIN workspaces w ON w.id = sprint.workspace_id WHERE sprint.document_type = 'sprint' AND sprint.workspace_id = d.workspace_id AND (sprint.properties->>'project_id')::uuid = d.id AND jsonb_array_length(COALESCE(sprint.properties->'assignee_ids', '[]'::jsonb)) > 0 ), 'backlog' ) END ) as inferred_status FROM documents d LEFT JOIN users u ON u.id = (d.properties->>'owner_id')::uuid LEFT JOIN document_associations prog_da ON prog_da.document_id = d.id AND prog_da.relationship_type = 'program' WHERE d.workspace_id = $1 AND d.document_type = 'project' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) AND d.archived_at IS NULL ORDER BY ((COALESCE((d.properties->>'impact')::int, 3) * COALESCE((d.properties->>'confidence')::int, 3) * COALESCE((d.properties->>'ease')::int, 3))) DESC",
+    "slowest_parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'",
+    "execute_entries": [
+      {
+        "duration_ms": 0.316,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.182,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:04.93+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.142,
+        "statement": "SELECT d.*, (d.visibility = 'workspace' OR d.created_by = $2 OR (SELECT role FROM workspace_memberships WHERE workspace_id = $3 AND user_id = $2) = 'admin') as can_access FROM documents d WHERE d.id = $1 AND d.workspace_id = $3 AND d.deleted_at IS NULL",
+        "parameters": "$1 = 'ba5e0de1-f8dc-400d-85e9-c5117d820a0a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = '07497cfa-486e-49f9-ad21-73eb973a541a'"
+      },
+      {
+        "duration_ms": 0.056,
+        "statement": "SELECT da.related_id as id, da.relationship_type as type, d.title, (d.properties->>'color') as color FROM document_associations da LEFT JOIN documents d ON d.id = da.related_id WHERE da.document_id = $1",
+        "parameters": "$1 = 'ba5e0de1-f8dc-400d-85e9-c5117d820a0a'"
+      },
+      {
+        "duration_ms": 0.06,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.095,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:04.947+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.026,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.412,
+        "statement": "SELECT d.id, d.properties->>'user_id' as user_id, d.title as name, COALESCE(d.properties->>'email', u.email) as email, CASE WHEN d.archived_at IS NOT NULL THEN true ELSE false END as \"isArchived\", CASE WHEN d.properties->>'pending' = 'true' THEN true ELSE false END as \"isPending\", d.properties->>'reports_to' as \"reportsTo\", d.properties->>'role' as role FROM documents d LEFT JOIN users u ON u.id = (d.properties->>'user_id')::uuid WHERE d.workspace_id = $1 AND d.document_type = 'person' AND ($4 OR d.archived_at IS NULL) AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) ORDER BY d.archived_at NULLS FIRST, d.title",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't', $4 = 'f'"
+      },
+      {
+        "duration_ms": 0.024,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.051,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:04.957+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.011,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.912,
+        "statement": " SELECT d.id, d.title, d.properties, d.archived_at, d.created_at, d.updated_at, COALESCE((d.properties->>'owner_id')::uuid, d.created_by) as owner_id, u.name as owner_name, u.email as owner_email, (SELECT COUNT(*) FROM documents i JOIN document_associations da ON da.document_id = i.id AND da.related_id = d.id AND da.relationship_type = 'program' WHERE i.document_type = 'issue') as issue_count, (SELECT COUNT(*) FROM documents s JOIN document_associations da ON da.document_id = s.id AND da.related_id = d.id AND da.relationship_type = 'program' WHERE s.document_type = 'sprint') as sprint_count FROM documents d LEFT JOIN users u ON u.id = COALESCE((d.properties->>'owner_id')::uuid, d.created_by) WHERE d.workspace_id = $1 AND d.document_type = 'program' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) AND d.archived_at IS NULL ORDER BY d.created_at DESC",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'"
+      },
+      {
+        "duration_ms": 0.028,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.047,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:04.968+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.009,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 1.972,
+        "statement": " SELECT d.id, d.title, d.properties, prog_da.related_id as program_id, d.archived_at, d.created_at, d.updated_at, d.converted_from_id, (d.properties->>'owner_id')::uuid as owner_id, u.name as owner_name, u.email as owner_email, (SELECT COUNT(*) FROM documents s JOIN document_associations da ON da.document_id = s.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE s.document_type = 'sprint') as sprint_count, (SELECT COUNT(*) FROM documents i JOIN document_associations da ON da.document_id = i.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE i.document_type = 'issue') as issue_count, ( CASE WHEN d.archived_at IS NOT NULL THEN 'archived' WHEN d.properties->>'plan_validated' IS NOT NULL THEN 'completed' ELSE COALESCE( ( SELECT CASE MAX( CASE -- Compute sprint timing: current=3, future=2, past=1 WHEN CURRENT_DATE BETWEEN (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) AND (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7 + 6) THEN 3  -- current sprint WHEN CURRENT_DATE < (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) THEN 2  -- future sprint ELSE 1  -- past sprint END ) WHEN 3 THEN 'active' WHEN 2 THEN 'planned' ELSE NULL  -- past allocations don't count END FROM documents sprint JOIN workspaces w ON w.id = sprint.workspace_id WHERE sprint.document_type = 'sprint' AND sprint.workspace_id = d.workspace_id AND (sprint.properties->>'project_id')::uuid = d.id AND jsonb_array_length(COALESCE(sprint.properties->'assignee_ids', '[]'::jsonb)) > 0 ), 'backlog' ) END ) as inferred_status FROM documents d LEFT JOIN users u ON u.id = (d.properties->>'owner_id')::uuid LEFT JOIN document_associations prog_da ON prog_da.document_id = d.id AND prog_da.relationship_type = 'program' WHERE d.workspace_id = $1 AND d.document_type = 'project' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) AND d.archived_at IS NULL ORDER BY ((COALESCE((d.properties->>'impact')::int, 3) * COALESCE((d.properties->>'confidence')::int, 3) * COALESCE((d.properties->>'ease')::int, 3))) DESC",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'"
+      }
+    ]
+  },
+  {
+    "flow": "List issues",
+    "request_count": 3,
+    "requests": [
+      "http://localhost:3000/api/issues",
+      "http://localhost:3000/api/team/people",
+      "http://localhost:3000/api/projects"
+    ],
+    "total_queries": 13,
+    "slowest_query_ms": 1.236,
+    "slowest_statement": " SELECT d.id, d.title, d.properties, prog_da.related_id as program_id, d.archived_at, d.created_at, d.updated_at, d.converted_from_id, (d.properties->>'owner_id')::uuid as owner_id, u.name as owner_name, u.email as owner_email, (SELECT COUNT(*) FROM documents s JOIN document_associations da ON da.document_id = s.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE s.document_type = 'sprint') as sprint_count, (SELECT COUNT(*) FROM documents i JOIN document_associations da ON da.document_id = i.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE i.document_type = 'issue') as issue_count, ( CASE WHEN d.archived_at IS NOT NULL THEN 'archived' WHEN d.properties->>'plan_validated' IS NOT NULL THEN 'completed' ELSE COALESCE( ( SELECT CASE MAX( CASE -- Compute sprint timing: current=3, future=2, past=1 WHEN CURRENT_DATE BETWEEN (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) AND (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7 + 6) THEN 3  -- current sprint WHEN CURRENT_DATE < (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) THEN 2  -- future sprint ELSE 1  -- past sprint END ) WHEN 3 THEN 'active' WHEN 2 THEN 'planned' ELSE NULL  -- past allocations don't count END FROM documents sprint JOIN workspaces w ON w.id = sprint.workspace_id WHERE sprint.document_type = 'sprint' AND sprint.workspace_id = d.workspace_id AND (sprint.properties->>'project_id')::uuid = d.id AND jsonb_array_length(COALESCE(sprint.properties->'assignee_ids', '[]'::jsonb)) > 0 ), 'backlog' ) END ) as inferred_status FROM documents d LEFT JOIN users u ON u.id = (d.properties->>'owner_id')::uuid LEFT JOIN document_associations prog_da ON prog_da.document_id = d.id AND prog_da.relationship_type = 'program' WHERE d.workspace_id = $1 AND d.document_type = 'project' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) AND d.archived_at IS NULL ORDER BY ((COALESCE((d.properties->>'impact')::int, 3) * COALESCE((d.properties->>'confidence')::int, 3) * COALESCE((d.properties->>'ease')::int, 3))) DESC",
+    "slowest_parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'",
+    "execute_entries": [
+      {
+        "duration_ms": 0.11,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.126,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:06.387+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.017,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.728,
+        "statement": " SELECT d.id, d.title, d.properties, d.ticket_number, d.content, d.created_at, d.updated_at, d.created_by, d.started_at, d.completed_at, d.cancelled_at, d.reopened_at, d.converted_from_id, u.name as assignee_name, CASE WHEN person_doc.archived_at IS NOT NULL THEN true ELSE false END as assignee_archived FROM documents d LEFT JOIN users u ON (d.properties->>'assignee_id')::uuid = u.id LEFT JOIN documents person_doc ON person_doc.workspace_id = d.workspace_id AND person_doc.document_type = 'person' AND person_doc.properties->>'user_id' = d.properties->>'assignee_id' WHERE d.workspace_id = $1 AND d.document_type = 'issue' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) AND d.archived_at IS NULL AND d.deleted_at IS NULL ORDER BY CASE d.properties->>'priority' WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END, d.updated_at DESC",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'"
+      },
+      {
+        "duration_ms": 0.836,
+        "statement": "SELECT da.document_id, da.related_id as id, da.relationship_type as type, d.title, d.properties->>'color' as color FROM document_associations da LEFT JOIN documents d ON da.related_id = d.id WHERE da.document_id = ANY($1) ORDER BY da.document_id, da.relationship_type, da.created_at",
+        "parameters": "$1 = '{2ac6c8d6-8ac0-4e15-9138-b66a55ec4b9e,d3dcfed3-7403-4877-a2e9-7b8d4ebe257f,762c2fb8-de37-4fb5-b593-796b98d66925,2328a125-5725-419a-acfd-6e75bcaf7434,a8a41b00-fb11-48c8-a16f-227c075dadb9,cd41aa3b-404b-4d42-a984-80a93b644f19,cf771acf-4fd5-4eb8-b68a-9303c49c4d02,3f788976-8da3-48f1-a01a-3575da2b7787,9fd15d06-b1ec-4e9e-8b1d-04a8d4721f23,5c5b146f-c02e-4dab-b03e-9b17f2f7919c,35dec02f-2dd8-4592-93b3-6b4100077e60,4fb80196-494f-4020-85c1-5c579b69c762,6d338406-3d4c-47fe-87cf-8d7120e6b89d,e8c20224-6a2c-4378-b6dd-03a7e4a241e3,31c1bf57-429d-47be-9468-7c8cd9d5eb40,0115bdaa-7661-43d0-8f06-88a165754a79,cf81b9b8-3f41-4e74-93a2-a8a87bddef56,da30cdcf-b214-487e-8ed6-63418139662a,6cba9805-d721-4f9f-a0a1-9028675770c0,bbb2141c-5f5b-40e4-be7c-f5f93f1b90d9,ca4ab29d-b650-439b-bdcb-f32b1038923c,7d1e42c2-2b84-42d5-92b7-3a1ed253c4a4,ee35aef5-b835-42ef-a988-0ff7e0102c2f,e46217f0-0cc7-4791-bd32-e0638f6273d7,d7e938cd-de8d-4896-9521-87d48f5b4519,06551fc7-b9a3-4f6c-a7bb-e2dea9cc8c1e,717b2df2-5cc7-4e85-bfd5-effcaae611e6,620ad42e-fffa-485d-a810-1f05f64f5cd0,5f1ab90e-039b-4299-b810-62df7cba288e,ffe1532d-5fb0-4784-b4fb-ccb4c1f3dfad,86a2b567-ee62-4d22-81f7-8bccd16f409a,62188f0e-bc79-41a9-8b05-45ae3271df7f,de66e356-d5b7-4408-950c-edc98fe0b598,81f124d3-023e-4746-a5ab-64af44d63b5d,0b3f50ad-1f92-4ded-ba60-181d6c19dc9c,b30a0ff1-2ad7-48dc-a0ff-92b68f7d1cea,58a37e50-b2b9-4dba-8392-88e0285cdc39,6d7efcea-f245-4897-9cf8-cbfced8879e5,231e25f8-1824-4ad7-99af-15ac8a1e6bfe,0ae8d86f-2fa2-41e0-9b31-5e93297af2c0,7a5b6b0a-7ce6-49f2-afca-e7e6b5f1a7ab,9a83afd9-477d-4154-b272-25e1db432fab,46f0df86-a35f-437d-bb7b-2e71d2ab33c7,b92f10a8-3070-48af-b5b9-a8d71ad99add,686bf0e4-8a9f-4c09-af7d-0dda79529a1c,19fd558b-8e22-497e-827d-1c8d00b67aec,4eae51fe-a047-4152-a680-61d38d0b7109,85052ec9-fc58-4c78-aec6-01a2996498ec,49398698-c64f-49bf-9510-b371e276f088,71f46b7c-1f68-4a4b-a62f-b73d18e6503d,4eb7721e-4002-4e71-93eb-d224c851ee59,94a109d6-c780-4f28-830b-8e860b1de8c0,d1fa103d-2f53-4d9a-982d-385dc39072d8,c4b75cd3-ab78-48c1-a377-14a8d28a2f31,d70880e5-9adb-4fe8-aa7e-0e4df2e3982a,4b15c4ff-b5e7-460d-b814-4c0e87ca9993,08d58bd4-308a-4e00-a8ca-2a35fa5a02d9,c990ff5a-5e9e-48d8-be69-f90575822ad7,754594a3-1a9e-4281-a28e-f0a43ea280c5,f2f0c639-7870-42e2-92de-19bebe610ca7,1ac6cff0-8c2d-4d3f-943b-8cacd2b978e4,e087b476-a24f-460f-b882-c2b02dc30425,01067fa9-bdc2-4ea2-bbac-b883caf1cda3,e48dba26-b30e-43e5-8728-0314a832ff82,5013c613-9280-40c5-ac14-da594dbb2b70,1288deb7-028a-4447-ad55-670a265858fe,74be7053-4216-4e6f-976a-b4f459d0adbb,08b84ea2-1287-4f38-9e04-ab212c222225,18111598-3cf3-434b-acfe-52faf0eca9d7,1cce0830-f0f8-406e-83eb-7c0d6d2b4162,933b420f-cfd4-4a92-8551-5b8b028de3fc,e324954b-81c4-4b62-b023-e7990a0aeef9,7ffe69b8-658f-45b8-99fe-a3cbbfbb2616,c98f9eaf-f222-4659-9561-2ce36833bc1c,708eb645-78e5-41e1-99eb-35db9ed688bd,71afbb1d-c9c6-4290-adfb-1035cc0c8c85,49b8010b-1e6e-4bf3-9bb5-38045ac702af,8cb83e4f-b318-47b7-bd54-d36fd4180913,ffc391b5-7776-40b4-b128-7c3635ada5af,3d413e41-82a0-4323-8c04-e7992ed6748c,9ee19620-6d30-4175-88bc-cc2ac458f265,2d053836-afad-407e-ab30-00ae37f6fa02,9df18f4f-a49a-44ca-8cd6-6b3e19c11ee1,de3c9683-161e-4c76-a500-9ed88a1fa72d,e932f0d9-58ab-400e-95e6-5b122b3ec8fd,62894067-7824-493f-bee8-714ea87959ff,4eef7dba-c593-4b66-8dd5-bde22045bbcf,d6894c93-1f96-433d-9929-cbdf23d2d008,e5a4ed16-f4a6-4af1-80e0-7046b3e064b3,091f041c-90ae-4017-bbe7-3b2807347e76,2448ae5c-55b2-4a37-a200-b34a10b1569a,419904e3-236b-41be-aea2-f70b43f0c5bf,aaebf49d-f5ae-4b4a-913d-d93b70f151ba,03161b10-6d8a-4a0a-b211-ca3b81e0c469,ca435a13-bb41-4dc9-b5f0-3a0425054167,f7e85ced-ef58-48a4-8e6e-918a72b4748f,cd38b110-d617-48d9-b136-c38a871948cf,2ecd27b3-fa38-4910-b244-84216064a9d1,c23f1267-4b9d-46b5-9fd1-ff428620fae1,3dae0235-2e08-4468-a996-778e18cb719c,63c24cb2-ef0f-4b34-be61-7c27ac62e399,e0e6a079-ebfe-473d-8a19-b2b420283b82,95650fff-9119-41bc-9783-108686542c32,cd94cf6e-543e-4f27-9d66-55b42c8b61bb}'"
+      },
+      {
+        "duration_ms": 0.039,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.052,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:06.404+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.008,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.15,
+        "statement": "SELECT d.id, d.properties->>'user_id' as user_id, d.title as name, COALESCE(d.properties->>'email', u.email) as email, CASE WHEN d.archived_at IS NOT NULL THEN true ELSE false END as \"isArchived\", CASE WHEN d.properties->>'pending' = 'true' THEN true ELSE false END as \"isPending\", d.properties->>'reports_to' as \"reportsTo\", d.properties->>'role' as role FROM documents d LEFT JOIN users u ON u.id = (d.properties->>'user_id')::uuid WHERE d.workspace_id = $1 AND d.document_type = 'person' AND ($4 OR d.archived_at IS NULL) AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) ORDER BY d.archived_at NULLS FIRST, d.title",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't', $4 = 'f'"
+      },
+      {
+        "duration_ms": 0.023,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.047,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:06.41+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.009,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 1.236,
+        "statement": " SELECT d.id, d.title, d.properties, prog_da.related_id as program_id, d.archived_at, d.created_at, d.updated_at, d.converted_from_id, (d.properties->>'owner_id')::uuid as owner_id, u.name as owner_name, u.email as owner_email, (SELECT COUNT(*) FROM documents s JOIN document_associations da ON da.document_id = s.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE s.document_type = 'sprint') as sprint_count, (SELECT COUNT(*) FROM documents i JOIN document_associations da ON da.document_id = i.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE i.document_type = 'issue') as issue_count, ( CASE WHEN d.archived_at IS NOT NULL THEN 'archived' WHEN d.properties->>'plan_validated' IS NOT NULL THEN 'completed' ELSE COALESCE( ( SELECT CASE MAX( CASE -- Compute sprint timing: current=3, future=2, past=1 WHEN CURRENT_DATE BETWEEN (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) AND (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7 + 6) THEN 3  -- current sprint WHEN CURRENT_DATE < (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) THEN 2  -- future sprint ELSE 1  -- past sprint END ) WHEN 3 THEN 'active' WHEN 2 THEN 'planned' ELSE NULL  -- past allocations don't count END FROM documents sprint JOIN workspaces w ON w.id = sprint.workspace_id WHERE sprint.document_type = 'sprint' AND sprint.workspace_id = d.workspace_id AND (sprint.properties->>'project_id')::uuid = d.id AND jsonb_array_length(COALESCE(sprint.properties->'assignee_ids', '[]'::jsonb)) > 0 ), 'backlog' ) END ) as inferred_status FROM documents d LEFT JOIN users u ON u.id = (d.properties->>'owner_id')::uuid LEFT JOIN document_associations prog_da ON prog_da.document_id = d.id AND prog_da.relationship_type = 'program' WHERE d.workspace_id = $1 AND d.document_type = 'project' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) AND d.archived_at IS NULL ORDER BY ((COALESCE((d.properties->>'impact')::int, 3) * COALESCE((d.properties->>'confidence')::int, 3) * COALESCE((d.properties->>'ease')::int, 3))) DESC",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'"
+      }
+    ]
+  },
+  {
+    "flow": "Load sprint board",
+    "request_count": 7,
+    "requests": [
+      "http://localhost:3000/api/weeks/9b2abdb8-4530-49b7-b0d3-b3e485461cc1",
+      "http://localhost:3000/api/weeks/9b2abdb8-4530-49b7-b0d3-b3e485461cc1/issues",
+      "http://localhost:3000/api/weeks/9b2abdb8-4530-49b7-b0d3-b3e485461cc1/standups",
+      "http://localhost:3000/api/team/people",
+      "http://localhost:3000/api/projects",
+      "http://localhost:3000/api/programs/825028f9-670f-4089-bc28-bd82015cd486/sprints",
+      "http://localhost:3000/api/issues?sprint_id=9b2abdb8-4530-49b7-b0d3-b3e485461cc1"
+    ],
+    "total_queries": 31,
+    "slowest_query_ms": 1.649,
+    "slowest_statement": " SELECT d.id, d.title, d.properties, prog_da.related_id as program_id, d.archived_at, d.created_at, d.updated_at, d.converted_from_id, (d.properties->>'owner_id')::uuid as owner_id, u.name as owner_name, u.email as owner_email, (SELECT COUNT(*) FROM documents s JOIN document_associations da ON da.document_id = s.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE s.document_type = 'sprint') as sprint_count, (SELECT COUNT(*) FROM documents i JOIN document_associations da ON da.document_id = i.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE i.document_type = 'issue') as issue_count, ( CASE WHEN d.archived_at IS NOT NULL THEN 'archived' WHEN d.properties->>'plan_validated' IS NOT NULL THEN 'completed' ELSE COALESCE( ( SELECT CASE MAX( CASE -- Compute sprint timing: current=3, future=2, past=1 WHEN CURRENT_DATE BETWEEN (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) AND (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7 + 6) THEN 3  -- current sprint WHEN CURRENT_DATE < (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) THEN 2  -- future sprint ELSE 1  -- past sprint END ) WHEN 3 THEN 'active' WHEN 2 THEN 'planned' ELSE NULL  -- past allocations don't count END FROM documents sprint JOIN workspaces w ON w.id = sprint.workspace_id WHERE sprint.document_type = 'sprint' AND sprint.workspace_id = d.workspace_id AND (sprint.properties->>'project_id')::uuid = d.id AND jsonb_array_length(COALESCE(sprint.properties->'assignee_ids', '[]'::jsonb)) > 0 ), 'backlog' ) END ) as inferred_status FROM documents d LEFT JOIN users u ON u.id = (d.properties->>'owner_id')::uuid LEFT JOIN document_associations prog_da ON prog_da.document_id = d.id AND prog_da.relationship_type = 'program' WHERE d.workspace_id = $1 AND d.document_type = 'project' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) AND d.archived_at IS NULL ORDER BY ((COALESCE((d.properties->>'impact')::int, 3) * COALESCE((d.properties->>'confidence')::int, 3) * COALESCE((d.properties->>'ease')::int, 3))) DESC",
+    "slowest_parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'",
+    "execute_entries": [
+      {
+        "duration_ms": 0.068,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.118,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:07.834+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.052,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.348,
+        "statement": "SELECT d.id, d.title, d.properties, prog_da.related_id as program_id, p.title as program_name, p.properties->>'prefix' as program_prefix, p.properties->>'accountable_id' as program_accountable_id, (SELECT op.properties->>'reports_to' FROM documents op WHERE d.properties->>'owner_id' IS NOT NULL AND op.id = (d.properties->>'owner_id')::uuid AND op.document_type = 'person' AND op.workspace_id = d.workspace_id) as owner_reports_to, w.sprint_start_date as workspace_sprint_start_date, u.id as owner_id, u.name as owner_name, u.email as owner_email, (SELECT COUNT(*) FROM documents i JOIN document_associations ida ON ida.document_id = i.id AND ida.related_id = d.id AND ida.relationship_type = 'sprint' WHERE i.document_type = 'issue') as issue_count, (SELECT COUNT(*) FROM documents i JOIN document_associations ida ON ida.document_id = i.id AND ida.related_id = d.id AND ida.relationship_type = 'sprint' WHERE i.document_type = 'issue' AND i.properties->>'state' = 'done') as completed_count, (SELECT COUNT(*) FROM documents i JOIN document_associations ida ON ida.document_id = i.id AND ida.related_id = d.id AND ida.relationship_type = 'sprint' WHERE i.document_type = 'issue' AND i.properties->>'state' IN ('in_progress', 'in_review')) as started_count, (SELECT COUNT(*) > 0 FROM documents pl WHERE pl.parent_id = d.id AND pl.document_type = 'weekly_plan') as has_plan, (SELECT COUNT(*) > 0 FROM documents rt JOIN document_associations rda ON rda.document_id = rt.id AND rda.related_id = d.id AND rda.relationship_type = 'sprint' WHERE rt.properties->>'outcome' IS NOT NULL) as has_retro, (SELECT rt.properties->>'outcome' FROM documents rt JOIN document_associations rda ON rda.document_id = rt.id AND rda.related_id = d.id AND rda.relationship_type = 'sprint' WHERE rt.properties->>'outcome' IS NOT NULL LIMIT 1) as retro_outcome, (SELECT rt.id FROM documents rt JOIN document_associations rda ON rda.document_id = rt.id AND rda.related_id = d.id AND rda.relationship_type = 'sprint' WHERE rt.properties->>'outcome' IS NOT NULL LIMIT 1) as retro_id FROM documents d LEFT JOIN document_associations prog_da ON prog_da.document_id = d.id AND prog_da.relationship_type = 'program' LEFT JOIN documents p ON prog_da.related_id = p.id JOIN workspaces w ON d.workspace_id = w.id LEFT JOIN users u ON (d.properties->'assignee_ids'->>0)::uuid = u.id WHERE d.id = $1 AND d.workspace_id = $2 AND d.document_type = 'sprint' AND (d.visibility = 'workspace' OR d.created_by = $3 OR $4 = TRUE)",
+        "parameters": "$1 = '9b2abdb8-4530-49b7-b0d3-b3e485461cc1', $2 = '07497cfa-486e-49f9-ad21-73eb973a541a', $3 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $4 = 't'"
+      },
+      {
+        "duration_ms": 0.045,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.055,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:07.856+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.018,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.029,
+        "statement": "SELECT d.id, p.properties->>'prefix' as prefix FROM documents d LEFT JOIN document_associations prog_da ON prog_da.document_id = d.id AND prog_da.relationship_type = 'program' LEFT JOIN documents p ON prog_da.related_id = p.id WHERE d.id = $1 AND d.workspace_id = $2 AND d.document_type = 'sprint' AND (d.visibility = 'workspace' OR d.created_by = $3 OR $4 = TRUE)",
+        "parameters": "$1 = '9b2abdb8-4530-49b7-b0d3-b3e485461cc1', $2 = '07497cfa-486e-49f9-ad21-73eb973a541a', $3 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $4 = 't'"
+      },
+      {
+        "duration_ms": 0.017,
+        "statement": "SELECT d.id, d.title, d.properties, d.ticket_number, d.created_at, d.updated_at, d.created_by, u.name as assignee_name, CASE WHEN person_doc.archived_at IS NOT NULL THEN true ELSE false END as assignee_archived FROM documents d JOIN document_associations sprint_da ON sprint_da.document_id = d.id AND sprint_da.related_id = $1 AND sprint_da.relationship_type = 'sprint' LEFT JOIN users u ON (d.properties->>'assignee_id')::uuid = u.id LEFT JOIN documents person_doc ON person_doc.workspace_id = d.workspace_id AND person_doc.document_type = 'person' AND person_doc.properties->>'user_id' = d.properties->>'assignee_id' WHERE d.document_type = 'issue' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) ORDER BY CASE d.properties->>'priority' WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END, d.updated_at DESC",
+        "parameters": "$1 = '9b2abdb8-4530-49b7-b0d3-b3e485461cc1', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'"
+      },
+      {
+        "duration_ms": 0.028,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.057,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:07.864+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.01,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.01,
+        "statement": "SELECT id FROM documents WHERE id = $1 AND workspace_id = $2 AND document_type = 'sprint' AND (documents.visibility = 'workspace' OR documents.created_by = $3 OR $4 = TRUE)",
+        "parameters": "$1 = '9b2abdb8-4530-49b7-b0d3-b3e485461cc1', $2 = '07497cfa-486e-49f9-ad21-73eb973a541a', $3 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $4 = 't'"
+      },
+      {
+        "duration_ms": 0.011,
+        "statement": "SELECT d.id, d.parent_id, d.title, d.content, d.created_at, d.updated_at, d.properties->>'author_id' as author_id, u.name as author_name, u.email as author_email FROM documents d LEFT JOIN users u ON (d.properties->>'author_id')::uuid = u.id WHERE d.parent_id = $1 AND d.document_type = 'standup' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) ORDER BY d.created_at DESC",
+        "parameters": "$1 = '9b2abdb8-4530-49b7-b0d3-b3e485461cc1', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'"
+      },
+      {
+        "duration_ms": 0.034,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.06,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:07.87+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.011,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.274,
+        "statement": "SELECT d.id, d.properties->>'user_id' as user_id, d.title as name, COALESCE(d.properties->>'email', u.email) as email, CASE WHEN d.archived_at IS NOT NULL THEN true ELSE false END as \"isArchived\", CASE WHEN d.properties->>'pending' = 'true' THEN true ELSE false END as \"isPending\", d.properties->>'reports_to' as \"reportsTo\", d.properties->>'role' as role FROM documents d LEFT JOIN users u ON u.id = (d.properties->>'user_id')::uuid WHERE d.workspace_id = $1 AND d.document_type = 'person' AND ($4 OR d.archived_at IS NULL) AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) ORDER BY d.archived_at NULLS FIRST, d.title",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't', $4 = 'f'"
+      },
+      {
+        "duration_ms": 0.018,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.031,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:07.875+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.008,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 1.649,
+        "statement": " SELECT d.id, d.title, d.properties, prog_da.related_id as program_id, d.archived_at, d.created_at, d.updated_at, d.converted_from_id, (d.properties->>'owner_id')::uuid as owner_id, u.name as owner_name, u.email as owner_email, (SELECT COUNT(*) FROM documents s JOIN document_associations da ON da.document_id = s.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE s.document_type = 'sprint') as sprint_count, (SELECT COUNT(*) FROM documents i JOIN document_associations da ON da.document_id = i.id AND da.related_id = d.id AND da.relationship_type = 'project' WHERE i.document_type = 'issue') as issue_count, ( CASE WHEN d.archived_at IS NOT NULL THEN 'archived' WHEN d.properties->>'plan_validated' IS NOT NULL THEN 'completed' ELSE COALESCE( ( SELECT CASE MAX( CASE -- Compute sprint timing: current=3, future=2, past=1 WHEN CURRENT_DATE BETWEEN (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) AND (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7 + 6) THEN 3  -- current sprint WHEN CURRENT_DATE < (w.sprint_start_date + ((sprint.properties->>'sprint_number')::int - 1) * 7) THEN 2  -- future sprint ELSE 1  -- past sprint END ) WHEN 3 THEN 'active' WHEN 2 THEN 'planned' ELSE NULL  -- past allocations don't count END FROM documents sprint JOIN workspaces w ON w.id = sprint.workspace_id WHERE sprint.document_type = 'sprint' AND sprint.workspace_id = d.workspace_id AND (sprint.properties->>'project_id')::uuid = d.id AND jsonb_array_length(COALESCE(sprint.properties->'assignee_ids', '[]'::jsonb)) > 0 ), 'backlog' ) END ) as inferred_status FROM documents d LEFT JOIN users u ON u.id = (d.properties->>'owner_id')::uuid LEFT JOIN document_associations prog_da ON prog_da.document_id = d.id AND prog_da.relationship_type = 'program' WHERE d.workspace_id = $1 AND d.document_type = 'project' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) AND d.archived_at IS NULL ORDER BY ((COALESCE((d.properties->>'impact')::int, 3) * COALESCE((d.properties->>'confidence')::int, 3) * COALESCE((d.properties->>'ease')::int, 3))) DESC",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'"
+      },
+      {
+        "duration_ms": 0.018,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.035,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:07.883+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.006,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.012,
+        "statement": "SELECT d.id, w.sprint_start_date FROM documents d JOIN workspaces w ON d.workspace_id = w.id WHERE d.id = $1 AND d.workspace_id = $2 AND d.document_type = 'program' AND (d.visibility = 'workspace' OR d.created_by = $3 OR $4 = TRUE)",
+        "parameters": "$1 = '825028f9-670f-4089-bc28-bd82015cd486', $2 = '07497cfa-486e-49f9-ad21-73eb973a541a', $3 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $4 = 't'"
+      },
+      {
+        "duration_ms": 0.639,
+        "statement": "SELECT d.id, d.title as name, d.properties, u.id as owner_id, u.name as owner_name, u.email as owner_email, (SELECT COUNT(*) FROM documents i JOIN document_associations ida ON ida.document_id = i.id AND ida.related_id = d.id AND ida.relationship_type = 'sprint' WHERE i.document_type = 'issue') as issue_count, (SELECT COUNT(*) FROM documents i JOIN document_associations ida ON ida.document_id = i.id AND ida.related_id = d.id AND ida.relationship_type = 'sprint' WHERE i.document_type = 'issue' AND i.properties->>'state' = 'done') as completed_count, (SELECT COUNT(*) FROM documents i JOIN document_associations ida ON ida.document_id = i.id AND ida.related_id = d.id AND ida.relationship_type = 'sprint' WHERE i.document_type = 'issue' AND i.properties->>'state' IN ('in_progress', 'in_review')) as started_count, (SELECT COALESCE(SUM((i.properties->>'estimate')::numeric), 0) FROM documents i JOIN document_associations ida ON ida.document_id = i.id AND ida.related_id = d.id AND ida.relationship_type = 'sprint' WHERE i.document_type = 'issue') as total_estimate_hours, (SELECT COUNT(*) > 0 FROM documents p WHERE p.parent_id = d.id AND p.document_type = 'weekly_plan') as has_plan, (SELECT COUNT(*) > 0 FROM documents r WHERE r.parent_id = d.id AND r.document_type = 'weekly_retro') as has_retro, (SELECT created_at FROM documents p WHERE p.parent_id = d.id AND p.document_type = 'weekly_plan' LIMIT 1) as plan_created_at, (SELECT created_at FROM documents r WHERE r.parent_id = d.id AND r.document_type = 'weekly_retro' LIMIT 1) as retro_created_at FROM documents d JOIN document_associations da ON da.document_id = d.id AND da.related_id = $1 AND da.relationship_type = 'program' LEFT JOIN users u ON (d.properties->>'owner_id')::uuid = u.id WHERE d.document_type = 'sprint' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) ORDER BY (d.properties->>'sprint_number')::int ASC",
+        "parameters": "$1 = '825028f9-670f-4089-bc28-bd82015cd486', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'"
+      },
+      {
+        "duration_ms": 0.019,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.035,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:07.893+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.006,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 0.008,
+        "statement": " SELECT d.id, d.title, d.properties, d.ticket_number, d.content, d.created_at, d.updated_at, d.created_by, d.started_at, d.completed_at, d.cancelled_at, d.reopened_at, d.converted_from_id, u.name as assignee_name, CASE WHEN person_doc.archived_at IS NOT NULL THEN true ELSE false END as assignee_archived FROM documents d LEFT JOIN users u ON (d.properties->>'assignee_id')::uuid = u.id LEFT JOIN documents person_doc ON person_doc.workspace_id = d.workspace_id AND person_doc.document_type = 'person' AND person_doc.properties->>'user_id' = d.properties->>'assignee_id' WHERE d.workspace_id = $1 AND d.document_type = 'issue' AND (d.visibility = 'workspace' OR d.created_by = $2 OR $3 = TRUE) AND d.archived_at IS NULL AND d.deleted_at IS NULL AND EXISTS ( SELECT 1 FROM document_associations da WHERE da.document_id = d.id AND da.related_id = $4 AND da.relationship_type = 'sprint' ) ORDER BY CASE d.properties->>'priority' WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END, d.updated_at DESC",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't', $4 = '9b2abdb8-4530-49b7-b0d3-b3e485461cc1'"
+      }
+    ]
+  },
+  {
+    "flow": "Search content",
+    "request_count": 1,
+    "requests": [
+      "http://localhost:3000/api/documents"
+    ],
+    "total_queries": 4,
+    "slowest_query_ms": 2.564,
+    "slowest_statement": " SELECT id, workspace_id, document_type, title, parent_id, position, ticket_number, properties, created_at, updated_at, created_by, visibility FROM documents WHERE workspace_id = $1 AND archived_at IS NULL AND deleted_at IS NULL AND (visibility = 'workspace' OR created_by = $2 OR $3 = TRUE) ORDER BY position ASC, created_at DESC",
+    "slowest_parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'",
+    "execute_entries": [
+      {
+        "duration_ms": 0.071,
+        "statement": "SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at, u.is_super_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        "parameters": "$1 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.109,
+        "statement": "UPDATE sessions SET last_activity = $1 WHERE id = $2",
+        "parameters": "$1 = '2026-03-10 05:12:09.301+00', $2 = 'f9d522a68d17b89bd9532714d649bb0e55782a1db0d814b34eef120feeb66ac3'"
+      },
+      {
+        "duration_ms": 0.033,
+        "statement": "SELECT role FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3'"
+      },
+      {
+        "duration_ms": 2.564,
+        "statement": " SELECT id, workspace_id, document_type, title, parent_id, position, ticket_number, properties, created_at, updated_at, created_by, visibility FROM documents WHERE workspace_id = $1 AND archived_at IS NULL AND deleted_at IS NULL AND (visibility = 'workspace' OR created_by = $2 OR $3 = TRUE) ORDER BY position ASC, created_at DESC",
+        "parameters": "$1 = '07497cfa-486e-49f9-ad21-73eb973a541a', $2 = 'b5cc1325-2965-417a-a761-5af2de7b25c3', $3 = 't'"
+      }
+    ]
+  }
+]
