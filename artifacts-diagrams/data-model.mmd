@@ -1,0 +1,68 @@
+erDiagram
+  workspaces ||--o{ workspace_memberships : has
+  users ||--o{ workspace_memberships : joins
+  users ||--o{ sessions : owns
+  workspaces ||--o{ sessions : scopes
+  workspaces ||--o{ documents : contains
+  users ||--o{ documents : creates
+  documents ||--o{ documents : parent_child
+  documents ||--o{ document_associations : source
+  documents ||--o{ document_associations : related
+  documents ||--o{ document_history : changes
+  documents ||--o{ document_snapshots : snapshots
+
+  workspaces {
+    uuid id PK
+    text name
+    date sprint_start_date
+  }
+
+  users {
+    uuid id PK
+    text email
+    text name
+    boolean is_super_admin
+  }
+
+  sessions {
+    text id PK
+    uuid user_id FK
+    uuid workspace_id FK
+    timestamptz expires_at
+  }
+
+  documents {
+    uuid id PK
+    uuid workspace_id FK
+    document_type document_type
+    text title
+    jsonb content
+    bytea yjs_state
+    uuid parent_id FK
+    jsonb properties
+    int ticket_number
+    text visibility
+  }
+
+  document_associations {
+    uuid id PK
+    uuid document_id FK
+    uuid related_id FK
+    relationship_type relationship_type
+    jsonb metadata
+  }
+
+  document_history {
+    int id PK
+    uuid document_id FK
+    text field
+    text old_value
+    text new_value
+  }
+
+  document_snapshots {
+    uuid id PK
+    uuid document_id FK
+    varchar document_type
+    jsonb properties
+  }
