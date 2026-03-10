@@ -1,0 +1,55 @@
+flowchart LR
+  User["User Browser"]
+
+  subgraph Frontend["web/ (React + Vite)"]
+    Router["React Router app\nweb/src/main.tsx"]
+    Providers["Context + React Query providers\nweb/src/main.tsx"]
+    UI["Pages / components\nweb/src/pages + web/src/components"]
+    ApiClient["Fetch + CSRF client\nweb/src/lib/api.ts"]
+    Realtime["Realtime events + editor WS clients\nweb/src/hooks/useRealtimeEvents.tsx\nweb/src/components/Editor.tsx"]
+  end
+
+  subgraph Backend["api/ (Express + Node)"]
+    App["Express app + middleware\napi/src/app.ts"]
+    Routes["Route modules\napi/src/routes/*"]
+    Collab["Yjs / WebSocket server\napi/src/collaboration/index.ts"]
+    DB["pg pool\napi/src/db/client.ts"]
+  end
+
+  subgraph Data["PostgreSQL"]
+    Schema["Schema + migrations\napi/src/db/schema.sql\napi/src/db/migrations/*"]
+    Tables["documents, document_associations,\nusers, sessions, workspaces, ..."]
+  end
+
+  subgraph Shared["shared/"]
+    Types["Shared types + constants\nshared/src/index.ts"]
+  end
+
+  subgraph Infra["Infra / Ops"]
+    Docker["Docker / Compose\nDockerfile*\ndocker-compose*.yml"]
+    Terraform["AWS Terraform\nterraform/*.tf"]
+    Playwright["Playwright E2E\ne2e/\nplaywright*.ts"]
+  end
+
+  User --> Router
+  Router --> Providers
+  Providers --> UI
+  UI --> ApiClient
+  UI --> Realtime
+  ApiClient --> App
+  Realtime --> Collab
+  App --> Routes
+  Routes --> DB
+  Collab --> DB
+  DB --> Schema
+  Schema --> Tables
+  Frontend -. imports .-> Types
+  Backend -. imports .-> Types
+  Docker -. runs .-> Frontend
+  Docker -. runs .-> Backend
+  Docker -. runs .-> Data
+  Terraform -. deploys .-> Backend
+  Terraform -. provisions .-> Data
+  Terraform -. provisions .-> Frontend
+  Playwright -. exercises .-> Frontend
+  Playwright -. exercises .-> Backend

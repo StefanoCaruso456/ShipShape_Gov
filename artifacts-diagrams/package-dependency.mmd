@@ -1,0 +1,30 @@
+flowchart TD
+  Root["ship root package\npackage.json"]
+  Workspace["pnpm workspace\npnpm-workspace.yaml"]
+
+  subgraph Packages["Workspace packages"]
+    Web["web/\n@ship/web"]
+    Api["api/\n@ship/api"]
+    Shared["shared/\n@ship/shared"]
+  end
+
+  subgraph Runtime["Runtime edges"]
+    Browser["Browser runtime"]
+    Node["Node runtime"]
+    Postgres["PostgreSQL"]
+  end
+
+  Root --> Workspace
+  Workspace --> Web
+  Workspace --> Api
+  Workspace --> Shared
+
+  Web --> Shared
+  Api --> Shared
+
+  Browser --> Web
+  Web --> Api
+  Api --> Postgres
+  Api --> Node
+  Shared -. built once, reused .-> Web
+  Shared -. built once, reused .-> Api
