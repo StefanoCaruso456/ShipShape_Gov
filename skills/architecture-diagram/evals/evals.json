@@ -1,0 +1,29 @@
+[
+  {
+    "input": "Create a system architecture diagram for this monorepo and explain the main packages.",
+    "expected_signals": [
+      "Uses Mermaid",
+      "Grounds explanation in repository structure",
+      "Explains package responsibilities",
+      "Does not invent unknown components"
+    ]
+  },
+  {
+    "input": "Trace the request flow for creating an issue from UI to database.",
+    "expected_signals": [
+      "Chooses a specific user action",
+      "Shows UI to API to service to DB path",
+      "Mentions evidence paths or files",
+      "Calls out unknowns if the path is incomplete"
+    ]
+  },
+  {
+    "input": "Explain the unified document model and create a Mermaid data model diagram.",
+    "expected_signals": [
+      "Shows document discriminator or equivalent",
+      "Includes relationships if supported",
+      "Explains risks or tradeoffs",
+      "Avoids overstating unsupported schema details"
+    ]
+  }
+]
