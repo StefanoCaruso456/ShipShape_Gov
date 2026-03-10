@@ -4,7 +4,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useFocusOnNavigate } from '@/hooks/useFocusOnNavigate';
-import { useRealtimeEvent } from '@/hooks/useRealtimeEvents';
+import { useRealtimeEvent, useRealtimeEvents } from '@/hooks/useRealtimeEvents';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { ArchiveIcon } from '@/components/icons/ArchiveIcon';
 import { useDocuments, WikiDocument } from '@/contexts/DocumentsContext';
@@ -41,6 +41,7 @@ type Mode = 'docs' | 'issues' | 'projects' | 'programs' | 'sprints' | 'team' | '
 
 export function AppLayout() {
   const { user, logout, isSuperAdmin, impersonating, endImpersonation } = useAuth();
+  const { connectionState, statusMessage } = useRealtimeEvents();
   const { currentWorkspace, workspaces, switchWorkspace } = useWorkspace();
   const location = useLocation();
   const navigate = useNavigate();
@@ -56,6 +57,7 @@ export function AppLayout() {
   const [projectSetupWizardOpen, setProjectSetupWizardOpen] = useState(false);
   const [actionItemsModalOpen, setActionItemsModalOpen] = useState(false);
   const [actionItemsModalShownOnLoad, setActionItemsModalShownOnLoad] = useState(false);
+  const [isBrowserOnline, setIsBrowserOnline] = useState(() => navigator.onLine);
 
   // Session timeout handling
   const handleSessionTimeout = useCallback(() => {
@@ -142,6 +144,17 @@ export function AppLayout() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    const handleOnline = () => setIsBrowserOnline(true);
+    const handleOffline = () => setIsBrowserOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Get current document type and ID for /documents/:id routes
@@ -293,6 +306,21 @@ export function AppLayout() {
         isCelebrating={isCelebrating}
         urgency={actionItemsData?.has_overdue ? 'overdue' : 'due_today'}
       />
+
+      {(!isBrowserOnline || (statusMessage && (connectionState === 'error' || connectionState === 'reconnecting'))) && (
+        <div
+          className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="font-medium">Realtime degraded.</span>
+          <span className="ml-2 text-amber-100/80">
+            {isBrowserOnline
+              ? statusMessage
+              : 'You are offline. Live notifications will resume when the network connection returns.'}
+          </span>
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         {/* Icon Rail - Navigation landmark */}

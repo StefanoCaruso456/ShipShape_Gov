@@ -18,9 +18,12 @@ export interface RealtimeEvent {
 }
 
 type EventCallback = (event: RealtimeEvent) => void;
+export type RealtimeConnectionState = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 
 interface RealtimeEventsContextType {
   isConnected: boolean;
+  connectionState: RealtimeConnectionState;
+  statusMessage: string | null;
   subscribe: (eventType: RealtimeEventType, callback: EventCallback) => () => void;
 }
 
@@ -50,6 +53,10 @@ export function RealtimeEventsProvider({ children }: { children: ReactNode }) {
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const subscribersRef = useRef<Map<RealtimeEventType, Set<EventCallback>>>(new Map());
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionState, setConnectionState] = useState<RealtimeConnectionState>('idle');
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const intentionalDisconnectRef = useRef(false);
 
   // Subscribe to events
   const subscribe = useCallback((eventType: RealtimeEventType, callback: EventCallback) => {
@@ -70,12 +77,18 @@ export function RealtimeEventsProvider({ children }: { children: ReactNode }) {
     if (wsRef.current?.readyState === WebSocket.CONNECTING) return;
     if (wsRef.current?.readyState === WebSocket.CLOSING) return;
 
+    intentionalDisconnectRef.current = false;
+    setConnectionState(reconnectAttemptRef.current > 0 ? 'reconnecting' : 'connecting');
+
     const ws = new WebSocket(getEventsWsUrl());
     wsRef.current = ws;
 
     ws.onopen = () => {
       console.log('[RealtimeEvents] Connected');
+      reconnectAttemptRef.current = 0;
       setIsConnected(true);
+      setConnectionState('connected');
+      setStatusMessage(null);
     };
 
     ws.onmessage = (event) => {
@@ -102,6 +115,16 @@ export function RealtimeEventsProvider({ children }: { children: ReactNode }) {
         wsRef.current = null;
       }
 
+      if (intentionalDisconnectRef.current || !user) {
+        setConnectionState('idle');
+        setStatusMessage(null);
+        return;
+      }
+
+      reconnectAttemptRef.current += 1;
+      setConnectionState('reconnecting');
+      setStatusMessage('Live notifications are temporarily unavailable. Retrying connection...');
+
       // Reconnect after delay if user is still logged in
       if (user) {
         reconnectTimeoutRef.current = setTimeout(() => {
@@ -113,12 +136,15 @@ export function RealtimeEventsProvider({ children }: { children: ReactNode }) {
 
     ws.onerror = (err) => {
       console.error('[RealtimeEvents] Error:', err);
+      setConnectionState('error');
+      setStatusMessage('Live notifications are temporarily unavailable. Retrying connection...');
       ws.close();
     };
   }, [user]);
 
   // Disconnect from WebSocket
   const disconnect = useCallback(() => {
+    intentionalDisconnectRef.current = true;
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
@@ -128,6 +154,8 @@ export function RealtimeEventsProvider({ children }: { children: ReactNode }) {
       wsRef.current = null;
     }
     setIsConnected(false);
+    setConnectionState('idle');
+    setStatusMessage(null);
   }, []);
 
   // Connect when user logs in, disconnect when they log out
@@ -157,7 +185,7 @@ export function RealtimeEventsProvider({ children }: { children: ReactNode }) {
   }, [isConnected]);
 
   return (
-    <RealtimeEventsContext.Provider value={{ isConnected, subscribe }}>
+    <RealtimeEventsContext.Provider value={{ isConnected, connectionState, statusMessage, subscribe }}>
       {children}
     </RealtimeEventsContext.Provider>
   );

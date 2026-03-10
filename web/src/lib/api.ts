@@ -1,6 +1,6 @@
 // In development, Vite proxy handles /api routes (see vite.config.ts)
 // In production, use VITE_API_URL or relative URLs
-const API_URL = import.meta.env.VITE_API_URL ?? '';
+export const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 interface ApiResponse<T> {
   success: boolean;
