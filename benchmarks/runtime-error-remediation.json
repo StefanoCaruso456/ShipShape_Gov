@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-03-10T16:56:02.136Z",
+  "baseUrl": "http://localhost:5173",
+  "apiUrl": "http://localhost:3000",
+  "sessionPolling": {
+    "frontendOriginPolls": 0,
+    "apiOriginPolls": 4,
+    "consoleErrors": []
+  },
+  "realtimeBanner": {
+    "visible": true,
+    "screenshot": "benchmarks/runtime-fix-realtime-banner.png",
+    "debugScreenshot": "benchmarks/runtime-fix-realtime-banner-debug.png",
+    "bodyText": null,
+    "console": []
+  },
+  "collaborationBanner": {
+    "visible": true,
+    "screenshot": "benchmarks/runtime-fix-collaboration-banner.png",
+    "debugScreenshot": "benchmarks/runtime-fix-collaboration-banner-debug.png",
+    "bodyText": null
+  },
+  "titleSaveRecovery": {
+    "errorBannerVisible": false,
+    "retrySucceeded": false,
+    "screenshot": "benchmarks/runtime-fix-title-save-banner.png",
+    "debugScreenshot": "benchmarks/runtime-fix-title-save-banner-debug.png",
+    "bodyText": "\n    Skip to main content1 accountability item is due today.1View itemsSDDocsWorkspaceTitle Save 1773161777521Collab Banner 1773161772696Title Save 1773161651916Collab Banner 1773161647113Title Save 1773161578122Collab Banner 1773161573281Title Save 1773161505753Collab Banner 1773161500940Title Save 1773161375935Collab Banner 177316137119322 more...docsFailTitleSavedDFailTitlePropertiesTypeWikiIssueProjectWeekMaintainerDUDev UserVisibilityWorkspaceCreatedMar 10, 2026UpdatedMar 10, 2026, 11:56 AMBacklinksNo backlinks\n    \n  \n\n",
+    "requestUrls": [
+      "GET http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "GET http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1/comments",
+      "GET http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1/backlinks",
+      "GET http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1/backlinks",
+      "PATCH http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "PATCH http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "PATCH http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "GET http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1/backlinks",
+      "PATCH http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "PATCH http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "GET http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1/backlinks",
+      "PATCH http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "PATCH http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "GET http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1/backlinks",
+      "PATCH http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "PATCH http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "PATCH http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1",
+      "GET http://localhost:3000/api/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1/backlinks"
+    ],
+    "error": "TimeoutError: locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Title save failed.') to be visible\u001b[22m\n"
+  }
+}

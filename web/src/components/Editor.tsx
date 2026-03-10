@@ -184,12 +184,14 @@ export function Editor({
   aiScoringAnalysis,
   titleSuffix,
 }: EditorProps) {
-  const [title, setTitle] = useState(initialTitle === 'Untitled' ? '' : initialTitle);
+  const normalizedInitialTitle = initialTitle === 'Untitled' ? '' : initialTitle;
+  const [title, setTitle] = useState(normalizedInitialTitle);
+  const [titleConflict, setTitleConflict] = useState<{ localTitle: string; remoteTitle: string } | null>(null);
   const titleInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Track if user has made local changes (to prevent stale server responses from overwriting)
   const hasLocalChangesRef = useRef(false);
-  const lastSyncedTitleRef = useRef(initialTitle);
+  const lastSyncedTitleRef = useRef(normalizedInitialTitle);
 
   // CRITICAL: Create a new Y.Doc for each documentId using useMemo
   // This ensures the Y.Doc is atomically recreated when documentId changes,
@@ -200,22 +202,29 @@ export function Editor({
   // Sync title when initialTitle prop changes (e.g., from context update)
   // Only update if user hasn't made local changes (prevents stale responses from overwriting)
   useEffect(() => {
-    const newTitle = initialTitle === 'Untitled' ? '' : initialTitle;
+    const newTitle = normalizedInitialTitle;
     // Only update if this is a genuinely new value from server
     // AND user hasn't made local changes since
-    if (!hasLocalChangesRef.current && initialTitle !== lastSyncedTitleRef.current) {
-      setTitle(newTitle);
-      lastSyncedTitleRef.current = initialTitle;
+    if (newTitle !== lastSyncedTitleRef.current && hasLocalChangesRef.current && title !== newTitle) {
+      setTitleConflict({ localTitle: title, remoteTitle: newTitle });
+      return;
     }
-  }, [initialTitle]);
+
+    if (!hasLocalChangesRef.current && newTitle !== lastSyncedTitleRef.current) {
+      setTitle(newTitle);
+      lastSyncedTitleRef.current = newTitle;
+      setTitleConflict(null);
+    }
+  }, [normalizedInitialTitle, title]);
 
   // Reset local changes flag after save completes (parent will update initialTitle)
   useEffect(() => {
-    if (initialTitle === title || (initialTitle === 'Untitled' && title === '')) {
+    if (normalizedInitialTitle === title) {
       hasLocalChangesRef.current = false;
-      lastSyncedTitleRef.current = initialTitle;
+      lastSyncedTitleRef.current = normalizedInitialTitle;
+      setTitleConflict(null);
     }
-  }, [initialTitle, title]);
+  }, [normalizedInitialTitle, title]);
 
   // Auto-resize title textarea when title changes or on mount
   useEffect(() => {
@@ -810,8 +819,25 @@ export function Editor({
     const newTitle = e.target.value;
     hasLocalChangesRef.current = true; // Mark as having local changes to prevent stale overwrites
     setTitle(newTitle);
+    setTitleConflict(null);
     onTitleChange?.(newTitle);
   }, [onTitleChange]);
+
+  const handleKeepLocalTitle = useCallback(() => {
+    if (!titleConflict) return;
+    hasLocalChangesRef.current = true;
+    setTitle(titleConflict.localTitle);
+    setTitleConflict(null);
+    onTitleChange?.(titleConflict.localTitle);
+  }, [onTitleChange, titleConflict]);
+
+  const handleUseRemoteTitle = useCallback(() => {
+    if (!titleConflict) return;
+    hasLocalChangesRef.current = false;
+    setTitle(titleConflict.remoteTitle);
+    lastSyncedTitleRef.current = titleConflict.remoteTitle;
+    setTitleConflict(null);
+  }, [titleConflict]);
 
   return (
     <div className="flex h-full flex-col">
@@ -947,6 +973,70 @@ export function Editor({
                 titleReadOnly && "cursor-default"
               )}
             />
+            {titleConflict && !titleReadOnly && (
+              <div
+                className="mb-4 rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+                role="alert"
+                aria-live="polite"
+              >
+                <div className="font-medium">Another user changed this title.</div>
+                <p className="mt-1 text-amber-100/80">
+                  Your local title was preserved so you can decide what to keep.
+                </p>
+                <div className="mt-2 grid gap-2 text-xs text-amber-50/90 md:grid-cols-2">
+                  <div className="rounded border border-amber-500/20 bg-black/10 px-3 py-2">
+                    <div className="font-medium">Your title</div>
+                    <div>{titleConflict.localTitle || 'Untitled'}</div>
+                  </div>
+                  <div className="rounded border border-amber-500/20 bg-black/10 px-3 py-2">
+                    <div className="font-medium">Remote title</div>
+                    <div>{titleConflict.remoteTitle || 'Untitled'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    onClick={handleKeepLocalTitle}
+                    className="rounded border border-amber-500/40 bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-50 hover:bg-amber-500/30"
+                  >
+                    Keep Mine
+                  </button>
+                  <button
+                    onClick={handleUseRemoteTitle}
+                    className="rounded border border-border bg-background/80 px-3 py-1 text-xs font-medium text-foreground hover:bg-background"
+                  >
+                    Use Remote
+                  </button>
+                </div>
+              </div>
+            )}
+            {(() => {
+              const effectiveStatus = !isBrowserOnline ? 'disconnected' : syncStatus;
+              if (effectiveStatus !== 'cached' && effectiveStatus !== 'disconnected') {
+                return null;
+              }
+
+              return (
+                <div
+                  className={cn(
+                    'mb-4 rounded-md border px-4 py-3 text-sm',
+                    effectiveStatus === 'disconnected'
+                      ? 'border-red-500/30 bg-red-500/10 text-red-100'
+                      : 'border-blue-500/30 bg-blue-500/10 text-blue-100'
+                  )}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <div className="font-medium">
+                    {effectiveStatus === 'disconnected' ? 'Collaboration connection lost.' : 'Working from cached content.'}
+                  </div>
+                  <p className={cn('mt-1', effectiveStatus === 'disconnected' ? 'text-red-100/80' : 'text-blue-100/80')}>
+                    {effectiveStatus === 'disconnected'
+                      ? 'Edits remain in this open tab, but avoid refreshing until the status returns to Saved.'
+                      : 'The editor is showing local cached content while it reconnects to the latest shared state.'}
+                  </p>
+                </div>
+              );
+            })()}
             {contentBanner}
             <div
               className="tiptap-wrapper"

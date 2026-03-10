@@ -203,6 +203,8 @@ export function UnifiedEditor({
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isChangingType, setIsChangingType] = useState(false);
+  const [titleSaveError, setTitleSaveError] = useState<string | null>(null);
+  const [failedTitleValue, setFailedTitleValue] = useState<string | null>(null);
 
   // Track missing required fields after type changes
   const missingFields = useMemo(() => {
@@ -231,7 +233,21 @@ export function UnifiedEditor({
     onSave: async (title: string) => {
       if (title) await onUpdate({ title });
     },
+    onSuccess: () => {
+      setTitleSaveError(null);
+      setFailedTitleValue(null);
+    },
+    onError: (title: string) => {
+      setFailedTitleValue(title);
+      setTitleSaveError('Title changes could not be saved. Keep this tab open and retry once the connection is stable.');
+    },
   });
+
+  const retryFailedTitleSave = useCallback(() => {
+    if (!failedTitleValue) return;
+    setTitleSaveError(null);
+    throttledTitleSave(failedTitleValue);
+  }, [failedTitleValue, throttledTitleSave]);
 
   // Handle document type change
   const handleTypeChange = useCallback(async (newType: SelectableDocumentType) => {
@@ -431,6 +447,36 @@ export function UnifiedEditor({
     return undefined;
   }, [document.id, document.document_type, editorContent, handlePlanAnalysisChange, handleRetroAnalysisChange]);
 
+  const contentBannerNode = useMemo(() => {
+    if (!titleSaveError && !qualityBanner) {
+      return undefined;
+    }
+
+    return (
+      <>
+        {titleSaveError && (
+          <div
+            className="mb-4 rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100"
+            role="alert"
+            aria-live="assertive"
+          >
+            <div className="font-medium">Title save failed.</div>
+            <p className="mt-1 text-red-100/80">{titleSaveError}</p>
+            <div className="mt-3">
+              <button
+                onClick={retryFailedTitleSave}
+                className="rounded border border-red-500/40 bg-red-500/20 px-3 py-1 text-xs font-medium text-red-50 hover:bg-red-500/30"
+              >
+                Retry Title Save
+              </button>
+            </div>
+          </div>
+        )}
+        {qualityBanner}
+      </>
+    );
+  }, [qualityBanner, retryFailedTitleSave, titleSaveError]);
+
   const secondaryHeader = useMemo(() => {
     if (!weeklyReviewState?.isReviewMode) return undefined;
     return <WeeklyReviewSubNav reviewState={weeklyReviewState} />;
@@ -456,7 +502,7 @@ export function UnifiedEditor({
       sidebar={sidebar}
       documentType={document.document_type}
       onPlanChange={document.document_type === 'sprint' || document.document_type === 'project' ? handlePlanChange : undefined}
-      contentBanner={qualityBanner}
+      contentBanner={contentBannerNode}
       onContentChange={isWeeklyDoc ? setEditorContent : undefined}
       aiScoringAnalysis={isWeeklyDoc ? aiScoringAnalysis : undefined}
       titleSuffix={titleSuffix}

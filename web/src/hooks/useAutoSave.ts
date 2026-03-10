@@ -2,11 +2,19 @@ import { useRef, useCallback, useEffect } from 'react';
 
 interface UseAutoSaveOptions {
   onSave: (value: string) => Promise<void>;
+  onSuccess?: (value: string) => void;
+  onError?: (value: string, error: unknown) => void;
   throttleMs?: number; // Default 500ms
   maxRetries?: number; // Default 3
 }
 
-export function useAutoSave({ onSave, throttleMs = 500, maxRetries = 3 }: UseAutoSaveOptions) {
+export function useAutoSave({
+  onSave,
+  onSuccess,
+  onError,
+  throttleMs = 500,
+  maxRetries = 3,
+}: UseAutoSaveOptions) {
   const lastSaveTimeRef = useRef(0);
   const pendingValueRef = useRef<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -28,6 +36,7 @@ export function useAutoSave({ onSave, throttleMs = 500, maxRetries = 3 }: UseAut
     try {
       await onSave(value);
       lastSaveTimeRef.current = Date.now();
+      onSuccess?.(value);
 
       // If value changed during save, trigger another save
       if (pendingValueRef.current !== null && pendingValueRef.current !== value) {
@@ -43,11 +52,12 @@ export function useAutoSave({ onSave, throttleMs = 500, maxRetries = 3 }: UseAut
         await save(value, sequence, retryCount + 1);
       } else {
         console.error('Auto-save failed after retries:', err);
+        onError?.(value, err);
       }
     } finally {
       isSavingRef.current = false;
     }
-  }, [onSave, maxRetries]);
+  }, [maxRetries, onError, onSave, onSuccess]);
 
   const throttledSave = useCallback((value: string) => {
     const now = Date.now();
@@ -65,10 +75,12 @@ export function useAutoSave({ onSave, throttleMs = 500, maxRetries = 3 }: UseAut
     // Throttle: if enough time has passed, save immediately
     if (timeSinceLastSave >= throttleMs) {
       saveSequenceRef.current++;
+      pendingValueRef.current = null;
       save(value, saveSequenceRef.current);
+      return;
     }
 
-    // Always schedule a trailing save
+    // Otherwise schedule a trailing save for the latest value in the throttle window
     timeoutRef.current = setTimeout(() => {
       saveSequenceRef.current++;
       save(value, saveSequenceRef.current);
