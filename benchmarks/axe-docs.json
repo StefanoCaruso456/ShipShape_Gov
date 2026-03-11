@@ -13,7 +13,7 @@
     "orientationAngle": 0,
     "orientationType": "landscape-primary"
   },
-  "timestamp": "2026-03-10T17:38:26.972Z",
+  "timestamp": "2026-03-11T02:31:16.074Z",
   "url": "http://localhost:5173/docs",
   "toolOptions": {
     "runOnly": {
@@ -3925,35 +3925,9 @@
             }
           ],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28)"
-          ]
-        },
-        {
-          "any": [],
-          "all": [
-            {
-              "id": "aria-allowed-attr",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "critical",
-              "message": "ARIA attributes are used correctly for the defined role"
-            }
-          ],
-          "none": [
-            {
-              "id": "aria-unsupported-attr",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "critical",
-              "message": "ARIA attribute is supported"
-            }
-          ],
-          "impact": null,
-          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
-          "target": [
-            ".p-0"
           ]
         },
         {
@@ -4107,9 +4081,35 @@
             }
           ],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(30)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-allowed-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attributes are used correctly for the defined role"
+            }
+          ],
+          "none": [
+            {
+              "id": "aria-unsupported-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute is supported"
+            }
+          ],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
+          "target": [
+            ".p-0"
           ]
         },
         {
@@ -4318,6 +4318,162 @@
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-allowed-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attributes are used correctly for the defined role"
+            }
+          ],
+          "none": [
+            {
+              "id": "aria-unsupported-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute is supported"
+            }
+          ],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-allowed-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attributes are used correctly for the defined role"
+            }
+          ],
+          "none": [
+            {
+              "id": "aria-unsupported-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute is supported"
+            }
+          ],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-allowed-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attributes are used correctly for the defined role"
+            }
+          ],
+          "none": [
+            {
+              "id": "aria-unsupported-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute is supported"
+            }
+          ],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-allowed-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attributes are used correctly for the defined role"
+            }
+          ],
+          "none": [
+            {
+              "id": "aria-unsupported-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute is supported"
+            }
+          ],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-allowed-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attributes are used correctly for the defined role"
+            }
+          ],
+          "none": [
+            {
+              "id": "aria-unsupported-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute is supported"
+            }
+          ],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-allowed-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attributes are used correctly for the defined role"
+            }
+          ],
+          "none": [
+            {
+              "id": "aria-unsupported-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute is supported"
+            }
+          ],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
           ]
         },
         {
@@ -6599,27 +6755,9 @@
           ],
           "none": [],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28)"
-          ]
-        },
-        {
-          "any": [],
-          "all": [
-            {
-              "id": "aria-conditional-attr",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "serious",
-              "message": "ARIA attribute is allowed"
-            }
-          ],
-          "none": [],
-          "impact": null,
-          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
-          "target": [
-            ".p-0"
           ]
         },
         {
@@ -6725,9 +6863,27 @@
           ],
           "none": [],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(30)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-conditional-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
+          "target": [
+            ".p-0"
           ]
         },
         {
@@ -6872,6 +7028,114 @@
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-conditional-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-conditional-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-conditional-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-conditional-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-conditional-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-conditional-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
           ]
         },
         {
@@ -7787,7 +8051,7 @@
             }
           ],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28)"
           ]
@@ -7823,7 +8087,7 @@
             }
           ],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(30)"
           ]
@@ -7862,6 +8126,42 @@
           "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "deprecatedrole",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "minor",
+              "message": "ARIA role is not deprecated"
+            }
+          ],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "deprecatedrole",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "minor",
+              "message": "ARIA role is not deprecated"
+            }
+          ],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34)"
           ]
         }
       ]
@@ -10501,27 +10801,9 @@
             }
           ],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28)"
-          ]
-        },
-        {
-          "any": [],
-          "all": [],
-          "none": [
-            {
-              "id": "aria-prohibited-attr",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "serious",
-              "message": "ARIA attribute is allowed"
-            }
-          ],
-          "impact": null,
-          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
-          "target": [
-            ".p-0"
           ]
         },
         {
@@ -10627,9 +10909,27 @@
             }
           ],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(30)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "aria-prohibited-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
+          "target": [
+            ".p-0"
           ]
         },
         {
@@ -10774,6 +11074,114 @@
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "aria-prohibited-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "aria-prohibited-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "aria-prohibited-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "aria-prohibited-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "aria-prohibited-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "aria-prohibited-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "ARIA attribute is allowed"
+            }
+          ],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
           ]
         },
         {
@@ -11689,7 +12097,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28)"
           ]
@@ -11725,7 +12133,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(30)"
           ]
@@ -11764,6 +12172,42 @@
           "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32)"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-required-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "All required ARIA attributes are present"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33)"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-required-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "All required ARIA attributes are present"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34)"
           ]
         }
       ]
@@ -12571,7 +13015,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28)"
           ]
@@ -12607,7 +13051,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(30)"
           ]
@@ -12646,6 +13090,42 @@
           "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32)"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-required-parent",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "Required ARIA parent role present"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33)"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-required-parent",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "Required ARIA parent role present"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34)"
           ]
         }
       ]
@@ -14197,7 +14677,7 @@
             }
           ],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28)"
           ]
@@ -14261,7 +14741,7 @@
             }
           ],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(30)"
           ]
@@ -14328,6 +14808,70 @@
           "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "invalidrole",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA role is valid"
+            },
+            {
+              "id": "abstractrole",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "Abstract roles are not used"
+            },
+            {
+              "id": "unsupportedrole",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA role is supported"
+            }
+          ],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [],
+          "none": [
+            {
+              "id": "invalidrole",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA role is valid"
+            },
+            {
+              "id": "abstractrole",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "Abstract roles are not used"
+            },
+            {
+              "id": "unsupportedrole",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA role is supported"
+            }
+          ],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34)"
           ]
         }
       ]
@@ -18247,41 +18791,9 @@
           ],
           "none": [],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28)"
-          ]
-        },
-        {
-          "any": [],
-          "all": [
-            {
-              "id": "aria-valid-attr-value",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "critical",
-              "message": "ARIA attribute values are valid"
-            },
-            {
-              "id": "aria-errormessage",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "critical",
-              "message": "aria-errormessage exists and references elements visible to screen readers that use a supported aria-errormessage technique"
-            },
-            {
-              "id": "aria-level",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "critical",
-              "message": "aria-level values are valid"
-            }
-          ],
-          "none": [],
-          "impact": null,
-          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
-          "target": [
-            ".p-0"
           ]
         },
         {
@@ -18471,9 +18983,41 @@
           ],
           "none": [],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(30)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-valid-attr-value",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute values are valid"
+            },
+            {
+              "id": "aria-errormessage",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-errormessage exists and references elements visible to screen readers that use a supported aria-errormessage technique"
+            },
+            {
+              "id": "aria-level",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-level values are valid"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
+          "target": [
+            ".p-0"
           ]
         },
         {
@@ -18730,6 +19274,198 @@
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-valid-attr-value",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute values are valid"
+            },
+            {
+              "id": "aria-errormessage",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-errormessage exists and references elements visible to screen readers that use a supported aria-errormessage technique"
+            },
+            {
+              "id": "aria-level",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-level values are valid"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-valid-attr-value",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute values are valid"
+            },
+            {
+              "id": "aria-errormessage",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-errormessage exists and references elements visible to screen readers that use a supported aria-errormessage technique"
+            },
+            {
+              "id": "aria-level",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-level values are valid"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-valid-attr-value",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute values are valid"
+            },
+            {
+              "id": "aria-errormessage",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-errormessage exists and references elements visible to screen readers that use a supported aria-errormessage technique"
+            },
+            {
+              "id": "aria-level",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-level values are valid"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-valid-attr-value",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute values are valid"
+            },
+            {
+              "id": "aria-errormessage",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-errormessage exists and references elements visible to screen readers that use a supported aria-errormessage technique"
+            },
+            {
+              "id": "aria-level",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-level values are valid"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34)"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-valid-attr-value",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute values are valid"
+            },
+            {
+              "id": "aria-errormessage",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-errormessage exists and references elements visible to screen readers that use a supported aria-errormessage technique"
+            },
+            {
+              "id": "aria-level",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-level values are valid"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-valid-attr-value",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute values are valid"
+            },
+            {
+              "id": "aria-errormessage",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-errormessage exists and references elements visible to screen readers that use a supported aria-errormessage technique"
+            },
+            {
+              "id": "aria-level",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-level values are valid"
+            }
+          ],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
           ]
         },
         {
@@ -21023,27 +21759,9 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28)"
-          ]
-        },
-        {
-          "any": [
-            {
-              "id": "aria-valid-attr",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "critical",
-              "message": "ARIA attribute name is valid"
-            }
-          ],
-          "all": [],
-          "none": [],
-          "impact": null,
-          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
-          "target": [
-            ".p-0"
           ]
         },
         {
@@ -21149,9 +21867,27 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "html": "<li role=\"treeitem\" aria-expanded=\"false\" aria-selected=\"false\" data-testid=\"doc-item\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(30)"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-valid-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute name is valid"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
+          "target": [
+            ".p-0"
           ]
         },
         {
@@ -21296,6 +22032,114 @@
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-valid-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute name is valid"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33)"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-valid-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute name is valid"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-valid-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute name is valid"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-valid-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute name is valid"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<li role=\"treeitem\" aria-selected=\"false\" data-testid=\"doc-item\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34)"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-valid-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute name is valid"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-valid-attr",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "ARIA attribute name is valid"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
           ]
         },
         {
@@ -23709,24 +24553,6 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
-          "target": [
-            ".p-0"
-          ]
-        },
-        {
-          "any": [
-            {
-              "id": "aria-label",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "critical",
-              "message": "aria-label attribute exists and is not empty"
-            }
-          ],
-          "all": [],
-          "none": [],
-          "impact": null,
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
@@ -23784,6 +24610,24 @@
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(29) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-label",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-label attribute exists and is not empty"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
+          "target": [
+            ".p-0"
           ]
         },
         {
@@ -23892,6 +24736,78 @@
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-label",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-label attribute exists and is not empty"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-label",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-label attribute exists and is not empty"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-label",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-label attribute exists and is not empty"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "aria-label",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "aria-label attribute exists and is not empty"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
           ]
         },
         {
@@ -24177,7 +25093,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"truncate\">Title Save 1773161777521</span>",
+          "html": "<span class=\"truncate\">jhggughhuhbg</span>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(1) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"] > span"
           ]
@@ -24202,7 +25118,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"truncate\">Collab Banner 1773161772696</span>",
+          "html": "<span class=\"truncate\">Untitled</span>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(2) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"] > span"
           ]
@@ -24227,7 +25143,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"truncate\">Title Save 1773161651916</span>",
+          "html": "<span class=\"truncate\">Title Save 1773161777521</span>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(3) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"] > span"
           ]
@@ -24252,7 +25168,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"truncate\">Collab Banner 1773161647113</span>",
+          "html": "<span class=\"truncate\">Collab Banner 1773161772696</span>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(4) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"] > span"
           ]
@@ -24277,7 +25193,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"truncate\">Title Save 1773161578122</span>",
+          "html": "<span class=\"truncate\">Title Save 1773161651916</span>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(5) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"] > span"
           ]
@@ -24302,7 +25218,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"truncate\">Collab Banner 1773161573281</span>",
+          "html": "<span class=\"truncate\">Collab Banner 1773161647113</span>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(6) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"] > span"
           ]
@@ -24327,7 +25243,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"truncate\">Title Save 1773161505753</span>",
+          "html": "<span class=\"truncate\">Title Save 1773161578122</span>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(7) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"] > span"
           ]
@@ -24352,7 +25268,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"truncate\">Collab Banner 1773161500940</span>",
+          "html": "<span class=\"truncate\">Collab Banner 1773161573281</span>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(8) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"] > span"
           ]
@@ -24377,7 +25293,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"truncate\">Title Save 1773161375935</span>",
+          "html": "<span class=\"truncate\">Title Save 1773161505753</span>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(9) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"] > span"
           ]
@@ -24402,7 +25318,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"truncate\">Collab Banner 1773161371193</span>",
+          "html": "<span class=\"truncate\">Collab Banner 1773161500940</span>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(10) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"] > span"
           ]
@@ -24427,7 +25343,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"block px-2 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/30 rounded-md transition-colors\" href=\"/docs?filter=workspace\" data-discover=\"true\">22 more...</a>",
+          "html": "<a class=\"block px-2 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/30 rounded-md transition-colors\" href=\"/docs?filter=workspace\" data-discover=\"true\">24 more...</a>",
           "target": [
             ".block"
           ]
@@ -24627,7 +25543,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1\" data-discover=\"true\">Title Save 1773161777521</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/e7c2d596-3dfa-4dd6-acb7-b51f22434610\" data-discover=\"true\">jhggughhuhbg</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(1) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24652,7 +25568,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/70a46596-367f-4770-bd14-023143116bea\" data-discover=\"true\">Collab Banner 1773161772696</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/3188b344-6784-43d3-be41-e5b4dc5c294c\" data-discover=\"true\">Untitled</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(2) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24677,7 +25593,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f69e9d20-765b-4725-a549-e117c4c99a1d\" data-discover=\"true\">Title Save 1773161651916</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1\" data-discover=\"true\">Title Save 1773161777521</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(3) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24702,7 +25618,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/d30dcbee-251c-4271-b798-046c6f94af14\" data-discover=\"true\">Collab Banner 1773161647113</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/70a46596-367f-4770-bd14-023143116bea\" data-discover=\"true\">Collab Banner 1773161772696</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(4) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24727,7 +25643,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/53f3724f-d3fb-44bb-af0d-bdf5d9efbae8\" data-discover=\"true\">Title Save 1773161578122</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f69e9d20-765b-4725-a549-e117c4c99a1d\" data-discover=\"true\">Title Save 1773161651916</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(5) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24752,7 +25668,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/ad24b2c9-a04a-4740-9ac1-eee5f9668b9e\" data-discover=\"true\">Collab Banner 1773161573281</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/d30dcbee-251c-4271-b798-046c6f94af14\" data-discover=\"true\">Collab Banner 1773161647113</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(6) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24777,7 +25693,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/21d2a8a9-c664-4a7e-b458-94c11868c6b5\" data-discover=\"true\">Title Save 1773161505753</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/53f3724f-d3fb-44bb-af0d-bdf5d9efbae8\" data-discover=\"true\">Title Save 1773161578122</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(7) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24802,7 +25718,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/44076c11-b06a-4b0a-85c2-165f99da168a\" data-discover=\"true\">Collab Banner 1773161500940</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/ad24b2c9-a04a-4740-9ac1-eee5f9668b9e\" data-discover=\"true\">Collab Banner 1773161573281</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(8) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24827,7 +25743,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/d21fd2eb-514f-4c93-83df-c3393152f2a2\" data-discover=\"true\">Title Save 1773161375935</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/21d2a8a9-c664-4a7e-b458-94c11868c6b5\" data-discover=\"true\">Title Save 1773161505753</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(9) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24852,7 +25768,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f65cfc15-1ee7-4630-91ff-168ee8b02b86\" data-discover=\"true\">Collab Banner 1773161371193</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/44076c11-b06a-4b0a-85c2-165f99da168a\" data-discover=\"true\">Collab Banner 1773161500940</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(10) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24877,7 +25793,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/a7d61ee6-32c1-430f-ac14-8c986b8fb79d\" data-discover=\"true\">Title Save 1773161265618</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/d21fd2eb-514f-4c93-83df-c3393152f2a2\" data-discover=\"true\">Title Save 1773161375935</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(11) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24902,7 +25818,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/a36c0ebb-6f39-4a17-809f-f04af67fbca3\" data-discover=\"true\">Collab Banner 1773161260797</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f65cfc15-1ee7-4630-91ff-168ee8b02b86\" data-discover=\"true\">Collab Banner 1773161371193</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(12) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24927,7 +25843,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/8a19b1ee-81aa-48b5-b3c9-f0b270d20eab\" data-discover=\"true\">Title Save 1773161173603</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/a7d61ee6-32c1-430f-ac14-8c986b8fb79d\" data-discover=\"true\">Title Save 1773161265618</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(13) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24952,7 +25868,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/b759327f-f315-4402-9e9e-d5969cc4da31\" data-discover=\"true\">Collab Banner 1773161168792</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/a36c0ebb-6f39-4a17-809f-f04af67fbca3\" data-discover=\"true\">Collab Banner 1773161260797</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(14) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -24977,7 +25893,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/ac4d3156-e02e-419f-b970-ae879a1f8151\" data-discover=\"true\">Title Save 1773161098328</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/8a19b1ee-81aa-48b5-b3c9-f0b270d20eab\" data-discover=\"true\">Title Save 1773161173603</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(15) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25002,7 +25918,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f8001bcf-b524-4d9e-a880-c22f65b6139f\" data-discover=\"true\">Collab Banner 1773161093519</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/b759327f-f315-4402-9e9e-d5969cc4da31\" data-discover=\"true\">Collab Banner 1773161168792</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(16) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25283,7 +26199,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1\" data-discover=\"true\"><span class=\"truncate\">Title Save 1773161777521</span></a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/e7c2d596-3dfa-4dd6-acb7-b51f22434610\" data-discover=\"true\"><span class=\"truncate\">jhggughhuhbg</span></a>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(1) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25309,7 +26225,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/70a46596-367f-4770-bd14-023143116bea\" data-discover=\"true\"><span class=\"truncate\">Collab Banner 1773161772696</span></a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/3188b344-6784-43d3-be41-e5b4dc5c294c\" data-discover=\"true\"><span class=\"truncate\">Untitled</span></a>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(2) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25335,7 +26251,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/f69e9d20-765b-4725-a549-e117c4c99a1d\" data-discover=\"true\"><span class=\"truncate\">Title Save 1773161651916</span></a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1\" data-discover=\"true\"><span class=\"truncate\">Title Save 1773161777521</span></a>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(3) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25361,7 +26277,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/d30dcbee-251c-4271-b798-046c6f94af14\" data-discover=\"true\"><span class=\"truncate\">Collab Banner 1773161647113</span></a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/70a46596-367f-4770-bd14-023143116bea\" data-discover=\"true\"><span class=\"truncate\">Collab Banner 1773161772696</span></a>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(4) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25387,7 +26303,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/53f3724f-d3fb-44bb-af0d-bdf5d9efbae8\" data-discover=\"true\"><span class=\"truncate\">Title Save 1773161578122</span></a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/f69e9d20-765b-4725-a549-e117c4c99a1d\" data-discover=\"true\"><span class=\"truncate\">Title Save 1773161651916</span></a>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(5) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25413,7 +26329,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/ad24b2c9-a04a-4740-9ac1-eee5f9668b9e\" data-discover=\"true\"><span class=\"truncate\">Collab Banner 1773161573281</span></a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/d30dcbee-251c-4271-b798-046c6f94af14\" data-discover=\"true\"><span class=\"truncate\">Collab Banner 1773161647113</span></a>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(6) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25439,7 +26355,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/21d2a8a9-c664-4a7e-b458-94c11868c6b5\" data-discover=\"true\"><span class=\"truncate\">Title Save 1773161505753</span></a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/53f3724f-d3fb-44bb-af0d-bdf5d9efbae8\" data-discover=\"true\"><span class=\"truncate\">Title Save 1773161578122</span></a>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(7) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25465,7 +26381,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/44076c11-b06a-4b0a-85c2-165f99da168a\" data-discover=\"true\"><span class=\"truncate\">Collab Banner 1773161500940</span></a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/ad24b2c9-a04a-4740-9ac1-eee5f9668b9e\" data-discover=\"true\"><span class=\"truncate\">Collab Banner 1773161573281</span></a>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(8) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25491,7 +26407,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/d21fd2eb-514f-4c93-83df-c3393152f2a2\" data-discover=\"true\"><span class=\"truncate\">Title Save 1773161375935</span></a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/21d2a8a9-c664-4a7e-b458-94c11868c6b5\" data-discover=\"true\"><span class=\"truncate\">Title Save 1773161505753</span></a>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(9) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25517,7 +26433,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/f65cfc15-1ee7-4630-91ff-168ee8b02b86\" data-discover=\"true\"><span class=\"truncate\">Collab Banner 1773161371193</span></a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer flex items-center gap-1\" href=\"/documents/44076c11-b06a-4b0a-85c2-165f99da168a\" data-discover=\"true\"><span class=\"truncate\">Collab Banner 1773161500940</span></a>",
           "target": [
             "li[data-tree-item=\"true\"][role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(10) > .focus-within\\:bg-border\\/30.focus-within\\:text-foreground.w-full > .gap-1.cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25543,7 +26459,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"block px-2 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/30 rounded-md transition-colors\" href=\"/docs?filter=workspace\" data-discover=\"true\">22 more...</a>",
+          "html": "<a class=\"block px-2 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/30 rounded-md transition-colors\" href=\"/docs?filter=workspace\" data-discover=\"true\">24 more...</a>",
           "target": [
             ".block"
           ]
@@ -25569,7 +26485,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1\" data-discover=\"true\">Title Save 1773161777521</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/e7c2d596-3dfa-4dd6-acb7-b51f22434610\" data-discover=\"true\">jhggughhuhbg</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(1) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25595,7 +26511,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/70a46596-367f-4770-bd14-023143116bea\" data-discover=\"true\">Collab Banner 1773161772696</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/3188b344-6784-43d3-be41-e5b4dc5c294c\" data-discover=\"true\">Untitled</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(2) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25621,7 +26537,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f69e9d20-765b-4725-a549-e117c4c99a1d\" data-discover=\"true\">Title Save 1773161651916</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/8606dfc8-0762-4280-9d94-fba485fc2fa1\" data-discover=\"true\">Title Save 1773161777521</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(3) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25647,7 +26563,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/d30dcbee-251c-4271-b798-046c6f94af14\" data-discover=\"true\">Collab Banner 1773161647113</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/70a46596-367f-4770-bd14-023143116bea\" data-discover=\"true\">Collab Banner 1773161772696</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(4) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25673,7 +26589,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/53f3724f-d3fb-44bb-af0d-bdf5d9efbae8\" data-discover=\"true\">Title Save 1773161578122</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f69e9d20-765b-4725-a549-e117c4c99a1d\" data-discover=\"true\">Title Save 1773161651916</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(5) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25699,7 +26615,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/ad24b2c9-a04a-4740-9ac1-eee5f9668b9e\" data-discover=\"true\">Collab Banner 1773161573281</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/d30dcbee-251c-4271-b798-046c6f94af14\" data-discover=\"true\">Collab Banner 1773161647113</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(6) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25725,7 +26641,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/21d2a8a9-c664-4a7e-b458-94c11868c6b5\" data-discover=\"true\">Title Save 1773161505753</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/53f3724f-d3fb-44bb-af0d-bdf5d9efbae8\" data-discover=\"true\">Title Save 1773161578122</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(7) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25751,7 +26667,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/44076c11-b06a-4b0a-85c2-165f99da168a\" data-discover=\"true\">Collab Banner 1773161500940</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/ad24b2c9-a04a-4740-9ac1-eee5f9668b9e\" data-discover=\"true\">Collab Banner 1773161573281</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(8) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25777,7 +26693,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/d21fd2eb-514f-4c93-83df-c3393152f2a2\" data-discover=\"true\">Title Save 1773161375935</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/21d2a8a9-c664-4a7e-b458-94c11868c6b5\" data-discover=\"true\">Title Save 1773161505753</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(9) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25803,7 +26719,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f65cfc15-1ee7-4630-91ff-168ee8b02b86\" data-discover=\"true\">Collab Banner 1773161371193</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/44076c11-b06a-4b0a-85c2-165f99da168a\" data-discover=\"true\">Collab Banner 1773161500940</a>",
           "target": [
             "ul[aria-label=\"Documents\"] > li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(10) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25829,7 +26745,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/a7d61ee6-32c1-430f-ac14-8c986b8fb79d\" data-discover=\"true\">Title Save 1773161265618</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/d21fd2eb-514f-4c93-83df-c3393152f2a2\" data-discover=\"true\">Title Save 1773161375935</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(11) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25855,7 +26771,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/a36c0ebb-6f39-4a17-809f-f04af67fbca3\" data-discover=\"true\">Collab Banner 1773161260797</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f65cfc15-1ee7-4630-91ff-168ee8b02b86\" data-discover=\"true\">Collab Banner 1773161371193</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(12) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25881,7 +26797,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/8a19b1ee-81aa-48b5-b3c9-f0b270d20eab\" data-discover=\"true\">Title Save 1773161173603</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/a7d61ee6-32c1-430f-ac14-8c986b8fb79d\" data-discover=\"true\">Title Save 1773161265618</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(13) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25907,7 +26823,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/b759327f-f315-4402-9e9e-d5969cc4da31\" data-discover=\"true\">Collab Banner 1773161168792</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/a36c0ebb-6f39-4a17-809f-f04af67fbca3\" data-discover=\"true\">Collab Banner 1773161260797</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(14) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25933,7 +26849,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/ac4d3156-e02e-419f-b970-ae879a1f8151\" data-discover=\"true\">Title Save 1773161098328</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/8a19b1ee-81aa-48b5-b3c9-f0b270d20eab\" data-discover=\"true\">Title Save 1773161173603</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(15) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25959,7 +26875,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f8001bcf-b524-4d9e-a880-c22f65b6139f\" data-discover=\"true\">Collab Banner 1773161093519</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/b759327f-f315-4402-9e9e-d5969cc4da31\" data-discover=\"true\">Collab Banner 1773161168792</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(16) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -25985,7 +26901,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/0d4b05e7-ed03-4b0f-823e-12f7fa9ba888\" data-discover=\"true\">Title Save 1773160993930</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/ac4d3156-e02e-419f-b970-ae879a1f8151\" data-discover=\"true\">Title Save 1773161098328</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(17) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26011,7 +26927,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/c4661c5b-c6ee-4bef-9bf7-6c5c91fe4c1e\" data-discover=\"true\">Collab Banner 1773160974212</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f8001bcf-b524-4d9e-a880-c22f65b6139f\" data-discover=\"true\">Collab Banner 1773161093519</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(18) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26037,7 +26953,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/30775d84-10bc-4a03-9476-0f4be3b5271f\" data-discover=\"true\">Title Save 1773160794476</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/0d4b05e7-ed03-4b0f-823e-12f7fa9ba888\" data-discover=\"true\">Title Save 1773160993930</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(19) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26063,7 +26979,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/615635d6-a48b-4c65-acef-8bb7e7465486\" data-discover=\"true\">Collab Banner 1773160781749</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/c4661c5b-c6ee-4bef-9bf7-6c5c91fe4c1e\" data-discover=\"true\">Collab Banner 1773160974212</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(20) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26089,7 +27005,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/285211ed-c5ee-412a-ada6-d6c6738c41f6\" data-discover=\"true\">Title Save 1773160680043</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/30775d84-10bc-4a03-9476-0f4be3b5271f\" data-discover=\"true\">Title Save 1773160794476</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(21) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26115,7 +27031,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f624fcb9-d8e6-4b6a-b94e-db1260d2ffa9\" data-discover=\"true\">Collab Banner 1773160667328</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/615635d6-a48b-4c65-acef-8bb7e7465486\" data-discover=\"true\">Collab Banner 1773160781749</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(22) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26141,7 +27057,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/cfddb96a-202e-4c55-a3a4-11448e57fa90\" data-discover=\"true\">Collab Banner 1773160592355</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/285211ed-c5ee-412a-ada6-d6c6738c41f6\" data-discover=\"true\">Title Save 1773160680043</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(23) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26167,7 +27083,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb\" data-discover=\"true\">Concurrent Title B 1773156789298</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/f624fcb9-d8e6-4b6a-b94e-db1260d2ffa9\" data-discover=\"true\">Collab Banner 1773160667328</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(24) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26193,7 +27109,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52\" data-discover=\"true\">&lt;img src=x onerror=alert(\"XSS_RUNTIME\")&gt;</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/cfddb96a-202e-4c55-a3a4-11448e57fa90\" data-discover=\"true\">Collab Banner 1773160592355</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(25) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26219,7 +27135,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd\" data-discover=\"true\">Reconnect Audit 1773156756746</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb\" data-discover=\"true\">Concurrent Title B 1773156789298</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(26) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26245,7 +27161,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1\" data-discover=\"true\">Normal Usage 1773156748338</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52\" data-discover=\"true\">&lt;img src=x onerror=alert(\"XSS_RUNTIME\")&gt;</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(27) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26271,7 +27187,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/7ee276cc-3fe8-4293-8ef6-b3e42bcc4864\" data-discover=\"true\">Welcome to Ship</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd\" data-discover=\"true\">Reconnect Audit 1773156756746</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26297,7 +27213,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/eb5544b2-1ac8-4aa5-8efb-4b16cccb611a\" data-discover=\"true\">Project Overview</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1\" data-discover=\"true\">Normal Usage 1773156748338</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(29) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26323,7 +27239,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/e7bb140a-d564-4365-8759-d9b0c9d75468\" data-discover=\"true\">Architecture Guide</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/7ee276cc-3fe8-4293-8ef6-b3e42bcc4864\" data-discover=\"true\">Welcome to Ship</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(30) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26349,7 +27265,7 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/e7de20c5-96cb-4637-9bc3-2f9c3b397122\" data-discover=\"true\">API Reference</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/eb5544b2-1ac8-4aa5-8efb-4b16cccb611a\" data-discover=\"true\">Project Overview</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(31) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
@@ -26375,9 +27291,61 @@
             }
           ],
           "impact": null,
-          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/3b961f90-eed4-4c5e-9bb3-d4a773132162\" data-discover=\"true\">Development Setup</a>",
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/e7bb140a-d564-4365-8759-d9b0c9d75468\" data-discover=\"true\">Architecture Guide</a>",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "has-visible-text",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element has text that is visible to screen readers"
+            }
+          ],
+          "all": [],
+          "none": [
+            {
+              "id": "focusable-no-name",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element is not in tab order or has accessible text"
+            }
+          ],
+          "impact": null,
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/e7de20c5-96cb-4637-9bc3-2f9c3b397122\" data-discover=\"true\">API Reference</a>",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "has-visible-text",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element has text that is visible to screen readers"
+            }
+          ],
+          "all": [],
+          "none": [
+            {
+              "id": "focusable-no-name",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element is not in tab order or has accessible text"
+            }
+          ],
+          "impact": null,
+          "html": "<a class=\"flex-1 truncate text-left cursor-pointer\" href=\"/documents/3b961f90-eed4-4c5e-9bb3-d4a773132162\" data-discover=\"true\">Development Setup</a>",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .cursor-pointer[data-discover=\"true\"]"
           ]
         }
       ]
@@ -27908,24 +28876,6 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
-          "target": [
-            ".p-0"
-          ]
-        },
-        {
-          "any": [
-            {
-              "id": "no-focusable-content",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "serious",
-              "message": "Element does not have focusable descendants"
-            }
-          ],
-          "all": [],
-          "none": [],
-          "impact": null,
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(28) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
@@ -27983,6 +28933,24 @@
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(29) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"w-4 h-4 flex-shrink-0 flex items-center justify-center p-0 rounded hover:bg-border/50\" aria-label=\"Expand\" data-state=\"closed\">",
+          "target": [
+            ".p-0"
           ]
         },
         {
@@ -28091,6 +29059,78 @@
           "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
           "target": [
             "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(32) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(33) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-red-100 hover:text-red-600 transition-opacity opacity-0\" aria-label=\"Delete document\" data-testid=\"delete-document-button\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .hover\\:bg-red-100.hover\\:text-red-600[aria-label=\"Delete document\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<button type=\"button\" class=\"flex-shrink-0 p-0.5 rounded hover:bg-border/50 transition-opacity opacity-50\" aria-label=\"Add sub-document\" data-state=\"closed\">",
+          "target": [
+            "li[role=\"treeitem\"][data-testid=\"doc-item\"]:nth-child(34) > .group.hover\\:bg-border\\/30.gap-1\\.5 > .opacity-50.hover\\:bg-border\\/50[aria-label=\"Add sub-document\"]"
           ]
         },
         {
@@ -28284,7 +29324,7 @@
               },
               "relatedNodes": [
                 {
-                  "html": "<li><a class=\"block px-2 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/30 rounded-md transition-colors\" href=\"/docs?filter=workspace\" data-discover=\"true\">22 more...</a></li>",
+                  "html": "<li><a class=\"block px-2 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/30 rounded-md transition-colors\" href=\"/docs?filter=workspace\" data-discover=\"true\">24 more...</a></li>",
                   "target": [
                     "ul[aria-label=\"Workspace documents\"] > li:nth-child(11)"
                   ]
@@ -28336,7 +29376,7 @@
           "all": [],
           "none": [],
           "impact": "serious",
-          "html": "<li><a class=\"block px-2 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/30 rounded-md transition-colors\" href=\"/docs?filter=workspace\" data-discover=\"true\">22 more...</a></li>",
+          "html": "<li><a class=\"block px-2 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/30 rounded-md transition-colors\" href=\"/docs?filter=workspace\" data-discover=\"true\">24 more...</a></li>",
           "target": [
             "ul[aria-label=\"Workspace documents\"] > li:nth-child(11)"
           ],

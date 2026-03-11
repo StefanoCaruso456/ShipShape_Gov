@@ -16,6 +16,9 @@ Command used:
 COREPACK_HOME=/tmp/corepack corepack pnpm exec node benchmarks/accessibility-audit.mjs
 ```
 
+Rerun note:
+- I reran the same probe on March 10, 2026; the Lighthouse page scores were unchanged from the earlier baseline.
+
 Major pages audited:
 - `/login`
 - `/my-week`

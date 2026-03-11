@@ -13,7 +13,7 @@
     "orientationAngle": 0,
     "orientationType": "landscape-primary"
   },
-  "timestamp": "2026-03-10T17:38:38.196Z",
+  "timestamp": "2026-03-11T02:31:27.091Z",
   "url": "http://localhost:5173/team/allocation",
   "toolOptions": {
     "runOnly": {
@@ -6408,7 +6408,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"text-xs text-muted\">3 team members · 15 projects</span>",
+          "html": "<span class=\"text-xs text-muted\">3 team members · 16 projects</span>",
           "target": [
             ".text-xs.text-muted:nth-child(3)"
           ]
