@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-03-11T19:28:20.604Z",
+  "repoRoot": "/Users/stefanocaruso/Desktop/Gauntlet/ShipShape",
+  "scope": [
+    "api/src",
+    "web/src",
+    "shared/src"
+  ],
+  "strictModeEnabled": true,
+  "totals": {
+    "any": 176,
+    "as": 589,
+    "nonNull": 117,
+    "tsIgnore": 0,
+    "tsExpectError": 1,
+    "total": 883
+  },
+  "byPackage": {
+    "api": {
+      "any": 143,
+      "as": 215,
+      "nonNull": 84,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "total": 442
+    },
+    "web": {
+      "any": 33,
+      "as": 372,
+      "nonNull": 33,
+      "tsIgnore": 0,
+      "tsExpectError": 1,
+      "total": 439
+    },
+    "shared": {
+      "any": 0,
+      "as": 2,
+      "nonNull": 0,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "total": 2
+    }
+  },
+  "topFiles": [
+    {
+      "file": "api/src/__tests__/activity.test.ts",
+      "any": 23,
+      "as": 23,
+      "nonNull": 3,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "total": 49
+    },
+    {
+      "file": "api/src/routes/weeks.ts",
+      "any": 11,
+      "as": 26,
+      "nonNull": 4,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "total": 41
+    },
+    {
+      "file": "api/src/routes/issues-history.test.ts",
+      "any": 20,
+      "as": 20,
+      "nonNull": 0,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "total": 40
+    },
+    {
+      "file": "web/src/pages/UnifiedDocumentPage.tsx",
+      "any": 0,
+      "as": 36,
+      "nonNull": 1,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "total": 37
+    },
+    {
+      "file": "api/src/db/seed.ts",
+      "any": 0,
+      "as": 0,
+      "nonNull": 35,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "total": 35
+    }
+  ]
+}
