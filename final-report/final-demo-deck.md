@@ -1,8 +1,12 @@
-# Ship Codebase Demo
+# ShipShape
 
-Stefano
+Stefano Caruso
+
+AI Product Engineer
 
 Understanding the architecture, audit findings, and improvement strategy
+
+![ShipShape cover graphic](./final-demo-cover-graphic.svg)
 
 ---
 
