@@ -1,5 +1,5 @@
 {
-  "auditedAt": "2026-03-10T17:40:04.883Z",
+  "auditedAt": "2026-03-11T02:32:56.443Z",
   "baseUrl": "http://localhost:5173",
   "pages": [
     {
@@ -91,26 +91,8 @@
         {
           "impact": "serious",
           "target": ".text-accent.font-medium.text-xs",
-          "html": "<span class=\"text-xs font-medium text-accent\">Tue</span>",
+          "html": "<span class=\"text-xs font-medium text-accent\">Wed</span>",
           "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.82 (foreground color: #005ea2, background color: #0c1114, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
-        },
-        {
-          "impact": "serious",
-          "target": ".opacity-40.py-2\\.5.bg-surface:nth-child(3) > .w-20.flex-shrink-0 > .font-medium.text-xs.text-muted",
-          "html": "<span class=\"text-xs font-medium text-muted\">Wed</span>",
-          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.84 (foreground color: #3f3f3f, background color: #0d0d0d, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
-        },
-        {
-          "impact": "serious",
-          "target": ".opacity-40.py-2\\.5.bg-surface:nth-child(3) > .w-20.flex-shrink-0 > .ml-1.text-xs.text-muted",
-          "html": "<span class=\"text-xs text-muted ml-1\">3/11</span>",
-          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.84 (foreground color: #3f3f3f, background color: #0d0d0d, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
-        },
-        {
-          "impact": "serious",
-          "target": ".opacity-40.py-2\\.5.bg-surface:nth-child(3) > .min-w-0.flex-1 > .italic.text-xs.text-muted",
-          "html": "<span class=\"text-xs text-muted italic\">Upcoming</span>",
-          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.84 (foreground color: #3f3f3f, background color: #0d0d0d, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
         },
         {
           "impact": "serious",
@@ -262,12 +244,16 @@
             "name": "DAILY UPDATES"
           },
           {
-            "role": "button",
-            "name": "Mon3/9 + Write update"
+            "role": "link",
+            "name": "Mon3/9 Monday Mar 9 Standup"
           },
           {
             "role": "button",
             "name": "Tue3/10 + Write update"
+          },
+          {
+            "role": "button",
+            "name": "Wed3/11 + Write update"
           }
         ],
         "note": "This is an accessibility-tree proxy only. Native VoiceOver/NVDA screen-reader testing was not executed in this environment."
@@ -368,7 +354,7 @@
           },
           {
             "role": "link",
-            "name": "22 more..."
+            "name": "24 more..."
           },
           {
             "role": "textbox",
@@ -385,6 +371,22 @@
           {
             "role": "button",
             "name": "Open Tanstack query devtools"
+          },
+          {
+            "role": "link",
+            "name": "jhggughhuhbg"
+          },
+          {
+            "role": "button",
+            "name": "Document actions"
+          },
+          {
+            "role": "link",
+            "name": "Untitled"
+          },
+          {
+            "role": "button",
+            "name": "Document actions"
           },
           {
             "role": "link",
@@ -452,19 +454,27 @@
           },
           {
             "role": "link",
-            "name": "Title Save 1773161375935"
+            "name": "jhggughhuhbg"
           },
           {
             "role": "button",
-            "name": "Document actions"
+            "name": "Delete document"
+          },
+          {
+            "role": "button",
+            "name": "Add sub-document"
           },
           {
             "role": "link",
-            "name": "Collab Banner 1773161371193"
+            "name": "Untitled"
           },
           {
             "role": "button",
-            "name": "Document actions"
+            "name": "Delete document"
+          },
+          {
+            "role": "button",
+            "name": "Add sub-document"
           },
           {
             "role": "link",
@@ -970,6 +980,22 @@
           },
           {
             "role": "link",
+            "name": "Build issue assignment flow"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Build issue assignment flow"
+          },
+          {
+            "role": "link",
+            "name": "Security audit fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Security audit fixes"
+          },
+          {
+            "role": "link",
             "name": "Create error handling"
           },
           {
@@ -1007,14 +1033,6 @@
           {
             "role": "button",
             "name": "Actions for Set up project structure"
-          },
-          {
-            "role": "link",
-            "name": "Security audit fixes"
-          },
-          {
-            "role": "button",
-            "name": "Actions for Security audit fixes"
           },
           {
             "role": "link",
@@ -1170,14 +1188,6 @@
           },
           {
             "role": "link",
-            "name": "Build issue assignment flow"
-          },
-          {
-            "role": "button",
-            "name": "Actions for Build issue assignment flow"
-          },
-          {
-            "role": "link",
             "name": "Create sprint timeline UI"
           },
           {
@@ -1247,6 +1257,14 @@
           {
             "role": "button",
             "name": "Actions for Initial project setup"
+          },
+          {
+            "role": "link",
+            "name": "Untitled"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Untitled"
           },
           {
             "role": "link",
@@ -1895,7 +1913,7 @@
         {
           "impact": "serious",
           "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(11) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
-          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">24</span>",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">27</span>",
           "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
         }
       ],
@@ -1997,6 +2015,30 @@
           },
           {
             "role": "link",
+            "name": "Ship Core - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Ship Core - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Authentication - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Authentication - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
             "name": "Infrastructure - Bug Fixes"
           },
           {
@@ -2021,11 +2063,11 @@
           },
           {
             "role": "link",
-            "name": "Ship Core - Bug Fixes"
+            "name": "Infrastructure - Core Features"
           },
           {
             "role": "button",
-            "name": "Actions for Ship Core - Bug Fixes"
+            "name": "Actions for Infrastructure - Core Features"
           },
           {
             "role": "button",
@@ -2033,11 +2075,11 @@
           },
           {
             "role": "link",
-            "name": "Authentication - Bug Fixes"
+            "name": "API Platform - Core Features"
           },
           {
             "role": "button",
-            "name": "Actions for Authentication - Bug Fixes"
+            "name": "Actions for API Platform - Core Features"
           },
           {
             "role": "button",
@@ -2069,18 +2111,6 @@
           },
           {
             "role": "link",
-            "name": "API Platform - Core Features"
-          },
-          {
-            "role": "button",
-            "name": "Actions for API Platform - Core Features"
-          },
-          {
-            "role": "button",
-            "name": "Expand"
-          },
-          {
-            "role": "link",
             "name": "Design System - Core Features"
           },
           {
@@ -2093,23 +2123,11 @@
           },
           {
             "role": "link",
-            "name": "Infrastructure - Core Features"
+            "name": "hiuhggggggigig"
           },
           {
             "role": "button",
-            "name": "Actions for Infrastructure - Core Features"
-          },
-          {
-            "role": "button",
-            "name": "Expand"
-          },
-          {
-            "role": "link",
-            "name": "Authentication - Performance"
-          },
-          {
-            "role": "button",
-            "name": "Actions for Authentication - Performance"
+            "name": "Actions for hiuhggggggigig"
           },
           {
             "role": "button",
@@ -2129,11 +2147,11 @@
           },
           {
             "role": "link",
-            "name": "Infrastructure - Performance"
+            "name": "API Platform - Performance"
           },
           {
             "role": "button",
-            "name": "Actions for Infrastructure - Performance"
+            "name": "Actions for API Platform - Performance"
           },
           {
             "role": "button",
@@ -2141,11 +2159,23 @@
           },
           {
             "role": "link",
-            "name": "API Platform - Performance"
+            "name": "Authentication - Performance"
           },
           {
             "role": "button",
-            "name": "Actions for API Platform - Performance"
+            "name": "Actions for Authentication - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Infrastructure - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Infrastructure - Performance"
           },
           {
             "role": "button",
@@ -2252,6 +2282,14 @@
           {
             "role": "button",
             "name": "Open Tanstack query devtools"
+          },
+          {
+            "role": "button",
+            "name": "U Untitled"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Untitled"
           },
           {
             "role": "button",
@@ -2671,7 +2709,7 @@
   },
   "totals": {
     "criticalSeriousViolations": 5,
-    "colorContrastFailures": 28
+    "colorContrastFailures": 25
   },
   "missingAriaLocations": [
     {
