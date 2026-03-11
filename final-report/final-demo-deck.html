@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ship Codebase Demo</title>
+  <title>ShipShape Demo</title>
   <style>
     :root {
       --bg: #f3eee2;
@@ -162,23 +162,101 @@
 
     .title-grid {
       display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 36px;
-      align-items: end;
+      grid-template-columns: 1.06fr 0.84fr;
+      gap: 38px;
+      align-items: stretch;
       min-height: 560px;
     }
 
     .title-panel {
-      padding: 26px 28px;
-      background: rgba(255, 250, 240, 0.8);
-      border: 1px solid rgba(35, 58, 87, 0.08);
-      backdrop-filter: blur(2px);
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 24px;
+      padding-bottom: 120px;
     }
 
     .title-stats {
       display: grid;
       gap: 16px;
       align-self: center;
+    }
+
+    .cover-art {
+      position: relative;
+      min-height: 332px;
+      padding: 20px;
+      background:
+        linear-gradient(135deg, rgba(35, 58, 87, 0.08), rgba(197, 92, 45, 0.04)),
+        rgba(255, 250, 240, 0.9);
+      border: 1px solid rgba(35, 58, 87, 0.1);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+    }
+
+    .cover-art::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      background: linear-gradient(180deg, var(--accent), var(--gold), var(--navy));
+    }
+
+    .cover-art img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: 1px solid rgba(35, 58, 87, 0.1);
+      background: #f8f2e8;
+    }
+
+    .cover-copy {
+      max-width: 700px;
+    }
+
+    .cover-copy h1 {
+      margin-bottom: 10px;
+      font-size: 66px;
+      line-height: 0.98;
+    }
+
+    .cover-copy .lead {
+      max-width: 700px;
+      margin-bottom: 0;
+      font-size: 24px;
+      line-height: 1.28;
+      color: var(--muted);
+    }
+
+    .cover-author {
+      position: absolute;
+      left: 64px;
+      bottom: 26px;
+      display: grid;
+      gap: 2px;
+      max-width: 420px;
+    }
+
+    .cover-author .label {
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .cover-author .name {
+      font-size: 22px;
+      line-height: 1.1;
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    .cover-author .role {
+      font-size: 17px;
+      line-height: 1.2;
+      color: var(--muted);
     }
 
     .stat {
@@ -452,12 +530,16 @@
 </head>
 <body>
   <section class="slide">
-    <p class="kicker">Ship Demo</p>
+    <p class="kicker">ShipShape Demo</p>
     <div class="title-grid">
       <div class="title-panel">
-        <h1>Ship Codebase Review</h1>
-        <p class="lead">Architecture, audit findings, and the strategy to make the system more consistent, reliable, and scalable.</p>
-        <p class="supporting">Stefano</p>
+        <div class="cover-art">
+          <img src="final-demo-cover-graphic.svg" alt="Diagram showing ShipShape's unified document model connecting issues, projects, docs, sprints, shared contracts, and realtime collaboration." />
+        </div>
+        <div class="cover-copy">
+          <h1>ShipShape</h1>
+          <p class="lead">Architecture, audit findings, and a practical improvement strategy for a unified work-and-collaboration system.</p>
+        </div>
       </div>
       <div class="title-stats">
         <div class="stat">
@@ -473,6 +555,11 @@
           <span>Practical path forward</span>
         </div>
       </div>
+    </div>
+    <div class="cover-author">
+      <div class="label">Author</div>
+      <div class="name">Stefano Caruso</div>
+      <div class="role">AI Product Engineer</div>
     </div>
     <div class="meta">01</div>
   </section>
