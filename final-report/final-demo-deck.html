@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ship Codebase Demo</title>
+  <style>
+    :root {
+      --bg: #f3eee2;
+      --paper: #fffaf0;
+      --ink: #182433;
+      --muted: #566170;
+      --accent: #c55c2d;
+      --accent-soft: #e8b08f;
+      --line: #d9cfbe;
+      --navy: #233a57;
+      --gold: #d7a332;
+      --shadow: rgba(24, 36, 51, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding: 20px 0 48px;
+    }
+
+    .slide {
+      position: relative;
+      width: 1280px;
+      min-height: 720px;
+      padding: 54px 64px 58px;
+      background:
+        radial-gradient(circle at top right, rgba(213, 163, 50, 0.14), transparent 26%),
+        linear-gradient(135deg, rgba(197, 92, 45, 0.06), rgba(35, 58, 87, 0.04)),
+        var(--paper);
+      box-shadow: 0 20px 60px var(--shadow);
+      overflow: hidden;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 12px;
+      background: linear-gradient(90deg, var(--accent), var(--gold), var(--navy));
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      right: -120px;
+      bottom: -160px;
+      width: 380px;
+      height: 380px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(35, 58, 87, 0.07), transparent 70%);
+    }
+
+    .kicker {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    h1,
+    h2,
+    h3,
+    p,
+    ul {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 900px;
+      margin-bottom: 18px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 56px;
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin-bottom: 18px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 40px;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      margin-bottom: 12px;
+      font-size: 22px;
+      color: var(--navy);
+    }
+
+    p,
+    li,
+    td,
+    th {
+      font-size: 25px;
+      line-height: 1.35;
+    }
+
+    p.lead {
+      max-width: 920px;
+      font-size: 30px;
+      line-height: 1.34;
+      color: var(--ink);
+    }
+
+    p.supporting {
+      max-width: 900px;
+      color: var(--muted);
+    }
+
+    ul {
+      padding-left: 28px;
+    }
+
+    li + li {
+      margin-top: 10px;
+    }
+
+    .meta {
+      position: absolute;
+      right: 64px;
+      bottom: 34px;
+      font-size: 16px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      position: absolute;
+      left: 64px;
+      bottom: 30px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .title-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 36px;
+      align-items: end;
+      min-height: 560px;
+    }
+
+    .title-panel {
+      padding: 26px 28px;
+      background: rgba(255, 250, 240, 0.8);
+      border: 1px solid rgba(35, 58, 87, 0.08);
+      backdrop-filter: blur(2px);
+    }
+
+    .title-stats {
+      display: grid;
+      gap: 16px;
+      align-self: center;
+    }
+
+    .stat {
+      padding: 20px 22px;
+      border-left: 6px solid var(--accent);
+      background: rgba(35, 58, 87, 0.08);
+    }
+
+    .stat strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 18px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
+
+    .stat span {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 34px;
+    }
+
+    .panel {
+      padding: 24px 26px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .panel.dark {
+      background: var(--navy);
+      color: #f7f2e8;
+      border-color: transparent;
+    }
+
+    .panel.dark h3,
+    .panel.dark p,
+    .panel.dark li {
+      color: #f7f2e8;
+    }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: 1fr 100px 1fr 100px 1fr;
+      gap: 0;
+      align-items: center;
+      margin-top: 30px;
+    }
+
+    .arch-box {
+      min-height: 250px;
+      padding: 22px;
+      border: 2px solid var(--navy);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .arch-box h3 {
+      margin-bottom: 14px;
+      font-size: 30px;
+    }
+
+    .arrow {
+      font-size: 56px;
+      text-align: center;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .callout-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 22px;
+    }
+
+    .callout {
+      padding: 20px 22px;
+      background: rgba(35, 58, 87, 0.08);
+      border-top: 6px solid var(--accent);
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--navy);
+    }
+
+    .sequence {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .step {
+      min-height: 230px;
+      padding: 18px 16px;
+      background: rgba(255, 255, 255, 0.56);
+      border: 1px solid var(--line);
+    }
+
+    .step .num {
+      display: inline-block;
+      margin-bottom: 16px;
+      padding: 6px 10px;
+      background: var(--accent);
+      color: #fffaf0;
+      font-weight: 700;
+    }
+
+    .findings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .finding {
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .finding strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--navy);
+      font-size: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: var(--navy);
+      color: #fffaf0;
+      font-size: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .big-quote {
+      max-width: 980px;
+      margin-top: 60px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 42px;
+      line-height: 1.18;
+    }
+
+    .roadmap {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-top: 26px;
+    }
+
+    .roadmap-card {
+      min-height: 280px;
+      padding: 20px 18px;
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid var(--line);
+    }
+
+    .roadmap-card .phase {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 10px;
+      background: var(--gold);
+      color: var(--ink);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .roadmap-card h3 {
+      font-size: 28px;
+    }
+
+    .closing-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 26px;
+      align-items: start;
+      margin-top: 30px;
+    }
+
+    .pillars {
+      display: grid;
+      gap: 14px;
+    }
+
+    .pillar {
+      padding: 18px 20px;
+      border-left: 6px solid var(--accent);
+      background: rgba(35, 58, 87, 0.08);
+    }
+
+    .question {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 420px;
+      border: 2px solid var(--navy);
+      background: linear-gradient(135deg, rgba(197, 92, 45, 0.1), rgba(35, 58, 87, 0.05));
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 76px;
+      letter-spacing: -0.04em;
+    }
+
+    code {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(35, 58, 87, 0.08);
+      font-family: Menlo, Monaco, monospace;
+      font-size: 0.72em;
+    }
+
+    @media print {
+      @page {
+        size: 13.333in 7.5in;
+        margin: 0;
+      }
+
+      body {
+        display: block;
+        padding: 0;
+        gap: 0;
+        background: #ffffff;
+      }
+
+      .slide {
+        display: block;
+        width: 13.333in;
+        height: 7.5in;
+        min-height: 7.5in;
+        max-height: 7.5in;
+        margin: 0;
+        box-shadow: none;
+        overflow: hidden;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .slide:last-of-type {
+        page-break-after: auto;
+        break-after: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide">
+    <p class="kicker">Ship Demo</p>
+    <div class="title-grid">
+      <div class="title-panel">
+        <h1>Ship Codebase Review</h1>
+        <p class="lead">Architecture, audit findings, and the strategy to make the system more consistent, reliable, and scalable.</p>
+        <p class="supporting">Stefano</p>
+      </div>
+      <div class="title-stats">
+        <div class="stat">
+          <strong>Core Thesis</strong>
+          <span>Strong architecture, uneven maturity</span>
+        </div>
+        <div class="stat">
+          <strong>Focus</strong>
+          <span>Understand first, then improve</span>
+        </div>
+        <div class="stat">
+          <strong>Outcome</strong>
+          <span>Practical path forward</span>
+        </div>
+      </div>
+    </div>
+    <div class="meta">01</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Approach</p>
+    <h2>I started by building a mental model, not by changing code</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3>What I focused on</h3>
+        <ul>
+          <li>Package boundaries across <code>web/</code>, <code>api/</code>, and <code>shared/</code></li>
+          <li>Request flow from UI to API to database</li>
+          <li>Realtime collaboration flow over WebSocket and Yjs</li>
+          <li>How the document model shapes the whole product</li>
+        </ul>
+      </div>
+      <div class="panel dark">
+        <h3>Why that matters</h3>
+        <ul>
+          <li>It reduces the risk of superficial fixes</li>
+          <li>It makes audit findings easier to explain and prioritize</li>
+          <li>It turns code reading into an architecture-level assessment</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-note">The first deliverable was understanding the system safely enough to change it.</div>
+    <div class="meta">02</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Architecture</p>
+    <h2>ShipShape is a unified-document monolith with clear package boundaries</h2>
+    <div class="architecture">
+      <div class="arch-box">
+        <h3><code>web/</code></h3>
+        <ul>
+          <li>React frontend</li>
+          <li>REST for normal app data</li>
+          <li>WebSocket for realtime collaboration</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="arch-box">
+        <h3><code>shared/</code></h3>
+        <ul>
+          <li>Types</li>
+          <li>Enums</li>
+          <li>Constants</li>
+          <li>Helpers</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="arch-box">
+        <h3><code>api/</code></h3>
+        <ul>
+          <li>Express + TypeScript backend</li>
+          <li>Validation and persistence</li>
+          <li>Realtime auth and Yjs coordination</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-note">The split is strong because both sides reuse the same contract layer instead of drifting apart.</div>
+    <div class="meta">03</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Data Model</p>
+    <h2>The unified document model is the most important design decision</h2>
+    <p class="lead">Instead of separate main tables for issues, projects, docs, and sprints, Ship stores them in one central <code>documents</code> table.</p>
+    <div class="callout-row">
+      <div class="callout">
+        <strong>Document Type</strong>
+        Filters the central table to the subset each query needs.
+      </div>
+      <div class="callout">
+        <strong>Hierarchy</strong>
+        <code>parent_id</code> models structural nesting.
+      </div>
+      <div class="callout">
+        <strong>Relationships</strong>
+        <code>document_associations</code> and <code>document_links</code> layer meaning on top.
+      </div>
+    </div>
+    <div class="footer-note">This model gives Ship flexibility and product coherence, but it also increases the cost of graph-heavy access patterns.</div>
+    <div class="meta">04</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Request Flow</p>
+    <h2>Create Issue is a clean example of the runtime model</h2>
+    <div class="sequence">
+      <div class="step">
+        <div class="num">01</div>
+        User clicks Create Issue
+      </div>
+      <div class="step">
+        <div class="num">02</div>
+        Frontend sends a <code>POST</code> request
+      </div>
+      <div class="step">
+        <div class="num">03</div>
+        Backend validates the payload
+      </div>
+      <div class="step">
+        <div class="num">04</div>
+        Backend inserts a row into <code>documents</code>
+      </div>
+      <div class="step">
+        <div class="num">05</div>
+        API returns JSON
+      </div>
+      <div class="step">
+        <div class="num">06</div>
+        Frontend re-renders from the response
+      </div>
+    </div>
+    <div class="footer-note">The frontend never writes directly to the database. The API remains the control point.</div>
+    <div class="meta">05</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Realtime</p>
+    <h2>Collaboration is one of the clearest differentiators in the system</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3>Flow</h3>
+        <ul>
+          <li>The editor opens a document-specific WebSocket room</li>
+          <li>The backend authenticates using the existing session cookie</li>
+          <li>The connection upgrades into a collaboration channel</li>
+          <li>Yjs syncs concurrent edits and the server persists state to Postgres</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Why it is strong</h3>
+        <ul>
+          <li>CRDT merging lets simultaneous edits converge automatically</li>
+          <li>Docs, planning, and execution stay in one system</li>
+          <li>This is a real product advantage, not just a technical feature</li>
+        </ul>
+      </div>
+    </div>
+    <div class="meta">06</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Assessment</p>
+    <h2>The architecture has a strong core, but the risks are concentrated in consistency</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3>Strongest decisions</h3>
+        <ul>
+          <li>Unified document model</li>
+          <li>Clear <code>web</code> / <code>api</code> / <code>shared</code> split</li>
+          <li>Yjs-based collaboration model</li>
+        </ul>
+      </div>
+      <div class="panel dark">
+        <h3>Weakest points</h3>
+        <ul>
+          <li>Relationship consistency is too fragile</li>
+          <li>Collaborative state has too many sources of truth</li>
+          <li><code>shared/</code> is valuable, but not yet fully authoritative</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-note">The big gap is not architectural vision. It is operational consistency across layers.</div>
+    <div class="meta">07</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Audit</p>
+    <h2>My findings were mixed: strong design choices, clear implementation risks</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Area</th>
+          <th>Main Finding</th>
+          <th>Implication</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Type safety</td>
+          <td>Strict mode is on, but API routes rely heavily on casts</td>
+          <td>Type guarantees are weaker than they appear</td>
+        </tr>
+        <tr>
+          <td>Frontend performance</td>
+          <td>The initial bundle is still too large</td>
+          <td>Slower first load and heavier critical path</td>
+        </tr>
+        <tr>
+          <td>Database and API</td>
+          <td>Graph-heavy flows raise query cost and are likely bottlenecks</td>
+          <td>Scalability risk grows with data volume and concurrency</td>
+        </tr>
+        <tr>
+          <td>Testing</td>
+          <td>Coverage exists, but reliability and full-suite completion are weak</td>
+          <td>The safety net is not mature enough</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="meta">08</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Performance</p>
+    <h2>The clearest frontend opportunity is reducing the amount of code shipped up front</h2>
+    <div class="findings-grid">
+      <div class="finding">
+        <strong>What is working</strong>
+        Code splitting already exists.
+      </div>
+      <div class="finding">
+        <strong>What is not</strong>
+        The main app chunk is still oversized.
+      </div>
+      <div class="finding">
+        <strong>Why</strong>
+        Heavy dependencies are still landing in the initial path.
+      </div>
+      <div class="finding">
+        <strong>Best next move</strong>
+        Reduce what the browser has to download before the app becomes useful.
+      </div>
+    </div>
+    <div class="meta">09</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Scalability</p>
+    <h2>The unified document model works, but relationship-heavy flows are where the cost starts to rise</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3>Database finding</h3>
+        <p>Query fan-out grows in relationship-heavy flows, especially when the system has to traverse the graph around the central <code>documents</code> table.</p>
+      </div>
+      <div class="panel">
+        <h3>API finding</h3>
+        <p>Latency is acceptable on the sampled endpoints, but graph-heavy endpoints are the ones most likely to become bottlenecks as scale increases.</p>
+      </div>
+    </div>
+    <div class="footer-note">The optimization target is not the entire stack equally. It is the relationship access patterns around the central model.</div>
+    <div class="meta">10</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Quality</p>
+    <h2>Testing, runtime behavior, and accessibility still need operational maturity</h2>
+    <div class="findings-grid">
+      <div class="finding">
+        <strong>Testing</strong>
+        Meaningful coverage exists, but reliability and critical-flow confidence are still not strong enough.
+      </div>
+      <div class="finding">
+        <strong>Runtime behavior</strong>
+        The issue is not only whether errors happen, but whether users are informed and can recover safely.
+      </div>
+      <div class="finding">
+        <strong>Accessibility</strong>
+        The baseline still shows 5 serious violations, partial keyboard completeness, 28 contrast failures, and ARIA gaps.
+      </div>
+      <div class="finding">
+        <strong>Bottom line</strong>
+        Good architecture does not matter much if quality signals are not dependable in production.
+      </div>
+    </div>
+    <div class="meta">11</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Positioning</p>
+    <h2>Ship’s advantage is unified work and context, not breadth of PM features</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3>Today</h3>
+        <ul>
+          <li>The LLM layer exists, but it is narrow and optional</li>
+          <li>It mainly supports advisory analysis plus Claude context APIs</li>
+          <li>Availability depends on Bedrock credentials</li>
+        </ul>
+      </div>
+      <div class="panel dark">
+        <h3>Competitive framing</h3>
+        <ul>
+          <li>Jira is stronger as a mature PM operating system</li>
+          <li>Ship is stronger when docs, planning, execution, and collaboration stay tightly connected</li>
+          <li>That advantage only holds if reliability and consistency catch up to the vision</li>
+        </ul>
+      </div>
+    </div>
+    <div class="meta">12</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Strategy</p>
+    <h2>The improvement strategy should follow the architecture’s actual pressure points</h2>
+    <div class="roadmap">
+      <div class="roadmap-card">
+        <div class="phase">Step 1</div>
+        <h3>Consolidate relationship handling</h3>
+        <p>Reduce inconsistency around how documents relate to each other.</p>
+      </div>
+      <div class="roadmap-card">
+        <div class="phase">Step 2</div>
+        <h3>Strengthen the shared contract layer</h3>
+        <p>Make <code>shared/</code> more authoritative so the frontend and backend cannot drift.</p>
+      </div>
+      <div class="roadmap-card">
+        <div class="phase">Step 3</div>
+        <h3>Harden realtime and scaling</h3>
+        <p>Reduce multi-source state risk and improve behavior under concurrency and growth.</p>
+      </div>
+      <div class="roadmap-card">
+        <div class="phase">Step 4</div>
+        <h3>Improve test reliability and accessibility</h3>
+        <p>Increase confidence in changes and improve real usability.</p>
+      </div>
+    </div>
+    <div class="footer-note">This order fixes structural consistency first, then correctness, then scale, then safety and usability.</div>
+    <div class="meta">13</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Conclusion</p>
+    <h2>Ship has a differentiated core. The next step is operational maturity.</h2>
+    <div class="closing-grid">
+      <div>
+        <p class="big-quote">Ship does not need a new architecture first. It needs to fully realize the one it already has.</p>
+      </div>
+      <div class="pillars">
+        <div class="pillar">Strong architectural core</div>
+        <div class="pillar">Clear product differentiation</div>
+        <div class="pillar">Main gap: consistency and reliability</div>
+        <div class="pillar">Best path: targeted hardening, not reinvention</div>
+      </div>
+    </div>
+    <div class="meta">14</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Discussion</p>
+    <div class="question">Q&amp;A</div>
+    <div class="footer-note">Questions on architecture, audit findings, or the improvement strategy.</div>
+    <div class="meta">15</div>
+  </section>
+</body>
+</html>
