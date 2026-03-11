@@ -1,0 +1,100 @@
+{
+  "generatedAt": "2026-03-11T22:32:17.577Z",
+  "command": "node benchmarks/test-quality-inventory.mjs .",
+  "surfaces": {
+    "api": {
+      "files": 28,
+      "tests": 449,
+      "topFiles": [
+        {
+          "file": "api/src/routes/weeks.test.ts",
+          "tests": 41
+        },
+        {
+          "file": "api/src/__tests__/extractHypothesis.test.ts",
+          "tests": 36
+        },
+        {
+          "file": "api/src/collaboration/__tests__/collaboration.test.ts",
+          "tests": 30
+        },
+        {
+          "file": "api/src/utils/__tests__/business-days.test.ts",
+          "tests": 27
+        },
+        {
+          "file": "api/src/routes/workspaces.test.ts",
+          "tests": 25
+        }
+      ]
+    },
+    "web": {
+      "files": 19,
+      "tests": 157,
+      "topFiles": [
+        {
+          "file": "web/src/hooks/useSessionTimeout.test.ts",
+          "tests": 34
+        },
+        {
+          "file": "web/src/lib/document-tabs.test.ts",
+          "tests": 24
+        },
+        {
+          "file": "web/src/hooks/useSelection.test.ts",
+          "tests": 11
+        },
+        {
+          "file": "web/src/components/editor/DetailsExtension.test.ts",
+          "tests": 10
+        },
+        {
+          "file": "web/src/components/editor/TableOfContents.test.ts",
+          "tests": 10
+        }
+      ]
+    },
+    "e2e": {
+      "files": 71,
+      "tests": 883,
+      "topFiles": [
+        {
+          "file": "e2e/bulk-selection.spec.ts",
+          "tests": 85
+        },
+        {
+          "file": "e2e/program-mode-week-ux.spec.ts",
+          "tests": 66
+        },
+        {
+          "file": "e2e/session-timeout.spec.ts",
+          "tests": 58
+        },
+        {
+          "file": "e2e/accessibility-remediation.spec.ts",
+          "tests": 57
+        },
+        {
+          "file": "e2e/features-real.spec.ts",
+          "tests": 24
+        }
+      ]
+    }
+  },
+  "totals": {
+    "files": 118,
+    "tests": 1489
+  },
+  "criticalPathMarkers": {
+    "caia_login_browser": [
+      "web/src/pages/Login.test.tsx"
+    ],
+    "document_delete_ui": [
+      "web/src/pages/Documents.test.tsx"
+    ],
+    "sprint_board_drag_drop": [
+      "web/src/components/KanbanBoard.test.tsx"
+    ]
+  },
+  "criticalFlowsWithZeroCoverage": []
+}
