@@ -3,6 +3,7 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/cn';
 import { Icon } from '@/components/icons/uswds';
+import { redirectTo } from '@/lib/browser-navigation';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '';
 
@@ -125,7 +126,7 @@ export function LoginPage() {
 
       if (data.success && data.data.authorizationUrl) {
         // Redirect to CAIA for PIV authentication
-        window.location.href = data.data.authorizationUrl;
+        redirectTo(data.data.authorizationUrl);
       } else {
         setError(data.error?.message || 'Failed to initiate CAIA login');
         setErrorField('general');

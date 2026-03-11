@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import { apiPost } from '@/lib/api';
 import { useSessionTimeout } from './useSessionTimeout';
+
+vi.mock('@/lib/api', () => ({
+  API_URL: '',
+  apiPost: vi.fn(),
+}));
 
 /**
  * Unit Tests for useSessionTimeout Hook
@@ -19,12 +25,14 @@ const ACTIVITY_THROTTLE_MS = 30 * 1000; // 30 seconds
 
 // Mock fetch globally
 const mockFetch = vi.fn();
+const mockApiPost = vi.mocked(apiPost);
 
 describe('useSessionTimeout', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     // Reset fetch mock
     mockFetch.mockReset();
+    mockApiPost.mockReset();
     // Default: return successful session info
     mockFetch.mockResolvedValue({
       ok: true,
@@ -37,6 +45,7 @@ describe('useSessionTimeout', () => {
         },
       }),
     });
+    mockApiPost.mockResolvedValue({ ok: true } as Response);
     global.fetch = mockFetch;
     // Mock document event listeners
     vi.spyOn(document, 'addEventListener');
@@ -717,6 +726,8 @@ describe('useSessionTimeout', () => {
 describe('useSessionTimeout - Edge Cases', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    mockApiPost.mockReset();
+    mockApiPost.mockResolvedValue({ ok: true } as Response);
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -777,6 +788,7 @@ describe('useSessionTimeout - Edge Cases', () => {
   it('handles resetTimer called when not showing warning', async () => {
     const onTimeout = vi.fn();
     (global.fetch as Mock).mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
+    mockApiPost.mockResolvedValue({ ok: true } as Response);
 
     const { result } = renderHook(() => useSessionTimeout(onTimeout));
 
@@ -793,6 +805,7 @@ describe('useSessionTimeout - Edge Cases', () => {
   it('handles multiple resetTimer calls in quick succession', async () => {
     const onTimeout = vi.fn();
     (global.fetch as Mock).mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
+    mockApiPost.mockResolvedValue({ ok: true } as Response);
 
     const { result } = renderHook(() => useSessionTimeout(onTimeout));
 
