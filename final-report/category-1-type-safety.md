@@ -36,6 +36,21 @@ Why this is better:
 
 The measurable outcome was a reduction from `1292` to `883` total violations, with most of the gain coming from the `api/` package. The biggest single improvement was removing unsafe non-null assertions, which dropped from `329` to `117`.
 
+## Concrete Before / After Examples
+
+| Before | After | What was wrong | How it was fixed |
+| --- | --- | --- | --- |
+| `const workspaceId = req.workspaceId!;` | `const authContext = getAuthContext(req, res); if (!authContext) return; const { workspaceId } = authContext;` | `!` forced TypeScript to trust auth existed. | The route now proves auth first. |
+| `const userId = req.userId!;` | `const { userId } = authContext;` | The handler assumed auth instead of checking it. | It now uses the checked auth context. |
+| `const searchQuery = (req.query.q as string) || '';` | `const queryParsed = mentionQuerySchema.safeParse(req.query);` | Untrusted input was cast into shape. | Query params are now validated with `zod`. |
+| `const programId = req.query.program_id as string \| undefined;` | `const { program_id: programId } = queryParsed.data;` | The query param was assumed valid without proof. | Parsing now creates a real typed value. |
+| `const limit = Math.min(parseInt(req.query.limit as string) \|\| 10, 50);` | `limit: z.coerce.number().int().min(1).max(50).optional().default(10)` | Manual coercion plus unsafe cast weakened the boundary. | The route now validates numeric input and bounds. |
+| `actorUserId: req.userId!` | `actorUserId: req.userId ?? null` | The code claimed user ID always existed even when nullable actors were allowed. | The audit-log call now matches the real nullable contract. |
+| `role: null as unknown as string` | `role: null` | The type lied about a runtime `null` value. | The response type now allows `null`. |
+| `joinedAt: null as unknown as string` | `joinedAt: null` | Same problem: runtime data and declared type disagreed. | The response contract now reflects reality. |
+| `const req = { cookies } as unknown as Request;` | `const req = createMockRequest({ cookies });` | The test mock bypassed Express typing. | Tests now use a typed request helper. |
+| `vi.mocked(pool.query).mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);` | `vi.mocked(pool.query).mockResolvedValueOnce(queryResponse({ rows: [], rowCount: 0 }));` | `any` disabled DB result typing in tests. | Tests now use a typed query-result helper. |
+
 ## Reproducible Proof
 
 ### Measurement command
