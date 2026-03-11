@@ -9,6 +9,33 @@
 - Threshold met: `Yes` (`25%` required)
 - `strict` mode enabled: `Yes`
 
+## Plain-Language Summary
+
+Before this pass, the API and many tests were using TypeScript, but they were also bypassing it too often. The main problems were:
+
+- route handlers were using `req.userId!` and `req.workspaceId!` to force TypeScript to trust that auth values existed
+- some request inputs were cast into the expected shape instead of being validated
+- some response types claimed values were always strings even when runtime data could be `null`
+- dense test files were using `as any` and `as unknown as` so often that the compiler could not meaningfully verify the mocks
+
+The result was that TypeScript was present, but a large part of the API surface was still relying on "trust me" patterns instead of real proof.
+
+This improvement made the types more honest and more useful:
+
+- authenticated routes now go through `getAuthContext(req, res)`, which either returns a checked auth object or exits with `401`
+- query parameters in `search.ts` are now validated with `zod` instead of being cast optimistically
+- nullable runtime values stay nullable in the response types instead of being forced into incorrect string types
+- repeated unsafe test mocks were replaced with typed helpers so tests better match the real request and database contracts
+
+Why this is better:
+
+- the compiler now verifies more of the real API contract instead of being silenced by `!`, `as`, and `any`
+- authentication preconditions are explicit and reusable instead of duplicated and assumed
+- malformed input is rejected at the boundary instead of leaking deeper into the handler
+- tests are closer to production behavior, so they are a better safety net
+
+The measurable outcome was a reduction from `1292` to `883` total violations, with most of the gain coming from the `api/` package. The biggest single improvement was removing unsafe non-null assertions, which dropped from `329` to `117`.
+
 ## Reproducible Proof
 
 ### Measurement command
