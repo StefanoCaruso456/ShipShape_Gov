@@ -21,6 +21,35 @@ function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
+export interface AuthContext {
+  userId: string;
+  workspaceId: string;
+  sessionId?: string;
+  isSuperAdmin: boolean;
+  isApiToken: boolean;
+}
+
+export function getAuthContext(req: Request, res: Response): AuthContext | null {
+  if (!req.userId || !req.workspaceId) {
+    res.status(HTTP_STATUS.UNAUTHORIZED).json({
+      success: false,
+      error: {
+        code: ERROR_CODES.UNAUTHORIZED,
+        message: 'Authentication required',
+      },
+    });
+    return null;
+  }
+
+  return {
+    userId: req.userId,
+    workspaceId: req.workspaceId,
+    sessionId: req.sessionId,
+    isSuperAdmin: req.isSuperAdmin === true,
+    isApiToken: req.isApiToken === true,
+  };
+}
+
 // Validate API token and return user info if valid
 async function validateApiToken(token: string): Promise<{
   userId: string;

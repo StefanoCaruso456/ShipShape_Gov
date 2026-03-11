@@ -7,6 +7,17 @@ import { logAuditEvent } from '../services/audit.js';
 
 const router: RouterType = Router();
 
+interface WorkspaceMemberResponse {
+  id: string;
+  userId: string | null;
+  email: string | null;
+  name: string;
+  role: string | null;
+  personDocumentId: string | null;
+  joinedAt: string | Date | null;
+  isArchived: boolean;
+}
+
 // GET /api/workspaces - List user's workspaces
 router.get('/', authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -211,7 +222,7 @@ router.post('/:id/switch', authMiddleware, async (req: Request, res: Response): 
 
     await logAuditEvent({
       workspaceId,
-      actorUserId: req.userId!,
+      actorUserId: req.userId ?? null,
       action: 'workspace.switch',
       resourceType: 'workspace',
       resourceId: workspaceId,
@@ -282,7 +293,7 @@ router.get('/:id/members', authMiddleware, workspaceAdminMiddleware, async (req:
       archivedRows = archivedResult.rows;
     }
 
-    const members = [
+    const members: WorkspaceMemberResponse[] = [
       ...activeResult.rows.map(row => ({
         id: row.id,
         userId: row.user_id,
@@ -298,9 +309,9 @@ router.get('/:id/members', authMiddleware, workspaceAdminMiddleware, async (req:
         userId: row.user_id,
         email: row.email,
         name: row.name,
-        role: null as unknown as string, // Archived users have no role
+        role: null, // Archived users have no role
         personDocumentId: row.person_document_id,
-        joinedAt: null as unknown as string, // No membership join date
+        joinedAt: null, // No membership join date
         isArchived: true,
       })),
     ];
@@ -386,7 +397,7 @@ router.post('/:id/members', authMiddleware, workspaceAdminMiddleware, async (req
 
     await logAuditEvent({
       workspaceId,
-      actorUserId: req.userId!,
+      actorUserId: req.userId ?? null,
       action: 'membership.create',
       resourceType: 'user',
       resourceId: userId,
@@ -487,7 +498,7 @@ router.patch('/:id/members/:userId', authMiddleware, workspaceAdminMiddleware, a
 
     await logAuditEvent({
       workspaceId,
-      actorUserId: req.userId!,
+      actorUserId: req.userId ?? null,
       action: 'membership.update',
       resourceType: 'user',
       resourceId: userId,
@@ -588,7 +599,7 @@ router.delete('/:id/members/:userId', authMiddleware, workspaceAdminMiddleware, 
 
     await logAuditEvent({
       workspaceId,
-      actorUserId: req.userId!,
+      actorUserId: req.userId ?? null,
       action: 'membership.delete',
       resourceType: 'user',
       resourceId: userId,
@@ -670,7 +681,7 @@ router.post('/:id/members/:userId/restore', authMiddleware, workspaceAdminMiddle
 
     await logAuditEvent({
       workspaceId,
-      actorUserId: req.userId!,
+      actorUserId: req.userId ?? null,
       action: 'membership.restore',
       resourceType: 'user',
       resourceId: userId,
@@ -858,7 +869,7 @@ router.post('/:id/invites', authMiddleware, workspaceAdminMiddleware, async (req
 
       await logAuditEvent({
         workspaceId,
-        actorUserId: req.userId!,
+        actorUserId: req.userId ?? null,
         action: 'member.add',
         resourceType: 'user',
         resourceId: existingUser.id,
@@ -930,7 +941,7 @@ router.post('/:id/invites', authMiddleware, workspaceAdminMiddleware, async (req
 
     await logAuditEvent({
       workspaceId,
-      actorUserId: req.userId!,
+      actorUserId: req.userId ?? null,
       action: 'invite.create',
       resourceType: 'invite',
       resourceId: result.rows[0].id,
@@ -997,7 +1008,7 @@ router.delete('/:id/invites/:inviteId', authMiddleware, workspaceAdminMiddleware
 
     await logAuditEvent({
       workspaceId,
-      actorUserId: req.userId!,
+      actorUserId: req.userId ?? null,
       action: 'invite.delete',
       resourceType: 'invite',
       resourceId: inviteId,

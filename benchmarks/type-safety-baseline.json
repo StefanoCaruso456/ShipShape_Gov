@@ -1,0 +1,45 @@
+{
+  "generatedAt": null,
+  "note": "Captured before Category 1 implementation from the same AST audit scope (api/src, web/src, shared/src).",
+  "repoRoot": "/Users/stefanocaruso/Desktop/Gauntlet/ShipShape",
+  "scope": [
+    "api/src",
+    "web/src",
+    "shared/src"
+  ],
+  "strictModeEnabled": true,
+  "totals": {
+    "any": 271,
+    "as": 691,
+    "nonNull": 329,
+    "tsIgnore": 0,
+    "tsExpectError": 1,
+    "total": 1292
+  },
+  "byPackage": {
+    "api": {
+      "any": 238,
+      "as": 317,
+      "nonNull": 296,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "total": 851
+    },
+    "web": {
+      "any": 33,
+      "as": 372,
+      "nonNull": 33,
+      "tsIgnore": 0,
+      "tsExpectError": 1,
+      "total": 439
+    },
+    "shared": {
+      "any": 0,
+      "as": 2,
+      "nonNull": 0,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "total": 2
+    }
+  }
+}

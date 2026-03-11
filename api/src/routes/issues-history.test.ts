@@ -28,6 +28,13 @@ vi.mock('../middleware/auth.js', () => ({
     req.workspaceId = 'ws-123';
     next();
   }),
+  getAuthContext: vi.fn((req) => ({
+    userId: req.userId,
+    workspaceId: req.workspaceId,
+    sessionId: req.sessionId,
+    isSuperAdmin: req.isSuperAdmin === true,
+    isApiToken: req.isApiToken === true,
+  })),
 }));
 
 import { pool } from '../db/client.js';

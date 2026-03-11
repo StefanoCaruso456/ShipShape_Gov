@@ -16,6 +16,13 @@ vi.mock('../middleware/auth.js', () => ({
     req.userId = 'test-user-id';
     next();
   },
+  getAuthContext: vi.fn((req) => ({
+    userId: req.userId,
+    workspaceId: req.workspaceId,
+    sessionId: req.sessionId,
+    isSuperAdmin: req.isSuperAdmin === true,
+    isApiToken: req.isApiToken === true,
+  })),
 }));
 
 import activityRouter from '../routes/activity.js';

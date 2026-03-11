@@ -1,10 +1,21 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../db/client.js';
-import { authMiddleware } from '../middleware/auth.js';
+import { z } from 'zod';
+import { authMiddleware, getAuthContext } from '../middleware/auth.js';
 import { isWorkspaceAdmin } from '../middleware/visibility.js';
 
 type RouterType = ReturnType<typeof Router>;
 export const searchRouter: RouterType = Router();
+
+const mentionQuerySchema = z.object({
+  q: z.string().optional().default(''),
+});
+
+const learningQuerySchema = z.object({
+  q: z.string().optional().default(''),
+  program_id: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(10),
+});
 
 // SECURITY: Escape SQL LIKE pattern special characters to prevent wildcard injection
 // This prevents users from using % and _ to match arbitrary patterns
@@ -16,9 +27,17 @@ function escapeLikePattern(str: string): string {
 // GET /api/search/mentions?q=:query
 searchRouter.get('/mentions', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const searchQuery = (req.query.q as string) || '';
-    const workspaceId = req.workspaceId!;
-    const userId = req.userId!;
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+    const { workspaceId, userId } = authContext;
+    const queryParsed = mentionQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      res.status(400).json({ error: 'Invalid search query', details: queryParsed.error.flatten() });
+      return;
+    }
+    const { q: searchQuery } = queryParsed.data;
 
     // SECURITY: Escape wildcard characters to prevent SQL wildcard injection
     const sanitizedQuery = escapeLikePattern(searchQuery);
@@ -81,11 +100,17 @@ searchRouter.get('/mentions', authMiddleware, async (req: Request, res: Response
 // GET /api/search/learnings?q=:query&program_id=:program_id
 searchRouter.get('/learnings', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const searchQuery = (req.query.q as string) || '';
-    const programId = req.query.program_id as string | undefined;
-    const workspaceId = req.workspaceId!;
-    const userId = req.userId!;
-    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+    const { workspaceId, userId } = authContext;
+    const queryParsed = learningQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      res.status(400).json({ error: 'Invalid learning query', details: queryParsed.error.flatten() });
+      return;
+    }
+    const { q: searchQuery, program_id: programId, limit } = queryParsed.data;
 
     // SECURITY: Escape wildcard characters to prevent SQL wildcard injection
     const sanitizedQuery = escapeLikePattern(searchQuery);
