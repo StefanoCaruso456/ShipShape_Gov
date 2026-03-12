@@ -50,6 +50,14 @@ COREPACK_HOME=/tmp/corepack corepack pnpm --dir web exec vitest run --reporter=j
 | Normal UI document delete flow | Uncovered | Covered | `web/src/pages/Documents.test.tsx` |
 | Sprint board drag/drop mutation flow | Uncovered | Covered | `web/src/components/KanbanBoard.test.tsx` |
 
+### Test type clarification
+
+The `3` new critical-path tests added for this category are `Vitest` page/component tests, not new `Playwright` E2E specs.
+
+- `Vitest` tests run inside the unit/component test runner with mocked boundaries.
+- `Playwright` tests launch a real browser and exercise the app end to end.
+- The Category 5 improvement target only required meaningful coverage for `3` previously untested critical paths, so this work used the faster and more deterministic `Vitest` layer.
+
 ### Suite health
 
 | Suite | Before | After | Delta |
