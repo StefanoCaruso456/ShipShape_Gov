@@ -356,6 +356,11 @@ CREATE INDEX IF NOT EXISTS idx_documents_parent_id ON documents(parent_id);
 CREATE INDEX IF NOT EXISTS idx_documents_document_type ON documents(document_type);
 CREATE INDEX IF NOT EXISTS idx_documents_properties ON documents USING GIN (properties);
 CREATE INDEX IF NOT EXISTS idx_documents_person_user_id ON documents ((properties->>'user_id')) WHERE document_type = 'person';
+CREATE INDEX IF NOT EXISTS idx_documents_sprint_project_lookup
+  ON documents(workspace_id, (properties->>'project_id'))
+  WHERE document_type = 'sprint'
+    AND (properties->>'project_id') IS NOT NULL
+    AND jsonb_array_length(COALESCE(properties->'assignee_ids', '[]'::jsonb)) > 0;
 
 -- Document visibility indexes
 CREATE INDEX IF NOT EXISTS idx_documents_visibility ON documents(visibility);
