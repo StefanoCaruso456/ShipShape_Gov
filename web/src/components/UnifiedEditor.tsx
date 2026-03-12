@@ -241,6 +241,8 @@ export function UnifiedEditor({
       setFailedTitleValue(title);
       setTitleSaveError('Title changes could not be saved. Keep this tab open and retry once the connection is stable.');
     },
+    // Title edits should surface recovery UI quickly instead of silently retrying.
+    maxRetries: 0,
   });
 
   const retryFailedTitleSave = useCallback(() => {

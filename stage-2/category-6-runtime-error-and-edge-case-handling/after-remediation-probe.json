@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-03-12T02:05:41.808Z",
+  "baseUrl": "http://localhost:5173",
+  "apiUrl": "http://localhost:3000",
+  "sessionPolling": {
+    "frontendOriginPolls": 0,
+    "apiOriginPolls": 4,
+    "consoleErrors": []
+  },
+  "realtimeBanner": {
+    "visible": true,
+    "screenshot": "benchmarks/runtime-fix-realtime-banner.png",
+    "debugScreenshot": "benchmarks/runtime-fix-realtime-banner-debug.png",
+    "bodyText": null,
+    "console": []
+  },
+  "collaborationBanner": {
+    "visible": true,
+    "screenshot": "benchmarks/runtime-fix-collaboration-banner.png",
+    "debugScreenshot": "benchmarks/runtime-fix-collaboration-banner-debug.png",
+    "bodyText": null
+  },
+  "titleSaveRecovery": {
+    "errorBannerVisible": true,
+    "retrySucceeded": true,
+    "screenshot": "benchmarks/runtime-fix-title-save-banner.png",
+    "debugScreenshot": "benchmarks/runtime-fix-title-save-banner-debug.png",
+    "bodyText": null,
+    "requestUrls": [
+      "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b",
+      "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b/comments",
+      "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b/backlinks",
+      "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b/backlinks",
+      "PATCH http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b",
+      "PATCH http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b",
+      "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b",
+      "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b/backlinks",
+      "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b/backlinks"
+    ]
+  }
+}

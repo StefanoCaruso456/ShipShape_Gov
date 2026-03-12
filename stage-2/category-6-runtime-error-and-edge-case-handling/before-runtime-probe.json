@@ -1,0 +1,3922 @@
+{
+  "generatedAt": "2026-03-10T15:32:24.089Z",
+  "baseUrl": "http://localhost:5173",
+  "normalUsage": {
+    "name": "normalUsage",
+    "console": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:26.041Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:26.066Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:26.180Z"
+      },
+      {
+        "type": "log",
+        "text": "[Schema] Initialized schema version: 2",
+        "location": {
+          "url": "http://localhost:5173/src/lib/queryClient.ts",
+          "lineNumber": 10,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:26.187Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:26.323Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:26.323Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:26.324Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:26.331Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:27.166Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:27.169Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:27.212Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:27.319Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:27.319Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:27.319Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:27.319Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "ts": "2026-03-10T15:32:28.419Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "ts": "2026-03-10T15:32:28.423Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "ts": "2026-03-10T15:32:28.450Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "ts": "2026-03-10T15:32:28.514Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "ts": "2026-03-10T15:32:28.515Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "ts": "2026-03-10T15:32:28.515Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "ts": "2026-03-10T15:32:28.519Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "ts": "2026-03-10T15:32:28.579Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "ts": "2026-03-10T15:32:28.595Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+        "ts": "2026-03-10T15:32:28.597Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/issues",
+        "ts": "2026-03-10T15:32:31.304Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/issues",
+        "ts": "2026-03-10T15:32:31.312Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/issues",
+        "ts": "2026-03-10T15:32:31.368Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/issues",
+        "ts": "2026-03-10T15:32:31.573Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/issues",
+        "ts": "2026-03-10T15:32:31.573Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/issues",
+        "ts": "2026-03-10T15:32:31.573Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/issues",
+        "ts": "2026-03-10T15:32:31.573Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:32:32.650Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:32:32.662Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:32:32.689Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:32:32.758Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:32:32.758Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:32:32.760Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:32:32.763Z"
+      }
+    ],
+    "pageErrors": [],
+    "requestFailures": [
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:26.323Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:26.323Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:27.319Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:27.319Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:28.515Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:28.516Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:31.573Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:31.573Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:32.761Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:32.761Z"
+      }
+    ],
+    "dialogs": [],
+    "summary": {
+      "documentUrl": "http://localhost:5173/documents/21c1a46b-0bfa-4665-882e-1c9ea10eb4e1",
+      "consoleErrors": 10,
+      "consoleWarnings": 0,
+      "pageErrors": 0,
+      "requestFailures": 10
+    }
+  },
+  "networkDisconnectRecovery": {
+    "name": "networkDisconnectRecovery",
+    "console": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:34.085Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:34.126Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:34.301Z"
+      },
+      {
+        "type": "log",
+        "text": "[Schema] Initialized schema version: 2",
+        "location": {
+          "url": "http://localhost:5173/src/lib/queryClient.ts",
+          "lineNumber": 10,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:34.354Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:34.412Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:34.416Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:34.429Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:34.431Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:35.541Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:35.556Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:35.703Z"
+      },
+      {
+        "type": "log",
+        "text": "[Schema] Initialized schema version: 2",
+        "location": {
+          "url": "http://localhost:5173/src/lib/queryClient.ts",
+          "lineNumber": 10,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:35.755Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:35.808Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:35.808Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:35.811Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:35.812Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:36.778Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:36.786Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:36.825Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:36.923Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:36.923Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:36.952Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:36.960Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:36.973Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:36.984Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:36.985Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.022Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.032Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.071Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.171Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.174Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.210Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.219Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.235Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.246Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.249Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.274Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.277Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.322Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.325Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.327Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.329Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.331Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.339Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.344Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.345Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.346Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.348Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.350Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:38.352Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.942Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.943Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.944Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.945Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.946Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.947Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.947Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.948Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.949Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.949Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.950Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.952Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.953Z"
+      },
+      {
+        "type": "warning",
+        "text": "A user uses an unsupported color format {name: Dev User, color: hsl(142, 70%, 60%)}",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-63K37XDC.js?v=f59c785b",
+          "lineNumber": 1480,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:40.954Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.032Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.039Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.088Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.209Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.221Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.261Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.262Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.262Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.262Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.263Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.265Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.265Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.266Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.356Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.361Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.361Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.363Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+        "ts": "2026-03-10T15:32:45.373Z"
+      }
+    ],
+    "pageErrors": [],
+    "requestFailures": [
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:34.412Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:34.416Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:35.812Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:35.812Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:36.923Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:36.923Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:38.171Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:38.174Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:45.261Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:45.263Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:45.361Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:45.362Z"
+      }
+    ],
+    "dialogs": [],
+    "summary": {
+      "documentUrl": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+      "sawOfflineTextWhileDisconnected": false,
+      "syncedAfterReconnect": true,
+      "survivedRefresh": false,
+      "status": "Partial",
+      "consoleErrors": 12,
+      "pageErrors": 0,
+      "requestFailures": 12
+    }
+  },
+  "malformedInput": {
+    "name": "malformedInput",
+    "console": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:45.614Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:45.627Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:45.695Z"
+      },
+      {
+        "type": "log",
+        "text": "[Schema] Initialized schema version: 2",
+        "location": {
+          "url": "http://localhost:5173/src/lib/queryClient.ts",
+          "lineNumber": 10,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:45.748Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:45.785Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:45.799Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:45.799Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:32:45.802Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:46.776Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:46.781Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:46.821Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:46.904Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:46.904Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:46.904Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:46.905Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:46.965Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:46.977Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:46.978Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:47.998Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:48.009Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:48.011Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:48.035Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:48.044Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:48.044Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:48.523Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:48.536Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:48.540Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.040Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.045Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.078Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.159Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.159Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 59,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.164Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Received: connected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 65,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.166Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.169Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.180Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.181Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: false for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.423Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: disconnected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.423Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.555Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.587Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.688Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: false for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.755Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: disconnected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.755Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.871Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:49.921Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.021Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: false for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.072Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: disconnected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.072Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.188Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.222Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.255Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: false for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.338Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: disconnected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.338Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.455Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.472Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.488Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: false for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.572Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: disconnected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.572Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.688Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.722Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.838Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: false for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.871Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: disconnected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.871Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:50.988Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:51.022Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: true for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:51.055Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket sync: false for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 315,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:51.255Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: disconnected for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:51.255Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:51.371Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:51.389Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:51.655Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:51.722Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:52.155Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:52.188Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:53.022Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:53.038Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:54.640Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:54.655Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:57.193Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:57.205Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:59.740Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:32:59.756Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:33:02.274Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:33:02.289Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:33:04.790Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:4c8e4b27-e84a-4223-8a5e-1462f9dd3c52' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+        "ts": "2026-03-10T15:33:04.791Z"
+      }
+    ],
+    "pageErrors": [],
+    "requestFailures": [
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:45.799Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:45.802Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:46.905Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:46.905Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:49.165Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:32:49.165Z"
+      }
+    ],
+    "dialogs": [],
+    "summary": {
+      "documentUrl": "http://localhost:5173/documents/4c8e4b27-e84a-4223-8a5e-1462f9dd3c52",
+      "xssDialogCount": 0,
+      "titleRoundTrippedAsText": true,
+      "longTextPresent": true,
+      "consoleErrors": 15,
+      "pageErrors": 0,
+      "requestFailures": 6
+    }
+  },
+  "concurrentEdit": {
+    "name": "concurrentEdit",
+    "console": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:05.383Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:05.401Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:05.514Z"
+      },
+      {
+        "type": "log",
+        "text": "[Schema] Initialized schema version: 2",
+        "location": {
+          "url": "http://localhost:5173/src/lib/queryClient.ts",
+          "lineNumber": 10,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:05.569Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:05.619Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:05.619Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/events' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 56,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:05.622Z"
+      },
+      {
+        "type": "error",
+        "text": "[RealtimeEvents] Error: Event",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 88,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:05.622Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Disconnected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 75,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:05.622Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:06.827Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:06.839Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:06.884Z"
+      },
+      {
+        "type": "log",
+        "text": "[Schema] Initialized schema version: 2",
+        "location": {
+          "url": "http://localhost:5173/src/lib/queryClient.ts",
+          "lineNumber": 10,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:06.890Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:06.912Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:06.936Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/events' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 56,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:06.944Z"
+      },
+      {
+        "type": "error",
+        "text": "[RealtimeEvents] Error: Event",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 88,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:06.944Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Disconnected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 75,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:06.944Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:07.931Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:07.934Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:07.956Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.036Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.042Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/events' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 56,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.042Z"
+      },
+      {
+        "type": "error",
+        "text": "[RealtimeEvents] Error: Event",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 88,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.042Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Disconnected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 75,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.042Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.091Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.104Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.304Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.305Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.707Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:08.711Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.118Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.123Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.149Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.255Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/events' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 56,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.255Z"
+      },
+      {
+        "type": "error",
+        "text": "[RealtimeEvents] Error: Event",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 88,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.256Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Disconnected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 75,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.256Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.256Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.306Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.320Z"
+      },
+      {
+        "type": "warning",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: WebSocket is closed before the connection is established.",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 211,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.321Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.327Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.331Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.342Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.355Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.361Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.363Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.370Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.563Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.567Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.571Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.573Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.865Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.866Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.876Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:09.876Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:10.078Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:10.078Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:10.082Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:10.082Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:10.485Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:10.485Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:10.491Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:10.491Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Reconnecting...",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 82,
+          "columnNumber": 18
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.043Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/events' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 56,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.048Z"
+      },
+      {
+        "type": "error",
+        "text": "[RealtimeEvents] Error: Event",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 88,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.049Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Disconnected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 75,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.049Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.292Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] WebSocket status: connecting for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 273,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.293Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.298Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.298Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.338Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.344Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.387Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.454Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.462Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.497Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/events' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 56,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.502Z"
+      },
+      {
+        "type": "error",
+        "text": "[RealtimeEvents] Error: Event",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 88,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.502Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Disconnected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 75,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.502Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.503Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.519Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.521Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.533Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.613Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.613Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/events' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 56,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.618Z"
+      },
+      {
+        "type": "error",
+        "text": "[RealtimeEvents] Error: Event",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 88,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.619Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Disconnected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 75,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.619Z"
+      },
+      {
+        "type": "log",
+        "text": "[Editor] IndexedDB synced for wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "location": {
+          "url": "http://localhost:5173/src/components/Editor.tsx",
+          "lineNumber": 223,
+          "columnNumber": 16
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.619Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/collaboration/wiki:5ca9c6d9-034f-43e0-8e63-889c641e6cdb' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/y-websocket.js?v=63d5012b",
+          "lineNumber": 241,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+        "ts": "2026-03-10T15:33:11.630Z"
+      }
+    ],
+    "pageErrors": [],
+    "requestFailures": [
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:05.622Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:05.622Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:06.936Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:06.944Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:08.037Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:08.042Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:09.255Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:09.256Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:11.501Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:11.520Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:11.617Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:11.617Z"
+      }
+    ],
+    "dialogs": [],
+    "summary": {
+      "documentUrl": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+      "titleA": "Concurrent Title A 1773156789298",
+      "titleB": "Concurrent Title B 1773156789298",
+      "finalTitle1": "Concurrent Title B 1773156789298",
+      "finalTitle2": "Concurrent Title B 1773156789298",
+      "bothValuesPreserved": false,
+      "finalConsensus": "Concurrent Title B 1773156789298",
+      "conflictUiVisible": false,
+      "consoleErrors": 44,
+      "pageErrors": 0
+    }
+  },
+  "slow3G": {
+    "name": "slow3G",
+    "console": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:11.868Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:11.877Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:11.968Z"
+      },
+      {
+        "type": "log",
+        "text": "[Schema] Initialized schema version: 2",
+        "location": {
+          "url": "http://localhost:5173/src/lib/queryClient.ts",
+          "lineNumber": 10,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:12.021Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:12.042Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:12.070Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/events' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 56,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:12.073Z"
+      },
+      {
+        "type": "error",
+        "text": "[RealtimeEvents] Error: Event",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 88,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:12.073Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Disconnected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 75,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/my-week",
+        "ts": "2026-03-10T15:33:12.073Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connecting...",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 788,
+          "columnNumber": 8
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:33:14.271Z"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected.",
+        "location": {
+          "url": "http://localhost:5173/@vite/client",
+          "lineNumber": 911,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:33:14.740Z"
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+        "location": {
+          "url": "http://localhost:5173/node_modules/.vite/deps/chunk-OACJB3WA.js?v=f59c785b",
+          "lineNumber": 21608,
+          "columnNumber": 24
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:33:25.505Z"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://localhost:3000/events' failed: Error during WebSocket handshake: Unexpected response code: 429",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 56,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:33:26.002Z"
+      },
+      {
+        "type": "error",
+        "text": "[RealtimeEvents] Error: Event",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 88,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:33:26.002Z"
+      },
+      {
+        "type": "log",
+        "text": "[RealtimeEvents] Disconnected",
+        "location": {
+          "url": "http://localhost:5173/src/hooks/useRealtimeEvents.tsx",
+          "lineNumber": 75,
+          "columnNumber": 14
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:33:26.002Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:33:26.399Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "location": {
+          "url": "http://localhost:5173/api/auth/session",
+          "lineNumber": 0,
+          "columnNumber": 0
+        },
+        "url": "http://localhost:5173/programs",
+        "ts": "2026-03-10T15:33:26.808Z"
+      }
+    ],
+    "pageErrors": [],
+    "requestFailures": [
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:12.070Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:12.073Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:26.399Z"
+      },
+      {
+        "method": "GET",
+        "url": "http://localhost:5173/api/auth/session",
+        "errorText": "net::ERR_ABORTED",
+        "ts": "2026-03-10T15:33:26.808Z"
+      }
+    ],
+    "dialogs": [],
+    "summary": {
+      "pendingApiAtSample": 0,
+      "headingVisible": false,
+      "loadingIndicators": {
+        "progressCount": 0,
+        "textHits": []
+      },
+      "missingLoadingStateObserved": false,
+      "consoleErrors": 8,
+      "pageErrors": 0,
+      "requestFailures": 4
+    },
+    "pendingTimeline": [
+      {
+        "event": "start",
+        "url": "http://localhost:3000/api/auth/me",
+        "pendingApi": 1,
+        "ts": 1773156805533
+      },
+      {
+        "event": "end",
+        "url": "http://localhost:3000/api/auth/me",
+        "pendingApi": 0,
+        "ts": 1773156805962
+      },
+      {
+        "event": "start",
+        "url": "http://localhost:5173/api/auth/session",
+        "pendingApi": 1,
+        "ts": 1773156805989
+      },
+      {
+        "event": "start",
+        "url": "http://localhost:3000/api/documents?type=wiki",
+        "pendingApi": 2,
+        "ts": 1773156805989
+      },
+      {
+        "event": "start",
+        "url": "http://localhost:5173/api/auth/session",
+        "pendingApi": 3,
+        "ts": 1773156805989
+      },
+      {
+        "event": "end",
+        "url": "http://localhost:5173/api/auth/session",
+        "pendingApi": 2,
+        "ts": 1773156806399
+      },
+      {
+        "event": "end",
+        "url": "http://localhost:3000/api/documents?type=wiki",
+        "pendingApi": 1,
+        "ts": 1773156806430
+      },
+      {
+        "event": "end",
+        "url": "http://localhost:5173/api/auth/session",
+        "pendingApi": 0,
+        "ts": 1773156806808
+      }
+    ]
+  }
+}

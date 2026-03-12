@@ -1,0 +1,11 @@
+# Baseline (recorded before fixes)
+COREPACK_HOME=/tmp/corepack corepack pnpm exec node benchmarks/runtime-error-probe.mjs
+
+# Targeted after-proof for user-facing recovery states
+COREPACK_HOME=/tmp/corepack corepack pnpm exec node benchmarks/runtime-error-remediation-probe.mjs
+
+# Full after snapshot
+COREPACK_HOME=/tmp/corepack corepack pnpm exec node benchmarks/runtime-error-probe.mjs
+
+# Local stack used for identical conditions
+docker compose -f docker-compose.local.yml up -d --build api web
