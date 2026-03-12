@@ -235,6 +235,9 @@ export function UnifiedDocumentPage() {
 
   // Update mutation with optimistic updates
   const updateMutation = useMutation({
+    // Document updates have UI-specific recovery paths (title retry banner, field-level rollback),
+    // so generic background retries create silent delays and duplicate failed writes.
+    retry: false,
     mutationFn: async ({ documentId, updates }: { documentId: string; updates: Partial<DocumentResponse> }) => {
       const response = await apiPatch(`/api/documents/${documentId}`, updates);
       if (!response.ok) {
@@ -248,14 +251,16 @@ export function UnifiedDocumentPage() {
 
       // Snapshot the previous value
       const previousDocument = queryClient.getQueryData<Record<string, unknown>>(['document', documentId]);
+      const isTitleOnlyUpdate = Object.keys(updates).length === 1 && Object.hasOwn(updates, 'title');
 
-      // Optimistically update the document cache
-      if (previousDocument) {
+      // Avoid optimistic title writes. The editor already holds local title state,
+      // and pretending the server accepted the change can hide save failures.
+      if (previousDocument && !isTitleOnlyUpdate) {
         queryClient.setQueryData(['document', documentId], { ...previousDocument, ...updates });
       }
 
       // Return context with the previous value for rollback
-      return { previousDocument, documentId };
+      return { previousDocument: isTitleOnlyUpdate ? null : previousDocument, documentId };
     },
     onError: (_err, _variables, context) => {
       // Rollback to the previous value on error

@@ -1,0 +1,119 @@
+{
+  "before": {
+    "consoleErrorsNormalUsage": 10,
+    "requestFailuresNormalUsage": 10,
+    "networkDisconnectRecovery": {
+      "documentUrl": "http://localhost:5173/documents/275b50b7-eafa-4e2c-a01e-6aa22abe2dfd",
+      "sawOfflineTextWhileDisconnected": false,
+      "syncedAfterReconnect": true,
+      "survivedRefresh": false,
+      "status": "Partial",
+      "consoleErrors": 12,
+      "pageErrors": 0,
+      "requestFailures": 12
+    },
+    "concurrentEdit": {
+      "documentUrl": "http://localhost:5173/documents/5ca9c6d9-034f-43e0-8e63-889c641e6cdb",
+      "titleA": "Concurrent Title A 1773156789298",
+      "titleB": "Concurrent Title B 1773156789298",
+      "finalTitle1": "Concurrent Title B 1773156789298",
+      "finalTitle2": "Concurrent Title B 1773156789298",
+      "bothValuesPreserved": false,
+      "finalConsensus": "Concurrent Title B 1773156789298",
+      "conflictUiVisible": false,
+      "consoleErrors": 44,
+      "pageErrors": 0
+    },
+    "slow3G": {
+      "pendingApiAtSample": 0,
+      "headingVisible": false,
+      "loadingIndicators": {
+        "progressCount": 0,
+        "textHits": []
+      },
+      "missingLoadingStateObserved": false,
+      "consoleErrors": 8,
+      "pageErrors": 0,
+      "requestFailures": 4
+    }
+  },
+  "after": {
+    "consoleErrorsNormalUsage": 0,
+    "requestFailuresNormalUsage": 0,
+    "networkDisconnectRecovery": {
+      "documentUrl": "http://localhost:5173/documents/688ef9b7-d15a-4262-9200-8c2528b62549",
+      "sawOfflineTextWhileDisconnected": false,
+      "syncedAfterReconnect": true,
+      "survivedRefresh": false,
+      "status": "Partial",
+      "consoleErrors": 0,
+      "pageErrors": 0,
+      "requestFailures": 0
+    },
+    "concurrentEdit": {
+      "documentUrl": "http://localhost:5173/documents/7dfceb88-2e00-40e0-a1ab-dd0d8cffca3e",
+      "titleA": "Concurrent Title A 1773281217075",
+      "titleB": "Concurrent Title B 1773281217075",
+      "finalTitle1": "Concurrent Title A 1773281217075",
+      "finalTitle2": "Concurrent Title B 1773281217075",
+      "bothValuesPreserved": true,
+      "finalConsensus": "diverged",
+      "conflictUiVisible": false,
+      "consoleErrors": 17,
+      "pageErrors": 0
+    },
+    "slow3G": {
+      "pendingApiAtSample": 0,
+      "headingVisible": false,
+      "loadingIndicators": {
+        "progressCount": 0,
+        "textHits": []
+      },
+      "missingLoadingStateObserved": false,
+      "consoleErrors": 0,
+      "pageErrors": 0,
+      "requestFailures": 0
+    },
+    "remediation": {
+      "generatedAt": "2026-03-12T02:05:41.808Z",
+      "baseUrl": "http://localhost:5173",
+      "apiUrl": "http://localhost:3000",
+      "sessionPolling": {
+        "frontendOriginPolls": 0,
+        "apiOriginPolls": 4,
+        "consoleErrors": []
+      },
+      "realtimeBanner": {
+        "visible": true,
+        "screenshot": "benchmarks/runtime-fix-realtime-banner.png",
+        "debugScreenshot": "benchmarks/runtime-fix-realtime-banner-debug.png",
+        "bodyText": null,
+        "console": []
+      },
+      "collaborationBanner": {
+        "visible": true,
+        "screenshot": "benchmarks/runtime-fix-collaboration-banner.png",
+        "debugScreenshot": "benchmarks/runtime-fix-collaboration-banner-debug.png",
+        "bodyText": null
+      },
+      "titleSaveRecovery": {
+        "errorBannerVisible": true,
+        "retrySucceeded": true,
+        "screenshot": "benchmarks/runtime-fix-title-save-banner.png",
+        "debugScreenshot": "benchmarks/runtime-fix-title-save-banner-debug.png",
+        "bodyText": null,
+        "requestUrls": [
+          "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b",
+          "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b/comments",
+          "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b/backlinks",
+          "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b/backlinks",
+          "PATCH http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b",
+          "PATCH http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b",
+          "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b",
+          "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b/backlinks",
+          "GET http://localhost:3000/api/documents/e018d6e2-9f18-4cf2-9fdb-c378d1ee691b/backlinks"
+        ]
+      }
+    }
+  }
+}

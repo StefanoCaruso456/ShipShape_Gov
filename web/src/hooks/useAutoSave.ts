@@ -15,7 +15,7 @@ export function useAutoSave({
   throttleMs = 500,
   maxRetries = 3,
 }: UseAutoSaveOptions) {
-  const lastSaveTimeRef = useRef(0);
+  const lastSaveTimeRef = useRef(Date.now());
   const pendingValueRef = useRef<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveSequenceRef = useRef(0);
@@ -46,13 +46,26 @@ export function useAutoSave({
         await save(pending, saveSequenceRef.current);
       }
     } catch (err) {
+      const newerPendingValue = pendingValueRef.current;
+      if (newerPendingValue && newerPendingValue !== value) {
+        saveSequenceRef.current++;
+        pendingValueRef.current = null;
+        await save(newerPendingValue, saveSequenceRef.current);
+        return;
+      }
+
       // Silent retry
       if (retryCount < maxRetries) {
         await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
         await save(value, sequence, retryCount + 1);
       } else {
+        const failedValue = pendingValueRef.current && pendingValueRef.current !== value
+          ? pendingValueRef.current
+          : value;
         console.error('Auto-save failed after retries:', err);
-        onError?.(value, err);
+        // Preserve the latest unsaved value so recovery UI can retry the exact user input.
+        pendingValueRef.current = failedValue;
+        onError?.(failedValue, err);
       }
     } finally {
       isSavingRef.current = false;
@@ -83,6 +96,7 @@ export function useAutoSave({
     // Otherwise schedule a trailing save for the latest value in the throttle window
     timeoutRef.current = setTimeout(() => {
       saveSequenceRef.current++;
+      pendingValueRef.current = null;
       save(value, saveSequenceRef.current);
     }, throttleMs);
   }, [save, throttleMs]);
