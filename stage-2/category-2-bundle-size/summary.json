@@ -1,0 +1,69 @@
+{
+  "targetMet": true,
+  "targetStrategy": "20% reduction in initial page-load bundle through code splitting",
+  "before": {
+    "totalProductionBundleKb": 2255.29,
+    "largestChunk": {
+      "name": "index-BMkImw2f.js",
+      "sizeKb": 2078.55
+    },
+    "chunkCount": 261,
+    "defaultStartupRoute": {
+      "route": "/my-week",
+      "sizeKb": 2078.55
+    },
+    "loginStartupRoute": {
+      "route": "/login",
+      "sizeKb": 2078.55
+    },
+    "topInitialDependencies": [
+      { "name": "emoji-picker-react", "sizeKb": 266.69 },
+      { "name": "highlight.js", "sizeKb": 170.57 },
+      { "name": "react-dom", "sizeKb": 132.16 }
+    ],
+    "unusedDependencies": [
+      "@tanstack/query-sync-storage-persister",
+      "@uswds/uswds"
+    ]
+  },
+  "after": {
+    "totalProductionBundleKb": 2181.68,
+    "largestChunk": {
+      "name": "useAutoSave-Cjbr-DYA.js",
+      "sizeKb": 737.17
+    },
+    "entryChunk": {
+      "name": "index-k5rnZOZq.js",
+      "sizeKb": 293.60,
+      "improvementPct": 85.9
+    },
+    "chunkCount": 306,
+    "defaultStartupRoute": {
+      "route": "/my-week",
+      "sizeKb": 485.14,
+      "improvementPct": 76.7
+    },
+    "loginStartupRoute": {
+      "route": "/login",
+      "sizeKb": 345.62,
+      "improvementPct": 83.4
+    },
+    "topInitialDependencies": [
+      { "name": "react-dom", "sizeKb": 134.79 },
+      { "name": "react-router", "sizeKb": 81.45 },
+      { "name": "@tanstack/query-core", "sizeKb": 79.22 }
+    ],
+    "unusedDependencies": [
+      "@tanstack/query-sync-storage-persister"
+    ]
+  },
+  "verification": {
+    "webBuild": "passed",
+    "webVitest": {
+      "passedFiles": 20,
+      "failedFiles": 0,
+      "passedTests": 158,
+      "failedTests": 0
+    }
+  }
+}

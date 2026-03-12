@@ -1,0 +1,81 @@
+# Category 2 before benchmark (baseline main branch on the same laptop)
+
+REPO_ROOT=$(pwd)
+BEFORE_WORKTREE=/tmp/shipshape-cat2-before
+
+git -C "$REPO_ROOT" worktree add --detach "$BEFORE_WORKTREE" origin/main
+
+cd "$BEFORE_WORKTREE"
+pnpm --offline --ignore-scripts --store-dir /Users/stefanocaruso/Desktop/Shipshape/.pnpm-store install
+pnpm build:shared
+cd web
+pnpm build > "$REPO_ROOT/stage-2/category-2-bundle-size/before-build-output.txt" 2>&1
+
+# Reuse the existing audited baseline treemap/report so the artifact set is self-contained.
+cp "$REPO_ROOT/benchmarks/bundle-treemap-baseline.html" "$REPO_ROOT/stage-2/category-2-bundle-size/before-treemap.html"
+cp "$REPO_ROOT/audit-results/bundle-analysis.md" "$REPO_ROOT/stage-2/category-2-bundle-size/before-analysis.md"
+
+# Category 2 after benchmark (optimized branch)
+cd "$REPO_ROOT/web"
+pnpm build > "$REPO_ROOT/stage-2/category-2-bundle-size/after-build-output.txt" 2>&1
+BUNDLE_REPORT_FILE=../stage-2/category-2-bundle-size/after-treemap.html BUNDLE_REPORT_TEMPLATE=treemap pnpm build
+BUNDLE_REPORT_FILE=../stage-2/category-2-bundle-size/after-stats.json BUNDLE_REPORT_TEMPLATE=raw-data pnpm build
+
+# Filesystem-based bundle size measurements
+python3 - <<'PY'
+from pathlib import Path
+
+for label, folder in [
+    ('before', Path('/tmp/shipshape-cat2-before/web/dist/assets')),
+    ('after', Path('dist/assets')),
+]:
+    assets = sorted(folder.glob('*.js'))
+    total = sum(p.stat().st_size for p in assets)
+    largest = max(assets, key=lambda p: p.stat().st_size)
+    print(label, {
+        'total_kb_decimal': round(total / 1000, 2),
+        'chunk_count': len(assets),
+        'largest_chunk': largest.name,
+        'largest_chunk_kb_decimal': round(largest.stat().st_size / 1000, 2),
+    })
+PY
+
+# Initial startup-path measurements from the optimized build
+python3 - <<'PY'
+import re
+from pathlib import Path
+
+assets = Path('dist/assets')
+sizes = {p.name: p.stat().st_size for p in assets.glob('*.js')}
+imports = {}
+pattern = re.compile(r'''from["']\./([^"']+\.js)["']''')
+
+for asset in assets.glob('*.js'):
+    imports[asset.name] = set(pattern.findall(asset.read_text(errors='ignore')))
+
+def closure(starts):
+    seen = set()
+    stack = list(starts)
+    while stack:
+        name = stack.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+        stack.extend(imports.get(name, ()))
+    return seen
+
+for label, starts in {
+    'my_week_initial': ['index-k5rnZOZq.js', 'App--Qu75XNX.js', 'MyWeekPage-CL8r3fJo.js'],
+    'login_initial': ['index-k5rnZOZq.js', 'Login-B0rUCv0u.js'],
+}.items():
+    files = closure(starts)
+    total = sum(sizes[name] for name in files)
+    print(label, {
+        'files': sorted(files),
+        'total_kb_decimal': round(total / 1000, 2),
+    })
+PY
+
+# Verification
+cd "$REPO_ROOT"
+pnpm --filter @ship/web test
