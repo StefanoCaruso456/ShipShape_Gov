@@ -1,0 +1,61 @@
+# Category 3 benchmark commands
+
+# 1. Prepare the benchmark dataset to the required scale
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+node benchmarks/api-performance-prepare.mjs > stage-2/category-3-api-response-time/dataset.json
+
+# 2. Build an untouched baseline checkout from origin/main
+git worktree add /tmp/ship-category3-baseline origin/main
+cp api/.env.local /tmp/ship-category3-baseline/api/.env.local
+cd /tmp/ship-category3-baseline
+pnpm install --offline --store-dir /Users/stefanocaruso/Desktop/Shipshape/.pnpm-store
+pnpm build:shared
+pnpm --filter @ship/api build
+
+# 3. Start the baseline API in one terminal
+cd /tmp/ship-category3-baseline/api
+node dist/index.js
+
+# 4. In a second terminal, create a stable cookie header and run the before benchmark
+cd /Users/stefanocaruso/Desktop/Shipshape
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+SHIP_COOKIE_PATH=/tmp/category3-before-stable.cookieheader node benchmarks/api-performance-login.mjs
+SHIP_COOKIE_PATH=/tmp/category3-before-stable.cookieheader \
+SHIP_SPRINT_ID=63b2572b-181a-45f0-a788-dd6b9041297b \
+SHIP_DOCUMENT_ID=7b5fb9a6-f10a-46eb-83d3-4a507e7fb5f0 \
+SHIP_REQUEST_COUNT=60 \
+SHIP_WARMUP_REQUESTS=5 \
+SHIP_OUTPUT_PATH=stage-2/category-3-api-response-time/before-benchmark.json \
+node benchmarks/api-performance-benchmark.mjs
+
+# 5. Stop the baseline server, return to the working branch, and apply the after-state DB index migration
+cd /Users/stefanocaruso/Desktop/Shipshape
+export PATH="$HOME/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"
+export DATABASE_URL="$(awk -F= '/^DATABASE_URL=/{print $2}' api/.env.local)"
+psql "$DATABASE_URL" -f api/src/db/migrations/039_api_response_time_indexes.sql
+
+# 6. Build and start the optimized API in one terminal
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+pnpm --filter @ship/api build
+cd api
+node dist/index.js
+
+# 7. In a second terminal, create a fresh cookie header and run the after benchmark
+cd /Users/stefanocaruso/Desktop/Shipshape
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+SHIP_COOKIE_PATH=/tmp/category3-after-stable.cookieheader node benchmarks/api-performance-login.mjs
+SHIP_COOKIE_PATH=/tmp/category3-after-stable.cookieheader \
+SHIP_SPRINT_ID=63b2572b-181a-45f0-a788-dd6b9041297b \
+SHIP_DOCUMENT_ID=7b5fb9a6-f10a-46eb-83d3-4a507e7fb5f0 \
+SHIP_REQUEST_COUNT=60 \
+SHIP_WARMUP_REQUESTS=5 \
+SHIP_OUTPUT_PATH=stage-2/category-3-api-response-time/after-benchmark.json \
+node benchmarks/api-performance-benchmark.mjs
+
+# 8. Save the verification test artifact
+export DATABASE_URL="$(awk -F= '/^DATABASE_URL=/{print $2}' api/.env.local)"
+pnpm --filter @ship/api exec vitest run --reporter=json --outputFile ../stage-2/category-3-api-response-time/api-vitest-after.json
