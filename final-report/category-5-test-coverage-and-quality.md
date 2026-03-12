@@ -163,6 +163,14 @@ Tradeoffs:
 
 - Some fixes updated test assumptions rather than production code because the tests, not the runtime behavior, were out of date.
 
+## Concise Critical-Path Summary
+
+| Critical path | What was wrong before | What changed | Why it is better |
+| --- | --- | --- | --- |
+| CAIA/PIV login start | No test proved that clicking the PIV sign-in button actually starts browser auth. A regression could leave PIV users stuck on the login page. | Added `web/src/pages/Login.test.tsx` and moved the redirect call behind `redirectTo()` in `web/src/lib/browser-navigation.ts` so the navigation boundary can be asserted. | The app now has direct regression coverage for the browser login start path. |
+| Document delete in normal docs UI | No test covered the real delete button flow in the docs tree. The UI could stop wiring delete correctly without being caught. | Added `web/src/pages/Documents.test.tsx` to click delete, verify the mutation, verify the toast, and verify the document disappears. | The normal document delete path is now covered at the page boundary with user-visible feedback checks. |
+| Sprint board drag/drop move | No test covered the mutation logic behind dragging an issue to a new board column. The board could render normally while moves stopped persisting. | Added `web/src/components/KanbanBoard.test.tsx` to simulate drop events and verify `onUpdateIssue` receives the correct target state. | The board’s core work-movement logic now has direct regression coverage. |
+
 ## Verification
 
 ### Full web suite
