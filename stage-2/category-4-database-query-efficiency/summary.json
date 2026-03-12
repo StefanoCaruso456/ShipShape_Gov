@@ -1,0 +1,32 @@
+{
+  "targetMet": true,
+  "targetStrategy": "20% query-count reduction on one user flow",
+  "primaryFlow": {
+    "name": "Load sprint board",
+    "beforeQueries": 32,
+    "afterQueries": 25,
+    "queryReduction": 7,
+    "queryImprovementPct": 21.9
+  },
+  "flows": {
+    "Load main page": { "beforeQueries": 14, "afterQueries": 12, "queryImprovementPct": 14.3 },
+    "View a document": { "beforeQueries": 16, "afterQueries": 12, "queryImprovementPct": 25.0 },
+    "List issues": { "beforeQueries": 13, "afterQueries": 10, "queryImprovementPct": 23.1 },
+    "Load sprint board": { "beforeQueries": 32, "afterQueries": 25, "queryImprovementPct": 21.9 },
+    "Search content": { "beforeQueries": 4, "afterQueries": 3, "queryImprovementPct": 25.0 }
+  },
+  "projectsExplain": {
+    "beforeExecutionMs": 1.214,
+    "afterExecutionMs": 1.021,
+    "improvementPct": 15.9
+  },
+  "verification": {
+    "apiTypecheck": "passed",
+    "apiVitest": {
+      "passedTests": 451,
+      "failedTests": 0,
+      "passedSuites": 204,
+      "failedSuites": 0
+    }
+  }
+}

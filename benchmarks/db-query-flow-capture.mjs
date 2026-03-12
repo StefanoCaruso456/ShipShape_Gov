@@ -87,6 +87,7 @@ const baseUrl = process.env.SHIP_BASE_URL || 'http://localhost:3000';
 const documentId = process.env.SHIP_DOCUMENT_ID;
 const sprintId = process.env.SHIP_SPRINT_ID;
 const programId = process.env.SHIP_PROGRAM_ID;
+const outputPath = process.env.DB_QUERY_FLOW_OUTPUT_PATH || 'benchmarks/db-query-flow-baseline.json';
 
 if (!documentId || !sprintId || !programId) {
   throw new Error('SHIP_DOCUMENT_ID, SHIP_SPRINT_ID, and SHIP_PROGRAM_ID are required');
@@ -178,7 +179,7 @@ for (const flow of flows) {
 }
 
 fs.writeFileSync(
-  'benchmarks/db-query-flow-baseline.json',
+  outputPath,
   JSON.stringify(results, null, 2)
 );
 

@@ -1,0 +1,43 @@
+# Category 4 before benchmark (pre-change stack)
+# Temporary worktree created from the pre-Category-4 commit:
+#   git -C /Users/stefanocaruso/Desktop/Gauntlet/ShipShape worktree add /tmp/shipshape-cat4-before HEAD
+
+docker compose -f /tmp/shipshape-cat4-before/docker-compose.local.yml up -d --build postgres api web
+cd /Users/stefanocaruso/Desktop/Gauntlet/ShipShape
+DATABASE_URL="postgres://ship:ship_dev_password@127.0.0.1:5433/ship_dev" COREPACK_HOME=/tmp/corepack corepack pnpm --filter @ship/api db:migrate
+DATABASE_URL="postgres://ship:ship_dev_password@127.0.0.1:5433/ship_dev" COREPACK_HOME=/tmp/corepack corepack pnpm --filter @ship/api db:seed
+
+docker compose -f /tmp/shipshape-cat4-before/docker-compose.local.yml exec -T postgres psql -U ship -d ship_dev -c "ALTER SYSTEM SET log_statement = 'none';" -c "ALTER SYSTEM SET log_duration = 'on';" -c "ALTER SYSTEM SET log_min_duration_statement = 0;" -c "SELECT pg_reload_conf();"
+docker compose -f /tmp/shipshape-cat4-before/docker-compose.local.yml restart postgres
+
+cd /tmp/shipshape-cat4-before
+curl -sS -c /tmp/ship_dbq_before.cookies http://localhost:3000/api/csrf-token > /tmp/ship_dbq_before_csrf.json
+TOKEN=$(node -p 'JSON.parse(require("fs").readFileSync("/tmp/ship_dbq_before_csrf.json","utf8")).token')
+curl -sS -b /tmp/ship_dbq_before.cookies -c /tmp/ship_dbq_before.cookies -H "x-csrf-token: $TOKEN" -H 'content-type: application/json' -d '{"email":"dev@ship.local","password":"admin123"}' http://localhost:3000/api/auth/login > /tmp/ship_dbq_before_login.json
+SHIP_DOCUMENT_ID=eba7d8a3-b23f-483c-9184-c3a0156f019b SHIP_SPRINT_ID=1614c4b4-893c-444c-ab2e-dd1c03b96f96 SHIP_PROGRAM_ID=8d34ac38-c101-458c-9c92-fbd3a4c40a94 SHIP_COOKIE_PATH=/tmp/ship_dbq_before.cookies DB_QUERY_FLOW_OUTPUT_PATH=/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/stage-2/category-4-database-query-efficiency/before-flow.json COREPACK_HOME=/tmp/corepack corepack pnpm exec node /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/benchmarks/db-query-flow-capture.mjs
+
+cd /Users/stefanocaruso/Desktop/Gauntlet/ShipShape
+WORKSPACE_ID=$(node -p 'JSON.parse(require("fs").readFileSync("/tmp/ship_dbq_before_login.json","utf8")).data.currentWorkspace.id')
+sed "s/07497cfa-486e-49f9-ad21-73eb973a541a/${WORKSPACE_ID}/g" benchmarks/explain-projects-baseline.sql | docker compose -f /tmp/shipshape-cat4-before/docker-compose.local.yml exec -T postgres psql -U ship -d ship_dev > stage-2/category-4-database-query-efficiency/explain-projects-before.txt
+
+# Category 4 after benchmark (optimized code on the same database volume)
+docker compose -f /tmp/shipshape-cat4-before/docker-compose.local.yml down
+docker compose -p shipshape-cat4-before -f /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docker-compose.local.yml up -d --build postgres api web
+cd /Users/stefanocaruso/Desktop/Gauntlet/ShipShape
+DATABASE_URL="postgres://ship:ship_dev_password@127.0.0.1:5433/ship_dev" COREPACK_HOME=/tmp/corepack corepack pnpm --filter @ship/api db:migrate
+DATABASE_URL="postgres://ship:ship_dev_password@127.0.0.1:5433/ship_dev" COREPACK_HOME=/tmp/corepack corepack pnpm --filter @ship/api db:seed
+
+docker compose -p shipshape-cat4-before -f /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docker-compose.local.yml exec -T postgres psql -U ship -d ship_dev -At -c "SHOW log_statement; SHOW log_duration; SHOW log_min_duration_statement;"
+
+cd /tmp/shipshape-cat4-before
+curl -sS -c /tmp/ship_dbq_after.cookies http://localhost:3000/api/csrf-token > /tmp/ship_dbq_after_csrf.json
+TOKEN=$(node -p 'JSON.parse(require("fs").readFileSync("/tmp/ship_dbq_after_csrf.json","utf8")).token')
+curl -sS -b /tmp/ship_dbq_after.cookies -c /tmp/ship_dbq_after.cookies -H "x-csrf-token: $TOKEN" -H 'content-type: application/json' -d '{"email":"dev@ship.local","password":"admin123"}' http://localhost:3000/api/auth/login > /tmp/ship_dbq_after_login.json
+SHIP_DOCUMENT_ID=eba7d8a3-b23f-483c-9184-c3a0156f019b SHIP_SPRINT_ID=1614c4b4-893c-444c-ab2e-dd1c03b96f96 SHIP_PROGRAM_ID=8d34ac38-c101-458c-9c92-fbd3a4c40a94 SHIP_COOKIE_PATH=/tmp/ship_dbq_after.cookies DB_QUERY_FLOW_OUTPUT_PATH=/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/stage-2/category-4-database-query-efficiency/after-flow.json COREPACK_HOME=/tmp/corepack corepack pnpm exec node /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/benchmarks/db-query-flow-capture.mjs
+
+docker compose -p shipshape-cat4-before -f /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docker-compose.local.yml exec -T postgres psql -U ship -d ship_dev < /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/benchmarks/explain-projects-optimized.sql > /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/stage-2/category-4-database-query-efficiency/explain-projects-after.txt
+
+# Verification
+cd /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api
+../node_modules/.bin/tsc --noEmit
+DATABASE_URL='postgres://ship:ship_dev_password@127.0.0.1:5433/ship_dev' ../node_modules/.bin/vitest run --reporter=json --outputFile ../stage-2/category-4-database-query-efficiency/api-vitest-after.json

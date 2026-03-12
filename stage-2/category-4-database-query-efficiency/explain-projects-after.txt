@@ -1,0 +1,95 @@
+                                                                                                  QUERY PLAN                                                                                                   
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=131.20..131.23 rows=15 width=260) (actual time=0.694..0.699 rows=15 loops=1)
+   Sort Key: (((COALESCE(((vp.properties ->> 'impact'::text))::integer, 3) * COALESCE(((vp.properties ->> 'confidence'::text))::integer, 3)) * COALESCE(((vp.properties ->> 'ease'::text))::integer, 3))) DESC
+   Sort Method: quicksort  Memory: 33kB
+   Buffers: shared hit=67 read=1
+   CTE visible_projects
+     ->  Bitmap Heap Scan on documents d  (cost=4.26..26.49 rows=15 width=302) (actual time=0.013..0.019 rows=15 loops=1)
+           Recheck Cond: (document_type = 'project'::document_type)
+           Filter: ((archived_at IS NULL) AND (workspace_id = '497ca5be-e21b-46b0-ab49-937dcb6b3e67'::uuid))
+           Heap Blocks: exact=2
+           Buffers: shared hit=3
+           ->  Bitmap Index Scan on idx_documents_document_type  (cost=0.00..4.26 rows=15 width=0) (actual time=0.008..0.008 rows=15 loops=1)
+                 Index Cond: (document_type = 'project'::document_type)
+                 Buffers: shared hit=1
+   ->  Hash Left Join  (cost=69.80..104.42 rows=15 width=260) (actual time=0.626..0.672 rows=15 loops=1)
+         Hash Cond: (vp.id = prc.project_id)
+         Buffers: shared hit=64 read=1
+         ->  Hash Right Join  (cost=28.26..62.19 rows=15 width=204) (actual time=0.387..0.423 rows=15 loops=1)
+               Hash Cond: ((sprint.workspace_id = vp.workspace_id) AND (((sprint.properties ->> 'project_id'::text)) = (vp.id)::text))
+               Buffers: shared hit=31 read=1
+               ->  GroupAggregate  (cost=0.29..33.97 rows=12 width=52) (actual time=0.186..0.214 rows=15 loops=1)
+                     Group Key: (sprint.properties ->> 'project_id'::text)
+                     Buffers: shared hit=20 read=1
+                     ->  Nested Loop  (cost=0.29..33.01 rows=12 width=264) (actual time=0.143..0.175 rows=35 loops=1)
+                           Buffers: shared hit=20 read=1
+                           ->  Index Scan using idx_documents_sprint_project_lookup on documents sprint  (cost=0.14..24.66 rows=12 width=228) (actual time=0.108..0.116 rows=35 loops=1)
+                                 Index Cond: (workspace_id = '497ca5be-e21b-46b0-ab49-937dcb6b3e67'::uuid)
+                                 Buffers: shared hit=18 read=1
+                           ->  Materialize  (cost=0.15..8.17 rows=1 width=20) (actual time=0.001..0.001 rows=1 loops=35)
+                                 Buffers: shared hit=2
+                                 ->  Index Scan using workspaces_pkey on workspaces w  (cost=0.15..8.17 rows=1 width=20) (actual time=0.018..0.030 rows=1 loops=1)
+                                       Index Cond: (id = '497ca5be-e21b-46b0-ab49-937dcb6b3e67'::uuid)
+                                       Buffers: shared hit=2
+               ->  Hash  (cost=27.75..27.75 rows=15 width=216) (actual time=0.153..0.155 rows=15 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 17kB
+                     Buffers: shared hit=11
+                     ->  Hash Right Join  (cost=13.40..27.75 rows=15 width=216) (actual time=0.133..0.143 rows=15 loops=1)
+                           Hash Cond: (u.id = ((vp.properties ->> 'owner_id'::text))::uuid)
+                           Buffers: shared hit=11
+                           ->  Seq Scan on users u  (cost=0.00..12.40 rows=240 width=80) (actual time=0.003..0.004 rows=11 loops=1)
+                                 Buffers: shared hit=1
+                           ->  Hash  (cost=13.21..13.21 rows=15 width=152) (actual time=0.111..0.113 rows=15 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 16kB
+                                 Buffers: shared hit=10
+                                 ->  Hash Right Join  (cost=0.49..13.21 rows=15 width=152) (actual time=0.050..0.093 rows=15 loops=1)
+                                       Hash Cond: (prog_da.document_id = vp.id)
+                                       Buffers: shared hit=10
+                                       ->  Seq Scan on document_associations prog_da  (cost=0.00..12.01 rows=154 width=32) (actual time=0.003..0.028 rows=154 loops=1)
+                                             Filter: (relationship_type = 'program'::relationship_type)
+                                             Rows Removed by Filter: 247
+                                             Buffers: shared hit=7
+                                       ->  Hash  (cost=0.30..0.30 rows=15 width=136) (actual time=0.037..0.038 rows=15 loops=1)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 16kB
+                                             Buffers: shared hit=3
+                                             ->  CTE Scan on visible_projects vp  (cost=0.00..0.30 rows=15 width=136) (actual time=0.016..0.030 rows=15 loops=1)
+                                                   Buffers: shared hit=3
+         ->  Hash  (cost=41.51..41.51 rows=2 width=24) (actual time=0.197..0.198 rows=15 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+               Buffers: shared hit=33
+               ->  Subquery Scan on prc  (cost=41.43..41.51 rows=2 width=24) (actual time=0.178..0.192 rows=15 loops=1)
+                     Buffers: shared hit=33
+                     ->  GroupAggregate  (cost=41.43..41.49 rows=2 width=24) (actual time=0.177..0.190 rows=15 loops=1)
+                           Group Key: da.related_id
+                           Buffers: shared hit=33
+                           ->  Sort  (cost=41.43..41.44 rows=2 width=20) (actual time=0.172..0.176 rows=139 loops=1)
+                                 Sort Key: da.related_id
+                                 Sort Method: quicksort  Memory: 31kB
+                                 Buffers: shared hit=33
+                                 ->  Hash Join  (cost=14.15..41.42 rows=2 width=20) (actual time=0.078..0.131 rows=139 loops=1)
+                                       Hash Cond: ((linked.id = da.document_id) AND (linked.workspace_id = vp_1.workspace_id))
+                                       Buffers: shared hit=30
+                                       ->  Seq Scan on documents linked  (cost=0.00..26.21 rows=139 width=36) (actual time=0.003..0.043 rows=139 loops=1)
+                                             Filter: (document_type = ANY ('{sprint,issue}'::document_type[]))
+                                             Rows Removed by Filter: 118
+                                             Buffers: shared hit=23
+                                       ->  Hash  (cost=13.47..13.47 rows=45 width=48) (actual time=0.068..0.068 rows=139 loops=1)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 19kB
+                                             Buffers: shared hit=7
+                                             ->  Hash Join  (cost=0.49..13.47 rows=45 width=48) (actual time=0.027..0.055 rows=139 loops=1)
+                                                   Hash Cond: (da.related_id = vp_1.id)
+                                                   Buffers: shared hit=7
+                                                   ->  Seq Scan on document_associations da  (cost=0.00..12.01 rows=139 width=32) (actual time=0.004..0.019 rows=139 loops=1)
+                                                         Filter: (relationship_type = 'project'::relationship_type)
+                                                         Rows Removed by Filter: 262
+                                                         Buffers: shared hit=7
+                                                   ->  Hash  (cost=0.30..0.30 rows=15 width=32) (actual time=0.009..0.010 rows=15 loops=1)
+                                                         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                         ->  CTE Scan on visible_projects vp_1  (cost=0.00..0.30 rows=15 width=32) (actual time=0.001..0.003 rows=15 loops=1)
+ Planning:
+   Buffers: shared hit=696 read=1
+ Planning Time: 1.442 ms
+ Execution Time: 1.021 ms
+(91 rows)
+
