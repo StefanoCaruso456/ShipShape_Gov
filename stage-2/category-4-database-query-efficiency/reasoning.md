@@ -12,16 +12,16 @@
 
 ### Measurement commands
 
-See [benchmark-commands.txt](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/stage-2/category-4-database-query-efficiency/benchmark-commands.txt).
+See [benchmark-commands.txt](./benchmark-commands.txt).
 
 ### Saved artifacts
 
-- [before-flow.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/stage-2/category-4-database-query-efficiency/before-flow.json)
-- [after-flow.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/stage-2/category-4-database-query-efficiency/after-flow.json)
-- [explain-projects-before.txt](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/stage-2/category-4-database-query-efficiency/explain-projects-before.txt)
-- [explain-projects-after.txt](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/stage-2/category-4-database-query-efficiency/explain-projects-after.txt)
-- [summary.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/stage-2/category-4-database-query-efficiency/summary.json)
-- [api-vitest-after.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/stage-2/category-4-database-query-efficiency/api-vitest-after.json)
+- [before-flow.json](./before-flow.json)
+- [after-flow.json](./after-flow.json)
+- [explain-projects-before.txt](./explain-projects-before.txt)
+- [explain-projects-after.txt](./explain-projects-after.txt)
+- [summary.json](./summary.json)
+- [api-vitest-after.json](./api-vitest-after.json)
 
 ## Before / After
 
@@ -52,8 +52,8 @@ See [benchmark-commands.txt](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/sta
 
 Files:
 
-- [auth.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api/src/middleware/auth.ts)
-- [auth.test.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api/src/__tests__/auth.test.ts)
+- [auth.ts](../../api/src/middleware/auth.ts)
+- [auth.test.ts](../../api/src/__tests__/auth.test.ts)
 
 What changed:
 
@@ -80,8 +80,8 @@ Tradeoffs:
 
 Files:
 
-- [projects.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api/src/routes/projects.ts)
-- [explain-projects-optimized.sql](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/benchmarks/explain-projects-optimized.sql)
+- [projects.ts](../../api/src/routes/projects.ts)
+- [explain-projects-optimized.sql](../../benchmarks/explain-projects-optimized.sql)
 
 What changed:
 
@@ -111,8 +111,8 @@ Tradeoffs:
 
 Files:
 
-- [038_project_query_efficiency.sql](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api/src/db/migrations/038_project_query_efficiency.sql)
-- [schema.sql](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api/src/db/schema.sql)
+- [038_project_query_efficiency.sql](../../api/src/db/migrations/038_project_query_efficiency.sql)
+- [schema.sql](../../api/src/db/schema.sql)
 
 What changed:
 
@@ -138,7 +138,8 @@ Tradeoffs:
 ### API type-check
 
 ```bash
-cd /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api
+# from repo root
+cd api
 ../node_modules/.bin/tsc --noEmit
 ```
 
@@ -147,7 +148,8 @@ Result: passed
 ### Full API suite
 
 ```bash
-cd /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api
+# from repo root
+cd api
 DATABASE_URL='postgres://ship:ship_dev_password@127.0.0.1:5433/ship_dev' ../node_modules/.bin/vitest run --reporter=json --outputFile ../stage-2/category-4-database-query-efficiency/api-vitest-after.json
 ```
 
