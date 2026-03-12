@@ -8,6 +8,10 @@
 - Query-count improvement: `21.9%`
 - Alternate EXPLAIN improvement on the repeated projects query: `1.214 ms -> 1.021 ms` (`15.9%`)
 
+## Demo Talking Point
+
+Category 4 was about making the database do less wasted work, not forcing every page into one giant query. Pages like the dashboard still need several real data lookups such as auth context, week context, plan, retro, standups, and project allocations. The improvement was removing unnecessary database work around those lookups: we stopped redundant session writes, rewrote the reused projects query to aggregate once instead of recalculating per row, and added a targeted index. The measurable result was a `21.9%` query-count reduction on the sprint-board flow, from `32` queries to `25`, while keeping API verification green.
+
 ## Reproducible Proof
 
 ### Measurement commands
