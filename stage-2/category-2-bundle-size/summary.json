@@ -1,6 +1,10 @@
 {
   "targetMet": true,
   "targetStrategy": "20% reduction in initial page-load bundle through code splitting",
+  "plainEnglishSummary": {
+    "before": "Users were downloading almost the entire frontend on first load, even for lightweight routes like login or My Week.",
+    "after": "Users now download the core app first, and heavier route and editor code load later when they actually navigate to those screens."
+  },
   "before": {
     "totalProductionBundleKb": 2255.29,
     "largestChunk": {

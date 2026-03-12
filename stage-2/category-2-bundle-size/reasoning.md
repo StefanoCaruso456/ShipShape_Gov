@@ -7,6 +7,19 @@
 - Passing metric: authenticated `/my-week` startup bundle `2,078.55 kB -> 485.14 kB` (`76.7%`)
 - Entry chunk reduction: `2,078.55 kB -> 293.60 kB` (`85.9%`)
 
+## Simple Overview
+
+Before this change, users were effectively downloading almost the entire frontend on first load.
+
+After this change, users load the core app first and only download heavier route and editor code when they actually navigate to those parts of the product.
+
+| Metric | Before | After | What it means |
+| --- | ---: | ---: | --- |
+| Entry chunk | `2,078.55 kB` | `293.60 kB` | the startup bundle is much smaller |
+| `/my-week` startup path | `2,078.55 kB` | `485.14 kB` | the default logged-in page loads far less code up front |
+| `/login` startup path | `2,078.55 kB` | `345.62 kB` | public login avoids pulling the full app immediately |
+| Total production JS | `2,255.29 kB` | `2,181.68 kB` | total shipped code changed a little, but startup got dramatically lighter |
+
 ## Reproducible Proof
 
 ### Measurement commands

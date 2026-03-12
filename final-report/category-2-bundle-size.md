@@ -13,6 +13,19 @@
 
 Category 2 was not about deleting features. It was about stopping the app from shipping almost the entire frontend on first load. Before this change, the default app boot came through one `2.08 MB` entry bundle that included route code, editor code, emoji picker code, and code-highlighting logic even when the user just landed on `My Week`. After the change, the authenticated startup path is about `485 kB` because routes are lazy-loaded, React Query Devtools only load in development, and the editor only registers a smaller set of highlighting languages. The app still has the same features, but it downloads the heavy parts when the user actually navigates to them.
 
+## Simple Overview
+
+Before this change, users downloaded almost the whole frontend immediately, even for lightweight routes like `Login` or `My Week`.
+
+After this change, users download the core app first and the heavier route and editor code later when they actually navigate to those screens.
+
+| Metric | Before | After | What it means |
+| --- | ---: | ---: | --- |
+| Entry chunk | `2,078.55 kB` | `293.60 kB` | the first JS file the app boots with is much smaller |
+| `/my-week` startup path | `2,078.55 kB` | `485.14 kB` | the default logged-in page loads far less code up front |
+| `/login` startup path | `2,078.55 kB` | `345.62 kB` | the login page no longer pulls the full app immediately |
+| Total production JS | `2,255.29 kB` | `2,181.68 kB` | the full app still exists, but much less of it blocks first load |
+
 ## Reproducible Proof
 
 ### Measurement commands
