@@ -9,7 +9,10 @@ declare global {
     interface Request {
       sessionId?: string;
       userId?: string;
+      userEmail?: string;
+      userName?: string;
       workspaceId?: string;
+      workspaceRole?: string | null;
       isSuperAdmin?: boolean;
       isApiToken?: boolean; // True when authenticated via API token
     }
@@ -159,9 +162,13 @@ export async function authMiddleware(
     // Get session and check if it's valid
     const result = await pool.query(
       `SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at,
-              u.is_super_admin
+              u.email as user_email, u.name as user_name,
+              u.is_super_admin,
+              wm.role as workspace_role
        FROM sessions s
        JOIN users u ON s.user_id = u.id
+       LEFT JOIN workspace_memberships wm
+         ON wm.workspace_id = s.workspace_id AND wm.user_id = s.user_id
        WHERE s.id = $1`,
       [sessionId]
     );
@@ -213,26 +220,19 @@ export async function authMiddleware(
       return;
     }
 
-    // Verify user still has access to the workspace (unless super-admin)
-    if (session.workspace_id && !session.is_super_admin) {
-      const membershipResult = await pool.query(
-        'SELECT id FROM workspace_memberships WHERE workspace_id = $1 AND user_id = $2',
-        [session.workspace_id, session.user_id]
-      );
+    // Verify user still has access to the workspace (unless super-admin).
+    // The membership join above avoids an extra lookup on every request.
+    if (session.workspace_id && !session.is_super_admin && !session.workspace_role) {
+      await pool.query('DELETE FROM sessions WHERE id = $1', [sessionId]);
 
-      if (!membershipResult.rows[0]) {
-        // User no longer has access - delete session
-        await pool.query('DELETE FROM sessions WHERE id = $1', [sessionId]);
-
-        res.status(HTTP_STATUS.FORBIDDEN).json({
-          success: false,
-          error: {
-            code: ERROR_CODES.FORBIDDEN,
-            message: 'Access to this workspace has been revoked',
-          },
-        });
-        return;
-      }
+      res.status(HTTP_STATUS.FORBIDDEN).json({
+        success: false,
+        error: {
+          code: ERROR_CODES.FORBIDDEN,
+          message: 'Access to this workspace has been revoked',
+        },
+      });
+      return;
     }
 
     const shouldRefreshSessionActivity = inactivityMs > SESSION_ACTIVITY_WRITE_THRESHOLD_MS;
@@ -255,7 +255,10 @@ export async function authMiddleware(
     // Attach session info to request
     req.sessionId = session.id;
     req.userId = session.user_id;
+    req.userEmail = session.user_email;
+    req.userName = session.user_name;
     req.workspaceId = session.workspace_id;
+    req.workspaceRole = session.workspace_role ?? null;
     req.isSuperAdmin = session.is_super_admin;
 
     next();

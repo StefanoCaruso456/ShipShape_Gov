@@ -1,0 +1,177 @@
+[
+  {
+    "endpoint": "GET /api/auth/me",
+    "runs": [
+      {
+        "concurrency": 10,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 3.93,
+        "p95_ms": 16.23,
+        "p99_ms": 18.03
+      },
+      {
+        "concurrency": 25,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 12.53,
+        "p95_ms": 23.42,
+        "p99_ms": 27.34
+      },
+      {
+        "concurrency": 50,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 15.13,
+        "p95_ms": 21.02,
+        "p99_ms": 21.67
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /api/dashboard/my-week",
+    "runs": [
+      {
+        "concurrency": 10,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 8.23,
+        "p95_ms": 15.43,
+        "p99_ms": 16.72
+      },
+      {
+        "concurrency": 25,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 17.79,
+        "p95_ms": 20.48,
+        "p99_ms": 21.35
+      },
+      {
+        "concurrency": 50,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 40.87,
+        "p95_ms": 43.4,
+        "p99_ms": 43.76
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /api/issues?sprint_id={id}",
+    "runs": [
+      {
+        "concurrency": 10,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 4.54,
+        "p95_ms": 8.27,
+        "p99_ms": 8.69
+      },
+      {
+        "concurrency": 25,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 9.66,
+        "p95_ms": 14.32,
+        "p99_ms": 15.06
+      },
+      {
+        "concurrency": 50,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 20.92,
+        "p95_ms": 23.56,
+        "p99_ms": 23.9
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /api/documents/:id",
+    "runs": [
+      {
+        "concurrency": 10,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 5.07,
+        "p95_ms": 7.08,
+        "p99_ms": 7.63
+      },
+      {
+        "concurrency": 25,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 7.56,
+        "p95_ms": 13.58,
+        "p99_ms": 13.98
+      },
+      {
+        "concurrency": 50,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 19.21,
+        "p95_ms": 21.76,
+        "p99_ms": 21.79
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /api/search/mentions?q=dev",
+    "runs": [
+      {
+        "concurrency": 10,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 3.38,
+        "p95_ms": 10.47,
+        "p99_ms": 10.73
+      },
+      {
+        "concurrency": 25,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 9.06,
+        "p95_ms": 13.16,
+        "p99_ms": 14.7
+      },
+      {
+        "concurrency": 50,
+        "requests": 60,
+        "statusCounts": {
+          "200": 60
+        },
+        "p50_ms": 16.3,
+        "p95_ms": 19.83,
+        "p99_ms": 20.29
+      }
+    ]
+  }
+]

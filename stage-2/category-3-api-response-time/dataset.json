@@ -1,0 +1,24 @@
+{
+  "workspaceId": "e6dc3921-d68b-4d46-9d7a-9609107782c6",
+  "workspaceName": "Ship Workspace",
+  "before": {
+    "users": 11,
+    "documents": 257,
+    "issues": 104,
+    "sprints": 35
+  },
+  "afterPrepare": {
+    "users": 32,
+    "documents": 550,
+    "issues": 104,
+    "sprints": 35
+  },
+  "benchmarkTargets": {
+    "sprintId": "63b2572b-181a-45f0-a788-dd6b9041297b",
+    "documentId": "7b5fb9a6-f10a-46eb-83d3-4a507e7fb5f0"
+  },
+  "loginUser": {
+    "email": "dev@ship.local",
+    "password": "admin123"
+  }
+}

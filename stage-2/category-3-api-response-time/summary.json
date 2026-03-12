@@ -1,0 +1,58 @@
+{
+  "targetMet": true,
+  "targetStrategy": "20% reduction in P95 latency on at least two endpoints under identical warmed-up local load",
+  "plainEnglishSummary": {
+    "before": "Protected read endpoints were still paying repeated auth and association work even after the database query-count cleanup.",
+    "after": "The API now folds workspace access into the session lookup, returns sprint issue associations in the main list query, and uses targeted indexes for the real issue-board and title-search access patterns."
+  },
+  "dataset": {
+    "users": 32,
+    "documents": 550,
+    "issues": 104,
+    "sprints": 35,
+    "benchmarkSprintId": "63b2572b-181a-45f0-a788-dd6b9041297b",
+    "benchmarkDocumentId": "7b5fb9a6-f10a-46eb-83d3-4a507e7fb5f0"
+  },
+  "measurement": {
+    "comparisonConcurrency": 25,
+    "requestsPerEndpoint": 60,
+    "warmupRequestsPerTier": 5
+  },
+  "before": {
+    "GET /api/auth/me": { "p50_ms": 10.58, "p95_ms": 20.30, "p99_ms": 25.55 },
+    "GET /api/dashboard/my-week": { "p50_ms": 20.04, "p95_ms": 24.08, "p99_ms": 24.66 },
+    "GET /api/issues?sprint_id={id}": { "p50_ms": 13.43, "p95_ms": 19.00, "p99_ms": 19.87 },
+    "GET /api/documents/:id": { "p50_ms": 11.75, "p95_ms": 18.09, "p99_ms": 19.12 },
+    "GET /api/search/mentions?q=dev": { "p50_ms": 8.96, "p95_ms": 12.98, "p99_ms": 13.20 }
+  },
+  "after": {
+    "GET /api/auth/me": { "p50_ms": 12.53, "p95_ms": 23.42, "p99_ms": 27.34, "p95ImprovementPct": -15.4 },
+    "GET /api/dashboard/my-week": { "p50_ms": 17.79, "p95_ms": 20.48, "p99_ms": 21.35, "p95ImprovementPct": 15.0 },
+    "GET /api/issues?sprint_id={id}": { "p50_ms": 9.66, "p95_ms": 14.32, "p99_ms": 15.06, "p95ImprovementPct": 24.6 },
+    "GET /api/documents/:id": { "p50_ms": 7.56, "p95_ms": 13.58, "p99_ms": 13.98, "p95ImprovementPct": 24.9 },
+    "GET /api/search/mentions?q=dev": { "p50_ms": 9.06, "p95_ms": 13.16, "p99_ms": 14.70, "p95ImprovementPct": -1.4 }
+  },
+  "passingEndpoints": [
+    {
+      "endpoint": "GET /api/issues?sprint_id={id}",
+      "beforeP95_ms": 19.00,
+      "afterP95_ms": 14.32,
+      "improvementPct": 24.6
+    },
+    {
+      "endpoint": "GET /api/documents/:id",
+      "beforeP95_ms": 18.09,
+      "afterP95_ms": 13.58,
+      "improvementPct": 24.9
+    }
+  ],
+  "verification": {
+    "apiTypeCheck": "passed",
+    "apiVitest": {
+      "passedFiles": 28,
+      "failedFiles": 0,
+      "passedTests": 451,
+      "failedTests": 0
+    }
+  }
+}

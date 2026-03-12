@@ -121,8 +121,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     }
     const { userId, workspaceId } = authContext;
 
-    // Get visibility context for filtering
-    const { isAdmin } = await getVisibilityContext(userId, workspaceId);
+    const isAdmin = req.isSuperAdmin === true || req.workspaceRole === 'admin';
 
     let query = `
       SELECT d.id, d.title, d.properties, d.ticket_number,
@@ -131,12 +130,30 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
              d.started_at, d.completed_at, d.cancelled_at, d.reopened_at,
              d.converted_from_id,
              u.name as assignee_name,
-             CASE WHEN person_doc.archived_at IS NOT NULL THEN true ELSE false END as assignee_archived
+             CASE WHEN person_doc.archived_at IS NOT NULL THEN true ELSE false END as assignee_archived,
+             issue_assoc.belongs_to
       FROM documents d
       LEFT JOIN users u ON (d.properties->>'assignee_id')::uuid = u.id
       LEFT JOIN documents person_doc ON person_doc.workspace_id = d.workspace_id
         AND person_doc.document_type = 'person'
         AND person_doc.properties->>'user_id' = d.properties->>'assignee_id'
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(
+          jsonb_agg(
+            jsonb_build_object(
+              'id', da.related_id,
+              'type', da.relationship_type,
+              'title', related.title,
+              'color', related.properties->>'color'
+            )
+            ORDER BY da.relationship_type, da.created_at
+          ),
+          '[]'::jsonb
+        ) as belongs_to
+        FROM document_associations da
+        LEFT JOIN documents related ON related.id = da.related_id
+        WHERE da.document_id = d.id
+      ) issue_assoc ON true
       WHERE d.workspace_id = $1 AND d.document_type = 'issue'
         AND ${VISIBILITY_FILTER_SQL('d', '$2', '$3')}
     `;
@@ -225,16 +242,12 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
 
     const result = await pool.query(query, params);
 
-    // Extract issues and batch-fetch associations to avoid N+1 queries
-    const issueIds = result.rows.map(row => row.id);
-    const associationsMap = await getBelongsToAssociationsBatch(issueIds);
-
     const issues = result.rows.map(row => {
       const issue = extractIssueFromRow(row);
       return {
         ...issue,
         display_id: `#${issue.ticket_number}`,
-        belongs_to: associationsMap.get(row.id) || [],
+        belongs_to: Array.isArray(row.belongs_to) ? row.belongs_to : [],
       };
     });
 
