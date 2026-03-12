@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { pool } from '../db/client.js';
 import { z } from 'zod';
 import { authMiddleware, getAuthContext } from '../middleware/auth.js';
-import { isWorkspaceAdmin } from '../middleware/visibility.js';
 
 type RouterType = ReturnType<typeof Router>;
 export const searchRouter: RouterType = Router();
@@ -42,49 +41,47 @@ searchRouter.get('/mentions', authMiddleware, async (req: Request, res: Response
     // SECURITY: Escape wildcard characters to prevent SQL wildcard injection
     const sanitizedQuery = escapeLikePattern(searchQuery);
 
-    // Check if user is admin for visibility filtering
-    const isAdmin = await isWorkspaceAdmin(userId, workspaceId);
+    const isAdmin = req.isSuperAdmin === true || req.workspaceRole === 'admin';
 
     // Search for people (person documents linked via properties.user_id)
     // Person documents are always workspace-visible, so no visibility filter needed
-    const peopleResult = await pool.query(
-      `SELECT
-         d.id::text as id,
-         d.title as name,
-         'person' as document_type
-       FROM documents d
-       WHERE d.workspace_id = $1
-         AND d.document_type = 'person'
-         AND d.archived_at IS NULL
-         AND d.deleted_at IS NULL
-         AND d.title ILIKE $2
-       ORDER BY d.title ASC
-       LIMIT 5`,
-      [workspaceId, `%${sanitizedQuery}%`]
-    );
-
-    // Search for other documents (wiki, issue, project, program)
-    // Filter by visibility: workspace docs, user's private docs, or all if admin
-    const documentsResult = await pool.query(
-      `SELECT id, title, document_type, visibility
-       FROM documents
-       WHERE workspace_id = $1
-         AND document_type IN ('wiki', 'issue', 'project', 'program')
-         AND deleted_at IS NULL
-         AND title ILIKE $2
-         AND (visibility = 'workspace' OR created_by = $3 OR $4 = TRUE)
-       ORDER BY
-         CASE document_type
-           WHEN 'issue' THEN 1
-           WHEN 'wiki' THEN 2
-           WHEN 'project' THEN 3
-           WHEN 'program' THEN 4
-           ELSE 5
-         END,
-         updated_at DESC
-       LIMIT 10`,
-      [workspaceId, `%${sanitizedQuery}%`, userId, isAdmin]
-    );
+    const [peopleResult, documentsResult] = await Promise.all([
+      pool.query(
+        `SELECT
+           d.id::text as id,
+           d.title as name,
+           'person' as document_type
+         FROM documents d
+         WHERE d.workspace_id = $1
+           AND d.document_type = 'person'
+           AND d.archived_at IS NULL
+           AND d.deleted_at IS NULL
+           AND d.title ILIKE $2
+         ORDER BY d.title ASC
+         LIMIT 5`,
+        [workspaceId, `%${sanitizedQuery}%`]
+      ),
+      pool.query(
+        `SELECT id, title, document_type, visibility
+         FROM documents
+         WHERE workspace_id = $1
+           AND document_type IN ('wiki', 'issue', 'project', 'program')
+           AND deleted_at IS NULL
+           AND title ILIKE $2
+           AND (visibility = 'workspace' OR created_by = $3 OR $4 = TRUE)
+         ORDER BY
+           CASE document_type
+             WHEN 'issue' THEN 1
+             WHEN 'wiki' THEN 2
+             WHEN 'project' THEN 3
+             WHEN 'program' THEN 4
+             ELSE 5
+           END,
+           updated_at DESC
+         LIMIT 10`,
+        [workspaceId, `%${sanitizedQuery}%`, userId, isAdmin]
+      ),
+    ]);
 
     res.json({
       people: peopleResult.rows,
@@ -115,8 +112,7 @@ searchRouter.get('/learnings', authMiddleware, async (req: Request, res: Respons
     // SECURITY: Escape wildcard characters to prevent SQL wildcard injection
     const sanitizedQuery = escapeLikePattern(searchQuery);
 
-    // Check if user is admin for visibility filtering
-    const isAdmin = await isWorkspaceAdmin(userId, workspaceId);
+    const isAdmin = req.isSuperAdmin === true || req.workspaceRole === 'admin';
 
     // Search for learning wiki documents
     // Match documents where:

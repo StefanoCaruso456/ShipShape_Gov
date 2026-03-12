@@ -2,7 +2,16 @@ import fs from 'fs';
 import { performance } from 'perf_hooks';
 
 function parseCookies(path) {
-  const lines = fs.readFileSync(path, 'utf8').split('\n');
+  const rawFile = fs.readFileSync(path, 'utf8').trim();
+  if (!rawFile) {
+    return '';
+  }
+
+  if (!rawFile.includes('\t')) {
+    return rawFile;
+  }
+
+  const lines = rawFile.split('\n');
   const cookies = [];
 
   for (const raw of lines) {
@@ -73,6 +82,8 @@ const outputPath = process.env.SHIP_OUTPUT_PATH || 'benchmarks/api-performance-b
 const baseUrl = process.env.SHIP_BASE_URL || 'http://localhost:3000';
 const sprintId = process.env.SHIP_SPRINT_ID;
 const documentId = process.env.SHIP_DOCUMENT_ID;
+const requestCount = Number(process.env.SHIP_REQUEST_COUNT || 60);
+const warmupRequests = Number(process.env.SHIP_WARMUP_REQUESTS || 5);
 
 if (!sprintId || !documentId) {
   throw new Error('SHIP_SPRINT_ID and SHIP_DOCUMENT_ID are required');
@@ -96,7 +107,12 @@ const results = [];
 for (const endpoint of endpoints) {
   const runs = [];
   for (const concurrency of [10, 25, 50]) {
-    runs.push(await benchmarkEndpoint(endpoint.url, concurrency, 30, headers));
+    if (warmupRequests > 0) {
+      await benchmarkEndpoint(endpoint.url, Math.min(concurrency, 5), warmupRequests, headers);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+
+    runs.push(await benchmarkEndpoint(endpoint.url, concurrency, requestCount, headers));
     await new Promise((resolve) => setTimeout(resolve, 750));
   }
   results.push({ endpoint: endpoint.name, runs });

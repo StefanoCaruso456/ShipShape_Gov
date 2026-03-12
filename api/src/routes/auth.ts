@@ -261,14 +261,7 @@ router.post('/logout', authMiddleware, async (req: Request, res: Response): Prom
 // GET /api/auth/me
 router.get('/me', authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const result = await pool.query(
-      `SELECT id, email, name, is_super_admin FROM users WHERE id = $1`,
-      [req.userId]
-    );
-
-    const user = result.rows[0];
-
-    if (!user) {
+    if (!req.userId || !req.userEmail || !req.userName) {
       res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: {
@@ -279,7 +272,6 @@ router.get('/me', authMiddleware, async (req: Request, res: Response): Promise<v
       return;
     }
 
-    // Get user's workspaces
     const workspacesResult = await pool.query(
       `SELECT w.id, w.name, wm.role
        FROM workspaces w
@@ -289,9 +281,18 @@ router.get('/me', authMiddleware, async (req: Request, res: Response): Promise<v
       [req.userId]
     );
 
-    // Get current workspace info
-    let currentWorkspace = null;
-    if (req.workspaceId) {
+    const workspaces = workspacesResult.rows.map((workspace) => ({
+      id: workspace.id,
+      name: workspace.name,
+      role: workspace.role,
+    }));
+
+    let currentWorkspace = req.workspaceId
+      ? workspaces.find((workspace) => workspace.id === req.workspaceId) || null
+      : null;
+
+    // Super-admin sessions can point at a workspace they are not directly a member of.
+    if (!currentWorkspace && req.workspaceId) {
       const currentResult = await pool.query(
         `SELECT w.id, w.name, wm.role
          FROM workspaces w
@@ -315,17 +316,13 @@ router.get('/me', authMiddleware, async (req: Request, res: Response): Promise<v
       success: true,
       data: {
         user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          isSuperAdmin: user.is_super_admin,
+          id: req.userId,
+          email: req.userEmail,
+          name: req.userName,
+          isSuperAdmin: req.isSuperAdmin === true,
         },
         currentWorkspace,
-        workspaces: workspacesResult.rows.map(w => ({
-          id: w.id,
-          name: w.name,
-          role: w.role,
-        })),
+        workspaces,
         pendingAccountabilityItems,
       },
     });

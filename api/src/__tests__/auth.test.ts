@@ -69,15 +69,15 @@ describe('authMiddleware', () => {
             last_activity: now,
             created_at: now,
             is_super_admin: false,
+            workspace_role: 'member',
           }],
         }))
-        .mockResolvedValueOnce(queryResponse({ rows: [{ id: 'membership-1' }] }))
-        .mockResolvedValueOnce(queryResponse({ rows: [] }));
 
       await authMiddleware(req, res, next);
       expect(req.sessionId).toBe('valid-session');
       expect(req.userId).toBe('user-123');
       expect(req.workspaceId).toBe('ws-123');
+      expect(req.workspaceRole).toBe('member');
       expect(next).toHaveBeenCalled();
     });
   });
@@ -173,6 +173,7 @@ describe('authMiddleware', () => {
             last_activity: now,
             created_at: now,
             is_super_admin: false,
+            workspace_role: null,
           }],
         }))
         .mockResolvedValueOnce(queryResponse({ rows: [] }));
@@ -200,9 +201,9 @@ describe('authMiddleware', () => {
             last_activity: now,
             created_at: now,
             is_super_admin: true,
+            workspace_role: null,
           }],
         }))
-        .mockResolvedValueOnce(queryResponse({ rows: [] }));
 
       await authMiddleware(req, res, next);
       expect(req.isSuperAdmin).toBe(true);
@@ -239,14 +240,14 @@ describe('authMiddleware', () => {
             last_activity: lastActivity,
             created_at: now,
             is_super_admin: false,
+            workspace_role: 'member',
           }],
         }))
-        .mockResolvedValueOnce(queryResponse({ rows: [{ id: 'membership-1' }] }))
         .mockResolvedValueOnce(queryResponse({ rows: [] }));
 
       await authMiddleware(req, res, next);
       expect(queryMock).toHaveBeenNthCalledWith(
-        3,
+        2,
         'UPDATE sessions SET last_activity = $1 WHERE id = $2',
         [expect.any(Date), 'valid-session']
       );
@@ -274,13 +275,12 @@ describe('authMiddleware', () => {
             last_activity: lastActivity,
             created_at: now,
             is_super_admin: false,
+            workspace_role: 'member',
           }],
         }))
-        .mockResolvedValueOnce(queryResponse({ rows: [{ id: 'membership-1' }] }))
-        .mockResolvedValueOnce(queryResponse({ rows: [] }));
 
       await authMiddleware(req, res, next);
-      expect(queryMock).toHaveBeenCalledTimes(2);
+      expect(queryMock).toHaveBeenCalledTimes(1);
       expect(res.cookie).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalled();
     });
