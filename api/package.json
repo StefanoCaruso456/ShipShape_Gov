@@ -30,6 +30,7 @@
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@ship/shared": "workspace:*",
     "bcryptjs": "^3.0.3",
+    "braintrust": "^3.4.0",
     "cookie": "^1.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

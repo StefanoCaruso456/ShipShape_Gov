@@ -26,14 +26,20 @@ if [[ ! "$ENV" =~ ^(dev|shadow|prod)$ ]]; then
 fi
 
 # Environment-specific configuration
+USE_ROOT_TERRAFORM=false
 if [ "$ENV" = "prod" ]; then
   TF_DIR="$PROJECT_ROOT/terraform"
+elif [ -f "$PROJECT_ROOT/terraform/terraform.tfvars" ] && [ -d "$PROJECT_ROOT/terraform/.terraform" ]; then
+  TF_DIR="$PROJECT_ROOT/terraform"
+  USE_ROOT_TERRAFORM=true
 else
   TF_DIR="$PROJECT_ROOT/terraform/environments/$ENV"
 fi
 
-# Sync terraform config from SSM (source of truth)
-"$SCRIPT_DIR/sync-terraform-config.sh" "$ENV"
+# Sync terraform config from SSM only when using the modular environment layout
+if [ "$USE_ROOT_TERRAFORM" = false ]; then
+  "$SCRIPT_DIR/sync-terraform-config.sh" "$ENV"
+fi
 
 echo "=== Ship Frontend Deploy ==="
 echo "Environment: $ENV"

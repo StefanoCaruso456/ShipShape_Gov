@@ -81,3 +81,9 @@ variable "cloudfront_waf_web_acl_id" {
   type        = string
   default     = ""
 }
+
+variable "enable_cloudfront_realtime_logs" {
+  description = "Enable optional CloudFront real-time logging via Kinesis"
+  type        = bool
+  default     = false
+}

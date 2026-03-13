@@ -15,9 +15,6 @@ if [[ ! "$ENV" =~ ^(dev|prod)$ ]]; then
   exit 1
 fi
 
-# Sync terraform config from SSM (source of truth)
-"$SCRIPT_DIR/sync-terraform-config.sh" "$ENV"
-
 echo "=========================================="
 echo "Ship - Frontend Deployment ($ENV)"
 echo "=========================================="
@@ -27,10 +24,19 @@ echo ""
 cd "$PROJECT_ROOT"
 
 # Environment-specific terraform directory
+USE_ROOT_TERRAFORM=false
 if [ "$ENV" = "prod" ]; then
   TF_DIR="$PROJECT_ROOT/terraform"
+elif [ -f "$PROJECT_ROOT/terraform/terraform.tfvars" ] && [ -d "$PROJECT_ROOT/terraform/.terraform" ]; then
+  TF_DIR="$PROJECT_ROOT/terraform"
+  USE_ROOT_TERRAFORM=true
 else
   TF_DIR="$PROJECT_ROOT/terraform/environments/$ENV"
+fi
+
+# Sync terraform config from SSM only when using the modular environment layout
+if [ "$USE_ROOT_TERRAFORM" = false ]; then
+  "$SCRIPT_DIR/sync-terraform-config.sh" "$ENV"
 fi
 
 # Get S3 bucket name and CloudFront distribution ID from Terraform

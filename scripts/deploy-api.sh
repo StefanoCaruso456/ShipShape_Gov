@@ -16,6 +16,7 @@ ENV_NAME="${EB_ENV_NAME:-ship-api-dev}"
 S3_BUCKET="${EB_S3_BUCKET:-}"
 AWS_REGION="${AWS_REGION:-us-east-1}"
 VERSION_LABEL="ship-api-$(date +%Y%m%d-%H%M%S)"
+export AWS_PAGER=""
 
 # Check if AWS CLI is installed
 if ! command -v aws &> /dev/null; then
@@ -86,9 +87,11 @@ cp -r "$PROJECT_ROOT/api/dist/"* "$DEPLOY_DIR/api/dist/"
 cp "$PROJECT_ROOT/shared/package.json" "$DEPLOY_DIR/shared/"
 cp -r "$PROJECT_ROOT/shared/dist/"* "$DEPLOY_DIR/shared/dist/"
 
-# Copy vendor dependencies (SDK linked via file: protocol)
-mkdir -p "$DEPLOY_DIR/vendor"
-cp -r "$PROJECT_ROOT/vendor/"* "$DEPLOY_DIR/vendor/"
+# Copy vendor dependencies if present (some worktrees do not include a vendor dir)
+if [ -d "$PROJECT_ROOT/vendor" ]; then
+    mkdir -p "$DEPLOY_DIR/vendor"
+    cp -r "$PROJECT_ROOT/vendor/"* "$DEPLOY_DIR/vendor/"
+fi
 
 # Create the deployment ZIP
 ZIP_FILE="$PROJECT_ROOT/deploy-api-${VERSION_LABEL}.zip"
@@ -110,8 +113,7 @@ aws elasticbeanstalk create-application-version \
     --application-name "$APP_NAME" \
     --version-label "$VERSION_LABEL" \
     --source-bundle S3Bucket="$S3_BUCKET",S3Key="$S3_KEY" \
-    --region "$AWS_REGION" \
-    --no-cli-pager
+    --region "$AWS_REGION"
 echo "Created application version: $VERSION_LABEL"
 
 echo ""
@@ -169,7 +171,7 @@ if [ "$ENV_EXISTS" = "0" ]; then
     aws elasticbeanstalk create-environment \
         --application-name "$APP_NAME" \
         --environment-name "$ENV_NAME" \
-        --solution-stack-name "64bit Amazon Linux 2023 v4.4.4 running Docker" \
+        --solution-stack-name "64bit Amazon Linux 2023 v4.11.0 running Docker" \
         --version-label "$VERSION_LABEL" \
         --option-settings \
             "Namespace=aws:ec2:vpc,OptionName=VPCId,Value=$VPC_ID" \
@@ -185,8 +187,7 @@ if [ "$ENV_EXISTS" = "0" ]; then
             "Namespace=aws:elasticbeanstalk:application:environment,OptionName=PORT,Value=80" \
             "Namespace=aws:elasticbeanstalk:environment:process:default,OptionName=HealthCheckPath,Value=/health" \
             "Namespace=aws:elasticbeanstalk:environment:process:default,OptionName=StickinessEnabled,Value=true" \
-        --region "$AWS_REGION" \
-        --no-cli-pager
+        --region "$AWS_REGION"
     echo "Environment creation initiated (this takes 5-10 minutes for new environments)"
 else
     echo "Updating existing environment..."
@@ -194,8 +195,7 @@ else
         --application-name "$APP_NAME" \
         --environment-name "$ENV_NAME" \
         --version-label "$VERSION_LABEL" \
-        --region "$AWS_REGION" \
-        --no-cli-pager
+        --region "$AWS_REGION"
     echo "Deployment initiated"
 fi
 
