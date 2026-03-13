@@ -592,7 +592,7 @@ export function TeamModePage() {
             )}
           </div>
           {viewAsSprintNumber !== null && (
-            <div className="flex items-center gap-1.5 rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 text-xs text-accent">
+            <div className="flex items-center gap-1.5 rounded-md border border-accent/30 bg-accent/20 px-2 py-0.5 text-xs text-foreground">
               <span>Viewing as {data.weeks.find(w => w.number === viewAsSprintNumber)?.name ?? `Week ${viewAsSprintNumber}`}</span>
               <button
                 onClick={() => setViewAsSprintNumber(null)}
@@ -749,7 +749,7 @@ export function TeamModePage() {
                   >
                     <span className={cn(
                       'text-xs font-medium',
-                      sprint.isCurrent ? 'text-accent' : 'text-foreground'
+                      'text-foreground'
                     )}>
                       {sprint.name}
                     </span>
@@ -957,4 +957,3 @@ function ViewAsIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-

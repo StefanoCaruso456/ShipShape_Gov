@@ -6,9 +6,15 @@ import AxeBuilder from '@axe-core/playwright';
 
 const ROOT = process.cwd();
 const BENCH_DIR = path.join(ROOT, 'benchmarks');
+const OUTPUT_DIR = process.env.ACCESSIBILITY_OUTPUT_DIR
+  ? path.resolve(ROOT, process.env.ACCESSIBILITY_OUTPUT_DIR)
+  : BENCH_DIR;
+const OUTPUT_PREFIX = process.env.ACCESSIBILITY_OUTPUT_PREFIX ?? '';
 const BASE_URL = process.env.ACCESSIBILITY_BASE_URL ?? 'http://localhost:5173';
 const LOGIN_EMAIL = process.env.ACCESSIBILITY_EMAIL ?? 'dev@ship.local';
 const LOGIN_PASSWORD = process.env.ACCESSIBILITY_PASSWORD ?? 'admin123';
+const LOGIN_NAME = process.env.ACCESSIBILITY_NAME ?? 'Dev User';
+const LIGHTHOUSE_CHROME_PATH = process.env.ACCESSIBILITY_CHROME_PATH ?? chromium.executablePath();
 
 const PAGES = [
   { name: 'login', path: '/login', authRequired: false },
@@ -22,6 +28,10 @@ const PAGES = [
 
 function slugify(value) {
   return value.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase();
+}
+
+function outputPath(fileName) {
+  return path.join(OUTPUT_DIR, `${OUTPUT_PREFIX}${fileName}`);
 }
 
 function sumViolationsByImpact(results, impact) {
@@ -87,9 +97,32 @@ async function settle(page) {
 async function login(page) {
   await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' });
   await settle(page);
+  if (!page.url().includes('/login')) {
+    return;
+  }
+
+  const setupButton = page.getByRole('button', { name: /create admin account/i });
+  const signInButton = page.getByRole('button', { name: 'Sign in', exact: true });
+
+  await Promise.any([
+    setupButton.waitFor({ state: 'visible', timeout: 10_000 }),
+    signInButton.waitFor({ state: 'visible', timeout: 10_000 }),
+  ]);
+
+  if (await setupButton.isVisible().catch(() => false)) {
+    await page.locator('#name').fill(LOGIN_NAME);
+    await page.locator('#email').fill(LOGIN_EMAIL);
+    await page.locator('#password').fill(LOGIN_PASSWORD);
+    await page.locator('#confirmPassword').fill(LOGIN_PASSWORD);
+    await setupButton.click();
+    await page.waitForURL((url) => !url.toString().includes('/setup') && !url.toString().includes('/login'), { timeout: 10_000 });
+    await settle(page);
+    return;
+  }
+
   await page.locator('#email').fill(LOGIN_EMAIL);
   await page.locator('#password').fill(LOGIN_PASSWORD);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await signInButton.click();
   await page.waitForURL((url) => !url.toString().includes('/login'), { timeout: 10_000 });
   await settle(page);
 }
@@ -207,7 +240,7 @@ async function auditPage(page, pageDef) {
     .analyze();
 
   const pageKey = slugify(pageDef.name);
-  const axePath = path.join(BENCH_DIR, `axe-${pageKey}.json`);
+  const axePath = outputPath(`axe-${pageKey}.json`);
   await fs.writeFile(axePath, JSON.stringify(axeResults, null, 2));
 
   const screenReaderProxy = await captureAccessibilityTree(page);
@@ -259,7 +292,11 @@ function runLighthouse(url, cookieHeader, outputPath) {
 
   execFileSync('corepack', args, {
     cwd: ROOT,
-    env: { ...process.env, COREPACK_HOME: '/tmp/corepack' },
+    env: {
+      ...process.env,
+      COREPACK_HOME: '/tmp/corepack',
+      ...(LIGHTHOUSE_CHROME_PATH ? { CHROME_PATH: LIGHTHOUSE_CHROME_PATH } : {}),
+    },
     stdio: 'pipe',
   });
 
@@ -267,7 +304,7 @@ function runLighthouse(url, cookieHeader, outputPath) {
 }
 
 async function main() {
-  await fs.mkdir(BENCH_DIR, { recursive: true });
+  await fs.mkdir(OUTPUT_DIR, { recursive: true });
 
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ baseURL: BASE_URL });
@@ -295,7 +332,7 @@ async function main() {
 
   const lighthouse = [];
   for (const pageDef of PAGES) {
-    const outPath = path.join(BENCH_DIR, `lighthouse-${slugify(pageDef.name)}.json`);
+    const outPath = outputPath(`lighthouse-${slugify(pageDef.name)}.json`);
     const result = await runLighthouse(`${BASE_URL}${pageDef.path}`, pageDef.authRequired ? cookieHeader : '', outPath);
     lighthouse.push({
       name: pageDef.name,
@@ -331,7 +368,7 @@ async function main() {
     ],
   };
 
-  const outPath = path.join(BENCH_DIR, 'accessibility-baseline.json');
+  const outPath = outputPath('accessibility-baseline.json');
   await fs.writeFile(outPath, JSON.stringify(report, null, 2));
 
   await browser.close();
