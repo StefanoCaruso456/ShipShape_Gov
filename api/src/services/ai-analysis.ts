@@ -12,6 +12,7 @@
 import { createHash } from 'crypto';
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { extractText } from '../utils/document-content.js';
+import { estimateAiCost, finishAiSpan, startAiSpan, type AiUsageMetrics } from './ai-telemetry.js';
 
 const MODEL_ID = 'global.anthropic.claude-opus-4-5-20251101-v1:0';
 const REGION = 'us-east-1';
@@ -225,10 +226,15 @@ Respond ONLY with valid JSON matching this exact structure:
   "suggestions": ["<actionable suggestion 1>", "<actionable suggestion 2>"]
 }`;
 
-async function callBedrock(systemPrompt: string, userPrompt: string): Promise<string | null> {
+async function callBedrock(
+  operation: 'shipshape.ai.analyze-plan' | 'shipshape.ai.analyze-retro',
+  systemPrompt: string,
+  userPrompt: string
+): Promise<string | null> {
   const client = getClient();
   if (!client) return null;
 
+  const startedAt = Date.now();
   const body = JSON.stringify({
     anthropic_version: 'bedrock-2023-05-31',
     max_tokens: 2048,
@@ -238,6 +244,15 @@ async function callBedrock(systemPrompt: string, userPrompt: string): Promise<st
     ],
   });
 
+  const span = startAiSpan({
+    operation,
+    model: MODEL_ID,
+    region: REGION,
+    systemPrompt,
+    userPrompt,
+    maxTokens: 2048,
+  });
+
   const command = new InvokeModelCommand({
     modelId: MODEL_ID,
     contentType: 'application/json',
@@ -245,14 +260,89 @@ async function callBedrock(systemPrompt: string, userPrompt: string): Promise<st
     body: new TextEncoder().encode(body),
   });
 
-  const response = await client.send(command);
-  const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+  try {
+    const response = await client.send(command);
+    const responseBody = JSON.parse(new TextDecoder().decode(response.body)) as Record<string, unknown>;
+    const usage = estimateAiCost(extractBedrockUsage(responseBody));
+    const responseText = extractResponseText(responseBody);
 
-  if (responseBody.content && responseBody.content[0]?.text) {
-    return responseBody.content[0].text;
+    finishAiSpan(span, {
+      responseText,
+      usage,
+      latencyMs: Date.now() - startedAt,
+      metadata: {
+        request_id: response.$metadata.requestId,
+        stop_reason: getStringProperty(responseBody, 'stop_reason'),
+      },
+    });
+
+    return responseText;
+  } catch (error) {
+    finishAiSpan(span, {
+      latencyMs: Date.now() - startedAt,
+      error,
+      metadata: {
+        model: MODEL_ID,
+      },
+    });
+    throw error;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getNumberProperty(record: Record<string, unknown>, key: string): number | undefined {
+  const value = record[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function getStringProperty(record: Record<string, unknown>, key: string): string | undefined {
+  const value = record[key];
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function extractResponseText(responseBody: Record<string, unknown>): string | null {
+  const content = responseBody.content;
+  if (!Array.isArray(content)) return null;
+
+  const textParts = content
+    .filter(isRecord)
+    .map((item) => getStringProperty(item, 'text'))
+    .filter((text): text is string => Boolean(text));
+
+  if (textParts.length === 0) return null;
+
+  const responseText = textParts.join('\n').trim();
+  return responseText || null;
+}
+
+function extractBedrockUsage(responseBody: Record<string, unknown>): AiUsageMetrics {
+  if (!isRecord(responseBody.usage)) {
+    return {};
   }
 
-  return null;
+  const usage = responseBody.usage;
+  const promptTokens = getNumberProperty(usage, 'input_tokens');
+  const completionTokens = getNumberProperty(usage, 'output_tokens');
+  const promptCachedTokens = getNumberProperty(usage, 'cache_read_input_tokens');
+  const promptCacheCreationTokens = getNumberProperty(usage, 'cache_creation_input_tokens');
+
+  const totalPromptTokens =
+    (promptTokens ?? 0) + (promptCachedTokens ?? 0) + (promptCacheCreationTokens ?? 0);
+  const totalTokens =
+    totalPromptTokens > 0 || completionTokens !== undefined
+      ? totalPromptTokens + (completionTokens ?? 0)
+      : undefined;
+
+  return {
+    promptTokens,
+    promptCachedTokens,
+    promptCacheCreationTokens,
+    completionTokens,
+    totalTokens,
+  };
 }
 
 /**
@@ -281,7 +371,7 @@ export async function analyzePlan(content: unknown): Promise<PlanAnalysisResult 
   const userPrompt = `Analyze this weekly plan. Here are the plan items:\n\n${itemsText}`;
 
   try {
-    const responseText = await callBedrock(PLAN_SYSTEM_PROMPT, userPrompt);
+    const responseText = await callBedrock('shipshape.ai.analyze-plan', PLAN_SYSTEM_PROMPT, userPrompt);
     if (!responseText) {
       return { error: 'ai_unavailable' };
     }
@@ -348,7 +438,7 @@ export async function analyzeRetro(
     : `Evaluate this weekly retro for quality. No plan was found for comparison, so evaluate the retro items on their own specificity, evidence, and substance.\n\nRETRO CONTENT:\n${retroText}`;
 
   try {
-    const responseText = await callBedrock(RETRO_SYSTEM_PROMPT, userPrompt);
+    const responseText = await callBedrock('shipshape.ai.analyze-retro', RETRO_SYSTEM_PROMPT, userPrompt);
     if (!responseText) {
       return { error: 'ai_unavailable' };
     }

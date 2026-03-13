@@ -251,8 +251,8 @@ resource "aws_cloudfront_distribution" "frontend" {
     default_ttl            = 3600
     max_ttl                = 86400
 
-    # Real-time logging for security monitoring
-    realtime_log_config_arn = aws_cloudfront_realtime_log_config.main.arn
+    # Real-time logging is optional because new/free AWS accounts may not have Kinesis access yet.
+    realtime_log_config_arn = var.enable_cloudfront_realtime_logs ? aws_cloudfront_realtime_log_config.main[0].arn : null
 
     forwarded_values {
       query_string = false
@@ -429,6 +429,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
   rule {
     id     = "abort-incomplete-multipart"
     status = "Enabled"
+
+    filter {}
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 1

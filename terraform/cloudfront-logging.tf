@@ -3,6 +3,7 @@
 
 # Kinesis Data Stream for CloudFront logs
 resource "aws_kinesis_stream" "cloudfront_logs" {
+  count            = var.enable_cloudfront_realtime_logs ? 1 : 0
   name             = "${var.project_name}-${var.environment}-cloudfront-logs"
   shard_count      = 4
   retention_period = 4320 # 180 days (in hours)
@@ -22,7 +23,8 @@ resource "aws_kinesis_stream" "cloudfront_logs" {
 
 # IAM Role for CloudFront to write to Kinesis
 resource "aws_iam_role" "cloudfront_realtime_logs" {
-  name = "${var.project_name}-${var.environment}-cf-realtime-logs"
+  count = var.enable_cloudfront_realtime_logs ? 1 : 0
+  name  = "${var.project_name}-${var.environment}-cf-realtime-logs"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -45,8 +47,9 @@ resource "aws_iam_role" "cloudfront_realtime_logs" {
 
 # IAM Policy for CloudFront to write to Kinesis
 resource "aws_iam_role_policy" "cloudfront_realtime_logs" {
-  name = "${var.project_name}-${var.environment}-cf-realtime-logs"
-  role = aws_iam_role.cloudfront_realtime_logs.id
+  count = var.enable_cloudfront_realtime_logs ? 1 : 0
+  name  = "${var.project_name}-${var.environment}-cf-realtime-logs"
+  role  = aws_iam_role.cloudfront_realtime_logs[0].id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -59,7 +62,7 @@ resource "aws_iam_role_policy" "cloudfront_realtime_logs" {
           "kinesis:PutRecord",
           "kinesis:PutRecords"
         ]
-        Resource = aws_kinesis_stream.cloudfront_logs.arn
+        Resource = aws_kinesis_stream.cloudfront_logs[0].arn
       }
     ]
   })
@@ -67,6 +70,7 @@ resource "aws_iam_role_policy" "cloudfront_realtime_logs" {
 
 # CloudFront Real-time Log Configuration
 resource "aws_cloudfront_realtime_log_config" "main" {
+  count         = var.enable_cloudfront_realtime_logs ? 1 : 0
   name          = "${var.project_name}-${var.environment}-realtime-logs"
   sampling_rate = 100
 
@@ -74,8 +78,8 @@ resource "aws_cloudfront_realtime_log_config" "main" {
     stream_type = "Kinesis"
 
     kinesis_stream_config {
-      role_arn   = aws_iam_role.cloudfront_realtime_logs.arn
-      stream_arn = aws_kinesis_stream.cloudfront_logs.arn
+      role_arn   = aws_iam_role.cloudfront_realtime_logs[0].arn
+      stream_arn = aws_kinesis_stream.cloudfront_logs[0].arn
     }
   }
 

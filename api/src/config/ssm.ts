@@ -35,6 +35,31 @@ export async function getSSMSecret(name: string): Promise<string> {
   return response.Parameter.Value;
 }
 
+function isParameterMissing(error: unknown): boolean {
+  return error instanceof Error && (
+    error.name === 'ParameterNotFound' ||
+    error.name === 'ParameterNotFoundException' ||
+    error.message.includes('not found')
+  );
+}
+
+async function getOptionalSSMSecret(name: string): Promise<string | undefined> {
+  try {
+    return await getSSMSecret(name);
+  } catch (error) {
+    if (isParameterMissing(error)) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+function setIfDefined(name: string, value: string | undefined): boolean {
+  if (!value) return false;
+  process.env[name] = value;
+  return true;
+}
+
 export async function loadProductionSecrets(): Promise<void> {
   if (process.env.NODE_ENV !== 'production') {
     return; // Use .env files for local dev
@@ -53,14 +78,45 @@ export async function loadProductionSecrets(): Promise<void> {
     getSSMSecret(`${basePath}/APP_BASE_URL`),
   ]);
 
+  const [
+    braintrustApiKey,
+    braintrustProject,
+    braintrustOrgName,
+    braintrustAppUrl,
+    braintrustLogPrompts,
+    bedrockInputCost,
+    bedrockOutputCost,
+  ] = await Promise.all([
+    getOptionalSSMSecret(`${basePath}/BRAINTRUST_API_KEY`),
+    getOptionalSSMSecret(`${basePath}/BRAINTRUST_PROJECT`),
+    getOptionalSSMSecret(`${basePath}/BRAINTRUST_ORG_NAME`),
+    getOptionalSSMSecret(`${basePath}/BRAINTRUST_APP_URL`),
+    getOptionalSSMSecret(`${basePath}/BRAINTRUST_LOG_PROMPTS`),
+    getOptionalSSMSecret(`${basePath}/BEDROCK_INPUT_COST_PER_MILLION_USD`),
+    getOptionalSSMSecret(`${basePath}/BEDROCK_OUTPUT_COST_PER_MILLION_USD`),
+  ]);
+
   process.env.DATABASE_URL = databaseUrl;
   process.env.SESSION_SECRET = sessionSecret;
   process.env.CORS_ORIGIN = corsOrigin;
   process.env.CDN_DOMAIN = cdnDomain;
   process.env.APP_BASE_URL = appBaseUrl;
 
+  const optionalAiValuesLoaded = [
+    setIfDefined('BRAINTRUST_API_KEY', braintrustApiKey),
+    setIfDefined('BRAINTRUST_PROJECT', braintrustProject),
+    setIfDefined('BRAINTRUST_ORG_NAME', braintrustOrgName),
+    setIfDefined('BRAINTRUST_APP_URL', braintrustAppUrl),
+    setIfDefined('BRAINTRUST_LOG_PROMPTS', braintrustLogPrompts),
+    setIfDefined('BEDROCK_INPUT_COST_PER_MILLION_USD', bedrockInputCost),
+    setIfDefined('BEDROCK_OUTPUT_COST_PER_MILLION_USD', bedrockOutputCost),
+  ].filter(Boolean).length;
+
   console.log('Secrets loaded from SSM Parameter Store');
   console.log(`CORS_ORIGIN: ${corsOrigin}`);
   console.log(`CDN_DOMAIN: ${cdnDomain}`);
   console.log(`APP_BASE_URL: ${appBaseUrl}`);
+  if (optionalAiValuesLoaded > 0) {
+    console.log(`Loaded ${optionalAiValuesLoaded} optional AI telemetry settings from SSM Parameter Store`);
+  }
 }

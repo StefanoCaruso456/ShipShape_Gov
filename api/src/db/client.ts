@@ -16,6 +16,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: isProduction ? { rejectUnauthorized: false } : false,
   // Production-ready pool configuration
   max: isProduction ? 20 : 10, // Max connections (default is 10)
   idleTimeoutMillis: 30000, // Close idle connections after 30 seconds

@@ -14,18 +14,18 @@ output "public_subnet_ids" {
 }
 
 output "aurora_cluster_endpoint" {
-  description = "Aurora cluster endpoint"
-  value       = aws_rds_cluster.aurora.endpoint
+  description = "PostgreSQL instance endpoint"
+  value       = aws_db_instance.aurora.address
 }
 
 output "aurora_cluster_reader_endpoint" {
-  description = "Aurora cluster reader endpoint"
-  value       = aws_rds_cluster.aurora.reader_endpoint
+  description = "PostgreSQL instance endpoint"
+  value       = aws_db_instance.aurora.address
 }
 
 output "database_name" {
   description = "Database name"
-  value       = aws_rds_cluster.aurora.database_name
+  value       = aws_db_instance.aurora.db_name
 }
 
 output "database_url_ssm_parameter" {
@@ -87,4 +87,3 @@ output "uploads_bucket_arn" {
   description = "S3 bucket ARN for file uploads"
   value       = aws_s3_bucket.uploads.arn
 }
-
