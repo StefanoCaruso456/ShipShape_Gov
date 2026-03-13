@@ -1,0 +1,76 @@
+{
+  "category": "Category 7: Accessibility Compliance",
+  "result": "pass",
+  "targetStrategy": "Eliminate automated serious accessibility violations and contrast failures on the seeded major pages under identical local audit conditions",
+  "plainEnglishSummary": "Before this change, the measurable accessibility problems were concentrated in repeated low-contrast badges, labels, and faded future-row text on the main authenticated pages. After the fix, those patterns use accessible foreground colors, future standup rows no longer dim all child text, and the docs sidebar overflow links live outside the tree structure. The measured result was 3 serious violations down to 0, 22 color contrast failures down to 0, and the My Week Lighthouse accessibility score improving from 96 to 100.",
+  "before": {
+    "criticalSeriousViolations": 3,
+    "colorContrastFailures": 22,
+    "keyboardCompleteness": "Partial",
+    "lighthouseScores": {
+      "login": 98,
+      "my-week": 96,
+      "docs": 100,
+      "issues": 100,
+      "projects": 100,
+      "programs": 100,
+      "team-allocation": 100
+    }
+  },
+  "after": {
+    "criticalSeriousViolations": 0,
+    "colorContrastFailures": 0,
+    "keyboardCompleteness": "Partial",
+    "lighthouseScores": {
+      "login": 98,
+      "my-week": 100,
+      "docs": 100,
+      "issues": 100,
+      "projects": 100,
+      "programs": 100,
+      "team-allocation": 100
+    }
+  },
+  "pageMetrics": [
+    {
+      "page": "/my-week",
+      "beforeSerious": 1,
+      "afterSerious": 0,
+      "beforeContrastFailures": 9,
+      "afterContrastFailures": 0,
+      "beforeLighthouse": 96,
+      "afterLighthouse": 100
+    },
+    {
+      "page": "/projects",
+      "beforeSerious": 1,
+      "afterSerious": 0,
+      "beforeContrastFailures": 12,
+      "afterContrastFailures": 0,
+      "beforeLighthouse": 100,
+      "afterLighthouse": 100
+    },
+    {
+      "page": "/team/allocation",
+      "beforeSerious": 1,
+      "afterSerious": 0,
+      "beforeContrastFailures": 1,
+      "afterContrastFailures": 0,
+      "beforeLighthouse": 100,
+      "afterLighthouse": 100
+    }
+  ],
+  "changedFiles": [
+    "web/src/pages/MyWeekPage.tsx",
+    "web/src/pages/Projects.tsx",
+    "web/src/pages/TeamMode.tsx",
+    "web/src/components/FilterTabs.tsx",
+    "web/src/pages/App.tsx",
+    "benchmarks/accessibility-audit.mjs"
+  ],
+  "artifacts": {
+    "beforeAudit": "stage-2/category-7-accessibility-compliance/before-accessibility-baseline.json",
+    "afterAudit": "stage-2/category-7-accessibility-compliance/after-accessibility-baseline.json",
+    "webTests": "stage-2/category-7-accessibility-compliance/web-vitest-after.json"
+  }
+}

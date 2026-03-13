@@ -36,4 +36,12 @@ This folder is the working evidence store for Stage 2 implementation.
 - Reasoning: `category-3-api-response-time/reasoning.md`
 - Verification: `category-3-api-response-time/api-vitest-after.json`
 
+## Category 7
+- Before audit: `category-7-accessibility-compliance/before-accessibility-baseline.json`
+- After audit: `category-7-accessibility-compliance/after-accessibility-baseline.json`
+- Summary: `category-7-accessibility-compliance/summary.json`
+- Command: `category-7-accessibility-compliance/benchmark-commands.txt`
+- Reasoning: `category-7-accessibility-compliance/reasoning.md`
+- Verification: `category-7-accessibility-compliance/web-vitest-after.json`
+
 The original benchmark files remain in `benchmarks/` and the final narrative remains in `final-report/` so existing references do not break.
