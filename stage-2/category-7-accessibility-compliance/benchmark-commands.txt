@@ -1,0 +1,53 @@
+# Category 7 benchmark commands
+
+# 1. Seed the local database so the audited pages have representative content.
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+export PATH="$HOME/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"
+export DATABASE_URL="$(awk -F= '/^DATABASE_URL=/{print $2}' api/.env.local)"
+pnpm db:seed
+
+# 2. Build the web app for Vite preview.
+pnpm build:web
+
+# 3. In terminal A, start the API server.
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+export PATH="$HOME/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"
+export DATABASE_URL="$(awk -F= '/^DATABASE_URL=/{print $2}' api/.env.local)"
+export CORS_ORIGIN=http://127.0.0.1:4173
+cd api
+node dist/index.js
+
+# 4. In terminal B, start the web preview server.
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+export API_PORT=3000
+cd web
+npx vite preview --host 127.0.0.1 --port 4173 --strictPort
+
+# 5. Capture the before-state accessibility audit.
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+ACCESSIBILITY_BASE_URL=http://127.0.0.1:4173 \
+ACCESSIBILITY_OUTPUT_DIR=stage-2/category-7-accessibility-compliance \
+ACCESSIBILITY_OUTPUT_PREFIX=before- \
+node benchmarks/accessibility-audit.mjs
+
+# 6. Capture the after-state accessibility audit.
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+ACCESSIBILITY_BASE_URL=http://127.0.0.1:4173 \
+ACCESSIBILITY_OUTPUT_DIR=stage-2/category-7-accessibility-compliance \
+ACCESSIBILITY_OUTPUT_PREFIX=after- \
+node benchmarks/accessibility-audit.mjs
+
+# 7. Verify the web test suite.
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+pnpm --filter @ship/web test
+
+# 8. Save the machine-readable test artifact.
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+pnpm --filter @ship/web exec vitest run --reporter=json --outputFile ../stage-2/category-7-accessibility-compliance/web-vitest-after.json

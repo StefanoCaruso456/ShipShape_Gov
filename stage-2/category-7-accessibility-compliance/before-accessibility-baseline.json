@@ -1,0 +1,2238 @@
+{
+  "auditedAt": "2026-03-13T01:21:41.894Z",
+  "baseUrl": "http://127.0.0.1:4173",
+  "pages": [
+    {
+      "name": "login",
+      "path": "/login",
+      "title": "Ship - Project Management & Documentation",
+      "authRequired": false,
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0,
+        "violationCount": 0,
+        "reportPath": "stage-2/category-7-accessibility-compliance/before-axe-login.json"
+      },
+      "colorContrastFailures": [],
+      "missingAriaLocations": [],
+      "screenReaderProxy": {
+        "status": "Partial",
+        "landmarks": [
+          {
+            "role": "heading",
+            "name": "Sign in to Ship"
+          },
+          {
+            "role": "button",
+            "name": "Sign in"
+          },
+          {
+            "role": "textbox",
+            "name": "Email address"
+          },
+          {
+            "role": "textbox",
+            "name": "Password"
+          }
+        ],
+        "note": "This is an accessibility-tree proxy only. Native VoiceOver/NVDA screen-reader testing was not executed in this environment."
+      }
+    },
+    {
+      "name": "my-week",
+      "path": "/my-week",
+      "title": "Ship | Ship",
+      "authRequired": true,
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "moderate": 0,
+        "minor": 0,
+        "violationCount": 1,
+        "reportPath": "stage-2/category-7-accessibility-compliance/before-axe-my-week.json"
+      },
+      "colorContrastFailures": [
+        {
+          "impact": "serious",
+          "target": ".bg-accent\\/20.py-0\\.5.px-1\\.5",
+          "html": "<span class=\"text-xs bg-accent/20 text-accent px-1.5 py-0.5 rounded\">Current</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".items-start.gap-2\\.5.py-1\\.5:nth-child(1) > .text-\\[11px\\].text-muted\\/50.text-right",
+          "html": "<span class=\"text-[11px] font-semibold text-muted/50 w-4 text-right shrink-0 mt-0.5\">1.</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.26 (foreground color: #4c4c4c, background color: #0d0d0d, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".items-start.gap-2\\.5.py-1\\.5:nth-child(2) > .text-\\[11px\\].text-muted\\/50.text-right",
+          "html": "<span class=\"text-[11px] font-semibold text-muted/50 w-4 text-right shrink-0 mt-0.5\">2.</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.26 (foreground color: #4c4c4c, background color: #0d0d0d, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".items-start.gap-2\\.5.py-1\\.5:nth-child(3) > .text-\\[11px\\].text-muted\\/50.text-right",
+          "html": "<span class=\"text-[11px] font-semibold text-muted/50 w-4 text-right shrink-0 mt-0.5\">3.</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.26 (foreground color: #4c4c4c, background color: #0d0d0d, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".items-start.gap-2\\.5.py-1\\.5:nth-child(4) > .text-\\[11px\\].text-muted\\/50.text-right",
+          "html": "<span class=\"text-[11px] font-semibold text-muted/50 w-4 text-right shrink-0 mt-0.5\">4.</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.26 (foreground color: #4c4c4c, background color: #0d0d0d, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".text-accent.font-medium.text-xs",
+          "html": "<span class=\"text-xs font-medium text-accent\">Fri</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.82 (foreground color: #005ea2, background color: #0c1114, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".opacity-40.py-2\\.5.bg-surface:nth-child(5) > .w-20.flex-shrink-0 > .font-medium.text-xs.text-muted",
+          "html": "<span class=\"text-xs font-medium text-muted\">Sat</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.84 (foreground color: #3f3f3f, background color: #0d0d0d, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".opacity-40.py-2\\.5.bg-surface:nth-child(5) > .w-20.flex-shrink-0 > .ml-1.text-xs.text-muted",
+          "html": "<span class=\"text-xs text-muted ml-1\">3/14</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.84 (foreground color: #3f3f3f, background color: #0d0d0d, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".opacity-40.py-2\\.5.bg-surface:nth-child(5) > .min-w-0.flex-1 > .italic.text-xs.text-muted",
+          "html": "<span class=\"text-xs text-muted italic\">Upcoming</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.84 (foreground color: #3f3f3f, background color: #0d0d0d, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ],
+      "missingAriaLocations": [],
+      "screenReaderProxy": {
+        "status": "Partial",
+        "landmarks": [
+          {
+            "role": "link",
+            "name": "Skip to main content"
+          },
+          {
+            "role": "button",
+            "name": "2 accountability items are due today. 2 View items"
+          },
+          {
+            "role": "navigation",
+            "name": "Primary navigation"
+          },
+          {
+            "role": "main",
+            "name": ""
+          },
+          {
+            "role": "button",
+            "name": "Dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Docs"
+          },
+          {
+            "role": "button",
+            "name": "Programs"
+          },
+          {
+            "role": "button",
+            "name": "Projects"
+          },
+          {
+            "role": "button",
+            "name": "Teams (standup due)"
+          },
+          {
+            "role": "button",
+            "name": "Settings"
+          },
+          {
+            "role": "button",
+            "name": "D"
+          },
+          {
+            "role": "heading",
+            "name": "Dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Collapse sidebar"
+          },
+          {
+            "role": "button",
+            "name": "My Work"
+          },
+          {
+            "role": "button",
+            "name": "Overview"
+          },
+          {
+            "role": "heading",
+            "name": "Week 14"
+          },
+          {
+            "role": "button",
+            "name": "Previous week"
+          },
+          {
+            "role": "button",
+            "name": "Next week"
+          },
+          {
+            "role": "button",
+            "name": "S"
+          },
+          {
+            "role": "heading",
+            "name": "ASSIGNED PROJECTS"
+          },
+          {
+            "role": "link",
+            "name": "Ship Core - Core Features Ship Core"
+          },
+          {
+            "role": "heading",
+            "name": "WEEKLY PLAN"
+          },
+          {
+            "role": "link",
+            "name": "Submitted 1. Refactor data access layer 2. Implement caching strategy 3. Fix accessibility audit findings 4. Update CI/CD pipeline configuration"
+          },
+          {
+            "role": "heading",
+            "name": "WEEKLY RETRO"
+          },
+          {
+            "role": "button",
+            "name": "+ Create retro for this week"
+          },
+          {
+            "role": "heading",
+            "name": "DAILY UPDATES"
+          },
+          {
+            "role": "button",
+            "name": "Tue3/10 + Write update"
+          },
+          {
+            "role": "button",
+            "name": "Wed3/11 + Write update"
+          },
+          {
+            "role": "button",
+            "name": "Thu3/12 + Write update"
+          },
+          {
+            "role": "button",
+            "name": "Fri3/13 + Write update"
+          }
+        ],
+        "note": "This is an accessibility-tree proxy only. Native VoiceOver/NVDA screen-reader testing was not executed in this environment."
+      }
+    },
+    {
+      "name": "docs",
+      "path": "/docs",
+      "title": "Documents | Ship",
+      "authRequired": true,
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0,
+        "violationCount": 0,
+        "reportPath": "stage-2/category-7-accessibility-compliance/before-axe-docs.json"
+      },
+      "colorContrastFailures": [],
+      "missingAriaLocations": [],
+      "screenReaderProxy": {
+        "status": "Partial",
+        "landmarks": [
+          {
+            "role": "link",
+            "name": "Skip to main content"
+          },
+          {
+            "role": "button",
+            "name": "2 accountability items are due today. 2 View items"
+          },
+          {
+            "role": "navigation",
+            "name": "Primary navigation"
+          },
+          {
+            "role": "main",
+            "name": ""
+          },
+          {
+            "role": "button",
+            "name": "Dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Docs"
+          },
+          {
+            "role": "button",
+            "name": "Programs"
+          },
+          {
+            "role": "button",
+            "name": "Projects"
+          },
+          {
+            "role": "button",
+            "name": "Teams (standup due)"
+          },
+          {
+            "role": "button",
+            "name": "Settings"
+          },
+          {
+            "role": "button",
+            "name": "D"
+          },
+          {
+            "role": "heading",
+            "name": "Docs"
+          },
+          {
+            "role": "button",
+            "name": "New document"
+          },
+          {
+            "role": "button",
+            "name": "Collapse sidebar"
+          },
+          {
+            "role": "heading",
+            "name": "Documents"
+          },
+          {
+            "role": "button",
+            "name": "New Document"
+          },
+          {
+            "role": "button",
+            "name": "S"
+          },
+          {
+            "role": "textbox",
+            "name": "Search..."
+          },
+          {
+            "role": "button",
+            "name": "List view"
+          },
+          {
+            "role": "button",
+            "name": "Tree view"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Welcome to Ship"
+          },
+          {
+            "role": "button",
+            "name": "Document actions"
+          },
+          {
+            "role": "link",
+            "name": "Project Overview"
+          },
+          {
+            "role": "button",
+            "name": "Document actions"
+          },
+          {
+            "role": "link",
+            "name": "Architecture Guide"
+          },
+          {
+            "role": "button",
+            "name": "Document actions"
+          },
+          {
+            "role": "link",
+            "name": "API Reference"
+          },
+          {
+            "role": "button",
+            "name": "Document actions"
+          },
+          {
+            "role": "link",
+            "name": "Development Setup"
+          },
+          {
+            "role": "button",
+            "name": "Document actions"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Welcome to Ship"
+          },
+          {
+            "role": "button",
+            "name": "Delete document"
+          },
+          {
+            "role": "button",
+            "name": "Add sub-document"
+          },
+          {
+            "role": "link",
+            "name": "Project Overview"
+          },
+          {
+            "role": "button",
+            "name": "Delete document"
+          },
+          {
+            "role": "button",
+            "name": "Add sub-document"
+          },
+          {
+            "role": "link",
+            "name": "Architecture Guide"
+          },
+          {
+            "role": "button",
+            "name": "Delete document"
+          },
+          {
+            "role": "button",
+            "name": "Add sub-document"
+          },
+          {
+            "role": "link",
+            "name": "API Reference"
+          },
+          {
+            "role": "button",
+            "name": "Delete document"
+          },
+          {
+            "role": "button",
+            "name": "Add sub-document"
+          },
+          {
+            "role": "link",
+            "name": "Development Setup"
+          },
+          {
+            "role": "button",
+            "name": "Delete document"
+          },
+          {
+            "role": "button",
+            "name": "Add sub-document"
+          }
+        ],
+        "note": "This is an accessibility-tree proxy only. Native VoiceOver/NVDA screen-reader testing was not executed in this environment."
+      }
+    },
+    {
+      "name": "issues",
+      "path": "/issues",
+      "title": "Issues | Ship",
+      "authRequired": true,
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0,
+        "violationCount": 0,
+        "reportPath": "stage-2/category-7-accessibility-compliance/before-axe-issues.json"
+      },
+      "colorContrastFailures": [],
+      "missingAriaLocations": [],
+      "screenReaderProxy": {
+        "status": "Partial",
+        "landmarks": [
+          {
+            "role": "link",
+            "name": "Skip to main content"
+          },
+          {
+            "role": "button",
+            "name": "2 accountability items are due today. 2 View items"
+          },
+          {
+            "role": "navigation",
+            "name": "Primary navigation"
+          },
+          {
+            "role": "main",
+            "name": ""
+          },
+          {
+            "role": "button",
+            "name": "Dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Docs"
+          },
+          {
+            "role": "button",
+            "name": "Programs"
+          },
+          {
+            "role": "button",
+            "name": "Projects"
+          },
+          {
+            "role": "button",
+            "name": "Teams (standup due)"
+          },
+          {
+            "role": "button",
+            "name": "Settings"
+          },
+          {
+            "role": "button",
+            "name": "D"
+          },
+          {
+            "role": "heading",
+            "name": "Issues"
+          },
+          {
+            "role": "button",
+            "name": "New issue"
+          },
+          {
+            "role": "button",
+            "name": "Collapse sidebar"
+          },
+          {
+            "role": "heading",
+            "name": "Issues"
+          },
+          {
+            "role": "button",
+            "name": "Customize columns"
+          },
+          {
+            "role": "button",
+            "name": "New Issue"
+          },
+          {
+            "role": "button",
+            "name": "S"
+          },
+          {
+            "role": "button",
+            "name": "List view"
+          },
+          {
+            "role": "button",
+            "name": "Kanban view"
+          },
+          {
+            "role": "link",
+            "name": "Security audit fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Security audit fixes"
+          },
+          {
+            "role": "link",
+            "name": "Create error handling"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create error handling"
+          },
+          {
+            "role": "link",
+            "name": "Add input validation"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add input validation"
+          },
+          {
+            "role": "link",
+            "name": "Implement core features"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement core features"
+          },
+          {
+            "role": "link",
+            "name": "Configure CI/CD pipeline"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Configure CI/CD pipeline"
+          },
+          {
+            "role": "link",
+            "name": "Set up project structure"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Set up project structure"
+          },
+          {
+            "role": "link",
+            "name": "Security audit fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Security audit fixes"
+          },
+          {
+            "role": "link",
+            "name": "Create error handling"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create error handling"
+          },
+          {
+            "role": "link",
+            "name": "Add input validation"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add input validation"
+          },
+          {
+            "role": "link",
+            "name": "Implement core features"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement core features"
+          },
+          {
+            "role": "link",
+            "name": "Configure CI/CD pipeline"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Configure CI/CD pipeline"
+          },
+          {
+            "role": "link",
+            "name": "Set up project structure"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Set up project structure"
+          },
+          {
+            "role": "link",
+            "name": "Security audit fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Security audit fixes"
+          },
+          {
+            "role": "link",
+            "name": "Create error handling"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create error handling"
+          },
+          {
+            "role": "link",
+            "name": "Add input validation"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add input validation"
+          },
+          {
+            "role": "link",
+            "name": "Implement core features"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement core features"
+          },
+          {
+            "role": "link",
+            "name": "Configure CI/CD pipeline"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Configure CI/CD pipeline"
+          },
+          {
+            "role": "link",
+            "name": "Set up project structure"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Set up project structure"
+          },
+          {
+            "role": "link",
+            "name": "Security audit fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Security audit fixes"
+          },
+          {
+            "role": "link",
+            "name": "Create error handling"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create error handling"
+          },
+          {
+            "role": "link",
+            "name": "Add input validation"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add input validation"
+          },
+          {
+            "role": "link",
+            "name": "Implement core features"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement core features"
+          },
+          {
+            "role": "link",
+            "name": "Configure CI/CD pipeline"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Configure CI/CD pipeline"
+          },
+          {
+            "role": "link",
+            "name": "Set up project structure"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Set up project structure"
+          },
+          {
+            "role": "link",
+            "name": "Create capacity planning"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create capacity planning"
+          },
+          {
+            "role": "link",
+            "name": "Add team workload view"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add team workload view"
+          },
+          {
+            "role": "link",
+            "name": "Build issue assignment flow"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Build issue assignment flow"
+          },
+          {
+            "role": "link",
+            "name": "Create sprint timeline UI"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create sprint timeline UI"
+          },
+          {
+            "role": "link",
+            "name": "Implement sprint management"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement sprint management"
+          },
+          {
+            "role": "link",
+            "name": "Add real-time collaboration"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add real-time collaboration"
+          },
+          {
+            "role": "link",
+            "name": "Implement CRUD operations"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement CRUD operations"
+          },
+          {
+            "role": "link",
+            "name": "Create document model"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create document model"
+          },
+          {
+            "role": "link",
+            "name": "Add password hashing"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add password hashing"
+          },
+          {
+            "role": "link",
+            "name": "Implement user authentication"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement user authentication"
+          },
+          {
+            "role": "link",
+            "name": "Database schema design"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Database schema design"
+          },
+          {
+            "role": "link",
+            "name": "Initial project setup"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Initial project setup"
+          },
+          {
+            "role": "link",
+            "name": "Create admin dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create admin dashboard"
+          },
+          {
+            "role": "link",
+            "name": "Add caching layer"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add caching layer"
+          },
+          {
+            "role": "link",
+            "name": "Performance optimization"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Performance optimization"
+          },
+          {
+            "role": "link",
+            "name": "Add unit tests"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add unit tests"
+          },
+          {
+            "role": "link",
+            "name": "Build user interface"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Build user interface"
+          },
+          {
+            "role": "link",
+            "name": "Set up staging environment"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Set up staging environment"
+          },
+          {
+            "role": "link",
+            "name": "Create initial documentation"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create initial documentation"
+          },
+          {
+            "role": "link",
+            "name": "Create admin dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create admin dashboard"
+          },
+          {
+            "role": "link",
+            "name": "Add caching layer"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add caching layer"
+          },
+          {
+            "role": "link",
+            "name": "Performance optimization"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Performance optimization"
+          },
+          {
+            "role": "link",
+            "name": "Add unit tests"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add unit tests"
+          },
+          {
+            "role": "link",
+            "name": "Build user interface"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Build user interface"
+          },
+          {
+            "role": "link",
+            "name": "Set up staging environment"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Set up staging environment"
+          },
+          {
+            "role": "link",
+            "name": "Create initial documentation"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create initial documentation"
+          },
+          {
+            "role": "link",
+            "name": "Create admin dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create admin dashboard"
+          },
+          {
+            "role": "link",
+            "name": "Add caching layer"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add caching layer"
+          },
+          {
+            "role": "link",
+            "name": "Performance optimization"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Performance optimization"
+          },
+          {
+            "role": "link",
+            "name": "Add unit tests"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add unit tests"
+          },
+          {
+            "role": "link",
+            "name": "Build user interface"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Build user interface"
+          },
+          {
+            "role": "link",
+            "name": "Set up staging environment"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Set up staging environment"
+          },
+          {
+            "role": "link",
+            "name": "Create initial documentation"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create initial documentation"
+          },
+          {
+            "role": "link",
+            "name": "Create admin dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create admin dashboard"
+          },
+          {
+            "role": "link",
+            "name": "Add caching layer"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add caching layer"
+          },
+          {
+            "role": "link",
+            "name": "Performance optimization"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Performance optimization"
+          },
+          {
+            "role": "link",
+            "name": "Add unit tests"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add unit tests"
+          },
+          {
+            "role": "link",
+            "name": "Build user interface"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Build user interface"
+          },
+          {
+            "role": "link",
+            "name": "Set up staging environment"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Set up staging environment"
+          },
+          {
+            "role": "link",
+            "name": "Create initial documentation"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create initial documentation"
+          },
+          {
+            "role": "link",
+            "name": "Build integration with Slack"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Build integration with Slack"
+          },
+          {
+            "role": "link",
+            "name": "Implement reporting dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement reporting dashboard"
+          },
+          {
+            "role": "link",
+            "name": "Build resource allocation UI"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Build resource allocation UI"
+          },
+          {
+            "role": "link",
+            "name": "Implement burndown chart"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement burndown chart"
+          },
+          {
+            "role": "link",
+            "name": "Add sprint velocity metrics"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add sprint velocity metrics"
+          },
+          {
+            "role": "link",
+            "name": "Create sprint retrospective view"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create sprint retrospective view"
+          },
+          {
+            "role": "link",
+            "name": "Add bulk issue operations"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add bulk issue operations"
+          },
+          {
+            "role": "link",
+            "name": "Add sprint progress chart"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add sprint progress chart"
+          },
+          {
+            "role": "link",
+            "name": "Integrate Yjs for CRDT"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Integrate Yjs for CRDT"
+          },
+          {
+            "role": "link",
+            "name": "Build WebSocket server"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Build WebSocket server"
+          },
+          {
+            "role": "link",
+            "name": "Add CSRF protection"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add CSRF protection"
+          },
+          {
+            "role": "link",
+            "name": "Build login/logout endpoints"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Build login/logout endpoints"
+          },
+          {
+            "role": "link",
+            "name": "Create session management"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create session management"
+          },
+          {
+            "role": "link",
+            "name": "Create basic API structure"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create basic API structure"
+          },
+          {
+            "role": "link",
+            "name": "Set up development environment"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Set up development environment"
+          },
+          {
+            "role": "link",
+            "name": "Add export functionality"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add export functionality"
+          },
+          {
+            "role": "link",
+            "name": "Implement analytics"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement analytics"
+          },
+          {
+            "role": "link",
+            "name": "Write integration tests"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Write integration tests"
+          },
+          {
+            "role": "link",
+            "name": "Define coding standards"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Define coding standards"
+          },
+          {
+            "role": "link",
+            "name": "Add export functionality"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add export functionality"
+          },
+          {
+            "role": "link",
+            "name": "Implement analytics"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement analytics"
+          },
+          {
+            "role": "link",
+            "name": "Write integration tests"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Write integration tests"
+          },
+          {
+            "role": "link",
+            "name": "Define coding standards"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Define coding standards"
+          },
+          {
+            "role": "link",
+            "name": "Add export functionality"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add export functionality"
+          },
+          {
+            "role": "link",
+            "name": "Implement analytics"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement analytics"
+          },
+          {
+            "role": "link",
+            "name": "Write integration tests"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Write integration tests"
+          },
+          {
+            "role": "link",
+            "name": "Define coding standards"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Define coding standards"
+          },
+          {
+            "role": "link",
+            "name": "Add export functionality"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add export functionality"
+          },
+          {
+            "role": "link",
+            "name": "Implement analytics"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement analytics"
+          },
+          {
+            "role": "link",
+            "name": "Write integration tests"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Write integration tests"
+          },
+          {
+            "role": "link",
+            "name": "Define coding standards"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Define coding standards"
+          },
+          {
+            "role": "link",
+            "name": "Add AI-powered suggestions"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add AI-powered suggestions"
+          },
+          {
+            "role": "link",
+            "name": "Create mobile app"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Create mobile app"
+          },
+          {
+            "role": "link",
+            "name": "Implement keyboard shortcuts"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Implement keyboard shortcuts"
+          },
+          {
+            "role": "link",
+            "name": "Add dark mode support"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add dark mode support"
+          },
+          {
+            "role": "link",
+            "name": "Add export to PDF"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add export to PDF"
+          },
+          {
+            "role": "link",
+            "name": "Add team availability calendar"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add team availability calendar"
+          },
+          {
+            "role": "link",
+            "name": "Add sprint completion notifications"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add sprint completion notifications"
+          },
+          {
+            "role": "link",
+            "name": "Add offline support"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Add offline support"
+          },
+          {
+            "role": "link",
+            "name": "Write auth unit tests"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Write auth unit tests"
+          }
+        ],
+        "note": "This is an accessibility-tree proxy only. Native VoiceOver/NVDA screen-reader testing was not executed in this environment."
+      }
+    },
+    {
+      "name": "projects",
+      "path": "/projects",
+      "title": "Ship | Ship",
+      "authRequired": true,
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "moderate": 0,
+        "minor": 0,
+        "violationCount": 1,
+        "reportPath": "stage-2/category-7-accessibility-compliance/before-axe-projects.json"
+      },
+      "colorContrastFailures": [
+        {
+          "impact": "serious",
+          "target": "#filter-planned > .bg-muted\\/30.ml-1.px-1\\.5",
+          "html": "<span class=\"ml-1 rounded-full px-1.5 py-0.5 text-xs font-medium bg-muted/30 text-muted\">10</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.65 (foreground color: #8a8a8a, background color: #333333, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(1) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">80</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(2) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">80</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(3) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">80</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(4) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">80</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(5) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">80</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".ring-2 > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">60</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.36 (foreground color: #005ea2, background color: #112431, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(7) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">60</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(8) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">60</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(9) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">60</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(10) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">60</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "impact": "serious",
+          "target": ".border-border\\/50[data-focused=\"false\"][role=\"row\"]:nth-child(11) > .text-center.font-medium.px-4 > .bg-accent\\/20.text-accent.whitespace-nowrap",
+          "html": "<span class=\"inline-flex items-center justify-center rounded bg-accent/20 px-2 py-0.5 text-accent whitespace-nowrap\">24</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #005ea2, background color: #0a1d2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ],
+      "missingAriaLocations": [],
+      "screenReaderProxy": {
+        "status": "Partial",
+        "landmarks": [
+          {
+            "role": "link",
+            "name": "Skip to main content"
+          },
+          {
+            "role": "button",
+            "name": "2 accountability items are due today. 2 View items"
+          },
+          {
+            "role": "navigation",
+            "name": "Primary navigation"
+          },
+          {
+            "role": "main",
+            "name": ""
+          },
+          {
+            "role": "button",
+            "name": "Dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Docs"
+          },
+          {
+            "role": "button",
+            "name": "Programs"
+          },
+          {
+            "role": "button",
+            "name": "Projects"
+          },
+          {
+            "role": "button",
+            "name": "Teams (standup due)"
+          },
+          {
+            "role": "button",
+            "name": "Settings"
+          },
+          {
+            "role": "button",
+            "name": "D"
+          },
+          {
+            "role": "heading",
+            "name": "Projects"
+          },
+          {
+            "role": "button",
+            "name": "New project"
+          },
+          {
+            "role": "button",
+            "name": "Collapse sidebar"
+          },
+          {
+            "role": "heading",
+            "name": "Projects"
+          },
+          {
+            "role": "button",
+            "name": "Customize columns"
+          },
+          {
+            "role": "button",
+            "name": "New Project"
+          },
+          {
+            "role": "button",
+            "name": "S"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "API Platform - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for API Platform - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Authentication - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Authentication - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Design System - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Design System - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Infrastructure - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Infrastructure - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Ship Core - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Ship Core - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Authentication - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Authentication - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "API Platform - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Actions for API Platform - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Ship Core - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Ship Core - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Design System - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Design System - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Infrastructure - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Infrastructure - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "API Platform - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Actions for API Platform - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Ship Core - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Ship Core - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Design System - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Design System - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Infrastructure - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Infrastructure - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Expand"
+          },
+          {
+            "role": "link",
+            "name": "Authentication - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Authentication - Performance"
+          }
+        ],
+        "note": "This is an accessibility-tree proxy only. Native VoiceOver/NVDA screen-reader testing was not executed in this environment."
+      }
+    },
+    {
+      "name": "programs",
+      "path": "/programs",
+      "title": "Programs | Ship",
+      "authRequired": true,
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "moderate": 0,
+        "minor": 0,
+        "violationCount": 0,
+        "reportPath": "stage-2/category-7-accessibility-compliance/before-axe-programs.json"
+      },
+      "colorContrastFailures": [],
+      "missingAriaLocations": [],
+      "screenReaderProxy": {
+        "status": "Partial",
+        "landmarks": [
+          {
+            "role": "link",
+            "name": "Skip to main content"
+          },
+          {
+            "role": "button",
+            "name": "2 accountability items are due today. 2 View items"
+          },
+          {
+            "role": "navigation",
+            "name": "Primary navigation"
+          },
+          {
+            "role": "main",
+            "name": ""
+          },
+          {
+            "role": "button",
+            "name": "Dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Docs"
+          },
+          {
+            "role": "button",
+            "name": "Programs"
+          },
+          {
+            "role": "button",
+            "name": "Projects"
+          },
+          {
+            "role": "button",
+            "name": "Teams (standup due)"
+          },
+          {
+            "role": "button",
+            "name": "Settings"
+          },
+          {
+            "role": "button",
+            "name": "D"
+          },
+          {
+            "role": "heading",
+            "name": "Programs"
+          },
+          {
+            "role": "button",
+            "name": "Collapse sidebar"
+          },
+          {
+            "role": "heading",
+            "name": "Programs"
+          },
+          {
+            "role": "button",
+            "name": "Customize columns"
+          },
+          {
+            "role": "button",
+            "name": "New Program"
+          },
+          {
+            "role": "button",
+            "name": "S"
+          },
+          {
+            "role": "button",
+            "name": "I Infrastructure"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Infrastructure"
+          },
+          {
+            "role": "button",
+            "name": "D Design System"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Design System"
+          },
+          {
+            "role": "button",
+            "name": "A API Platform"
+          },
+          {
+            "role": "button",
+            "name": "Actions for API Platform"
+          },
+          {
+            "role": "button",
+            "name": "A Authentication"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Authentication"
+          },
+          {
+            "role": "button",
+            "name": "S Ship Core"
+          },
+          {
+            "role": "button",
+            "name": "Actions for Ship Core"
+          }
+        ],
+        "note": "This is an accessibility-tree proxy only. Native VoiceOver/NVDA screen-reader testing was not executed in this environment."
+      }
+    },
+    {
+      "name": "team-allocation",
+      "path": "/team/allocation",
+      "title": "Team Allocation | Ship",
+      "authRequired": true,
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "moderate": 0,
+        "minor": 0,
+        "violationCount": 1,
+        "reportPath": "stage-2/category-7-accessibility-compliance/before-axe-team-allocation.json"
+      },
+      "colorContrastFailures": [
+        {
+          "impact": "serious",
+          "target": ".text-accent.font-medium.text-xs",
+          "html": "<span class=\"text-xs font-medium text-accent\">Week 14</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.89 (foreground color: #005ea2, background color: #0d0d0d, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ],
+      "missingAriaLocations": [],
+      "screenReaderProxy": {
+        "status": "Partial",
+        "landmarks": [
+          {
+            "role": "link",
+            "name": "Skip to main content"
+          },
+          {
+            "role": "button",
+            "name": "2 accountability items are due today. 2 View items"
+          },
+          {
+            "role": "navigation",
+            "name": "Primary navigation"
+          },
+          {
+            "role": "main",
+            "name": ""
+          },
+          {
+            "role": "button",
+            "name": "Dashboard"
+          },
+          {
+            "role": "button",
+            "name": "Docs"
+          },
+          {
+            "role": "button",
+            "name": "Programs"
+          },
+          {
+            "role": "button",
+            "name": "Projects"
+          },
+          {
+            "role": "button",
+            "name": "Teams (standup due)"
+          },
+          {
+            "role": "button",
+            "name": "Settings"
+          },
+          {
+            "role": "button",
+            "name": "D"
+          },
+          {
+            "role": "heading",
+            "name": "Teams"
+          },
+          {
+            "role": "button",
+            "name": "Collapse sidebar"
+          },
+          {
+            "role": "button",
+            "name": "S"
+          },
+          {
+            "role": "heading",
+            "name": "Allocation"
+          },
+          {
+            "role": "button",
+            "name": "My Team"
+          },
+          {
+            "role": "button",
+            "name": "Everyone"
+          },
+          {
+            "role": "button",
+            "name": "Show past weeks"
+          },
+          {
+            "role": "button",
+            "name": "A Authentication - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Change project assignment"
+          },
+          {
+            "role": "button",
+            "name": "D Design System - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Change project assignment"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "A Authentication - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Change project assignment"
+          },
+          {
+            "role": "button",
+            "name": "D Design System - Bug Fixes"
+          },
+          {
+            "role": "button",
+            "name": "Change project assignment"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "A Authentication - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Change project assignment"
+          },
+          {
+            "role": "button",
+            "name": "D Design System - Performance"
+          },
+          {
+            "role": "button",
+            "name": "Change project assignment"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "A Authentication - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Change project assignment"
+          },
+          {
+            "role": "button",
+            "name": "D Design System - Core Features"
+          },
+          {
+            "role": "button",
+            "name": "Change project assignment"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "+"
+          },
+          {
+            "role": "button",
+            "name": "Allocation"
+          },
+          {
+            "role": "button",
+            "name": "Directory"
+          },
+          {
+            "role": "button",
+            "name": "Status Overview"
+          },
+          {
+            "role": "button",
+            "name": "Reviews"
+          },
+          {
+            "role": "button",
+            "name": "Org Chart"
+          },
+          {
+            "role": "textbox",
+            "name": "Filter by name..."
+          },
+          {
+            "role": "button",
+            "name": "A Authentication 1"
+          },
+          {
+            "role": "button",
+            "name": "D Design System 1"
+          },
+          {
+            "role": "button",
+            "name": "? Unassigned 1"
+          },
+          {
+            "role": "button",
+            "name": "View as current week"
+          },
+          {
+            "role": "button",
+            "name": "View as current week"
+          },
+          {
+            "role": "button",
+            "name": "View as current week"
+          },
+          {
+            "role": "button",
+            "name": "View as current week"
+          },
+          {
+            "role": "button",
+            "name": "View as current week"
+          },
+          {
+            "role": "button",
+            "name": "View as current week"
+          },
+          {
+            "role": "button",
+            "name": "View as current week"
+          }
+        ],
+        "note": "This is an accessibility-tree proxy only. Native VoiceOver/NVDA screen-reader testing was not executed in this environment."
+      }
+    }
+  ],
+  "lighthouse": [
+    {
+      "name": "login",
+      "path": "/login",
+      "accessibilityScore": 98,
+      "reportPath": "stage-2/category-7-accessibility-compliance/before-lighthouse-login.json"
+    },
+    {
+      "name": "my-week",
+      "path": "/my-week",
+      "accessibilityScore": 96,
+      "reportPath": "stage-2/category-7-accessibility-compliance/before-lighthouse-my-week.json"
+    },
+    {
+      "name": "docs",
+      "path": "/docs",
+      "accessibilityScore": 100,
+      "reportPath": "stage-2/category-7-accessibility-compliance/before-lighthouse-docs.json"
+    },
+    {
+      "name": "issues",
+      "path": "/issues",
+      "accessibilityScore": 100,
+      "reportPath": "stage-2/category-7-accessibility-compliance/before-lighthouse-issues.json"
+    },
+    {
+      "name": "projects",
+      "path": "/projects",
+      "accessibilityScore": 100,
+      "reportPath": "stage-2/category-7-accessibility-compliance/before-lighthouse-projects.json"
+    },
+    {
+      "name": "programs",
+      "path": "/programs",
+      "accessibilityScore": 100,
+      "reportPath": "stage-2/category-7-accessibility-compliance/before-lighthouse-programs.json"
+    },
+    {
+      "name": "team-allocation",
+      "path": "/team/allocation",
+      "accessibilityScore": 100,
+      "reportPath": "stage-2/category-7-accessibility-compliance/before-lighthouse-team-allocation.json"
+    }
+  ],
+  "keyboard": {
+    "completeness": "Partial",
+    "checks": [
+      {
+        "check": "login-email-focusable",
+        "passed": true
+      },
+      {
+        "check": "login-password-tab-order",
+        "passed": true
+      },
+      {
+        "check": "login-submit-tab-order",
+        "passed": true
+      },
+      {
+        "check": "app-main-focused-on-navigation",
+        "passed": true
+      },
+      {
+        "check": "app-tab-reaches-focusable-control",
+        "passed": true
+      },
+      {
+        "check": "docs-toolbar-reachable-by-keyboard",
+        "passed": true
+      }
+    ],
+    "note": "Sampled keyboard flows passed, but the audit did not exhaustively verify every interactive control on every page."
+  },
+  "totals": {
+    "criticalSeriousViolations": 3,
+    "colorContrastFailures": 22
+  },
+  "missingAriaLocations": [],
+  "limitations": [
+    "VoiceOver/NVDA was not run directly in this environment. Accessibility tree snapshots were used as a proxy for screen-reader structure checks.",
+    "Keyboard testing sampled critical flows rather than every single interactive control on every page."
+  ]
+}

@@ -658,13 +658,21 @@ function DocumentsTree({ documents, activeId, onSelect }: { documents: WikiDocum
     <div className="space-y-2" data-testid="document-list">
       {/* Workspace section */}
       <div>
-        <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-muted uppercase tracking-wider">
+        <div
+          id="workspace-documents-heading"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-muted uppercase tracking-wider"
+        >
           <GlobeIcon className="h-3 w-3" />
           Workspace
         </div>
-        <ul role="tree" aria-label="Workspace documents" aria-live="polite" className="space-y-0.5 px-2">
-          {workspaceToShow.length > 0 ? (
-            workspaceToShow.map((doc) => (
+        {workspaceToShow.length > 0 ? (
+          <ul
+            role="tree"
+            aria-labelledby="workspace-documents-heading"
+            aria-live="polite"
+            className="space-y-0.5 px-2"
+          >
+            {workspaceToShow.map((doc) => (
               <DocumentTreeItem
                 key={doc.id}
                 document={doc}
@@ -672,30 +680,38 @@ function DocumentsTree({ documents, activeId, onSelect }: { documents: WikiDocum
                 onSelect={onSelect}
                 depth={0}
               />
-            ))
-          ) : (
-            <li className="px-2 py-1 text-sm text-muted">No workspace documents</li>
-          )}
-          {workspaceHiddenCount > 0 && (
-            <li>
-              <Link
-                to="/docs?filter=workspace"
-                className="block px-2 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/30 rounded-md transition-colors"
-              >
-                {workspaceHiddenCount} more...
-              </Link>
-            </li>
-          )}
-        </ul>
+            ))}
+          </ul>
+        ) : (
+          <div className="px-4 py-1 text-sm text-muted">
+            No workspace documents
+          </div>
+        )}
+        {workspaceHiddenCount > 0 && (
+          <Link
+            to="/docs?filter=workspace"
+            className="mx-2 block rounded-md px-2 py-1.5 text-sm text-muted transition-colors hover:bg-border/30 hover:text-foreground"
+          >
+            View {workspaceHiddenCount} more workspace document{workspaceHiddenCount === 1 ? '' : 's'}
+          </Link>
+        )}
       </div>
       {/* Private section - only show if user has private docs */}
       {privateTree.length > 0 && (
         <div>
-          <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-muted uppercase tracking-wider">
+          <div
+            id="private-documents-heading"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-muted uppercase tracking-wider"
+          >
             <LockIcon className="h-3 w-3" />
             Private
           </div>
-          <ul role="tree" aria-label="Private documents" aria-live="polite" className="space-y-0.5 px-2">
+          <ul
+            role="tree"
+            aria-labelledby="private-documents-heading"
+            aria-live="polite"
+            className="space-y-0.5 px-2"
+          >
             {privateToShow.map((doc) => (
               <DocumentTreeItem
                 key={doc.id}
@@ -705,17 +721,15 @@ function DocumentsTree({ documents, activeId, onSelect }: { documents: WikiDocum
                 depth={0}
               />
             ))}
-            {privateHiddenCount > 0 && (
-              <li>
-                <Link
-                  to="/docs?filter=private"
-                  className="block px-2 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/30 rounded-md transition-colors"
-                >
-                  {privateHiddenCount} more...
-                </Link>
-              </li>
-            )}
           </ul>
+          {privateHiddenCount > 0 && (
+            <Link
+              to="/docs?filter=private"
+              className="mx-2 block rounded-md px-2 py-1.5 text-sm text-muted transition-colors hover:bg-border/30 hover:text-foreground"
+            >
+              View {privateHiddenCount} more private document{privateHiddenCount === 1 ? '' : 's'}
+            </Link>
+          )}
         </div>
       )}
     </div>
