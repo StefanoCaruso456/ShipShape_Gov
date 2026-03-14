@@ -119,31 +119,37 @@ These still require separate tracking from:
 - Copilot usage
 - subscription or invoice data
 
-## User Cost Analysis Table
+## Monthly User Cost Analysis Table
 
-### Assumption
+### Monthly Assumption
 
 The table below assumes:
 
-- **1 successful `analyze-plan` call per active user**
-- cost per call = **`$0.0022136`**
+- cost per successful `analyze-plan` call = **`$0.0022136`**
+- each active user triggers **4 analyses per month**
 
-If your real product behavior is different, use this multiplier:
+That corresponds to a lightweight monthly usage assumption, such as:
 
-`total cost = active users * analyses per user * 0.0022136`
+- roughly 1 analysis per week per active user
 
-### Cost by User Count
+Monthly formula:
 
-| Active users | Calls assumed | Estimated total cost |
+`monthly cost = active users * 4 * 0.0022136`
+
+If your real usage is different, substitute the monthly analyses-per-user number in that formula.
+
+### Monthly Cost by User Count
+
+| Active users | Monthly calls assumed | Estimated monthly cost |
 | --- | ---: | ---: |
-| 100 | 100 | $0.2214 |
-| 1,000 | 1,000 | $2.2136 |
-| 10,000 | 10,000 | $22.1360 |
-| 100,000 | 100,000 | $221.3600 |
+| 100 | 400 | $0.8854 |
+| 1,000 | 4,000 | $8.8544 |
+| 10,000 | 40,000 | $88.5440 |
+| 100,000 | 400,000 | $885.4400 |
 
 ## Practical Interpretation
 
-This means the current validated OpenAI path is inexpensive at low and mid-scale for this specific analysis feature.
+This means the current validated OpenAI path is inexpensive at low and mid-scale for this specific analysis feature under a light monthly usage assumption.
 
 However, real spend can rise due to:
 
