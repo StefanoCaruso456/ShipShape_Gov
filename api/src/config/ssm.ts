@@ -86,6 +86,10 @@ export async function loadProductionSecrets(): Promise<void> {
     braintrustLogPrompts,
     bedrockInputCost,
     bedrockOutputCost,
+    openAiApiKey,
+    openAiModel,
+    openAiInputCost,
+    openAiOutputCost,
   ] = await Promise.all([
     getOptionalSSMSecret(`${basePath}/BRAINTRUST_API_KEY`),
     getOptionalSSMSecret(`${basePath}/BRAINTRUST_PROJECT`),
@@ -94,6 +98,10 @@ export async function loadProductionSecrets(): Promise<void> {
     getOptionalSSMSecret(`${basePath}/BRAINTRUST_LOG_PROMPTS`),
     getOptionalSSMSecret(`${basePath}/BEDROCK_INPUT_COST_PER_MILLION_USD`),
     getOptionalSSMSecret(`${basePath}/BEDROCK_OUTPUT_COST_PER_MILLION_USD`),
+    getOptionalSSMSecret(`${basePath}/OPENAI_API_KEY`),
+    getOptionalSSMSecret(`${basePath}/OPENAI_MODEL`),
+    getOptionalSSMSecret(`${basePath}/OPENAI_INPUT_COST_PER_MILLION_USD`),
+    getOptionalSSMSecret(`${basePath}/OPENAI_OUTPUT_COST_PER_MILLION_USD`),
   ]);
 
   process.env.DATABASE_URL = databaseUrl;
@@ -110,6 +118,10 @@ export async function loadProductionSecrets(): Promise<void> {
     setIfDefined('BRAINTRUST_LOG_PROMPTS', braintrustLogPrompts),
     setIfDefined('BEDROCK_INPUT_COST_PER_MILLION_USD', bedrockInputCost),
     setIfDefined('BEDROCK_OUTPUT_COST_PER_MILLION_USD', bedrockOutputCost),
+    setIfDefined('OPENAI_API_KEY', openAiApiKey),
+    setIfDefined('OPENAI_MODEL', openAiModel),
+    setIfDefined('OPENAI_INPUT_COST_PER_MILLION_USD', openAiInputCost),
+    setIfDefined('OPENAI_OUTPUT_COST_PER_MILLION_USD', openAiOutputCost),
   ].filter(Boolean).length;
 
   console.log('Secrets loaded from SSM Parameter Store');

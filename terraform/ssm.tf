@@ -172,6 +172,15 @@ resource "aws_iam_role_policy" "eb_bedrock_access" {
           "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/anthropic.*",
           "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/global.anthropic.*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:Unsubscribe",
+          "aws-marketplace:ViewSubscriptions"
+        ]
+        Resource = "*"
       }
     ]
   })

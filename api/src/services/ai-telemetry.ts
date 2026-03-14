@@ -16,6 +16,7 @@ export interface AiUsageMetrics {
 
 interface StartAiSpanArgs {
   operation: string;
+  provider: 'aws-bedrock' | 'openai';
   model: string;
   region: string;
   systemPrompt: string;
@@ -34,6 +35,9 @@ interface FinishAiSpanArgs {
 let braintrustLogger: Logger<true> | null | undefined;
 let loggedInitFailure = false;
 let loggedInvalidPricing = false;
+const OPENAI_DEFAULT_MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  'gpt-4.1-mini': { input: 0.4, output: 1.6 },
+};
 
 function getEnv(name: string): string | undefined {
   const value = process.env[name]?.trim();
@@ -75,6 +79,36 @@ function parseUsdPerMillion(name: string): number | undefined {
   }
 
   return value;
+}
+
+function getPricingConfig(
+  provider: 'aws-bedrock' | 'openai',
+  model: string
+): { inputCostPerMillion?: number; outputCostPerMillion?: number; pricingSource?: string } {
+  if (provider === 'openai') {
+    const inputCostPerMillion = parseUsdPerMillion('OPENAI_INPUT_COST_PER_MILLION_USD');
+    const outputCostPerMillion = parseUsdPerMillion('OPENAI_OUTPUT_COST_PER_MILLION_USD');
+    if (inputCostPerMillion !== undefined && outputCostPerMillion !== undefined) {
+      return { inputCostPerMillion, outputCostPerMillion, pricingSource: 'env' };
+    }
+
+    const defaultPricing = OPENAI_DEFAULT_MODEL_PRICING[model];
+    if (defaultPricing) {
+      return {
+        inputCostPerMillion: defaultPricing.input,
+        outputCostPerMillion: defaultPricing.output,
+        pricingSource: 'openai-default',
+      };
+    }
+
+    return {};
+  }
+
+  return {
+    inputCostPerMillion: parseUsdPerMillion('BEDROCK_INPUT_COST_PER_MILLION_USD'),
+    outputCostPerMillion: parseUsdPerMillion('BEDROCK_OUTPUT_COST_PER_MILLION_USD'),
+    pricingSource: 'env',
+  };
 }
 
 function serializeError(error: unknown): Record<string, unknown> {
@@ -154,9 +188,12 @@ function getBraintrustLogger(): Logger<true> | null {
   return braintrustLogger;
 }
 
-export function estimateAiCost(usage: AiUsageMetrics): AiUsageMetrics {
-  const inputCostPerMillion = parseUsdPerMillion('BEDROCK_INPUT_COST_PER_MILLION_USD');
-  const outputCostPerMillion = parseUsdPerMillion('BEDROCK_OUTPUT_COST_PER_MILLION_USD');
+export function estimateAiCost(
+  usage: AiUsageMetrics,
+  provider: 'aws-bedrock' | 'openai',
+  model: string
+): AiUsageMetrics {
+  const { inputCostPerMillion, outputCostPerMillion, pricingSource } = getPricingConfig(provider, model);
 
   const promptTokens =
     (usage.promptTokens ?? 0) +
@@ -181,7 +218,7 @@ export function estimateAiCost(usage: AiUsageMetrics): AiUsageMetrics {
     result.estimatedCostUsd =
       (promptTokens / 1_000_000) * inputCostPerMillion +
       (completionTokens / 1_000_000) * outputCostPerMillion;
-    result.pricingSource = 'env';
+    result.pricingSource = pricingSource;
   }
 
   return result;
@@ -196,14 +233,14 @@ export function startAiSpan(args: StartAiSpanArgs): Span | null {
       name: args.operation,
       type: 'llm',
       spanAttributes: {
-        provider: 'aws-bedrock',
+        provider: args.provider,
         model: args.model,
         region: args.region,
       },
       event: {
         input: buildInputPayload(args.systemPrompt, args.userPrompt, args.maxTokens),
         metadata: {
-          provider: 'aws-bedrock',
+          provider: args.provider,
           model: args.model,
           region: args.region,
           prompt_logging_enabled: isPromptLoggingEnabled(),
