@@ -1,100 +1,101 @@
 # AI Cost Analysis
 
-## Executive Summary
+## Summary
 
-Yes, we now have enough telemetry to produce a correct **application-side AI cost analysis** for the currently deployed path.
+This document provides a validated cost analysis for Shipshape's application-side AI feature based on successful Braintrust telemetry from the deployed environment.
 
-What is now validated:
+The current analysis is based on the live provider path that successfully completed requests:
 
-- Braintrust is receiving successful traces
-- traces include prompt tokens, completion tokens, total tokens, and estimated cost
-- the live app is currently using **OpenAI direct** for AI analysis
-- the validated successful model is **`gpt-4.1-mini`**
-
-What is **not** covered by this telemetry alone:
-
-- coding-agent costs such as Codex, Cursor, Claude Code, or Copilot
-- authoritative AWS billing totals
-- AWS Bedrock Claude Opus 4.5 production-equivalent cost, because Bedrock quota approval was still blocking successful Opus runs
-
-So the honest conclusion is:
-
-- **Yes** for Shipshape application AI cost analysis on the deployed OpenAI path
-- **No** for coding-agent cost tracking without separate manual or billing data
-- **No** for claiming this is the final Bedrock Opus production cost
-
-## Validated Telemetry State
-
-As of **March 13, 2026** in the deployed environment:
-
-- operation: `shipshape.ai.analyze-plan`
-- provider: `openai`
+- provider: `OpenAI`
 - model: `gpt-4.1-mini`
-- Braintrust metadata includes:
-  - `provider`
-  - `model`
-  - `request_id`
-  - `finish_reason`
-  - `pricing_source`
-- Braintrust metrics includes:
-  - `prompt_tokens`
-  - `completion_tokens`
-  - `tokens`
-  - `estimated_cost`
-  - `latency_ms`
+- operation: `shipshape.ai.analyze-plan`
 
-This is the first successful end-to-end proof that the telemetry implementation is working for real billable AI calls.
+The telemetry is sufficient to support:
 
-## Confirmed Successful Trace
+- LLM API cost estimation
+- total token reporting
+- API call count reporting
+- monthly user-scale cost projections
 
-Confirmed Braintrust trace:
+The telemetry is not sufficient to support:
 
-- trace name: `shipshape.ai.analyze-plan`
+- coding-agent cost tracking
+- authoritative cloud billing totals
+- final AWS Bedrock Claude Opus 4.5 production cost, because the Bedrock path was blocked by quota approval during validation
+
+## Validated Telemetry
+
+The deployed application now records the following Braintrust fields for successful AI analysis requests:
+
+- prompt tokens
+- completion tokens
+- total tokens
+- estimated cost
+- latency
+- request ID
+- model
+- provider
+- finish reason
+
+This confirms that the application has the minimum required telemetry to produce a defensible AI cost analysis for the currently deployed path.
+
+## Confirmed Successful Request
+
+Validated Braintrust trace:
+
+- trace: `shipshape.ai.analyze-plan`
 - provider: `openai`
 - model: `gpt-4.1-mini`
 - prompt tokens: `834`
 - completion tokens: `1,175`
 - total tokens: `2,009`
-- estimated cost shown in Braintrust: `$0.002`
+- estimated cost displayed by Braintrust: `$0.002`
 - latency: `17,991 ms`
-- pricing source: `env`
 
-Braintrust rounds the displayed dollar amount. The more exact cost from the logged token counts is:
+Braintrust rounds the displayed cost. The more precise request cost is:
 
 `(834 / 1,000,000 * 0.4) + (1175 / 1,000,000 * 1.6) = 0.0022136 USD`
 
-Rounded working value:
+Validated per-request working value:
 
-- **per successful analyze-plan call: `$0.0022`**
+- **`$0.0022136` per successful `shipshape.ai.analyze-plan` call**
 
-## Pricing Basis
+## Pricing Assumptions
 
-The deployed OpenAI pricing values used by the app are:
+The deployed environment uses the following pricing inputs for this analysis:
 
-- input: `$0.40` per 1 million tokens
-- output: `$1.60` per 1 million tokens
+- input token price: `$0.40` per 1 million tokens
+- output token price: `$1.60` per 1 million tokens
 
-These were loaded into the environment and recorded in Braintrust as `pricing_source=env`.
+These values were supplied through environment configuration and recorded in Braintrust with `pricing_source=env`.
 
-## Development Cost Summary
+## Cost Methodology
 
-### LLM API costs
+### Formula
 
-For the currently validated deployment path, we can now calculate Shipshape AI request cost directly from Braintrust traces.
-
-Formula:
+Application request cost is calculated as:
 
 `estimated cost = (prompt tokens / 1,000,000 * input price) + (completion tokens / 1,000,000 * output price)`
 
-Validated example:
+### Validated Example
 
 - prompt cost: `834 / 1,000,000 * 0.4 = $0.0003336`
 - completion cost: `1175 / 1,000,000 * 1.6 = $0.00188`
-- total: `$0.0022136`
+- total cost: `$0.0022136`
+
+## Development Cost Coverage
+
+### LLM API costs
+
+Covered by current telemetry.
+
+The application now logs enough information to estimate per-request and aggregate LLM API cost for successful requests.
 
 ### Total tokens consumed
 
-Validated and available from Braintrust:
+Covered by current telemetry.
+
+Available fields:
 
 - prompt tokens
 - completion tokens
@@ -102,135 +103,114 @@ Validated and available from Braintrust:
 
 ### Number of API calls made
 
-Validated and available from Braintrust by counting successful traces such as:
+Covered by current telemetry.
 
-- `shipshape.ai.analyze-plan`
-- `shipshape.ai.analyze-retro`
+Successful calls can be counted directly from Braintrust traces by operation name.
 
 ### Coding agent costs
 
-Not covered by this telemetry.
+Not covered by current telemetry.
 
-These still require separate tracking from:
+This category requires separate tracking from subscription data, invoices, or manual usage logs for tools such as:
 
-- Codex usage
-- Cursor usage
-- Claude Code usage
-- Copilot usage
-- subscription or invoice data
+- Codex
+- Cursor
+- Claude Code
+- GitHub Copilot
 
-## Monthly User Cost Analysis Table
+## Monthly User Cost Analysis
 
 ### Monthly Assumption
 
-The table below assumes:
+This table uses the following assumption:
 
-- cost per successful `analyze-plan` call = **`$0.0022136`**
-- each active user triggers **4 analyses per month**
+- each active user triggers **4 successful analyses per month**
+- cost per analysis = **`$0.0022136`**
 
-That corresponds to a lightweight monthly usage assumption, such as:
+This represents a light monthly usage pattern of approximately one analysis per week per active user.
 
-- roughly 1 analysis per week per active user
-
-Monthly formula:
+Monthly cost formula:
 
 `monthly cost = active users * 4 * 0.0022136`
 
-If your real usage is different, substitute the monthly analyses-per-user number in that formula.
+### Monthly Cost Table
 
-### Monthly Cost by User Count
-
-| Active users | Monthly calls assumed | Estimated monthly cost |
+| Active users | Monthly analyses | Estimated monthly cost |
 | --- | ---: | ---: |
 | 100 | 400 | $0.8854 |
 | 1,000 | 4,000 | $8.8544 |
 | 10,000 | 40,000 | $88.5440 |
 | 100,000 | 400,000 | $885.4400 |
 
-## Practical Interpretation
+## Interpretation
 
-This means the current validated OpenAI path is inexpensive at low and mid-scale for this specific analysis feature under a light monthly usage assumption.
+Under the validated OpenAI path, the feature is inexpensive at low and medium scale under a light monthly usage assumption.
 
-However, real spend can rise due to:
+Costs will increase if:
 
-- repeated re-analysis while users edit
-- both plan and retro analysis running in the same week
-- retries, failures, or duplicate submissions
-- switching to a larger model
-- longer prompts or longer outputs
+- users trigger repeated re-analysis while editing
+- both plan and retro analysis run regularly
+- requests become longer
+- outputs become longer
+- the application is switched to a more expensive model
 
-## Recommended Final Reporting Framing
+## Limitations
 
-For the project deliverable, the safest framing is:
+This analysis should be presented with the following constraints:
 
-1. **Validated current application AI cost**
-   - based on successful Braintrust traces from the deployed OpenAI path
-2. **Scaling estimate**
-   - based on the observed per-call token profile and the user-count table above
-3. **Known limitation**
-   - this is not yet the final AWS Bedrock Claude Opus 4.5 production cost
-4. **Separate manual section**
-   - coding-agent costs must be tracked outside Braintrust
+- it reflects the validated **OpenAI direct** deployment path
+- it does not represent final **AWS Bedrock Claude Opus 4.5** production cost
+- it is an engineering estimate, not a billing-authoritative total
+- it excludes coding-agent cost
 
-## Reflection Questions
+## Recommended Final Framing
 
-### Which parts of the audit were AI tools most helpful for? Least helpful?
+For reporting purposes, the strongest and most defensible framing is:
 
-Most helpful:
+1. Present the validated per-request application AI cost from Braintrust
+2. Present the monthly user-scale projection table
+3. State clearly that coding-agent cost is tracked separately
+4. State clearly that cloud billing remains the final source of truth for invoice-level spend
 
-- finding code paths quickly
+## Reflection Notes
+
+### Most helpful uses of AI during the audit
+
+- locating relevant files and entry points quickly
 - understanding cross-package relationships
-- accelerating repeated inspection and implementation work
+- accelerating repeated implementation and debugging tasks
 
-Least helpful:
+### Least helpful uses of AI during the audit
 
-- interpreting partially complete cloud deployment state
-- anything where the UI implied success before the underlying infrastructure was actually ready
-- cost claims before real successful traces existed
+- interpreting partially complete infrastructure state
+- inferring success before downstream telemetry or cloud state confirmed it
+- making cost claims before a successful billable request existed
 
-### Did AI tools help understand the codebase, or shortcut understanding?
+### Areas requiring correction or override
 
-They helped when used as navigation and implementation acceleration tools.
+Corrections were required when:
 
-They risked shortcutting understanding when summaries were accepted before checking the real runtime behavior, deployment status, and telemetry output.
+- infrastructure UI state implied success before deployment completed
+- Braintrust project setup existed without successful billable traces
+- Bedrock billing, quota, and model-access issues appeared similar from the surface
 
-### Where did AI suggestions need to be overridden or corrected? Why?
+## Conclusion
 
-Corrections were needed when:
+Shipshape now has sufficient telemetry to support a professional application-side AI cost analysis for the currently deployed OpenAI path.
 
-- the Braintrust project existed but had no real traces yet
-- Bedrock access errors looked like application bugs
-- billing, quotas, and model authorization were easy to confuse
-- a successful-looking UI state did not match actual downstream metrics
+The validated benchmark is:
 
-The common issue was that downstream evidence mattered more than plausible interpretation.
+- **`$0.0022136` per successful `shipshape.ai.analyze-plan` request on `gpt-4.1-mini`**
 
-### What percentage of final code changes were AI-generated vs. hand-written?
+This is sufficient for:
 
-Reasonable final framing:
+- application LLM API cost analysis
+- token consumption analysis
+- request count analysis
+- monthly user-scale projections
 
-- first-pass discovery and implementation were heavily AI-assisted
-- final telemetry validation, cloud debugging, secret management, and deployment corrections required human review and selective correction
+It is not sufficient, by itself, for:
 
-If a numeric estimate is required, use a conservative range instead of false precision.
-
-## Bottom Line
-
-Shipshape now has enough telemetry to support a real **application AI cost analysis**.
-
-The currently validated benchmark is:
-
-- **`$0.0022136` per successful `shipshape.ai.analyze-plan` call on `gpt-4.1-mini`**
-
-That is enough to support:
-
-- LLM API cost reporting
-- token reporting
-- API call count reporting
-- user-scale sensitivity analysis
-
-It is **not** enough by itself to report:
-
-- coding-agent cost
-- final AWS billing truth
-- final Bedrock Claude Opus 4.5 production cost
+- coding-agent cost analysis
+- final provider invoice reconciliation
+- final Bedrock Claude Opus 4.5 production cost reporting
