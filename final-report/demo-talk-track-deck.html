@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShipShape Demo Talk Track</title>
+  <style>
+    :root {
+      --bg: #f3eee2;
+      --paper: #fffaf0;
+      --ink: #182433;
+      --muted: #5d6674;
+      --accent: #b4512b;
+      --gold: #d3a03a;
+      --navy: #233a57;
+      --line: #d9cfbe;
+      --shadow: rgba(24, 36, 51, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      padding: 22px 0 48px;
+    }
+
+    .slide {
+      position: relative;
+      width: 1280px;
+      min-height: 720px;
+      padding: 54px 64px 58px;
+      background:
+        radial-gradient(circle at top right, rgba(211, 160, 58, 0.14), transparent 28%),
+        linear-gradient(135deg, rgba(180, 81, 43, 0.06), rgba(35, 58, 87, 0.04)),
+        var(--paper);
+      box-shadow: 0 20px 60px var(--shadow);
+      overflow: hidden;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 12px;
+      background: linear-gradient(90deg, var(--accent), var(--gold), var(--navy));
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      right: -120px;
+      bottom: -140px;
+      width: 360px;
+      height: 360px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(35, 58, 87, 0.08), transparent 70%);
+    }
+
+    h1,
+    h2,
+    h3,
+    p,
+    ul {
+      margin-top: 0;
+    }
+
+    .kicker {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    h1 {
+      max-width: 920px;
+      margin-bottom: 18px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 64px;
+      line-height: 0.98;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin-bottom: 18px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 42px;
+      line-height: 1.06;
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      margin-bottom: 10px;
+      font-size: 24px;
+      color: var(--navy);
+    }
+
+    p,
+    li,
+    td,
+    th {
+      font-size: 26px;
+      line-height: 1.34;
+    }
+
+    p.lead {
+      max-width: 920px;
+      font-size: 30px;
+      color: var(--muted);
+    }
+
+    ul {
+      padding-left: 28px;
+    }
+
+    li + li {
+      margin-top: 10px;
+    }
+
+    .meta {
+      position: absolute;
+      right: 64px;
+      bottom: 34px;
+      font-size: 16px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      position: absolute;
+      left: 64px;
+      bottom: 30px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .title-grid {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 34px;
+      align-items: stretch;
+      min-height: 560px;
+    }
+
+    .title-panel {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 22px;
+      padding-bottom: 100px;
+    }
+
+    .stats {
+      display: grid;
+      gap: 16px;
+      align-self: center;
+    }
+
+    .stat {
+      padding: 20px 22px;
+      border-left: 6px solid var(--accent);
+      background: rgba(35, 58, 87, 0.08);
+    }
+
+    .stat strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 17px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
+
+    .stat span {
+      font-size: 30px;
+      font-weight: 800;
+    }
+
+    .cover-card {
+      position: relative;
+      min-height: 460px;
+      padding: 28px;
+      border: 1px solid rgba(35, 58, 87, 0.12);
+      background:
+        linear-gradient(135deg, rgba(35, 58, 87, 0.08), rgba(180, 81, 43, 0.04)),
+        rgba(255, 250, 240, 0.92);
+    }
+
+    .cover-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 10px;
+      background: linear-gradient(180deg, var(--accent), var(--gold), var(--navy));
+    }
+
+    .cover-card .big {
+      margin: 26px 0 12px;
+      font-size: 34px;
+      line-height: 1.12;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .cover-card p {
+      color: var(--muted);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    .panel {
+      padding: 24px 26px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.56);
+    }
+
+    .panel.dark {
+      background: var(--navy);
+      color: #fff7ec;
+      border-color: transparent;
+    }
+
+    .panel.dark h3,
+    .panel.dark p,
+    .panel.dark li {
+      color: #fff7ec;
+    }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: 1fr 100px 1fr 100px 1fr;
+      align-items: center;
+      margin-top: 26px;
+    }
+
+    .arch-box {
+      min-height: 250px;
+      padding: 22px;
+      border: 2px solid var(--navy);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .arrow {
+      text-align: center;
+      font-size: 56px;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .callout-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .callout {
+      padding: 18px 20px;
+      border-top: 6px solid var(--accent);
+      background: rgba(35, 58, 87, 0.08);
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 17px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--navy);
+    }
+
+    .findings-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .finding {
+      padding: 20px 22px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .finding strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--navy);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 18px;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--navy);
+      color: #fffaf0;
+      font-size: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .big-quote {
+      max-width: 980px;
+      margin-top: 60px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 42px;
+      line-height: 1.18;
+    }
+
+    .pillars {
+      display: grid;
+      gap: 14px;
+      margin-top: 26px;
+    }
+
+    .pillar {
+      padding: 18px 20px;
+      border-left: 6px solid var(--accent);
+      background: rgba(35, 58, 87, 0.08);
+    }
+
+    code {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(35, 58, 87, 0.08);
+      font-family: Menlo, Monaco, monospace;
+      font-size: 0.72em;
+    }
+
+    @media print {
+      @page {
+        size: 13.333in 7.5in;
+        margin: 0;
+      }
+
+      body {
+        display: block;
+        padding: 0;
+        gap: 0;
+        background: #fff;
+      }
+
+      .slide {
+        width: 13.333in;
+        height: 7.5in;
+        min-height: 7.5in;
+        max-height: 7.5in;
+        margin: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide">
+    <p class="kicker">ShipShape Audit Demo</p>
+    <div class="title-grid">
+      <div class="title-panel">
+        <div>
+          <h1>Audit, Improvement, and Deployment Summary</h1>
+          <p class="lead">
+            A focused walkthrough of how the system works, what was audited, what improved, and what was validated in a live environment.
+          </p>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <strong>Audit Scope</strong>
+            <span>7 Required Categories</span>
+          </div>
+          <div class="stat">
+            <strong>Validation Style</strong>
+            <span>Baseline → Fix → Proof</span>
+          </div>
+          <div class="stat">
+            <strong>Live Deploy</strong>
+            <span>AWS + Public URL</span>
+          </div>
+        </div>
+      </div>
+      <div class="cover-card">
+        <div class="big">Talk Track</div>
+        <p>1. Mental model of the system</p>
+        <p>2. Audit approach and evidence trail</p>
+        <p>3. Key architectural discoveries</p>
+        <p>4. AI cost analysis and telemetry validation</p>
+        <p>5. Live deployment and final conclusion</p>
+      </div>
+    </div>
+    <div class="footer-note">Stefano Caruso</div>
+    <div class="meta">Slide 1</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">System Model</p>
+    <h2>Start With the Architecture</h2>
+    <p class="lead">
+      Before changing code, the first step was to understand the operating model of the application and the architectural decisions that drive the product.
+    </p>
+    <div class="architecture">
+      <div class="arch-box">
+        <h3><code>web</code></h3>
+        <ul>
+          <li>React frontend</li>
+          <li>single-page application</li>
+          <li>route-driven UX</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="arch-box">
+        <h3><code>api</code></h3>
+        <ul>
+          <li>Express backend</li>
+          <li>document and workflow logic</li>
+          <li>AI analysis endpoints</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="arch-box">
+        <h3><code>shared</code></h3>
+        <ul>
+          <li>shared contracts</li>
+          <li>cross-package types</li>
+          <li>product-level consistency</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout-row">
+      <div class="callout">
+        <strong>Core Model</strong>
+        Issues, projects, docs, and weekly artifacts all live in one unified document system.
+      </div>
+      <div class="callout">
+        <strong>Realtime</strong>
+        Collaboration is powered by Yjs and WebSockets.
+      </div>
+      <div class="callout">
+        <strong>Product Coherence</strong>
+        Typed associations are the backbone of flexibility across features.
+      </div>
+      <div class="callout">
+        <strong>Why It Matters</strong>
+        The audit focused on improving the architecture already present, not replacing it.
+      </div>
+    </div>
+    <div class="meta">Slide 2</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Audit Method</p>
+    <h2>Seven Categories, One Evidence Standard</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3>Required Categories</h3>
+        <ul>
+          <li>Type safety</li>
+          <li>Bundle size</li>
+          <li>API response time</li>
+          <li>Database query efficiency</li>
+          <li>Test coverage and quality</li>
+          <li>Runtime error and edge-case handling</li>
+          <li>Accessibility compliance</li>
+        </ul>
+      </div>
+      <div class="panel dark">
+        <h3>Working Method</h3>
+        <ul>
+          <li>capture a baseline</li>
+          <li>identify the root cause</li>
+          <li>implement a fix</li>
+          <li>record the after-state</li>
+          <li>preserve reproducible proof</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout-row">
+      <div class="callout">
+        <strong>Goal</strong>
+        Improve the system in measurable ways, not just patch isolated defects.
+      </div>
+      <div class="callout">
+        <strong>Output</strong>
+        A clear engineering trail instead of unsupported claims.
+      </div>
+      <div class="callout">
+        <strong>Review Style</strong>
+        Before-and-after evidence for every category.
+      </div>
+      <div class="callout">
+        <strong>Result</strong>
+        The audit is defensible, repeatable, and easy to review.
+      </div>
+    </div>
+    <div class="meta">Slide 3</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Key Discoveries</p>
+    <h2>Three Important Findings From the Codebase</h2>
+    <div class="findings-grid">
+      <div class="finding">
+        <strong>Testing Infrastructure</strong>
+        Playwright uses isolated per-worker environments, including separate database and server resources. That is a strong pattern for reliable end-to-end testing.
+      </div>
+      <div class="finding">
+        <strong>Architectural Center</strong>
+        The unified document model with typed associations is the core design decision that gives ShipShape flexibility and product coherence.
+      </div>
+      <div class="finding">
+        <strong>Accessibility Pattern</strong>
+        The frontend already includes route-level focus management, which is a meaningful accessibility practice for a single-page application.
+      </div>
+    </div>
+    <p class="lead" style="margin-top: 34px;">
+      These discoveries mattered because they changed the audit posture from “replace weak systems” to “strengthen the strong core.”
+    </p>
+    <div class="meta">Slide 4</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">AI Cost Analysis</p>
+    <h2>Validated Telemetry, Not Assumptions</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3>What Was Validated</h3>
+        <ul>
+          <li>successful Braintrust traces</li>
+          <li>prompt tokens</li>
+          <li>completion tokens</li>
+          <li>total tokens</li>
+          <li>estimated cost</li>
+          <li>latency and request metadata</li>
+        </ul>
+      </div>
+      <div class="panel dark">
+        <h3>Confirmed Example</h3>
+        <ul>
+          <li>provider: <code>OpenAI</code></li>
+          <li>model: <code>gpt-4.1-mini</code></li>
+          <li>total tokens: <code>2,009</code></li>
+          <li>validated request cost: <code>$0.0022136</code></li>
+        </ul>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Monthly Users</th>
+          <th>Assumption</th>
+          <th>Estimated Monthly Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>100</td>
+          <td>4 analyses per user / month</td>
+          <td>$0.8854</td>
+        </tr>
+        <tr>
+          <td>1,000</td>
+          <td>4 analyses per user / month</td>
+          <td>$8.8544</td>
+        </tr>
+        <tr>
+          <td>10,000</td>
+          <td>4 analyses per user / month</td>
+          <td>$88.5440</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="footer-note">Application-side AI cost is validated. Coding-agent cost still requires a separate ledger.</p>
+    <div class="meta">Slide 5</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Deployment</p>
+    <h2>Live Validation in a Public Environment</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3>Deployed Environment</h3>
+        <p><strong>AWS</strong></p>
+        <p>Public URL:</p>
+        <p><code>https://d1woqw06xb054i.cloudfront.net</code></p>
+      </div>
+      <div class="panel dark">
+        <h3>Why This Environment</h3>
+        <ul>
+          <li>publicly accessible for review</li>
+          <li>matched the full-stack submission requirement</li>
+          <li>safe place to validate the improved build end to end</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pillars">
+      <div class="pillar">Frontend validated through the public CloudFront URL.</div>
+      <div class="pillar">Backend validated in the AWS deployment path used for the improved application.</div>
+      <div class="pillar">Telemetry validated against successful live requests instead of local-only assumptions.</div>
+    </div>
+    <div class="meta">Slide 6</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Conclusion</p>
+    <h2>The Architecture Was Strong. The Work Was About Maturity.</h2>
+    <p class="big-quote">
+      ShipShape already has a strong architectural core. The real opportunity was to make that architecture more consistent, more testable, more accessible, and more operationally mature.
+    </p>
+    <div class="pillars">
+      <div class="pillar">
+        <strong>Not a rewrite.</strong><br />
+        The system did not need reinvention; it needed disciplined strengthening.
+      </div>
+      <div class="pillar">
+        <strong>Measured improvements.</strong><br />
+        Each category was handled with baseline evidence, root-cause analysis, implementation, and proof.
+      </div>
+      <div class="pillar">
+        <strong>End-to-end validation.</strong><br />
+        The result was not only code changes, but a validated, deployed, and observable system.
+      </div>
+    </div>
+    <div class="footer-note">Close with questions or a short live walk-through in the app.</div>
+    <div class="meta">Slide 7</div>
+  </section>
+</body>
+</html>
