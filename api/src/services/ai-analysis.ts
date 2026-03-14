@@ -1,12 +1,15 @@
 /**
- * AI-powered plan and retro quality analysis using AWS Bedrock (Claude Opus 4.5).
+ * AI-powered plan and retro quality analysis.
  *
  * Provides two analysis functions:
  * - analyzePlan: Evaluates weekly plan items for falsifiability and workload
  * - analyzeRetro: Compares retro against plan for coverage and evidence
  *
- * Uses AWS Bedrock's Claude Opus 4.5 model via the standard credential chain.
- * Gracefully degrades when Bedrock is unavailable.
+ * Provider selection:
+ * - OpenAI direct API when OPENAI_API_KEY or OPEN_API_KEY is configured
+ * - AWS Bedrock (Claude Opus 4.5) otherwise
+ *
+ * Gracefully degrades when no configured provider is available.
  */
 
 import { createHash } from 'crypto';
@@ -14,19 +17,34 @@ import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedroc
 import { extractText } from '../utils/document-content.js';
 import { estimateAiCost, finishAiSpan, startAiSpan, type AiUsageMetrics } from './ai-telemetry.js';
 
-const MODEL_ID = 'global.anthropic.claude-opus-4-5-20251101-v1:0';
-const REGION = 'us-east-1';
+const BEDROCK_MODEL_ID = 'global.anthropic.claude-opus-4-5-20251101-v1:0';
+const BEDROCK_REGION = 'us-east-1';
+const OPENAI_MODEL = 'gpt-4.1-mini';
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 // Lazy-initialize client (fails gracefully if AWS credentials unavailable)
 let bedrockClient: BedrockRuntimeClient | null = null;
 let clientInitFailed = false;
+
+function getEnv(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+function getOpenAiApiKey(): string | undefined {
+  return getEnv('OPENAI_API_KEY') ?? getEnv('OPEN_API_KEY');
+}
+
+function getOpenAiModel(): string {
+  return getEnv('OPENAI_MODEL') ?? OPENAI_MODEL;
+}
 
 function getClient(): BedrockRuntimeClient | null {
   if (clientInitFailed) return null;
   if (bedrockClient) return bedrockClient;
 
   try {
-    bedrockClient = new BedrockRuntimeClient({ region: REGION });
+    bedrockClient = new BedrockRuntimeClient({ region: BEDROCK_REGION });
     return bedrockClient;
   } catch (err) {
     console.warn('Failed to initialize Bedrock client:', err);
@@ -39,7 +57,7 @@ function getClient(): BedrockRuntimeClient | null {
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 120; // max requests per hour per user (polling every 5s, but only analyzes on content change)
 const RATE_WINDOW = 60 * 60 * 1000; // 1 hour in ms
-const MAX_CONTENT_TEXT_LENGTH = 50_000; // 50KB max extracted text sent to Bedrock
+const MAX_CONTENT_TEXT_LENGTH = 50_000; // 50KB max extracted text sent to the AI provider
 
 // Periodically clean up expired entries to prevent memory leak
 setInterval(() => {
@@ -246,15 +264,16 @@ async function callBedrock(
 
   const span = startAiSpan({
     operation,
-    model: MODEL_ID,
-    region: REGION,
+    provider: 'aws-bedrock',
+    model: BEDROCK_MODEL_ID,
+    region: BEDROCK_REGION,
     systemPrompt,
     userPrompt,
     maxTokens: 2048,
   });
 
   const command = new InvokeModelCommand({
-    modelId: MODEL_ID,
+    modelId: BEDROCK_MODEL_ID,
     contentType: 'application/json',
     accept: 'application/json',
     body: new TextEncoder().encode(body),
@@ -263,7 +282,7 @@ async function callBedrock(
   try {
     const response = await client.send(command);
     const responseBody = JSON.parse(new TextDecoder().decode(response.body)) as Record<string, unknown>;
-    const usage = estimateAiCost(extractBedrockUsage(responseBody));
+    const usage = estimateAiCost(extractBedrockUsage(responseBody), 'aws-bedrock', BEDROCK_MODEL_ID);
     const responseText = extractResponseText(responseBody);
 
     finishAiSpan(span, {
@@ -282,11 +301,95 @@ async function callBedrock(
       latencyMs: Date.now() - startedAt,
       error,
       metadata: {
-        model: MODEL_ID,
+        model: BEDROCK_MODEL_ID,
       },
     });
     throw error;
   }
+}
+
+async function callOpenAi(
+  operation: 'shipshape.ai.analyze-plan' | 'shipshape.ai.analyze-retro',
+  systemPrompt: string,
+  userPrompt: string
+): Promise<string | null> {
+  const apiKey = getOpenAiApiKey();
+  if (!apiKey) return null;
+
+  const model = getOpenAiModel();
+  const startedAt = Date.now();
+  const span = startAiSpan({
+    operation,
+    provider: 'openai',
+    model,
+    region: 'global',
+    systemPrompt,
+    userPrompt,
+    maxTokens: 2048,
+  });
+
+  try {
+    const response = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        max_tokens: 2048,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+      }),
+    });
+
+    const responseBody = await response.json() as Record<string, unknown>;
+    if (!response.ok) {
+      const errorMessage = isRecord(responseBody.error)
+        ? getStringProperty(responseBody.error, 'message')
+        : undefined;
+      throw new Error(errorMessage ?? `OpenAI request failed with status ${response.status}`);
+    }
+
+    const responseText = extractOpenAiResponseText(responseBody);
+    const usage = estimateAiCost(extractOpenAiUsage(responseBody), 'openai', model);
+
+    finishAiSpan(span, {
+      responseText,
+      usage,
+      latencyMs: Date.now() - startedAt,
+      metadata: {
+        request_id: response.headers.get('x-request-id') ?? getStringProperty(responseBody, 'id'),
+        finish_reason: extractOpenAiFinishReason(responseBody),
+      },
+    });
+
+    return responseText;
+  } catch (error) {
+    finishAiSpan(span, {
+      latencyMs: Date.now() - startedAt,
+      error,
+      metadata: {
+        model,
+      },
+    });
+    throw error;
+  }
+}
+
+async function callAiProvider(
+  operation: 'shipshape.ai.analyze-plan' | 'shipshape.ai.analyze-retro',
+  systemPrompt: string,
+  userPrompt: string
+): Promise<string | null> {
+  if (getOpenAiApiKey()) {
+    return callOpenAi(operation, systemPrompt, userPrompt);
+  }
+
+  return callBedrock(operation, systemPrompt, userPrompt);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -345,6 +448,64 @@ function extractBedrockUsage(responseBody: Record<string, unknown>): AiUsageMetr
   };
 }
 
+function extractOpenAiResponseText(responseBody: Record<string, unknown>): string | null {
+  const choices = responseBody.choices;
+  if (!Array.isArray(choices) || choices.length === 0) return null;
+
+  const firstChoice = choices[0];
+  if (!isRecord(firstChoice) || !isRecord(firstChoice.message)) return null;
+
+  const content = firstChoice.message.content;
+  if (typeof content === 'string') {
+    const trimmed = content.trim();
+    return trimmed || null;
+  }
+
+  if (Array.isArray(content)) {
+    const textParts = content
+      .filter(isRecord)
+      .map(item => getStringProperty(item, 'text'))
+      .filter((text): text is string => Boolean(text));
+    if (textParts.length > 0) {
+      return textParts.join('\n').trim() || null;
+    }
+  }
+
+  return null;
+}
+
+function extractOpenAiFinishReason(responseBody: Record<string, unknown>): string | undefined {
+  const choices = responseBody.choices;
+  if (!Array.isArray(choices) || choices.length === 0) return undefined;
+
+  const firstChoice = choices[0];
+  if (!isRecord(firstChoice)) return undefined;
+  return getStringProperty(firstChoice, 'finish_reason');
+}
+
+function extractOpenAiUsage(responseBody: Record<string, unknown>): AiUsageMetrics {
+  if (!isRecord(responseBody.usage)) {
+    return {};
+  }
+
+  const usage = responseBody.usage;
+  const promptTokens = getNumberProperty(usage, 'prompt_tokens');
+  const completionTokens = getNumberProperty(usage, 'completion_tokens');
+  const totalTokens = getNumberProperty(usage, 'total_tokens');
+
+  let promptCachedTokens: number | undefined;
+  if (isRecord(usage.prompt_tokens_details)) {
+    promptCachedTokens = getNumberProperty(usage.prompt_tokens_details, 'cached_tokens');
+  }
+
+  return {
+    promptTokens,
+    promptCachedTokens,
+    completionTokens,
+    totalTokens,
+  };
+}
+
 /**
  * Analyze a weekly plan for quality (falsifiability and workload).
  */
@@ -371,7 +532,7 @@ export async function analyzePlan(content: unknown): Promise<PlanAnalysisResult 
   const userPrompt = `Analyze this weekly plan. Here are the plan items:\n\n${itemsText}`;
 
   try {
-    const responseText = await callBedrock('shipshape.ai.analyze-plan', PLAN_SYSTEM_PROMPT, userPrompt);
+    const responseText = await callAiProvider('shipshape.ai.analyze-plan', PLAN_SYSTEM_PROMPT, userPrompt);
     if (!responseText) {
       return { error: 'ai_unavailable' };
     }
@@ -438,7 +599,7 @@ export async function analyzeRetro(
     : `Evaluate this weekly retro for quality. No plan was found for comparison, so evaluate the retro items on their own specificity, evidence, and substance.\n\nRETRO CONTENT:\n${retroText}`;
 
   try {
-    const responseText = await callBedrock('shipshape.ai.analyze-retro', RETRO_SYSTEM_PROMPT, userPrompt);
+    const responseText = await callAiProvider('shipshape.ai.analyze-retro', RETRO_SYSTEM_PROMPT, userPrompt);
     if (!responseText) {
       return { error: 'ai_unavailable' };
     }
@@ -460,9 +621,9 @@ export async function analyzeRetro(
   }
 }
 
-/** Check if Bedrock client is available (for UI to decide whether to render quality assistant) */
+/** Check if any configured AI provider is available (for UI to decide whether to render quality assistant) */
 export function isAiAvailable(): boolean {
-  return getClient() !== null;
+  return Boolean(getOpenAiApiKey()) || getClient() !== null;
 }
 
 export { checkRateLimit };
