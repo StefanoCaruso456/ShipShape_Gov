@@ -1,244 +1,170 @@
 # AI Cost Analysis
 
-## Purpose
+## Executive Summary
 
-This document tracks how AI usage should be measured for the Shipshape codebase comprehension and audit work.
+Yes, we now have enough telemetry to produce a correct **application-side AI cost analysis** for the currently deployed path.
 
-The requirement in the project brief is to capture:
+What is now validated:
 
-- LLM API costs
-- total tokens consumed
-- number of API calls made
-- coding agent costs
-- a short reflection on where AI helped or hurt understanding
+- Braintrust is receiving successful traces
+- traces include prompt tokens, completion tokens, total tokens, and estimated cost
+- the live app is currently using **OpenAI direct** for AI analysis
+- the validated successful model is **`gpt-4.1-mini`**
 
-## Short Answer
+What is **not** covered by this telemetry alone:
 
-We **can estimate cost from downstream Braintrust data**, but only if the traces contain token usage.
+- coding-agent costs such as Codex, Cursor, Claude Code, or Copilot
+- authoritative AWS billing totals
+- AWS Bedrock Claude Opus 4.5 production-equivalent cost, because Bedrock quota approval was still blocking successful Opus runs
 
-That means:
+So the honest conclusion is:
 
-- if Braintrust receives `prompt_tokens` and `completion_tokens`, we can estimate LLM cost by multiplying those counts by the provider's published token pricing
-- if Braintrust also receives an `estimated_cost` field, then the cost can be read directly from the trace data
-- if Braintrust receives only a trace name with no token usage, then it is **not enough** to estimate cost accurately
+- **Yes** for Shipshape application AI cost analysis on the deployed OpenAI path
+- **No** for coding-agent cost tracking without separate manual or billing data
+- **No** for claiming this is the final Bedrock Opus production cost
 
-So the honest answer is **not just "yes"**. It is:
+## Validated Telemetry State
 
-- `Yes` for token-based downstream estimation
-- `No` for exact cost estimation from Braintrust alone unless token or cost fields are logged
+As of **March 13, 2026** in the deployed environment:
 
-## Current Shipshape Instrumentation
+- operation: `shipshape.ai.analyze-plan`
+- provider: `openai`
+- model: `gpt-4.1-mini`
+- Braintrust metadata includes:
+  - `provider`
+  - `model`
+  - `request_id`
+  - `finish_reason`
+  - `pricing_source`
+- Braintrust metrics includes:
+  - `prompt_tokens`
+  - `completion_tokens`
+  - `tokens`
+  - `estimated_cost`
+  - `latency_ms`
 
-Shipshape's weekly plan and retro quality analysis currently runs through AWS Bedrock using the model:
+This is the first successful end-to-end proof that the telemetry implementation is working for real billable AI calls.
 
-- `global.anthropic.claude-opus-4-5-20251101-v1:0`
+## Confirmed Successful Trace
 
-The API now includes Braintrust telemetry around that Bedrock call.
+Confirmed Braintrust trace:
 
-What the telemetry is designed to log:
+- trace name: `shipshape.ai.analyze-plan`
+- provider: `openai`
+- model: `gpt-4.1-mini`
+- prompt tokens: `834`
+- completion tokens: `1,175`
+- total tokens: `2,009`
+- estimated cost shown in Braintrust: `$0.002`
+- latency: `17,991 ms`
+- pricing source: `env`
 
-- operation name
-- model
-- region
-- request ID
-- stop reason
-- prompt token count
-- completion token count
-- total token count
-- estimated cost, if pricing env vars are configured
+Braintrust rounds the displayed dollar amount. The more exact cost from the logged token counts is:
 
-Important limitation:
+`(834 / 1,000,000 * 0.4) + (1175 / 1,000,000 * 1.6) = 0.0022136 USD`
 
-- Braintrust will not magically know AWS Bedrock pricing on its own in this repo
-- estimated cost is only logged if the app is configured with:
-  - `BEDROCK_INPUT_COST_PER_MILLION_USD`
-  - `BEDROCK_OUTPUT_COST_PER_MILLION_USD`
+Rounded working value:
 
-Without those two pricing values, Braintrust traces can still support a cost analysis, but the cost must be calculated from tokens after the fact.
+- **per successful analyze-plan call: `$0.0022`**
 
-## Pricing Assumption For This Repo
+## Pricing Basis
 
-Current working pricing assumption for Shipshape's Bedrock model:
+The deployed OpenAI pricing values used by the app are:
 
-- input: `$5.00` per 1 million tokens
-- output: `$25.00` per 1 million tokens
+- input: `$0.40` per 1 million tokens
+- output: `$1.60` per 1 million tokens
 
-Source:
+These were loaded into the environment and recorded in Braintrust as `pricing_source=env`.
 
-- AWS announcement for Claude Opus 4.5 on Bedrock published on November 24, 2025
+## Development Cost Summary
 
-Best-practice note:
+### LLM API costs
 
-- use this as a documented engineering assumption
-- re-check the live Bedrock pricing before submitting a final cost report
-- if pricing changes, update environment values instead of changing code
+For the currently validated deployment path, we can now calculate Shipshape AI request cost directly from Braintrust traces.
 
-## What We Can Measure Reliably
+Formula:
 
-### 1. LLM API Costs
+`estimated cost = (prompt tokens / 1,000,000 * input price) + (completion tokens / 1,000,000 * output price)`
 
-We can estimate LLM API cost for Shipshape's AI analysis feature using:
+Validated example:
 
-`estimated cost = (input tokens / 1,000,000 * input price) + (output tokens / 1,000,000 * output price)`
+- prompt cost: `834 / 1,000,000 * 0.4 = $0.0003336`
+- completion cost: `1175 / 1,000,000 * 1.6 = $0.00188`
+- total: `$0.0022136`
 
-This is reliable if:
+### Total tokens consumed
 
-- Braintrust logs token counts
-- we use the correct Bedrock pricing for the exact model/version used in production
+Validated and available from Braintrust:
 
-This is **an estimate**, not a billing-authoritative number.
+- prompt tokens
+- completion tokens
+- total tokens
 
-Why:
+### Number of API calls made
 
-- AWS billing is the source of truth
-- traces are still the best per-request engineering view
+Validated and available from Braintrust by counting successful traces such as:
 
-### 2. Total Tokens Consumed
+- `shipshape.ai.analyze-plan`
+- `shipshape.ai.analyze-retro`
 
-This is a good downstream Braintrust metric if the traces contain:
+### Coding agent costs
 
-- `prompt_tokens`
-- `completion_tokens`
-- optionally cached-token fields
+Not covered by this telemetry.
 
-This requirement is reasonable to satisfy from trace data.
+These still require separate tracking from:
 
-### 3. Number of API Calls Made
-
-This is easy to count from traces.
-
-For this feature, one successful plan or retro analysis should correspond to one Bedrock call.
-
-### 4. Coding Agent Costs
-
-This is **not automatically covered** by Shipshape's Braintrust instrumentation.
-
-Examples:
-
-- Codex desktop usage
+- Codex usage
 - Cursor usage
 - Claude Code usage
-- GitHub Copilot usage
+- Copilot usage
+- subscription or invoice data
 
-Those costs usually need to be tracked separately from:
+## User Cost Analysis Table
 
-- provider invoices
-- tool dashboards
-- plan/subscription cost allocation
-- manual session logs
+### Assumption
 
-So this requirement should be documented as **manual or external tracking**, not inferred from app telemetry.
+The table below assumes:
 
-## Best-Practice Checklist
+- **1 successful `analyze-plan` call per active user**
+- cost per call = **`$0.0022136`**
 
-To make this analysis genuinely useful, not just technically possible, the project should have:
+If your real product behavior is different, use this multiplier:
 
-- token metrics in every LLM trace
-- a documented pricing assumption for the exact model and provider
-- per-feature trace names so costs can be grouped by workflow
-- separation between application LLM costs and coding-agent costs
-- a repeatable export or summary process
-- a final reconciliation step against AWS billing
-- privacy controls so prompts are not logged raw unless explicitly approved
+`total cost = active users * analyses per user * 0.0022136`
 
-Current status in Shipshape:
+### Cost by User Count
 
-- Braintrust tracing around the Bedrock call: `implemented`
-- token logging: `implemented`
-- estimated cost logging when pricing env vars are present: `implemented`
-- production-safe loading of telemetry config from SSM: `implemented`
-- SSM sync script for Braintrust and pricing config: `implemented`
-- automated aggregate report from live trace data: `not yet implemented`
-- coding-agent cost ledger: `manual`
+| Active users | Calls assumed | Estimated total cost |
+| --- | ---: | ---: |
+| 100 | 100 | $0.2214 |
+| 1,000 | 1,000 | $2.2136 |
+| 10,000 | 10,000 | $22.1360 |
+| 100,000 | 100,000 | $221.3600 |
 
-## Recommended Tracking Method For This Project
+## Practical Interpretation
 
-Use a split approach.
+This means the current validated OpenAI path is inexpensive at low and mid-scale for this specific analysis feature.
 
-### App-side AI cost tracking
+However, real spend can rise due to:
 
-Use Braintrust traces for:
+- repeated re-analysis while users edit
+- both plan and retro analysis running in the same week
+- retries, failures, or duplicate submissions
+- switching to a larger model
+- longer prompts or longer outputs
 
-- request count
-- token count
-- per-request metadata
-- estimated per-request cost
+## Recommended Final Reporting Framing
 
-This covers the LLM calls made by the Shipshape application itself.
+For the project deliverable, the safest framing is:
 
-### Human coding-agent cost tracking
-
-Track separately:
-
-- which coding assistant was used
-- approximate number of sessions
-- subscription or usage-based cost
-- whether the tool was used for exploration, implementation, debugging, or writing
-
-This covers the AI tools used by the engineer during the audit.
-
-## Recommended Final Deliverable
-
-The strongest final AI cost analysis for this project should include four tables:
-
-### 1. Application LLM usage summary
-
-- feature name
-- model
-- API call count
-- input tokens
-- output tokens
-- estimated cost
-
-### 2. By-environment breakdown
-
-- dev
-- staging
-- production
-
-### 3. Failure and waste summary
-
-- failed AI calls
-- repeated calls caused by retries or repeated edits
-- avoidable spend
-
-### 4. Developer AI tooling summary
-
-- tool name
-- how it was used
-- approximate session count
-- subscription or usage cost
-
-## Cost Analysis Template
-
-### Development Costs
-
-#### LLM API costs
-
-- Source: Braintrust traces for Shipshape AI analysis requests
-- Status: `Partially automatable`
-- Needed for full automation:
-  - token metrics in traces
-  - Bedrock token pricing configured in environment or applied in post-processing
-
-#### Total tokens consumed
-
-- Source: Braintrust trace metrics
-- Status: `Automatable`
-- Breakdown needed:
-  - input tokens
-  - output tokens
-  - total tokens
-
-#### Number of API calls made
-
-- Source: Braintrust trace count
-- Status: `Automatable`
-
-#### Coding agent costs
-
-- Source: external tool billing or manual log
-- Status: `Manual`
+1. **Validated current application AI cost**
+   - based on successful Braintrust traces from the deployed OpenAI path
+2. **Scaling estimate**
+   - based on the observed per-call token profile and the user-count table above
+3. **Known limitation**
+   - this is not yet the final AWS Bedrock Claude Opus 4.5 production cost
+4. **Separate manual section**
+   - coding-agent costs must be tracked outside Braintrust
 
 ## Reflection Questions
 
@@ -246,60 +172,59 @@ The strongest final AI cost analysis for this project should include four tables
 
 Most helpful:
 
-- quickly locating relevant files and cross-package flows
-- summarizing architecture patterns across `web/`, `api/`, and `shared/`
-- accelerating repetitive codebase inspection
+- finding code paths quickly
+- understanding cross-package relationships
+- accelerating repeated inspection and implementation work
 
 Least helpful:
 
-- anything requiring precise infrastructure state or live deployment timing
-- cost analysis when pricing assumptions are not explicitly configured
-- cases where the tool can sound confident before the downstream evidence exists
+- interpreting partially complete cloud deployment state
+- anything where the UI implied success before the underlying infrastructure was actually ready
+- cost claims before real successful traces existed
 
 ### Did AI tools help understand the codebase, or shortcut understanding?
 
-They helped understanding when used as a discovery and navigation aid, especially for finding entry points and relationships between systems.
+They helped when used as navigation and implementation acceleration tools.
 
-They risk shortcutting understanding when summaries are accepted without checking the actual code paths, runtime environment, or deployment state.
+They risked shortcutting understanding when summaries were accepted before checking the real runtime behavior, deployment status, and telemetry output.
 
 ### Where did AI suggestions need to be overridden or corrected? Why?
 
-AI suggestions needed correction when:
+Corrections were needed when:
 
-- a UI screen implied success but the underlying telemetry had not ingested data yet
-- deployment status looked complete before AWS had actually finished rolling updates
-- cost telemetry sounded "done" before pricing inputs were configured
+- the Braintrust project existed but had no real traces yet
+- Bedrock access errors looked like application bugs
+- billing, quotas, and model authorization were easy to confuse
+- a successful-looking UI state did not match actual downstream metrics
 
-The common reason was that downstream proof mattered more than plausible interpretation.
+The common issue was that downstream evidence mattered more than plausible interpretation.
 
 ### What percentage of final code changes were AI-generated vs. hand-written?
 
-Suggested framing for this project:
+Reasonable final framing:
 
-- architecture discovery and first-pass implementation: heavily AI-assisted
-- final corrections, environment fixes, deployment sequencing, and judgment calls: human-reviewed and selectively adjusted
+- first-pass discovery and implementation were heavily AI-assisted
+- final telemetry validation, cloud debugging, secret management, and deployment corrections required human review and selective correction
 
-If a numeric estimate is required, fill in after the project ends with a conservative range rather than a false-precision percentage.
+If a numeric estimate is required, use a conservative range instead of false precision.
 
 ## Bottom Line
 
-For this repo, Braintrust can support an AI cost analysis **if the trace data includes token metrics**.
+Shipshape now has enough telemetry to support a real **application AI cost analysis**.
 
-That gives us:
+The currently validated benchmark is:
 
-- total calls
-- total tokens
-- token breakdown
-- estimated per-call and aggregate LLM cost
+- **`$0.0022136` per successful `shipshape.ai.analyze-plan` call on `gpt-4.1-mini`**
 
-But it does **not** by itself solve:
+That is enough to support:
 
-- coding agent cost tracking
-- authoritative AWS billing totals
-- exact cost estimation when pricing inputs are missing
+- LLM API cost reporting
+- token reporting
+- API call count reporting
+- user-scale sensitivity analysis
 
-The right conclusion is:
+It is **not** enough by itself to report:
 
-- use Braintrust for application-level LLM usage and estimated cost
-- use external/manual tracking for coding-agent costs
-- use AWS billing as the final source of truth for spend
+- coding-agent cost
+- final AWS billing truth
+- final Bedrock Claude Opus 4.5 production cost
