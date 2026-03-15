@@ -17,6 +17,15 @@ From Discovery To Measurable Improvements
 
 ---
 
+# AI Layer, Telemetry, And Cost Analysis
+
+- **Scope:** Ship already has a narrow AI layer for plan and retro quality analysis, not a full app-wide copilot
+- **Telemetry:** the app already captures request metadata, tokens, latency, and traceable AI usage
+- **Cost:** that makes AI cost measurable before the feature surface expands
+- **Takeaway:** the right strategy is to prove value and cost efficiency first, then broaden the AI layer
+
+---
+
 # Category 1: Type Safety
 
 - **Before:** API routes and tests relied too heavily on `!`, `as`, and `any`
