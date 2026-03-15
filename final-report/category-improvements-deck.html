@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShipShape Category Improvements Deck</title>
+  <style>
+    :root {
+      --bg: #efe8db;
+      --paper: #fffaf1;
+      --ink: #1a2433;
+      --muted: #57616f;
+      --accent: #b85a2f;
+      --gold: #d4a237;
+      --navy: #243a58;
+      --line: #dacdb7;
+      --shadow: rgba(26, 36, 51, 0.12);
+      --soft: rgba(36, 58, 88, 0.07);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      padding: 22px 0 48px;
+    }
+
+    .slide {
+      position: relative;
+      width: 1280px;
+      min-height: 720px;
+      padding: 54px 64px 62px;
+      background:
+        radial-gradient(circle at top right, rgba(212, 162, 55, 0.16), transparent 28%),
+        linear-gradient(135deg, rgba(184, 90, 47, 0.06), rgba(36, 58, 88, 0.04)),
+        var(--paper);
+      box-shadow: 0 18px 54px var(--shadow);
+      overflow: hidden;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 12px;
+      background: linear-gradient(90deg, var(--accent), var(--gold), var(--navy));
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      right: -120px;
+      bottom: -140px;
+      width: 360px;
+      height: 360px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(36, 58, 88, 0.08), transparent 70%);
+    }
+
+    h1, h2, h3, p, ul {
+      margin-top: 0;
+    }
+
+    .kicker {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    h1 {
+      max-width: 940px;
+      margin-bottom: 16px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 66px;
+      line-height: 0.98;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      max-width: 960px;
+      margin-bottom: 18px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 44px;
+      line-height: 1.04;
+      letter-spacing: -0.02em;
+    }
+
+    p, li {
+      font-size: 25px;
+      line-height: 1.34;
+    }
+
+    p.lead {
+      max-width: 880px;
+      font-size: 29px;
+      color: var(--muted);
+    }
+
+    ul {
+      padding-left: 28px;
+    }
+
+    li + li {
+      margin-top: 10px;
+    }
+
+    .meta {
+      position: absolute;
+      right: 64px;
+      bottom: 32px;
+      font-size: 16px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      position: absolute;
+      left: 64px;
+      bottom: 30px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .title-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 34px;
+      align-items: stretch;
+      min-height: 560px;
+    }
+
+    .title-panel {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 26px;
+      padding-bottom: 96px;
+    }
+
+    .stats {
+      display: grid;
+      gap: 16px;
+      align-self: center;
+    }
+
+    .stat {
+      padding: 18px 20px;
+      border-left: 6px solid var(--accent);
+      background: var(--soft);
+    }
+
+    .stat strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 16px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
+
+    .stat span {
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .cover-card {
+      min-height: 500px;
+      padding: 28px 30px;
+      border: 1px solid rgba(36, 58, 88, 0.12);
+      background:
+        linear-gradient(135deg, rgba(36, 58, 88, 0.08), rgba(184, 90, 47, 0.05)),
+        rgba(255, 250, 241, 0.94);
+    }
+
+    .cover-card .big {
+      margin: 26px 0 10px;
+      font-size: 34px;
+      line-height: 1.14;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .cover-card p {
+      color: var(--muted);
+    }
+
+    .cover-card .stack {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .cover-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(36, 58, 88, 0.1);
+      color: var(--navy);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .four-up {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .pillar {
+      min-height: 228px;
+      padding: 20px 22px;
+      border: 1px solid rgba(36, 58, 88, 0.12);
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .pillar h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .pillar p {
+      font-size: 24px;
+      line-height: 1.32;
+    }
+
+    .next-grid {
+      display: grid;
+      grid-template-columns: 1.02fr 0.98fr;
+      gap: 24px;
+      margin-top: 14px;
+    }
+
+    .panel {
+      padding: 22px 24px;
+      border: 1px solid rgba(36, 58, 88, 0.12);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .panel h3 {
+      margin-bottom: 10px;
+      font-size: 20px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+        gap: 0;
+      }
+
+      .slide {
+        width: auto;
+        min-height: 100vh;
+        box-shadow: none;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide">
+    <p class="kicker">ShipShape Improvements</p>
+    <div class="title-grid">
+      <div class="title-panel">
+        <div>
+          <h1>From Discovery To Measurable Improvements</h1>
+          <p class="lead">A category-by-category walkthrough of what was wrong, why it mattered, what changed, and what improved.</p>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <strong>Presenter</strong>
+            <span>Stefano Caruso</span>
+          </div>
+          <div class="stat">
+            <strong>Structure</strong>
+            <span>Discovery → 7 Categories → Next Steps</span>
+          </div>
+          <div class="stat">
+            <strong>Proof</strong>
+            <span>Before/After Metrics + Reproducible Evidence</span>
+          </div>
+        </div>
+      </div>
+      <div class="cover-card">
+        <div class="big">This deck focuses on implemented improvements, not just audit findings.</div>
+        <p>The goal is to show where the pressure points were, why those problems mattered, and the measurable results after the fixes.</p>
+        <div class="stack">
+          <span class="cover-chip">Unified-document monolith</span>
+          <span class="cover-chip">React + Express + shared contracts</span>
+          <span class="cover-chip">REST + WebSocket + Yjs</span>
+          <span class="cover-chip">Measured before/after outcomes</span>
+        </div>
+      </div>
+    </div>
+    <div class="meta">Slide 1</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Discovery</p>
+    <h2>What We Learned Before Changing Code</h2>
+    <div class="four-up">
+      <div class="pillar">
+        <h3>System Shape</h3>
+        <p>Ship is a unified-document monolith with `web/`, `api/`, and `shared/`, not a set of separate apps.</p>
+      </div>
+      <div class="pillar">
+        <h3>Core Model</h3>
+        <p>One `documents` table stores docs, issues, projects, and sprints, filtered by `document_type`.</p>
+      </div>
+      <div class="pillar">
+        <h3>Runtime Flow</h3>
+        <p>The frontend goes through the API for writes, and the editor uses WebSocket + Yjs for realtime collaboration.</p>
+      </div>
+      <div class="pillar">
+        <h3>Why It Mattered</h3>
+        <p>That discovery told us where improvements had the highest leverage: contracts, first load, hot read paths, and relationship-heavy flows.</p>
+      </div>
+    </div>
+    <div class="footer-note">Discovery came first so the fixes matched the architecture instead of fighting it.</div>
+    <div class="meta">Slide 2</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Category 1</p>
+    <h2>Type Safety</h2>
+    <div class="four-up">
+      <div class="pillar">
+        <h3>Before</h3>
+        <p>API routes and tests relied too heavily on `!`, `as`, and `any`.</p>
+      </div>
+      <div class="pillar">
+        <h3>Why It Mattered</h3>
+        <p>TypeScript was present, but the compiler was being bypassed on important auth, input, and response paths.</p>
+      </div>
+      <div class="pillar">
+        <h3>What Changed</h3>
+        <p>Added checked auth helpers, `zod` validation, honest nullable types, and typed test helpers.</p>
+      </div>
+      <div class="pillar">
+        <h3>Outcome</h3>
+        <p>Violations dropped from <strong>1292</strong> to <strong>883</strong>, a <strong>31.7%</strong> reduction.</p>
+      </div>
+    </div>
+    <div class="meta">Slide 3</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Category 2</p>
+    <h2>Bundle Size</h2>
+    <div class="four-up">
+      <div class="pillar">
+        <h3>Before</h3>
+        <p>The app shipped almost the entire frontend on first load, even for lightweight pages.</p>
+      </div>
+      <div class="pillar">
+        <h3>Why It Mattered</h3>
+        <p>Users were paying for heavy route and editor code before they actually needed it.</p>
+      </div>
+      <div class="pillar">
+        <h3>What Changed</h3>
+        <p>Added route-level lazy loading, limited devtools to development, and reduced the highlighting payload.</p>
+      </div>
+      <div class="pillar">
+        <h3>Outcome</h3>
+        <p>Authenticated startup dropped from <strong>2078.55 kB</strong> to <strong>485.14 kB</strong>, a <strong>76.7%</strong> improvement.</p>
+      </div>
+    </div>
+    <div class="meta">Slide 4</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Category 3</p>
+    <h2>API Response Time</h2>
+    <div class="four-up">
+      <div class="pillar">
+        <h3>Before</h3>
+        <p>Protected read endpoints were doing repeated auth and association work on every request.</p>
+      </div>
+      <div class="pillar">
+        <h3>Why It Mattered</h3>
+        <p>Those fixed costs become bottlenecks as concurrency and data volume grow.</p>
+      </div>
+      <div class="pillar">
+        <h3>What Changed</h3>
+        <p>Reduced auth overhead, removed an extra issue-association round-trip, and added targeted indexes.</p>
+      </div>
+      <div class="pillar">
+        <h3>Outcome</h3>
+        <p>P95 improved from <strong>19.00 ms</strong> to <strong>14.32 ms</strong> on `GET /api/issues`, and from <strong>18.09 ms</strong> to <strong>13.58 ms</strong> on `GET /api/documents/:id`.</p>
+      </div>
+    </div>
+    <div class="meta">Slide 5</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Category 4</p>
+    <h2>Database Query Efficiency</h2>
+    <div class="four-up">
+      <div class="pillar">
+        <h3>Before</h3>
+        <p>The app was doing unnecessary database work, especially repeated session writes and repeated project-query work.</p>
+      </div>
+      <div class="pillar">
+        <h3>Why It Mattered</h3>
+        <p>Relationship-heavy flows are where the unified document model gets more expensive.</p>
+      </div>
+      <div class="pillar">
+        <h3>What Changed</h3>
+        <p>Throttled session `last_activity` writes, tightened the repeated projects query, and added a targeted index.</p>
+      </div>
+      <div class="pillar">
+        <h3>Outcome</h3>
+        <p>Sprint-board flow dropped from <strong>32</strong> queries to <strong>25</strong>, a <strong>21.9%</strong> reduction.</p>
+      </div>
+    </div>
+    <div class="meta">Slide 6</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Category 5</p>
+    <h2>Test Coverage And Quality</h2>
+    <div class="four-up">
+      <div class="pillar">
+        <h3>Before</h3>
+        <p><strong>3</strong> critical flows had zero coverage, and web Vitest had <strong>13</strong> failures.</p>
+      </div>
+      <div class="pillar">
+        <h3>Why It Mattered</h3>
+        <p>The test suite was not strong enough to be a dependable regression safety net.</p>
+      </div>
+      <div class="pillar">
+        <h3>What Changed</h3>
+        <p>Added tests for CAIA/PIV login start, UI document delete, and sprint-board drag/drop, then stabilized the web suite.</p>
+      </div>
+      <div class="pillar">
+        <h3>Outcome</h3>
+        <p>Critical uncovered flows dropped from <strong>3</strong> to <strong>0</strong>, and web Vitest improved from <strong>138 / 13</strong> to <strong>157 / 0</strong>.</p>
+      </div>
+    </div>
+    <div class="meta">Slide 7</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Category 6</p>
+    <h2>Runtime Error And Edge Case Handling</h2>
+    <div class="four-up">
+      <div class="pillar">
+        <h3>Before</h3>
+        <p>Several failure states were silent or confusing, especially around collaboration and title-save failures.</p>
+      </div>
+      <div class="pillar">
+        <h3>Why It Mattered</h3>
+        <p>Users could miss recovery actions or think failed work had already been saved.</p>
+      </div>
+      <div class="pillar">
+        <h3>What Changed</h3>
+        <p>Added a global realtime banner, a collaboration disconnect warning, and explicit title-save retry recovery.</p>
+      </div>
+      <div class="pillar">
+        <h3>Outcome</h3>
+        <p>Console errors during normal usage dropped from <strong>10</strong> to <strong>0</strong>, and the three targeted user-facing recovery gaps were fixed.</p>
+      </div>
+    </div>
+    <div class="meta">Slide 8</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Category 7</p>
+    <h2>Accessibility Compliance</h2>
+    <div class="four-up">
+      <div class="pillar">
+        <h3>Before</h3>
+        <p>Repeated low-contrast UI patterns and docs-tree semantics were causing serious accessibility failures.</p>
+      </div>
+      <div class="pillar">
+        <h3>Why It Mattered</h3>
+        <p>This was both a compliance risk and a usability problem on key pages.</p>
+      </div>
+      <div class="pillar">
+        <h3>What Changed</h3>
+        <p>Fixed contrast on repeated badges and labels, removed opacity-based contrast loss, and cleaned up docs sidebar tree semantics.</p>
+      </div>
+      <div class="pillar">
+        <h3>Outcome</h3>
+        <p>Serious automated violations dropped from <strong>3</strong> to <strong>0</strong>, contrast failures from <strong>22</strong> to <strong>0</strong>, and `/my-week` improved from <strong>96</strong> to <strong>100</strong>.</p>
+      </div>
+    </div>
+    <div class="meta">Slide 9</div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Next Steps</p>
+    <h2>Future Insights</h2>
+    <div class="next-grid">
+      <div class="panel">
+        <h3>What Still Matters Most</h3>
+        <ul>
+          <li>Relationship consistency is still the biggest structural pressure point.</li>
+          <li>The realtime layer remains the first likely scale bottleneck.</li>
+          <li>`shared/` should become a more authoritative contract layer.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Recommended Sequence</h3>
+        <ul>
+          <li>Consolidate relationship handling around the unified document model.</li>
+          <li>Harden scale and operational reliability in the collaboration layer.</li>
+          <li>Finish accessibility validation with full assistive-technology coverage.</li>
+          <li>Keep improving test reliability so the suite remains a trustworthy guardrail.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-note">The strongest path forward is to keep improving the integrated experience, not just individual features in isolation.</div>
+    <div class="meta">Slide 10</div>
+  </section>
+</body>
+</html>
