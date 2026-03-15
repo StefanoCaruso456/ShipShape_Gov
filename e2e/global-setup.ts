@@ -9,12 +9,42 @@
  * occurred when 8 workers each ran full Vite dev servers with HMR.
  */
 
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
 // Get project root (this file is at e2e/global-setup.ts, so go up one level)
 const PROJECT_ROOT = path.resolve(__dirname, '..');
+
+function runPnpm(args: string[], extraEnv?: NodeJS.ProcessEnv) {
+  const corepackCandidates = [
+    process.env.COREPACK_BIN,
+    '/opt/homebrew/bin/corepack',
+    '/usr/local/bin/corepack',
+  ].filter(Boolean) as string[];
+
+  const corepackBin = corepackCandidates.find((candidate) => fs.existsSync(candidate));
+
+  if (corepackBin) {
+    execFileSync(corepackBin, ['pnpm', ...args], {
+      cwd: PROJECT_ROOT,
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        COREPACK_HOME: process.env.COREPACK_HOME || '/tmp/corepack',
+        ...extraEnv,
+      },
+    });
+    return;
+  }
+
+  execSync(`pnpm ${args.join(' ')}`, {
+    cwd: PROJECT_ROOT,
+    stdio: 'inherit',
+    env: { ...process.env, ...extraEnv },
+  });
+}
 
 export default async function globalSetup() {
   // Memory check at startup
@@ -30,10 +60,8 @@ export default async function globalSetup() {
 
   console.log('\nBuilding API for tests...');
   try {
-    execSync('pnpm build:api', {
-      cwd: PROJECT_ROOT,
-      stdio: 'inherit',
-    });
+    runPnpm(['--filter', '@ship/shared', 'build']);
+    runPnpm(['--filter', '@ship/api', 'build']);
     console.log('✓ API build complete');
   } catch (error) {
     console.error('Failed to build API:', error);
@@ -42,11 +70,8 @@ export default async function globalSetup() {
 
   console.log('\nBuilding Web for tests (enables lightweight preview servers)...');
   try {
-    execSync('pnpm build:web', {
-      cwd: PROJECT_ROOT,
-      stdio: 'inherit',
-      env: { ...process.env, VITE_APP_ENV: 'test_e2e' },
-    });
+    runPnpm(['--filter', '@ship/shared', 'build']);
+    runPnpm(['--filter', '@ship/web', 'build'], { VITE_APP_ENV: 'test_e2e' });
     console.log('✓ Web build complete');
   } catch (error) {
     console.error('Failed to build Web:', error);
