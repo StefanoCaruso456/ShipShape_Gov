@@ -706,6 +706,18 @@ Ship should persist historical delivery patterns:
 
 Without this, FleetGraph cannot produce credible delivery forecasts.
 
+### Burn-up and burn-down charts
+
+Ship should support first-class burn-up and burn-down data for sprints, projects, and roadmap scopes:
+
+- planned scope over time
+- completed scope over time
+- scope added after start
+- remaining work over time
+- expected vs actual trajectory
+
+These views are important because they make scope growth and delivery slippage visible at a glance. They also give FleetGraph a much stronger base for distinguishing between normal execution variance, true scope creep, and structural under-capacity.
+
 ### Scope snapshots and scope-creep tracking
 
 Ship should capture scope at sprint start and then track what changes:
@@ -776,6 +788,7 @@ Once Ship has the stronger planning foundation above, FleetGraph should expand b
 That second layer should support:
 
 - capacity and velocity analysis across past sprints
+- burn-up and burn-down analysis across sprint and project history
 - scope-creep detection and explanation
 - forecasted delivery risk at project and program level
 - staffing-gap identification and quantified resourcing recommendations
