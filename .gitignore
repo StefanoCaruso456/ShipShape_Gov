@@ -101,6 +101,8 @@ research/
 
 # Deployment artifacts
 ship-api-*.zip
+deploy-api-ship-api-*.zip
+-progress.txt
 
 # Vendor (local SDK links)
 vendor/

@@ -4,7 +4,7 @@ import { chromium } from '@playwright/test';
 
 const ROOT = process.cwd();
 const INPUT = path.join(ROOT, 'PRESEARCH.md');
-const OUTPUT = path.join(ROOT, 'PRESEARCH.pdf');
+const OUTPUT = path.join(ROOT, 'artifacts-documentation', 'PRESEARCH.pdf');
 
 function escapeHtml(value) {
   return value
