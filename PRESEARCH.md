@@ -42,6 +42,8 @@ The implication is simple:
 
 ### 1. Agent Responsibility Scoping
 
+FleetGraph should be defined by the problems it owns, not by the existence of an LLM or a chat box. In Ship, the highest-value problems are not “find me information” problems; they are “something is drifting and the right person is about to miss it” problems. That means the agent’s job is to monitor execution, accountability, approvals, ownership, and intake, then decide when a situation is meaningful enough to surface and who should see it.
+
 #### What events in Ship should the agent monitor proactively?
 
 FleetGraph should monitor two kinds of proactive triggers:
@@ -185,6 +187,8 @@ The strongest use cases are already implied by how Ship works today. These are d
 
 ### 3. Trigger Model Decision
 
+The trigger model has to match the nature of the failures we care about. Some FleetGraph findings should surface immediately because they are caused by a fresh mutation in Ship. Others only become meaningful because time passed and nobody acted. That is why the trigger decision is architectural, not incidental.
+
 #### When does the proactive agent run without a user present?
 
 The proactive agent should run without a user present in two cases:
@@ -260,6 +264,8 @@ That is the key cost control decision in this architecture.
 ## Phase 2: Graph Architecture
 
 ### 4. Node Design
+
+The graph should stay the same across proactive and on-demand mode so that the agent reasons consistently. The difference between modes should be the trigger and the initial context, not a completely different workflow. That keeps observability, behavior, and maintenance simpler.
 
 Both proactive and on-demand mode should use the same graph. The difference is how the run starts.
 
@@ -345,6 +351,8 @@ The graph should branch at least on:
 
 ### 5. State Management
 
+FleetGraph needs enough state to reason coherently within a run, but it should not become a second source of truth for project data. Ship remains the source of truth. FleetGraph should only persist operational memory: dedupe, cooldowns, snoozes, and run metadata.
+
 #### What state does the graph carry across a session?
 
 The graph should carry:
@@ -387,6 +395,8 @@ This should live in a small FleetGraph-owned state store, not in Ship's domain m
 
 ### 6. Human-in-the-Loop Design
 
+The human-in-the-loop layer is what keeps FleetGraph useful without making it reckless. The agent should be proactive and opinionated, but anything that changes project state or escalates people needs an explicit pause point. In other words, FleetGraph should be strong on detection and recommendation, conservative on mutation.
+
 #### Which actions require confirmation?
 
 - create comment or document draft in Ship
@@ -416,6 +426,8 @@ Each confirmation should show:
 - `snooze`: suppress the same finding key until either the snooze expires or the underlying state changes materially
 
 ### 7. Error and Failure Handling
+
+Error handling matters more here than in a normal feature because FleetGraph will run when no user is present and will often make decisions under incomplete context. The goal is not just to avoid crashing. The goal is to degrade in a way that stays trustworthy: admit uncertainty, reduce scope, and avoid confident bad actions.
 
 #### What does the agent do when Ship API is down?
 
@@ -448,6 +460,8 @@ Never trust cached state when mutating Ship. Re-fetch the exact mutation target 
 ## Phase 3: Stack and Deployment
 
 ### 8. Deployment Model
+
+The deployment model should reflect the fact that FleetGraph has two different entry paths. Proactive runs need an always-available runtime that is not tied to a browser session. On-demand runs need to inherit the current user’s context and permissions. The cleanest design is a shared graph implementation with two invocation surfaces.
 
 #### Where does the proactive agent run when no user is present?
 
@@ -483,6 +497,8 @@ On-demand mode should run through a Ship API endpoint that invokes the same grap
 - the user's role and visibility constraints
 
 ### 9. Performance
+
+FleetGraph only works as a project intelligence tool if it is timely enough to matter and cheap enough to keep running. That means the performance story is not only about latency. It is also about when Claude is invoked, how much context is passed, and how often the same unchanged condition is re-analyzed.
 
 #### How does your trigger model achieve the `< 5 minute` detection latency goal?
 
