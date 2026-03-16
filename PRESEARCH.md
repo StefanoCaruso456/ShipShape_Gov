@@ -44,6 +44,16 @@ The implication is simple:
 
 FleetGraph should be defined by the problems it owns, not by the existence of an LLM or a chat box. In Ship, the highest-value problems are not “find me information” problems; they are “something is drifting and the right person is about to miss it” problems. That means the agent’s job is to monitor execution, accountability, approvals, ownership, and intake, then decide when a situation is meaningful enough to surface and who should see it.
 
+This section directly answers:
+
+- What events in Ship should the agent monitor proactively?
+- What constitutes a condition worth surfacing?
+- What is the agent allowed to do without human approval?
+- What must always require confirmation?
+- How does the agent know who is on a project?
+- How does the agent know who to notify?
+- How does the on-demand mode use context from the current view?
+
 #### What events in Ship should the agent monitor proactively?
 
 FleetGraph should monitor two kinds of proactive triggers:
@@ -159,7 +169,7 @@ The current view is the graph entry point:
 - **Program view**: start with the program, then rank child project and week risk
 - **My Week / person context**: start with the person, then expand to current accountability items, allocations, and due work
 
-### Agent Responsibility Statement
+#### Design conclusion: Agent Responsibility Statement
 
 FleetGraph is responsible for:
 
@@ -175,6 +185,12 @@ FleetGraph is not responsible for:
 
 The strongest use cases are already implied by how Ship works today. These are discovered from the current Ship product model: accountability gaps, approval workflows, sprint drift, ownership, and intake/triage state.
 
+This section directly answers:
+
+- Think about the roles: Director, PM, Engineer
+- For each use case define: role, trigger, what the agent detects or produces, what the human decides
+- Do not invent use cases - discover pain points first
+
 | Use Case | Role | Mode | Trigger | What FleetGraph detects or produces | What the human decides |
 |---|---|---|---|---|---|
 | Missing ritual with active work | Engineer | Proactive | Business day passes with active sprint issues and no standup or weekly doc | Surfaces the missing item, why it is due, and a deep link to the exact document to complete | Whether to act now or snooze |
@@ -188,6 +204,13 @@ The strongest use cases are already implied by how Ship works today. These are d
 ### 3. Trigger Model Decision
 
 The trigger model has to match the nature of the failures we care about. Some FleetGraph findings should surface immediately because they are caused by a fresh mutation in Ship. Others only become meaningful because time passed and nobody acted. That is why the trigger decision is architectural, not incidental.
+
+This section directly answers:
+
+- When does the proactive agent run without a user present?
+- Poll vs. webhook vs. hybrid - what are the tradeoffs?
+- How stale is too stale for your use cases?
+- What does your choice cost at 100 projects? At 1,000?
 
 #### When does the proactive agent run without a user present?
 
@@ -266,6 +289,12 @@ That is the key cost control decision in this architecture.
 ### 4. Node Design
 
 The graph should stay the same across proactive and on-demand mode so that the agent reasons consistently. The difference between modes should be the trigger and the initial context, not a completely different workflow. That keeps observability, behavior, and maintenance simpler.
+
+This section directly answers:
+
+- What are your context, fetch, reasoning, action, and output nodes?
+- Which fetch nodes run in parallel?
+- Where are your conditional edges and what triggers each branch?
 
 Both proactive and on-demand mode should use the same graph. The difference is how the run starts.
 
@@ -353,6 +382,12 @@ The graph should branch at least on:
 
 FleetGraph needs enough state to reason coherently within a run, but it should not become a second source of truth for project data. Ship remains the source of truth. FleetGraph should only persist operational memory: dedupe, cooldowns, snoozes, and run metadata.
 
+This section directly answers:
+
+- What state does the graph carry across a session?
+- What state persists between proactive runs?
+- How do you avoid redundant API calls?
+
 #### What state does the graph carry across a session?
 
 The graph should carry:
@@ -397,6 +432,12 @@ This should live in a small FleetGraph-owned state store, not in Ship's domain m
 
 The human-in-the-loop layer is what keeps FleetGraph useful without making it reckless. The agent should be proactive and opinionated, but anything that changes project state or escalates people needs an explicit pause point. In other words, FleetGraph should be strong on detection and recommendation, conservative on mutation.
 
+This section directly answers:
+
+- Which actions require confirmation?
+- What does the confirmation experience look like in Ship?
+- What happens if the human dismisses or snoozes?
+
 #### Which actions require confirmation?
 
 - create comment or document draft in Ship
@@ -428,6 +469,12 @@ Each confirmation should show:
 ### 7. Error and Failure Handling
 
 Error handling matters more here than in a normal feature because FleetGraph will run when no user is present and will often make decisions under incomplete context. The goal is not just to avoid crashing. The goal is to degrade in a way that stays trustworthy: admit uncertainty, reduce scope, and avoid confident bad actions.
+
+This section directly answers:
+
+- What does the agent do when Ship API is down?
+- How does it degrade gracefully?
+- What gets cached and for how long?
 
 #### What does the agent do when Ship API is down?
 
@@ -463,6 +510,12 @@ Never trust cached state when mutating Ship. Re-fetch the exact mutation target 
 
 The deployment model should reflect the fact that FleetGraph has two different entry paths. Proactive runs need an always-available runtime that is not tied to a browser session. On-demand runs need to inherit the current user’s context and permissions. The cleanest design is a shared graph implementation with two invocation surfaces.
 
+This section directly answers:
+
+- Where does the proactive agent run when no user is present?
+- How is it kept alive?
+- How does it authenticate with Ship without a user session?
+
 #### Where does the proactive agent run when no user is present?
 
 FleetGraph should run as a **dedicated worker service**, not inside a user request handler.
@@ -488,7 +541,7 @@ This is important:
 - proactive mode should not impersonate random users
 - on-demand mode should still use the invoking user's session and permissions
 
-#### Supporting detail: how on-demand mode runs
+#### Supporting design detail: how on-demand mode runs
 
 On-demand mode should run through a Ship API endpoint that invokes the same graph code, but with:
 
@@ -499,6 +552,12 @@ On-demand mode should run through a Ship API endpoint that invokes the same grap
 ### 9. Performance
 
 FleetGraph only works as a project intelligence tool if it is timely enough to matter and cheap enough to keep running. That means the performance story is not only about latency. It is also about when Claude is invoked, how much context is passed, and how often the same unchanged condition is re-analyzed.
+
+This section directly answers:
+
+- How does your trigger model achieve the < 5 minute detection latency goal?
+- What is your token budget per invocation?
+- Where are the cost cliffs in your architecture?
 
 #### How does your trigger model achieve the `< 5 minute` detection latency goal?
 
