@@ -1,0 +1,19 @@
+flowchart TD
+  A["Trigger<br/>Proactive event / sweep<br/>or on-demand UI invoke"] --> B["Supervisor / Control Plane<br/>entrypoint, routing, interrupts,<br/>resume, failure classification"]
+
+  B --> C["Shared Graph Nodes<br/>context -> fetch -> derive -> reason -> propose -> HITL / fallback"]
+
+  S[("Graph State<br/>mode, actor, scope, payloads,<br/>signals, findings, action, errors")] <--> B
+  S <--> C
+
+  R["Runtime Services<br/>Ship API, Claude, LangSmith,<br/>cache, config, auth, logger"] --> C
+
+  C --> D{"Outcome"}
+  D -->|"No finding"| E["Quiet exit / contextual answer"]
+  D -->|"Insight only"| F["Surface finding"]
+  D -->|"Action proposal"| G["Human-in-the-loop gate"]
+
+  G -->|"Approve"| H["Execute action"]
+  G -->|"Dismiss / Snooze"| I["Persist operational memory"]
+
+  C --> J["Fallback / retry / low-confidence exit"]
