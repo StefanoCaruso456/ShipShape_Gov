@@ -1,0 +1,19 @@
+flowchart TD
+  A["Trigger<br/>Proactive event / sweep<br/>or on-demand UI invoke"] --> B["Supervisor / Control Plane"]
+  B --> C["Graph State"]
+  B --> D["Checkpoint History"]
+  B --> E["Route Next Subflow"]
+
+  E --> F["Context + Scope"]
+  E --> G["Parallel Fetch"]
+  E --> H["Derived Signals"]
+  E --> I["Reasoning / Action Proposal"]
+
+  F --> J["Structured Handoff / State Update"]
+  G --> J
+  H --> J
+  I --> J
+
+  J --> B
+  C --> B
+  D --> B

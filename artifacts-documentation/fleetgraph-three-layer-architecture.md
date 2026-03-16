@@ -50,11 +50,31 @@ The supervisor should:
 - initialize a run
 - decide whether the run is proactive or on-demand
 - route into the correct subflow
+- observe state updates and handoff boundaries
 - evaluate branch outcomes
 - manage human-in-the-loop interrupts
 - resume after approval, dismiss, or snooze
+- detect drift, blockers, and loop risk
 - classify failures into retryable, non-retryable, and low-confidence exits
 - close the run cleanly with trace and memory updates
+
+### Supervisor design posture
+
+The supervisor should behave as a control-plane authority, not as a noisy participant in the user experience.
+
+Default behavior:
+
+- observe silently
+- route intentionally
+- intervene by exception
+
+That means the supervisor should not speak unless:
+
+- the graph needs to branch visibly
+- approval is required
+- the run is blocked
+- the graph is drifting or looping
+- a failure path has to be taken
 
 ### Best-practice rules
 
@@ -62,6 +82,17 @@ The supervisor should:
 - Route through explicit branch conditions instead of hiding decisions in a single prompt.
 - Treat interrupts and resumes as first-class graph behavior.
 - Keep proactive and on-demand mode on the same graph and vary only the entrypoint and output surface.
+
+### Supervisor decision order
+
+The supervisor should make decisions in this order:
+
+1. Is the run still aligned to the original goal and active scope?
+2. Is the current state complete and safe enough to continue?
+3. Is the default next subflow still the correct one?
+4. Is approval required before continuing?
+5. Is the graph blocked, drifting, or looping?
+6. Should it continue, reroute, pause, escalate, retry, or fail?
 
 ## Layer 2: Graph State
 
@@ -137,6 +168,52 @@ Runtime should provide:
 6. If an action needs approval, the supervisor interrupts and waits.
 7. When resumed, the supervisor continues from the saved state.
 
+## Handoffs and intervention model
+
+FleetGraph should use supervisor-directed handoffs through state, not freeform agent-to-agent chatter.
+
+That means:
+
+- a node completes work
+- it writes structured output into state
+- the supervisor evaluates the updated state
+- the supervisor routes to the next subflow or intervention path
+
+This keeps the run:
+
+- inspectable
+- traceable
+- checkpoint-friendly
+- consistent across proactive and on-demand mode
+
+The supervisor should also observe:
+
+- handoff completeness
+- missing context
+- ambiguous downstream routing
+- broken artifact or evidence chains
+
+## Normal path vs intervention path
+
+The supervisor should have two clearly modeled behaviors.
+
+### Normal path
+
+The graph is healthy, the handoff is complete, and the default next subflow is still correct.
+
+### Intervention path
+
+The supervisor steps in because one of the following is true:
+
+- blocker
+- missing approval
+- drift from the goal or scope
+- loop risk
+- low-confidence path
+- retryable or terminal failure
+
+Keeping these paths separate makes the orchestration easier to reason about and easier to explain in LangSmith traces.
+
 ## Why this is better than separate agents
 
 We should not create three independent agents for orchestration, proactive monitoring, and chat.
@@ -173,11 +250,13 @@ The better pattern is:
   - HITL
   - fallback
 
-## Mermaid diagram
+## Mermaid diagrams
 
-Diagram source:
+Diagram sources:
 
 - [fleetgraph-three-layer-architecture.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-three-layer-architecture.mmd)
+- [fleetgraph-supervision-normal-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-supervision-normal-flow.mmd)
+- [fleetgraph-supervision-intervention-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-supervision-intervention-flow.mmd)
 
 ## Design conclusion
 

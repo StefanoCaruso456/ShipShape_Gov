@@ -30,6 +30,21 @@ That means the implementation will be organized around:
 
 The same graph will serve both proactive and on-demand mode. The trigger changes, not the graph.
 
+We are also explicitly using a **supervisor-style orchestration model** inside LangGraph. That means the roadmap should account for both:
+
+- the shared graph nodes
+- the control-plane behavior that supervises those nodes
+
+The supervisor is responsible for:
+
+- routing
+- intervention
+- approval pause and resume
+- blocker handling
+- drift and loop-risk control
+- failure classification
+- checkpoint-aware continuation
+
 ## Execution principles
 
 - Keep the MVP narrow enough to ship, but agentic enough to feel real.
@@ -59,8 +74,16 @@ Set up the LangGraph backbone so FleetGraph has a real supervisor, state model, 
   - config
   - cache hooks
 - supervisor / control-plane entrypoint
+- supervisor decision order and routing policy
+- handoff packet structure between subflows
 - checkpoint and interrupt-ready graph setup
 - base error and fallback path
+- intervention event model for:
+  - reroute
+  - pause
+  - resume
+  - retry
+  - fail-safe exit
 
 ### Why this phase matters
 
@@ -72,6 +95,7 @@ If we skip this and start with prompts or UI, we will create duplicate logic and
 - graph state is defined and inspectable
 - LangSmith traces exist
 - proactive and on-demand can share the same graph entry structure
+- normal path and intervention path are both defined
 
 ## Phase 2: Ship context and fetch layer
 
@@ -94,6 +118,7 @@ Make FleetGraph able to understand what it is looking at and fetch the minimum s
   - people and role context
   - related supporting context when needed
 - normalized fetch outputs into graph state
+- handoff state between context, fetch, derive, and reasoning layers
 - failure handling for missing or partial data
 
 ### Why this phase matters
@@ -124,6 +149,11 @@ Create the rules-first detection layer so FleetGraph does not depend on the LLM 
 - severity and confidence scoring
 - dedupe keys and finding signatures
 - quiet-exit logic when nothing meaningful is found
+- supervisor branch conditions for:
+  - quiet exit
+  - insight only
+  - action proposal
+  - fallback
 
 ### Why this phase matters
 
@@ -251,6 +281,7 @@ Make FleetGraph durable enough to survive real runtime conditions.
   - snooze
   - last surfaced timestamp
 - traceable intervention events
+- checkpoint-aware restart and supervised resume rules
 
 ### Why this phase matters
 
@@ -342,10 +373,11 @@ The next slice we should execute is:
 1. scaffold the FleetGraph TypeScript runtime
 2. define graph state and runtime context
 3. implement the supervisor entrypoint
-4. wire LangSmith tracing
-5. build context + fetch nodes for one scope
-6. choose one proactive MVP use case
-7. choose one on-demand MVP question
+4. define the normal path and intervention path
+5. wire LangSmith tracing
+6. build context + fetch nodes for one scope
+7. choose one proactive MVP use case
+8. choose one on-demand MVP question
 
 ## Decision rule for scope
 

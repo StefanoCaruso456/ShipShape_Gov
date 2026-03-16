@@ -1,0 +1,20 @@
+flowchart TD
+  A["State Update / Handoff / Runtime Event"] --> B["Supervisor / Control Plane"]
+  B --> C{"Intervention Needed?"}
+
+  C -->|"no"| D["Continue Default Flow"]
+  D --> E["Route Next Subflow"]
+
+  C -->|"blocker"| F["Pause or Reroute"]
+  C -->|"approval"| G["Wait for Approval"]
+  C -->|"drift"| H["Redirect to Safer Subflow"]
+  C -->|"loop risk"| I["Break Loop / Escalate"]
+  C -->|"retryable failure"| J["Retry with Guardrails"]
+  C -->|"terminal failure"| K["Fail Safely"]
+
+  F --> B
+  G --> B
+  H --> B
+  I --> B
+  J --> B
+  K --> B
