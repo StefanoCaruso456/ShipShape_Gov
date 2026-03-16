@@ -30,6 +30,8 @@ COREPACK_HOME=/tmp/corepack corepack pnpm --dir web exec vitest run --reporter=j
 - `stage-2/category-5-test-coverage-and-quality/api-vitest-after.json`
 - `stage-2/category-5-test-coverage-and-quality/web-vitest-before.json`
 - `stage-2/category-5-test-coverage-and-quality/web-vitest-after.json`
+- `stage-2/category-5-test-coverage-and-quality/playwright-final.json`
+- `stage-2/category-5-test-coverage-and-quality/playwright-final-clean.json`
 - `stage-2/category-5-test-coverage-and-quality/benchmark-commands.txt`
 
 ## Before / After
@@ -64,6 +66,12 @@ The `3` new critical-path tests added for this category are `Vitest` page/compon
 | --- | --- | --- | --- |
 | API Vitest | 451 passed / 0 failed | 451 passed / 0 failed | no regression |
 | Web Vitest | 138 passed / 13 failed | 157 passed / 0 failed | +19 passing, -13 failing |
+
+### Full Playwright proof
+
+| Suite | Final status | Runtime | Notes |
+| --- | --- | --- | --- |
+| Playwright E2E | 859 expected / 5 unexpected / 5 flaky / 0 skipped | 35m 47s | Final full-suite artifact saved in `playwright-final-clean.json` |
 
 ## What Changed
 
@@ -205,6 +213,7 @@ Result: passed
 
 ## Notes
 
-- The full Playwright suite remains expensive and was not the proof mechanism for this category.
+- The full Playwright suite now has a final saved artifact, but it is not fully green on this machine: `5` tests were unexpected and `5` were flaky.
 - This category was satisfied by making the web suite green and adding direct coverage for the 3 previously uncovered critical paths.
+- The final Playwright artifact closes the earlier proof gap by documenting the full-suite outcome, even though it does not prove a fully passing E2E surface.
 - The unrelated deleted file `final-report/final-audit.pdf` was not part of this Category 5 work and should stay out of the commit.
