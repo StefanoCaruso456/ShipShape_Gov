@@ -16,6 +16,12 @@ Build FleetGraph as a LangGraph-based project intelligence system for Ship with:
 - human-in-the-loop action boundaries
 - LangSmith tracing from day one
 
+## Phase documentation
+
+Concise phase-by-phase implementation notes live here:
+
+- [fleetgraph-phases/README.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/fleetgraph-phases/README.md)
+
 ## Architecture we are building toward
 
 FleetGraph will follow the three-layer architecture already defined in:
@@ -75,6 +81,7 @@ This checklist mirrors the assignment pass criteria. We should treat these as th
 | Shared graph for proactive and on-demand | Phase 1, Phase 2, Phase 5 | one graph entry with two trigger paths |
 | One proactive detection end to end | Phase 3, Phase 4 | working proactive run against live data |
 | Context-aware on-demand mode | Phase 2, Phase 5 | embedded UI invocation from current Ship context |
+| Active page / tab awareness | Phase 2, Phase 5 | graph receives Active View Context from the current Ship surface |
 | HITL gate | Phase 6 | interrupt / resume trace and approval UI |
 | Error and fallback nodes | Phase 1, Phase 7 | failure branch visible in traces |
 | LangSmith tracing from day one | Phase 0, Phase 1 | trace links for clean and problem-detected runs |
