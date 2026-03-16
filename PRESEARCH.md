@@ -42,9 +42,28 @@ The implication is simple:
 
 ### 1. Agent Responsibility Scoping
 
-#### What FleetGraph monitors proactively
+#### What events in Ship should the agent monitor proactively?
 
-FleetGraph should proactively monitor:
+FleetGraph should monitor two kinds of proactive triggers:
+
+1. **Mutation events**
+   - issue created or updated
+   - issue moved into or out of a sprint
+   - weekly plan or retro created, submitted, or changed
+   - week started, approved, or sent back for changes
+   - project plan or retro changed
+   - public feedback created or triaged
+
+2. **Time-based conditions discovered by scheduled sweeps**
+   - missing standups
+   - missing weekly plans or retros
+   - active sprint with low activity and open work
+   - blocked or stale issues
+   - approval pending too long
+   - changes requested but not addressed
+   - feedback sitting in triage too long
+
+The main proactive monitoring areas are:
 
 1. **Execution drift**
    - active sprint with low activity and open work
@@ -77,7 +96,7 @@ FleetGraph should proactively monitor:
    - external feedback enters the system and sits in triage too long
    - useful learnings exist but are not connected to active work
 
-#### What constitutes a condition worth surfacing
+#### What constitutes a condition worth surfacing?
 
 A condition is worth surfacing only if it meets all of these:
 
@@ -87,7 +106,7 @@ A condition is worth surfacing only if it meets all of these:
 - it is not a duplicate of a recently surfaced finding
 - the agent has enough evidence to explain why it matters
 
-#### What the agent can do autonomously
+#### What is the agent allowed to do without human approval?
 
 FleetGraph can autonomously:
 
@@ -98,7 +117,7 @@ FleetGraph can autonomously:
 - dedupe, snooze, and cool down repeated alerts
 - maintain its own run and alert memory
 
-#### What must always require human approval
+#### What must always require confirmation?
 
 FleetGraph must always pause before:
 
@@ -108,7 +127,7 @@ FleetGraph must always pause before:
 - notifying people beyond the directly responsible chain
 - creating persistent comments, follow-up issues, or external messages
 
-#### How the agent knows who is on a project
+#### How does the agent know who is on a project?
 
 FleetGraph should derive project membership from Ship's graph, not from a separate membership table:
 
@@ -119,7 +138,7 @@ FleetGraph should derive project membership from Ship's graph, not from a separa
 - person documents and `reports_to` for management chain
 - team allocation and accountability views for who is active in a sprint or project
 
-#### How the agent knows who to notify
+#### How does the agent know who to notify?
 
 Notification order should be:
 
@@ -128,7 +147,7 @@ Notification order should be:
 3. **Manager/director** only when the accountable chain has stalled or the impact is cross-project
 4. **Informed** roles only for high-signal summaries, not raw alert spam
 
-#### How on-demand mode uses the current view
+#### How does the on-demand mode use context from the current view?
 
 The current view is the graph entry point:
 
@@ -152,7 +171,7 @@ FleetGraph is not responsible for:
 
 ### 2. Use Case Discovery
 
-The strongest use cases are already implied by how Ship works today.
+The strongest use cases are already implied by how Ship works today. These are discovered from the current Ship product model: accountability gaps, approval workflows, sprint drift, ownership, and intake/triage state.
 
 | Use Case | Role | Mode | Trigger | What FleetGraph detects or produces | What the human decides |
 |---|---|---|---|---|---|
@@ -166,22 +185,37 @@ The strongest use cases are already implied by how Ship works today.
 
 ### 3. Trigger Model Decision
 
-#### Decision
+#### When does the proactive agent run without a user present?
 
-Use a **hybrid trigger model**:
+The proactive agent should run without a user present in two cases:
 
-- **Event-triggered** for mutation-based conditions
-- **Scheduled sweeps** for time-based and quiet-failure conditions
+- immediately after high-signal Ship mutations
+- every 5 minutes as a scheduled backstop for time-based drift
 
-#### Why hybrid is the defensible choice
+That means the design uses a **hybrid trigger model**:
 
-Event-only is not enough because some important failures are caused by the passage of time:
+- **event-triggered** for mutation-based conditions
+- **scheduled sweeps** for time-based and quiet-failure conditions
+
+#### Poll vs. webhook vs. hybrid - what are the tradeoffs?
+
+**Event-only / webhook-only**
+- pro: fast and cheap for explicit changes
+- con: misses failures caused by silence and time passing
+
+**Poll-only**
+- pro: simpler mental model and catches silent drift
+- con: noisier, more expensive, and less timely for fresh mutations
+
+**Hybrid**
+- pro: combines fast mutation response with reliable time-based detection
+- con: slightly more operational complexity
+
+Hybrid is the defensible choice because important failures in Ship are caused by both mutations and silence:
 
 - nobody posted the standup yet
 - no activity has happened for 3 days
 - an approval has been waiting too long
-
-Poll-only is also weak because it is noisier and more expensive than necessary for changes that already have a precise mutation point.
 
 Hybrid gives:
 
@@ -189,35 +223,7 @@ Hybrid gives:
 - reliable backstop for time-based drift
 - lower LLM cost because not every sweep becomes a reasoning run
 
-#### Event-triggered conditions
-
-For MVP, the highest-signal event sources should be:
-
-- issue created or updated
-- issue moved into or out of a sprint
-- weekly plan or retro created/submitted/changed
-- week started, approved, or sent back for changes
-- project plan or retro changed
-- public feedback created or triaged
-
-#### Scheduled sweep conditions
-
-Scheduled sweeps should cover:
-
-- missing standups due today
-- no recent activity in an active scope
-- pending approvals over threshold
-- unresolved changes requested over threshold
-- stale triage or drift not tied to a fresh mutation
-
-#### Frequency
-
-- Event-triggered checks: immediately
-- Scheduled backstop: every 5 minutes
-
-This keeps the architecture simple while still meeting the `< 5 minute` detection target for time-based conditions. Mutation-based conditions should surface much faster because they do not wait for the sweep.
-
-#### How stale is too stale
+#### How stale is too stale for your use cases?
 
 Initial thresholds:
 
@@ -229,7 +235,7 @@ Initial thresholds:
 - active sprint/project with low activity: 3 days with open work
 - triage feedback untouched: 2 days
 
-#### Cost at 100 projects vs 1,000 projects
+#### What does your choice cost at 100 projects? At 1,000?
 
 Assumptions:
 
@@ -274,7 +280,7 @@ flowchart TD
   D --> N["Fallback/Error Node"]
 ```
 
-#### Proposed nodes
+#### What are your context, fetch, reasoning, action, and output nodes?
 
 | Node | Purpose | Notes |
 |---|---|---|
@@ -295,7 +301,29 @@ flowchart TD
 | `persist_memory` | Store dedupe key, snooze, cooldown, and trace metadata | Agent-side state |
 | `fallback` | Handle API failure, missing data, or reasoning uncertainty | Must degrade gracefully |
 
-#### Which fetch nodes run in parallel
+Grouped by type:
+
+- **Context nodes**
+  - `init_context`
+  - `expand_scope`
+- **Fetch nodes**
+  - `fetch_entity_context`
+  - `fetch_accountability_signals`
+  - `fetch_activity_signals`
+  - `fetch_people_roles`
+  - `fetch_supporting_context`
+- **Reasoning nodes**
+  - `derive_metrics`
+  - `reason_about_state`
+- **Action nodes**
+  - `prepare_action`
+  - `execute_action`
+  - `persist_memory`
+- **Output nodes**
+  - `compose_insight`
+  - `fallback`
+
+#### Which fetch nodes run in parallel?
 
 These should run in parallel whenever they are all needed:
 
@@ -305,7 +333,7 @@ These should run in parallel whenever they are all needed:
 - people/role resolution
 - supporting context search
 
-#### Conditional edges
+#### Where are your conditional edges and what triggers each branch?
 
 The graph should branch at least on:
 
@@ -317,7 +345,7 @@ The graph should branch at least on:
 
 ### 5. State Management
 
-#### State carried during a run
+#### What state does the graph carry across a session?
 
 The graph should carry:
 
@@ -335,7 +363,7 @@ The graph should carry:
 - human approval status
 - trace metadata and error state
 
-#### State persisted between proactive runs
+#### What state persists between proactive runs?
 
 Persist only operational state, not Ship domain truth:
 
@@ -349,7 +377,7 @@ Persist only operational state, not Ship domain truth:
 
 This should live in a small FleetGraph-owned state store, not in Ship's domain model.
 
-#### How to avoid redundant API calls
+#### How do you avoid redundant API calls?
 
 - resolve scope first, then fetch only relevant subgraphs
 - parallelize fetches instead of chaining them
@@ -359,7 +387,7 @@ This should live in a small FleetGraph-owned state store, not in Ship's domain m
 
 ### 6. Human-in-the-Loop Design
 
-#### Actions that require confirmation
+#### Which actions require confirmation?
 
 - create comment or document draft in Ship
 - create follow-up issue
@@ -367,7 +395,7 @@ This should live in a small FleetGraph-owned state store, not in Ship's domain m
 - request changes or approve
 - escalate to manager or broader audience
 
-#### Confirmation UX inside Ship
+#### What does the confirmation experience look like in Ship?
 
 The confirmation should appear in existing context surfaces, not a new chatbot page:
 
@@ -382,14 +410,14 @@ Each confirmation should show:
 - the exact target object
 - approve / edit / snooze / dismiss controls
 
-#### What happens on dismiss or snooze
+#### What happens if the human dismisses or snoozes?
 
 - `dismiss`: close the current proposal and record that it was reviewed
 - `snooze`: suppress the same finding key until either the snooze expires or the underlying state changes materially
 
 ### 7. Error and Failure Handling
 
-#### If the Ship API is down
+#### What does the agent do when Ship API is down?
 
 FleetGraph should:
 
@@ -398,7 +426,7 @@ FleetGraph should:
 - retry with backoff
 - only surface an operator-facing alert after repeated failures
 
-#### If the graph has incomplete data
+#### How does it degrade gracefully?
 
 FleetGraph should:
 
@@ -406,7 +434,7 @@ FleetGraph should:
 - avoid confident recommendations based on partial evidence
 - fall back to a narrower insight instead of hallucinating a full diagnosis
 
-#### What gets cached
+#### What gets cached and for how long?
 
 Short-lived caches only:
 
@@ -421,7 +449,7 @@ Never trust cached state when mutating Ship. Re-fetch the exact mutation target 
 
 ### 8. Deployment Model
 
-#### Where the proactive agent runs
+#### Where does the proactive agent run when no user is present?
 
 FleetGraph should run as a **dedicated worker service**, not inside a user request handler.
 
@@ -431,21 +459,13 @@ Why:
 - retries, cooldowns, and sweeps should not live on the request path
 - scaled API instances make in-process schedulers harder to reason about
 
-#### How it is kept alive
+#### How is it kept alive?
 
 - always-on worker process
 - internal scheduler for 5-minute sweeps
 - event queue or internal enqueue path for high-signal mutation events
 
-#### How on-demand mode runs
-
-On-demand mode should run through a Ship API endpoint that invokes the same graph code, but with:
-
-- the current user session
-- the current view context
-- the user's role and visibility constraints
-
-#### How it authenticates without a user session
+#### How does it authenticate with Ship without a user session?
 
 The proactive worker should authenticate to Ship using a service account or API token with least-privilege workspace access.
 
@@ -454,15 +474,23 @@ This is important:
 - proactive mode should not impersonate random users
 - on-demand mode should still use the invoking user's session and permissions
 
+#### Supporting detail: how on-demand mode runs
+
+On-demand mode should run through a Ship API endpoint that invokes the same graph code, but with:
+
+- the current user session
+- the current view context
+- the user's role and visibility constraints
+
 ### 9. Performance
 
-#### How this design hits the `< 5 minute` latency target
+#### How does your trigger model achieve the `< 5 minute` detection latency goal?
 
 - mutation-based detections are event-triggered and should surface near immediately
 - time-based detections use a 5-minute sweep backstop
 - sweeps stay fast because they are deterministic-first and scoped to active work
 
-#### Token budget per invocation
+#### What is your token budget per invocation?
 
 Initial target budgets:
 
@@ -471,7 +499,7 @@ Initial target budgets:
 
 Rules-first passes should consume **zero LLM tokens**.
 
-#### Cost cliffs
+#### Where are the cost cliffs in your architecture?
 
 The main cost cliffs are:
 
