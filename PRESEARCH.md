@@ -13,6 +13,8 @@ It should not be a generic chatbot, a second dashboard, or a duplicate of Ship's
 - Who should act?
 - What is the best next action?
 
+That is the right MVP boundary. The broader product opportunity is larger: once Ship captures stronger planning primitives, FleetGraph should also become a **planning and portfolio intelligence layer** that can reason about capacity, velocity, scope creep, roadmap confidence, and staffing pressure. The LLM should not be asked to invent those signals from thin air; it should reason on top of a stronger product and planning foundation.
+
 ## Repo-Grounded Observations
 
 These decisions are based on what Ship already exposes:
@@ -25,6 +27,22 @@ These decisions are based on what Ship already exposes:
 - Ship already has context-specific Claude data at [`/api/claude/context`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api/src/routes/claude.ts).
 - Ship already has AI quality assistants for weekly plans and retros at [`/api/ai/*`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api/src/routes/ai.ts) and [`QualityAssistant.tsx`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/web/src/components/sidebars/QualityAssistant.tsx).
 - Ship already has realtime in-app notification plumbing through `accountability:updated` events in [`App.tsx`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/web/src/pages/App.tsx) and [`useRealtimeEvents.tsx`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/web/src/hooks/useRealtimeEvents.tsx).
+
+Ship also already has the beginning of a product operating model that FleetGraph can build on:
+
+- owner/accountable/consulted/informed fields that can support a RACI-like responsibility model
+- team allocation data that can support future capacity reasoning
+- weekly plans, retros, and accountability views that can support delivery-pattern analysis
+- scoring and prioritization concepts that can evolve toward stronger product prioritization inputs
+
+What Ship does **not** yet have in a strong, explicit form are the planning primitives needed for higher-order product intelligence:
+
+- historical velocity and throughput snapshots by team and sprint
+- committed vs added scope snapshots for scope-creep analysis
+- roadmap and milestone entities with confidence and dependency structure
+- metric-tree linkage from goals to team scope
+- explicit RICE-style prioritization inputs
+- initiative and PRD linkage from strategy to execution
 
 The implication is simple:
 
@@ -43,6 +61,8 @@ The implication is simple:
 ### 1. Agent Responsibility Scoping
 
 FleetGraph should be defined by the problems it owns, not by the existence of an LLM or a chat box. In Ship, the highest-value problems are not “find me information” problems; they are “something is drifting and the right person is about to miss it” problems. That means the agent’s job is to monitor execution, accountability, approvals, ownership, and intake, then decide when a situation is meaningful enough to surface and who should see it.
+
+That is the first layer. The second layer, which should be designed now even if not fully implemented in MVP, is **planning intelligence**: helping PMs and directors understand whether missed dates are caused by poor execution, growing scope, weak prioritization, or insufficient capacity. That is the same class of reasoning teams rely on in Jira, and it becomes much more valuable once the product captures the right historical planning data.
 
 This section directly answers:
 
@@ -200,6 +220,9 @@ This section directly answers:
 | Prioritize director intervention in context | Director | On-demand | User opens a program or dashboard and asks where to focus | Produces a ranked list of projects/weeks by risk and names the required intervention | Which scope to drill into and who to contact |
 | Turn a stale issue into an actionable next step | Engineer or PM | On-demand | User opens an issue and asks what is blocking it | Explains likely blockers from surrounding sprint/project context and drafts a concrete next-step comment or plan | Whether to post or edit the draft |
 | Escalate intake that is sitting too long | PM | Proactive | External feedback remains in triage too long or matches active work but has no owner | Produces a triage recommendation with likely owning project/program and suggested disposition | Whether to accept, reject, assign, or create follow-up work |
+| Distinguish scope creep from capacity shortfall | PM | On-demand | User opens a sprint or project and asks why delivery is slipping | Produces an explanation of whether the problem is added scope, low throughput, poor prioritization, or insufficient staffing | Whether to cut scope, rebalance, or request more capacity |
+| Quantify staffing pressure before deadlines slip further | Director | Proactive | A project or program repeatedly misses projected delivery based on rolling capacity and throughput | Produces a staffing-risk brief that estimates whether the current team can meet target dates and what additional capacity would be required | Whether to hire, reassign, or reset commitments |
+| Generate roadmap recommendations from execution history | PM or Director | On-demand | User opens a project/program and asks for a roadmap or sequencing recommendation | Produces a proposed roadmap view using sprint history, delivery patterns, dependencies, priorities, and ownership context | Whether to adopt, edit, or reject the proposed roadmap |
 
 ### 3. Trigger Model Decision
 
@@ -249,6 +272,15 @@ Hybrid gives:
 - fast detection for explicit state changes
 - reliable backstop for time-based drift
 - lower LLM cost because not every sweep becomes a reasoning run
+
+For the longer-term planning layer, FleetGraph should also support lower-frequency scheduled runs after:
+
+- sprint close
+- sprint planning
+- major scope changes
+- roadmap updates
+
+Those runs are not about catching today's missing standup. They are about producing higher-order insights such as velocity shifts, scope growth, forecast confidence, and staffing pressure.
 
 #### How stale is too stale for your use cases?
 
@@ -358,6 +390,16 @@ Grouped by type:
   - `compose_insight`
   - `fallback`
 
+For the planning-and-portfolio layer, the graph should eventually add future fetch and reasoning nodes for:
+
+- capacity history
+- sprint velocity history
+- committed vs added scope analysis
+- roadmap and milestone context
+- RICE-style prioritization inputs
+- metric-tree and outcome linkage
+- initiative or PRD context
+
 #### Which fetch nodes run in parallel?
 
 These should run in parallel whenever they are all needed:
@@ -419,6 +461,16 @@ Persist only operational state, not Ship domain truth:
 - trace IDs and run summaries
 
 This should live in a small FleetGraph-owned state store, not in Ship's domain model.
+
+If FleetGraph expands into planning intelligence, it will also need access to persistent historical planning signals such as:
+
+- sprint commitment snapshots
+- delivered scope history
+- scope added after sprint start
+- rolling team throughput
+- staffing and allocation assumptions
+
+Those are not necessary to deliver the execution-intelligence MVP, but they are necessary if FleetGraph is expected to reason credibly about capacity, velocity, forecast risk, and staffing needs.
 
 #### How do you avoid redundant API calls?
 
@@ -590,6 +642,14 @@ Mitigations:
 - aggressive scope trimming
 - cached summaries for repeated on-demand questions
 
+Planning and portfolio intelligence should be treated as a separate cost profile:
+
+- it should run less frequently than execution monitoring
+- it will need more historical context per invocation
+- it is better suited to periodic summary runs than every mutation event
+
+That keeps the MVP affordable while still leaving room for richer forecasting and roadmap analysis later.
+
 ## Preliminary Architecture Decisions
 
 These are the decisions I would carry into implementation:
@@ -617,6 +677,113 @@ These are the decisions I would carry into implementation:
 7. **Use Ship REST APIs only for Ship data**
    - any persistence for FleetGraph should be operational state only.
 
+8. **Design for a second intelligence layer without bloating MVP**
+   - MVP should solve execution drift first, while leaving room for future capacity, forecast, and roadmap reasoning.
+
+## Product Foundation Required for Advanced FleetGraph
+
+FleetGraph can only be as strong as the planning structure underneath it. An LLM can explain and compare signals, but it cannot reliably compensate for missing operational data. If Ship wants FleetGraph to grow from execution intelligence into planning and portfolio intelligence, the application needs stronger first-class planning primitives.
+
+### Capacity model
+
+Ship should make team capacity explicit:
+
+- engineer availability by sprint
+- allocation across projects
+- planned capacity vs actual available capacity
+- time off and partial participation
+
+Without this, FleetGraph cannot distinguish overload from poor execution.
+
+### Velocity and throughput history
+
+Ship should persist historical delivery patterns:
+
+- committed work per sprint
+- completed work per sprint
+- carryover
+- rolling averages by team or scope
+
+Without this, FleetGraph cannot produce credible delivery forecasts.
+
+### Scope snapshots and scope-creep tracking
+
+Ship should capture scope at sprint start and then track what changes:
+
+- committed scope at start
+- added scope after start
+- removed scope
+- why the change happened
+
+Without this, FleetGraph cannot tell whether missed dates are caused by weak execution or expanding scope.
+
+### Roadmap and milestone objects
+
+Ship should support explicit planning objects for:
+
+- roadmap items
+- milestones
+- target dates
+- dependencies
+- confidence levels
+
+Without this, roadmap generation remains too implicit and difficult to reason about consistently.
+
+### Stronger RACI model
+
+Ship already has partial responsibility structure through owner/accountable/consulted/informed fields. That should become easier to inspect and more consistently applied across planning and execution objects so FleetGraph can reason about ownership and escalation with more precision.
+
+### RICE-style prioritization inputs
+
+Ship should capture structured prioritization inputs such as:
+
+- reach
+- impact
+- confidence
+- effort
+
+Without this, FleetGraph can comment on urgency but not on whether the work is actually the best use of scarce capacity.
+
+### Metric-tree and outcome linkage
+
+Ship should link:
+
+- business goals
+- metrics
+- teams
+- initiatives
+- execution work
+
+Without this, FleetGraph can reason about delivery risk, but not about whether the work is driving the right outcomes.
+
+### Initiative and PRD linkage
+
+Ship should connect product requirements and initiatives to the execution graph:
+
+- problem statement
+- target user
+- success metric
+- scope definition
+- linked roadmap item
+- linked sprint and issue work
+
+Without this, FleetGraph will have weak context for roadmap generation and prioritization guidance.
+
+## Phase 2 Opportunity: Planning and Portfolio Intelligence
+
+Once Ship has the stronger planning foundation above, FleetGraph should expand beyond execution drift into planning and portfolio intelligence.
+
+That second layer should support:
+
+- capacity and velocity analysis across past sprints
+- scope-creep detection and explanation
+- forecasted delivery risk at project and program level
+- staffing-gap identification and quantified resourcing recommendations
+- roadmap generation from sprint, project, and dependency history
+- prioritization guidance using RICE-style inputs and outcome linkage
+
+This is the same family of operating-model intelligence that mature Jira workflows try to provide. The difference is that in Ship, FleetGraph can reason directly over the document graph, ownership structure, accountability signals, and planning context in one place.
+
 ## Open Risks to Validate at MVP
 
 - Which Ship routes are the cleanest event hooks for proactive enqueueing
@@ -624,6 +791,7 @@ These are the decisions I would carry into implementation:
 - How much context can be sent before on-demand answers become too slow or too expensive
 - Which notification surface feels most native in the existing 4-panel layout
 - Whether program-level proactive summaries should be direct notifications or only appear in a director-facing dashboard/sidebar
+- Which planning primitives should be added first to support capacity and forecast intelligence without bloating the product model too early
 
 ## Summary
 
@@ -636,6 +804,8 @@ It should:
 - explain why a scope matters now
 - identify the right human to act
 - make the next action obvious
+
+Over time, it should also grow into a planning and portfolio intelligence layer that can reason about capacity, velocity, scope growth, roadmap confidence, and staffing pressure. That second layer depends on Ship evolving the product foundation underneath it.
 
 It should not:
 
