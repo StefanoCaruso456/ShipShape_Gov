@@ -23,7 +23,7 @@ What is still missing for a strong multi-agent setup: one canonical skill regist
 - `.agents/`: Codex-oriented local skill folder; structurally improved, but not obviously wired into the rest of the repo. Refs: [AGENTS.md](../AGENTS.md), [ship-worktree-preflight](../.agents/skills/ship-worktree-preflight/SKILL.md).
 - `skills/`: a separate generic skill package area; currently contains a well-formed `architecture-diagram` skill, but it is not surfaced in the checked-in AGENTS skill list. Refs: [architecture-diagram/SKILL.md](../skills/architecture-diagram/SKILL.md), [architecture-diagram/evals.json](../skills/architecture-diagram/evals/evals.json).
 - `benchmarks/`, `audit-results/`, `stage-2/`, `final-report/`, `artifacts-documentation/`, `artifacts-diagrams/`, `research/`: non-runtime evidence, audit, performance, and onboarding material. These are useful, but they materially increase repo noise. Refs: [stage-2/index.md](../stage-2/index.md), [type-safety.md](../audit-results/type-safety.md), [repo-map.md](../artifacts-documentation/repo-map.md).
-- `agent-context/`: currently empty placeholder. Refs: [.gitkeep](../agent-context/.gitkeep).
+- `docs/internal/`: internal notes and snapshot-style documentation that should stay out of the root. Refs: [ship-changelog-72h.md](./internal/ship-changelog-72h.md).
 
 ## 3. Runtime Architecture
 
@@ -127,7 +127,7 @@ flowchart LR
 - [developer-workflow-guide.md](./developer-workflow-guide.md) says `weekly_plan` and `weekly_retro` are missing, but schema, routes, and shared types already include them.
 - The association model is only partially simplified: docs present `parent_id` as canonical containment, but code and schema still use `document_associations` with `relationship_type='parent'` for some issue/sub-issue flows. Refs: [schema.sql](../api/src/db/schema.sql), [issues.ts](../api/src/routes/issues.ts), [document-model-conventions.md](./document-model-conventions.md).
 - There is no checked-in `.github/workflows`, despite multiple docs referring to CI and GitHub Actions. Refs: [CONTRIBUTING.md](../CONTRIBUTING.md), [security.md](./claude-reference/security.md).
-- The repo tracks a large amount of audit, benchmark, report, and deployment artifact material, which muddies the boundary between source-of-truth runtime code and project evidence. Refs: [final-audit.md](../final-report/final-audit.md), [stage-2/index.md](../stage-2/index.md), [deploy-api-ship-api-20260313-144723.zip](../deploy-api-ship-api-20260313-144723.zip).
+- The repo tracks a large amount of audit, benchmark, and report material, which muddies the boundary between source-of-truth runtime code and project evidence. Refs: [final-audit.md](../final-report/final-audit.md), [stage-2/index.md](../stage-2/index.md), [PRESEARCH.pdf](../artifacts-documentation/PRESEARCH.pdf).
 
 ## 7. Recommended Next Steps
 

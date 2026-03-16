@@ -6,7 +6,7 @@ Use these folders for all future non-source outputs in this repository:
 - Diagrams: `artifacts-diagrams/`
 - Audit measurements: `audit-results/`
 - Benchmarks: `benchmarks/`
-- Agent memory and context: `agent-context/`
+- Internal notes and snapshots: `docs/internal/`
 - Final deliverables: `final-report/`
 
 Rules:
