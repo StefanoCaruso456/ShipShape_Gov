@@ -223,6 +223,9 @@ This section directly answers:
 | Distinguish scope creep from capacity shortfall | PM | On-demand | User opens a sprint or project and asks why delivery is slipping | Produces an explanation of whether the problem is added scope, low throughput, poor prioritization, or insufficient staffing | Whether to cut scope, rebalance, or request more capacity |
 | Quantify staffing pressure before deadlines slip further | Director | Proactive | A project or program repeatedly misses projected delivery based on rolling capacity and throughput | Produces a staffing-risk brief that estimates whether the current team can meet target dates and what additional capacity would be required | Whether to hire, reassign, or reset commitments |
 | Generate roadmap recommendations from execution history | PM or Director | On-demand | User opens a project/program and asks for a roadmap or sequencing recommendation | Produces a proposed roadmap view using sprint history, delivery patterns, dependencies, priorities, and ownership context | Whether to adopt, edit, or reject the proposed roadmap |
+| Run a what-if delivery scenario before committing | PM or Director | On-demand | User asks what happens if scope increases, a dependency slips, or an engineer is added or removed | Produces alternate delivery scenarios with tradeoffs, changed risk levels, and revised dates | Which scenario to accept, reject, or use for planning |
+| Flag an off-track dependency before it causes a miss | PM | Proactive | A dependency is late, blocked, or unresolved while dependent work remains on the critical path | Produces a dependency-risk alert that names the blocking relationship, likely deadline impact, and the escalation path | Whether to escalate, re-sequence, or reset the target date |
+| Prepare a stakeholder-safe roadmap summary | PM or Director | On-demand | User asks for a roadmap view for leadership or cross-functional stakeholders | Produces a permission-aware roadmap summary with milestones, confidence, dependencies, and key risks without exposing noisy execution detail | Whether to share, edit, or tailor the summary for the audience |
 
 ### 3. Trigger Model Decision
 
@@ -279,6 +282,8 @@ For the longer-term planning layer, FleetGraph should also support lower-frequen
 - sprint planning
 - major scope changes
 - roadmap updates
+- release-plan changes
+- dependency state changes that affect a committed milestone
 
 Those runs are not about catching today's missing standup. They are about producing higher-order insights such as velocity shifts, scope growth, forecast confidence, and staffing pressure.
 
@@ -395,9 +400,16 @@ For the planning-and-portfolio layer, the graph should eventually add future fet
 - capacity history
 - sprint velocity history
 - committed vs added scope analysis
+- dependency graph and dependency status history
+- release and milestone planning context
+- scenario-model inputs for what-if analysis
+- idea and insight clustering context
 - roadmap and milestone context
 - RICE-style prioritization inputs
+- prioritization formulas and ranking views
 - metric-tree and outcome linkage
+- stakeholder view context and audience rules
+- decision-log context for prior tradeoffs
 - initiative or PRD context
 
 #### Which fetch nodes run in parallel?
@@ -469,6 +481,12 @@ If FleetGraph expands into planning intelligence, it will also need access to pe
 - scope added after sprint start
 - rolling team throughput
 - staffing and allocation assumptions
+- dependency-state history
+- release-date changes
+- carryover and predictability rates
+- lead-time and cycle-time trends
+- scenario assumptions and selected planning scenarios
+- decision-log and tradeoff history
 
 Those are not necessary to deliver the execution-intelligence MVP, but they are necessary if FleetGraph is expected to reason credibly about capacity, velocity, forecast risk, and staffing needs.
 
@@ -647,6 +665,7 @@ Planning and portfolio intelligence should be treated as a separate cost profile
 - it should run less frequently than execution monitoring
 - it will need more historical context per invocation
 - it is better suited to periodic summary runs than every mutation event
+- scenario analysis should be bounded so one planning question does not explode into many expensive runs
 
 That keeps the MVP affordable while still leaving room for richer forecasting and roadmap analysis later.
 
@@ -729,6 +748,28 @@ Ship should capture scope at sprint start and then track what changes:
 
 Without this, FleetGraph cannot tell whether missed dates are caused by weak execution or expanding scope.
 
+### Scenario planning
+
+Ship should support structured what-if planning inputs and outputs:
+
+- alternate staffing assumptions
+- alternate scope assumptions
+- alternate dependency or target-date assumptions
+- saved scenarios for comparison
+
+Without this, FleetGraph can explain the current state, but it cannot help PMs and directors compare realistic planning options before making a commitment.
+
+### Dependency graph and off-track alerts
+
+Ship should model dependencies as first-class planning relationships:
+
+- blocking and blocked scopes
+- dependency owners
+- dependency due dates
+- dependency health and off-track status
+
+Without this, FleetGraph will miss one of the most common causes of slipped commitments: work that was locally on track but globally blocked.
+
 ### Roadmap and milestone objects
 
 Ship should support explicit planning objects for:
@@ -740,6 +781,29 @@ Ship should support explicit planning objects for:
 - confidence levels
 
 Without this, roadmap generation remains too implicit and difficult to reason about consistently.
+
+### Release planning
+
+Ship should support release-level planning above the sprint and project level:
+
+- release containers
+- release scope
+- target dates
+- release confidence
+- unresolved release risks
+
+Without this, FleetGraph cannot give strong portfolio-level guidance on what is likely to ship and when.
+
+### Hierarchy rollups
+
+Ship should roll key planning signals upward through the hierarchy:
+
+- issue to sprint
+- sprint to project
+- project to program
+- program to roadmap or release
+
+Rollups should include dates, effort, risk, confidence, and unresolved blockers. Without this, PMs and directors will still need to reconstruct the real picture manually.
 
 ### Stronger RACI model
 
@@ -756,6 +820,17 @@ Ship should capture structured prioritization inputs such as:
 
 Without this, FleetGraph can comment on urgency but not on whether the work is actually the best use of scarce capacity.
 
+### Prioritization formulas and ranking views
+
+Ship should support explicit prioritization formulas and ranking outputs:
+
+- RICE score calculations
+- alternate weighting schemes when needed
+- ranked backlog and roadmap views
+- tie-breaker rationale
+
+Without this, FleetGraph can surface the inputs, but not produce a defensible prioritization recommendation.
+
 ### Metric-tree and outcome linkage
 
 Ship should link:
@@ -767,6 +842,62 @@ Ship should link:
 - execution work
 
 Without this, FleetGraph can reason about delivery risk, but not about whether the work is driving the right outcomes.
+
+### Ideas and insights repository
+
+Ship should preserve the discovery inputs behind roadmap decisions:
+
+- ideas
+- customer or user insights
+- linked feedback
+- opportunity statements
+- evidence tied to initiatives
+
+Without this, FleetGraph can reason about delivery and prioritization, but not about whether the roadmap still reflects the strongest opportunities.
+
+### Stakeholder-safe and permission-aware roadmap views
+
+Ship should support multiple roadmap views for different audiences:
+
+- team-operating view
+- leadership summary view
+- stakeholder-safe shareable view
+- permission-aware hiding of noisy or sensitive execution detail
+
+Without this, FleetGraph can generate a roadmap answer, but not one that is appropriate for the audience consuming it.
+
+### Delivery predictability metrics
+
+Ship should track planning reliability, not just delivery output:
+
+- carryover rate
+- scope-added-mid-sprint rate
+- forecast-confidence trend
+- commitment vs completion reliability
+
+Without this, FleetGraph cannot say whether a team is not only productive, but also predictable.
+
+### Lead time and cycle time
+
+Ship should capture flow-efficiency metrics such as:
+
+- lead time
+- cycle time
+- work-item aging
+- time spent blocked
+
+Without this, FleetGraph cannot distinguish a throughput issue from a flow issue.
+
+### Decision log and tradeoff history
+
+Ship should preserve the reasoning behind major planning choices:
+
+- why scope changed
+- why priorities moved
+- why a roadmap item slipped
+- why a scenario was chosen over another
+
+Without this, FleetGraph loses the institutional memory required to explain how the plan evolved.
 
 ### Initiative and PRD linkage
 
@@ -790,10 +921,17 @@ That second layer should support:
 - capacity and velocity analysis across past sprints
 - burn-up and burn-down analysis across sprint and project history
 - scope-creep detection and explanation
+- dependency-risk detection and off-track alerts
 - forecasted delivery risk at project and program level
+- scenario planning and what-if comparisons
 - staffing-gap identification and quantified resourcing recommendations
+- release-confidence analysis
+- hierarchy-level rollups from issues to roadmap scope
 - roadmap generation from sprint, project, and dependency history
+- idea and insight synthesis tied to roadmap proposals
 - prioritization guidance using RICE-style inputs and outcome linkage
+- stakeholder-safe roadmap summaries and shareable planning views
+- predictability analysis using carryover, scope-added, lead-time, and cycle-time trends
 
 This is the same family of operating-model intelligence that mature Jira workflows try to provide. The difference is that in Ship, FleetGraph can reason directly over the document graph, ownership structure, accountability signals, and planning context in one place.
 
@@ -805,6 +943,8 @@ This is the same family of operating-model intelligence that mature Jira workflo
 - Which notification surface feels most native in the existing 4-panel layout
 - Whether program-level proactive summaries should be direct notifications or only appear in a director-facing dashboard/sidebar
 - Which planning primitives should be added first to support capacity and forecast intelligence without bloating the product model too early
+- How explicit the dependency and release model needs to be before FleetGraph can reason about off-track commitments reliably
+- Which discovery and stakeholder-view features belong in Ship core versus in FleetGraph-generated outputs
 
 ## Summary
 
@@ -819,6 +959,8 @@ It should:
 - make the next action obvious
 
 Over time, it should also grow into a planning and portfolio intelligence layer that can reason about capacity, velocity, scope growth, roadmap confidence, and staffing pressure. That second layer depends on Ship evolving the product foundation underneath it.
+
+That broader layer should ultimately cover scenario planning, dependencies, releases, rollups, discovery inputs, prioritization mechanics, predictability metrics, and stakeholder-safe roadmap communication so the LLM is reasoning on top of a real product operating system rather than trying to invent one.
 
 It should not:
 
