@@ -1,0 +1,22 @@
+flowchart TD
+    A["Trigger"] --> B{"Mode"}
+    B -->|"On-demand"| C["Initialize On-Demand Context"]
+    B -->|"Proactive"| D["Initialize Proactive Context"]
+
+    C --> E["Resolve Scope"]
+    D --> E
+
+    E --> F["Parallel Fetch Nodes"]
+    F --> G["Derive Deterministic Signals"]
+    G --> H{"Anything worth surfacing?"}
+
+    H -->|"No"| I["Quiet Exit"]
+    H -->|"Yes"| J["Record Finding"]
+
+    J --> K{"Output path"}
+    K -->|"Proactive"| L["Persist Finding + Realtime Delivery"]
+    K -->|"On-demand"| M["Return Finding in Response"]
+
+    L --> N["Complete Run"]
+    M --> N
+    I --> N

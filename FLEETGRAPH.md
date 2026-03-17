@@ -9,6 +9,10 @@ This file is the source of truth for:
 - how the graph is structured
 - how proactive and on-demand mode share the same graph
 
+Fast current-state summary:
+
+- [FLEETGRAPH-STATUS.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/FLEETGRAPH-STATUS.md)
+
 ## Current MVP Scope
 
 The MVP is intentionally narrow.
@@ -146,6 +150,21 @@ That means:
 - slightly more operational complexity
 - most defensible choice for this project
 
+### Current trigger vs future trigger
+
+**Current trigger**
+
+- manual sweep route:
+  - `POST /api/fleetgraph/proactive/run`
+- env-gated timed sweep worker:
+  - `FLEETGRAPH_ENABLE_PROACTIVE_WORKER=true`
+
+**Future trigger**
+
+- high-signal Ship mutation trigger
+- webhook or pub/sub style delivery
+- direct event-to-graph invocation for important changes
+
 ## Use Cases
 
 The MVP starts narrow, but FleetGraph is designed to support a broader set of useful project workflows.
@@ -187,6 +206,13 @@ flowchart TD
 
   G --> Q["Fallback / Error Path"]
 ```
+
+Useful flow diagrams:
+
+- [fleetgraph-shared-graph-end-to-end-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-shared-graph-end-to-end-flow.mmd)
+- [fleetgraph-on-demand-active-view-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-on-demand-active-view-flow.mmd)
+- [fleetgraph-proactive-trigger-delivery-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-proactive-trigger-delivery-flow.mmd)
+- [fleetgraph-hitl-interrupt-resume-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-hitl-interrupt-resume-flow.mmd)
 
 ## Graph Outline
 

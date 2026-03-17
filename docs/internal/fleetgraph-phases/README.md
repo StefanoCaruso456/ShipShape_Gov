@@ -12,6 +12,10 @@ Each phase document uses the same structure:
 
 This keeps the implementation history and the future plan in one place without making the main roadmap too noisy.
 
+Current snapshot:
+
+- [FLEETGRAPH-STATUS.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/FLEETGRAPH-STATUS.md)
+
 ## Cross-cutting build rules
 
 - Keep FleetGraph in the existing TypeScript monorepo.
@@ -48,3 +52,13 @@ Active View Context is partially accounted for in Phase 1 through the typed `con
 - [phase-7-failure-resume-memory.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/fleetgraph-phases/phase-7-failure-resume-memory.md)
 - [phase-8-planning-intelligence.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/fleetgraph-phases/phase-8-planning-intelligence.md)
 - [phase-9-evidence-and-submission.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/fleetgraph-phases/phase-9-evidence-and-submission.md)
+
+## Useful diagrams
+
+- [fleetgraph-three-layer-architecture.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-three-layer-architecture.mmd)
+- [fleetgraph-supervision-normal-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-supervision-normal-flow.mmd)
+- [fleetgraph-supervision-intervention-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-supervision-intervention-flow.mmd)
+- [fleetgraph-shared-graph-end-to-end-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-shared-graph-end-to-end-flow.mmd)
+- [fleetgraph-on-demand-active-view-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-on-demand-active-view-flow.mmd)
+- [fleetgraph-proactive-trigger-delivery-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-proactive-trigger-delivery-flow.mmd)
+- [fleetgraph-hitl-interrupt-resume-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-hitl-interrupt-resume-flow.mmd)

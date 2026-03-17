@@ -1,0 +1,11 @@
+flowchart TD
+    A["User is on Ship page/tab"] --> B["Ship UI builds Active View Context"]
+    B --> C["POST /api/fleetgraph/on-demand"]
+    C --> D["Supervisor Entry"]
+    D --> E["Initialize On-Demand Context"]
+    E --> F["Resolve Scope from current entity"]
+    F --> G["Parallel Fetch from Ship APIs"]
+    G --> H["Derive Deterministic Signals"]
+    H --> I{"Quiet or finding?"}
+    I -->|"Quiet"| J["Return quiet response"]
+    I -->|"Finding"| K["Return finding + fetched evidence"]

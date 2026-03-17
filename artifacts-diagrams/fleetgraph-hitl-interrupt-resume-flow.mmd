@@ -1,0 +1,14 @@
+flowchart TD
+    A["Finding needs consequential action"] --> B["Prepare action proposal"]
+    B --> C["Human-in-the-loop gate"]
+    C --> D{"Decision"}
+
+    D -->|"Approve"| E["Resume graph"]
+    E --> F["Execute action"]
+    F --> G["Persist result and complete"]
+
+    D -->|"Dismiss"| H["Record dismissal"]
+    H --> G
+
+    D -->|"Snooze"| I["Persist snooze / cooldown state"]
+    I --> G

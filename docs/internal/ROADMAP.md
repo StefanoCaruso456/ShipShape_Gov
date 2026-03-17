@@ -22,6 +22,10 @@ Concise phase-by-phase implementation notes live here:
 
 - [fleetgraph-phases/README.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/fleetgraph-phases/README.md)
 
+Fast current-state summary:
+
+- [FLEETGRAPH-STATUS.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/FLEETGRAPH-STATUS.md)
+
 ## Architecture we are building toward
 
 FleetGraph will follow the three-layer architecture already defined in:
