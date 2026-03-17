@@ -26,6 +26,21 @@ Fast current-state summary:
 
 - [FLEETGRAPH-STATUS.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/FLEETGRAPH-STATUS.md)
 
+## Phase status
+
+| Phase | Status | Notes |
+|---|---|---|
+| Phase 0: MVP framing | complete | `FLEETGRAPH.md` and MVP scope are defined |
+| Phase 1: Graph foundation | complete | supervisor, state, runtime, and fallback exist |
+| Phase 2: Context and fetch | complete for sprint/week MVP | Active View Context and real fetch path work |
+| Phase 3: Deterministic signals | complete for sprint/week MVP | quiet vs flagged signal path is validated |
+| Phase 4: Proactive MVP | complete | proactive sweep, finding persistence, dedupe, and delivery exist |
+| Phase 5: On-demand UI | next | embed the user-facing FleetGraph surface in Ship |
+| Phase 6: Reasoning, actions, and HITL | pending | add explanation, action proposal, and interrupt/resume |
+| Phase 7: Failure/resume/memory hardening | pending | expand durability beyond the MVP slice |
+| Phase 8: Planning intelligence | later | expansion path after MVP |
+| Phase 9: Evidence and submission | pending | LangSmith links, deployment, and final proof |
+
 ## Architecture we are building toward
 
 FleetGraph will follow the three-layer architecture already defined in:
@@ -328,6 +343,16 @@ This controls cost, improves reliability, and keeps the LLM focused on analysis 
 
 Ship one proactive detection end to end using real Ship data and a real surfaced output.
 
+### Current progress
+
+- [x] manual proactive sweep route added
+- [x] env-gated proactive worker added
+- [x] proactive findings persist in the database
+- [x] cooldown / dedupe prevents repeat broadcasts
+- [x] owner-scoped findings lookup route added
+- [x] realtime notification event added
+- [x] Ship toast path added for proactive findings
+
 ### What we plan to implement
 
 - proactive trigger path:
@@ -540,16 +565,18 @@ Build in this order:
 
 The next slice we should execute is:
 
-1. create `FLEETGRAPH.md`
-2. lock one proactive MVP use case
-3. lock one on-demand MVP question
-4. lock one HITL boundary
-5. verify LangSmith tracing locally
-6. scaffold the FleetGraph TypeScript runtime
-7. define graph state and runtime context
-8. implement the supervisor entrypoint
-9. define the normal path and intervention path
-10. build context + fetch nodes for one scope
+1. build the embedded on-demand FleetGraph surface in Ship
+2. support the MVP question:
+   - why is this sprint at risk?
+3. reuse the existing Active View Context and graph response path
+4. verify the on-demand UI invokes the same shared graph as proactive mode
+5. enable and capture LangSmith traces for:
+   - quiet path
+   - flagged path
+6. start Phase 6 immediately after the UI exists:
+   - reasoning node
+   - action proposal
+   - first HITL interrupt / resume flow
 
 ## Decision rule for scope
 

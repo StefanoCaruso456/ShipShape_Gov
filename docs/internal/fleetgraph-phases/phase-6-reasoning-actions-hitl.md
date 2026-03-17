@@ -4,7 +4,7 @@ Status: `planned`
 
 ## What
 
-Add recommendation quality and safe action handling:
+Add explanation quality and safe action handling:
 
 - reasoning node
 - action proposal node
@@ -17,17 +17,18 @@ FleetGraph should not just detect problems. It should explain why they matter an
 
 ## How
 
-- use Claude for real analysis, not formatting
+- add a reasoning node on top of deterministic signals and fetched evidence
 - generate evidence-backed recommendations
 - pause the graph before consequential mutations
 - resume through a typed approval path
 
 ## Purpose
 
-Turn FleetGraph from a detector into an actual agent system.
+Turn FleetGraph from a detector into an agent that can explain and propose, while still staying safe.
 
 ## Outcome
 
+- at least one explanation path beyond deterministic signals
 - at least one action proposal
 - at least one interrupt / resume path
 - safe HITL behavior
