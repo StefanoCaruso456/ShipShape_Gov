@@ -166,9 +166,44 @@ export interface FleetGraphFetchedPayloads {
   supporting: FleetGraphDocumentContextSnapshot | null;
 }
 
+export type FleetGraphSignalSeverity = 'info' | 'warning' | 'action';
+
+export type FleetGraphSignalKind =
+  | 'changes_requested_plan'
+  | 'changes_requested_review'
+  | 'low_recent_activity'
+  | 'missing_standup'
+  | 'no_completed_work'
+  | 'work_not_started'
+  | 'missing_review';
+
+export interface FleetGraphDerivedSignal {
+  kind: FleetGraphSignalKind;
+  severity: FleetGraphSignalSeverity;
+  summary: string;
+  evidence: string[];
+  dedupeKey: string;
+}
+
+export interface FleetGraphDerivedMetrics {
+  totalIssues: number;
+  completedIssues: number;
+  inProgressIssues: number;
+  incompleteIssues: number;
+  cancelledIssues: number;
+  standupCount: number;
+  recentActivityCount: number;
+  recentActiveDays: number;
+  completionRate: number | null;
+}
+
 export interface FleetGraphDerivedSignals {
   severity: 'none' | 'info' | 'warning' | 'action';
   reasons: string[];
+  summary: string | null;
+  shouldSurface: boolean;
+  signals: FleetGraphDerivedSignal[];
+  metrics: FleetGraphDerivedMetrics;
 }
 
 export interface FleetGraphFinding {

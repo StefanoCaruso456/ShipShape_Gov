@@ -1,9 +1,11 @@
 import { END, MemorySaver, START, StateGraph } from '@langchain/langgraph';
 import { completeRunNode } from './nodes/complete-run.js';
+import { deriveSprintSignalsNode } from './nodes/derive-sprint-signals.js';
 import { fetchSprintContextNode } from './nodes/fetch-sprint-context.js';
 import { fallbackNode } from './nodes/fallback.js';
 import { initializeOnDemandContextNode } from './nodes/initialize-on-demand-context.js';
 import { initializeProactiveContextNode } from './nodes/initialize-proactive-context.js';
+import { recordSignalFindingNode } from './nodes/record-signal-finding.js';
 import { resolveContextNode } from './nodes/resolve-context.js';
 import { supervisorEntryNode } from './nodes/supervisor-entry.js';
 import { FleetGraphStateAnnotation } from './state.js';
@@ -23,7 +25,13 @@ export function createFleetGraph() {
       ends: ['fetchSprintContext', 'completeRun'],
     })
     .addNode('fetchSprintContext', fetchSprintContextNode, {
-      ends: ['completeRun', 'fallback'],
+      ends: ['deriveSprintSignals', 'completeRun', 'fallback'],
+    })
+    .addNode('deriveSprintSignals', deriveSprintSignalsNode, {
+      ends: ['recordSignalFinding', 'completeRun'],
+    })
+    .addNode('recordSignalFinding', recordSignalFindingNode, {
+      ends: ['completeRun'],
     })
     .addNode('completeRun', completeRunNode)
     .addNode('fallback', fallbackNode)

@@ -280,21 +280,32 @@ The graph cannot reason well without strong context. This is the layer that turn
 
 Create the rules-first detection layer so FleetGraph does not depend on the LLM for basic anomaly detection.
 
+### Current progress
+
+- [x] added a dedicated deterministic signal node for the sprint/week MVP slice
+- [x] added quiet vs flagged routing after sprint context fetch
+- [x] added typed sprint metrics and signal evidence to graph state
+- [x] added live API response fields for `derivedSignals` and `finding`
+- [x] validated both:
+  - flagged sprint path
+  - quiet sprint path
+- [ ] extend the same signal model into proactive triggering and dedupe memory
+
 ### What we plan to implement
 
 - derived signal node(s) for:
-  - stale issue detection
   - missing ritual detection
-  - approval bottleneck detection
   - low activity in active sprint
+  - no completed work
+  - all work still incomplete / not started
   - unresolved changes-requested state
-- severity and confidence scoring
-- dedupe keys and finding signatures
+  - missing review on completed sprint
+- severity scoring
+- signal-level dedupe keys
 - quiet-exit logic when nothing meaningful is found
 - supervisor branch conditions for:
   - quiet exit
-  - insight only
-  - action proposal
+  - flagged finding
   - fallback
 
 ### Why this phase matters
@@ -305,7 +316,7 @@ This controls cost, improves reliability, and keeps the LLM focused on analysis 
 
 - graph can distinguish between no finding and meaningful finding
 - signals are deterministic and traceable
-- findings are ranked before reasoning
+- findings are surfaced in API output before reasoning
 
 ## Phase 4: Proactive MVP flow
 

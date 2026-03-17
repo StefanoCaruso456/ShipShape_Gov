@@ -11,7 +11,7 @@ import type {
 } from '../types.js';
 import { createHandoff, createIntervention } from '../supervision.js';
 
-type FetchSprintContextTargets = 'completeRun' | 'fallback';
+type FetchSprintContextTargets = 'deriveSprintSignals' | 'completeRun' | 'fallback';
 
 export async function fetchSprintContextNode(
   state: FleetGraphState,
@@ -57,7 +57,7 @@ export async function fetchSprintContextNode(
     };
 
     return new Command({
-      goto: 'completeRun',
+      goto: 'deriveSprintSignals',
       update: {
         stage: 'sprint_context_fetched',
         expandedScope: {
@@ -83,7 +83,7 @@ export async function fetchSprintContextNode(
         },
         handoff: createHandoff(
           'fetchSprintContext',
-          'completeRun',
+          'deriveSprintSignals',
           'fetched sprint context from Ship REST APIs'
         ),
       },

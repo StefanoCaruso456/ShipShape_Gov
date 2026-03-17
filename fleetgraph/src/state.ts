@@ -85,6 +85,20 @@ export const FleetGraphStateAnnotation = Annotation.Root({
     default: () => ({
       severity: 'none',
       reasons: [],
+      summary: null,
+      shouldSurface: false,
+      signals: [],
+      metrics: {
+        totalIssues: 0,
+        completedIssues: 0,
+        inProgressIssues: 0,
+        incompleteIssues: 0,
+        cancelledIssues: 0,
+        standupCount: 0,
+        recentActivityCount: 0,
+        recentActiveDays: 0,
+        completionRate: null,
+      },
     }),
   }),
   finding: Annotation<FleetGraphFinding | null>({

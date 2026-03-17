@@ -16,6 +16,8 @@ export async function completeRunNode(
     activeView: state.activeView,
     weekId: state.expandedScope.weekId,
     fetchedEntity: state.fetched.entity?.id ?? null,
+    signalSeverity: state.derivedSignals.severity,
+    findingSummary: state.finding?.summary ?? null,
   });
 
   return {

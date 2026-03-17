@@ -16,7 +16,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.62.0",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.19.3",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.16"
   }
 }

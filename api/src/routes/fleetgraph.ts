@@ -170,6 +170,8 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
       activeView: result.activeView,
       expandedScope: result.expandedScope,
       fetched: result.fetched,
+      derivedSignals: result.derivedSignals,
+      finding: result.finding,
       error: result.error,
       trace: result.trace,
     });
