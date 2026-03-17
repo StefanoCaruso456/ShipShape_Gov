@@ -34,7 +34,7 @@ That means the graph receives the current Ship scope directly from the UI, such 
 - program
 - person / My Week
 
-Active View Context is partially accounted for in Phase 1 through the typed `contextEntity` state field and the on-demand initialization gate. It is fully implemented in Phase 2, where real UI context and real Ship fetches get wired into the graph.
+Active View Context is partially accounted for in Phase 1 through the typed `contextEntity` state field and the on-demand initialization gate. It is implemented first for the sprint/week MVP slice in Phase 2, where real UI context and real Ship fetches get wired into the graph.
 
 ## Phase index
 

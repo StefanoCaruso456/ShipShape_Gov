@@ -1,4 +1,5 @@
 import { Annotation } from '@langchain/langgraph';
+import type { FleetGraphActiveViewContext } from '@ship/shared';
 import type {
   FleetGraphActor,
   FleetGraphDerivedSignals,
@@ -9,6 +10,7 @@ import type {
   FleetGraphHandoff,
   FleetGraphInterventionEvent,
   FleetGraphPendingApproval,
+  FleetGraphPromptInput,
   FleetGraphProposedAction,
   FleetGraphRunMode,
   FleetGraphScope,
@@ -46,7 +48,15 @@ export const FleetGraphStateAnnotation = Annotation.Root({
     reducer: (left, right) => right ?? left,
     default: () => null,
   }),
+  activeView: Annotation<FleetGraphActiveViewContext | null>({
+    reducer: (left, right) => right ?? left,
+    default: () => null,
+  }),
   contextEntity: Annotation<FleetGraphEntityRef | null>({
+    reducer: (left, right) => right ?? left,
+    default: () => null,
+  }),
+  prompt: Annotation<FleetGraphPromptInput | null>({
     reducer: (left, right) => right ?? left,
     default: () => null,
   }),

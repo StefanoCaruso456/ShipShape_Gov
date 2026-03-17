@@ -60,23 +60,6 @@ export function UnifiedDocumentPage() {
     retry: false,
   });
 
-  // Sync current document context for rail highlighting
-  useEffect(() => {
-    if (document && id) {
-      const docType = document.document_type as 'wiki' | 'issue' | 'project' | 'program' | 'sprint' | 'person' | 'weekly_plan' | 'weekly_retro' | 'standup';
-      // Extract projectId for weekly documents
-      const projectId = (document.document_type === 'weekly_plan' || document.document_type === 'weekly_retro')
-        ? (document.properties?.project_id as string | undefined) ?? null
-        : null;
-      setCurrentDocument(id, docType, projectId);
-    }
-    return () => {
-      clearCurrentDocument();
-    };
-  }, [document, id, setCurrentDocument, clearCurrentDocument]);
-
-
-
   // Set default active tab when document loads (status-aware for sprints)
   const tabConfig = document ? getTabsForDocument(document) : [];
   const hasTabs = document ? documentTypeHasTabs(document.document_type) : false;
@@ -88,6 +71,21 @@ export function UnifiedDocumentPage() {
     }
     return tabConfig[0]?.id || '';
   }, [urlTab, tabConfig]);
+
+  // Sync current document context for rail highlighting and FleetGraph active view context
+  useEffect(() => {
+    if (document && id) {
+      const docType = document.document_type as 'wiki' | 'issue' | 'project' | 'program' | 'sprint' | 'person' | 'weekly_plan' | 'weekly_retro' | 'standup';
+      // Extract projectId for weekly documents
+      const projectId = (document.document_type === 'weekly_plan' || document.document_type === 'weekly_retro')
+        ? (document.properties?.project_id as string | undefined) ?? null
+        : null;
+      setCurrentDocument(id, docType, projectId, activeTab || null);
+    }
+    return () => {
+      clearCurrentDocument();
+    };
+  }, [activeTab, clearCurrentDocument, document, id, setCurrentDocument]);
 
   // Redirect to clean URL if tab is invalid (prevents broken bookmarks and typos)
   useEffect(() => {

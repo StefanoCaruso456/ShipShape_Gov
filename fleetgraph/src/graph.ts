@@ -1,5 +1,6 @@
 import { END, MemorySaver, START, StateGraph } from '@langchain/langgraph';
 import { completeRunNode } from './nodes/complete-run.js';
+import { fetchSprintContextNode } from './nodes/fetch-sprint-context.js';
 import { fallbackNode } from './nodes/fallback.js';
 import { initializeOnDemandContextNode } from './nodes/initialize-on-demand-context.js';
 import { initializeProactiveContextNode } from './nodes/initialize-proactive-context.js';
@@ -19,7 +20,10 @@ export function createFleetGraph() {
       ends: ['resolveContext', 'fallback'],
     })
     .addNode('resolveContext', resolveContextNode, {
-      ends: ['completeRun'],
+      ends: ['fetchSprintContext', 'completeRun'],
+    })
+    .addNode('fetchSprintContext', fetchSprintContextNode, {
+      ends: ['completeRun', 'fallback'],
     })
     .addNode('completeRun', completeRunNode)
     .addNode('fallback', fallbackNode)

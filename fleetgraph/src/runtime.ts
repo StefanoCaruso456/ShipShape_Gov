@@ -15,8 +15,8 @@ export interface FleetGraphCache {
 }
 
 export interface FleetGraphShipApiClient {
-  get(path: string, init?: RequestInit): Promise<unknown>;
-  post(path: string, body?: unknown, init?: RequestInit): Promise<unknown>;
+  get<T>(path: string, init?: RequestInit): Promise<T>;
+  post<T>(path: string, body?: unknown, init?: RequestInit): Promise<T>;
 }
 
 export interface FleetGraphRuntimeContext {

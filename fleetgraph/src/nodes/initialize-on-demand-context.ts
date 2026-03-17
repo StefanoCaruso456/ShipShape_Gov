@@ -14,10 +14,13 @@ export async function initializeOnDemandContextNode(
 
   runtime.logger.debug('Initializing on-demand FleetGraph context', {
     contextEntity: state.contextEntity,
+    activeView: state.activeView,
     actorId: state.actor?.id,
   });
 
-  if (!state.contextEntity) {
+  const contextEntity = state.contextEntity ?? state.activeView?.entity ?? null;
+
+  if (!contextEntity) {
     return new Command({
       goto: 'fallback',
       update: {
@@ -44,6 +47,7 @@ export async function initializeOnDemandContextNode(
     goto: 'resolveContext',
     update: {
       stage: 'initialize_on_demand_context',
+      contextEntity,
       actor: state.actor ?? {
         id: null,
         kind: 'user',

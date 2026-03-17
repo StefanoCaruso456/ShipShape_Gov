@@ -236,6 +236,15 @@ If we skip this and start with prompts or UI, we will create duplicate logic and
 
 Make FleetGraph able to understand what it is looking at and fetch the minimum set of real Ship context needed for reasoning.
 
+### Current progress
+
+- [x] shared **Active View Context** contract added
+- [x] current document context extended to carry the active tab
+- [x] on-demand FleetGraph API route added
+- [x] sprint/week MVP fetch path added to the graph
+- [ ] widen context resolution beyond sprint/week into issue, project, program, and person surfaces
+- [ ] add dedicated people/role fetches where the sprint payload is not enough
+
 ### What we plan to implement
 
 - context resolution for:

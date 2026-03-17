@@ -68,6 +68,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.26.0
         version: 1.26.0(@cfworker/json-schema@4.1.1)(zod@3.25.76)
+      '@ship/fleetgraph':
+        specifier: workspace:*
+        version: link:../fleetgraph
       '@ship/shared':
         specifier: workspace:*
         version: link:../shared
