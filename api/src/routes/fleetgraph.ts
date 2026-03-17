@@ -1,18 +1,22 @@
-import { randomUUID } from 'crypto';
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import {
-  createFleetGraph,
-  createFleetGraphRunnableConfig,
-  createFleetGraphRuntime,
   type FleetGraphRunInput,
-  type FleetGraphShipApiClient,
 } from '@ship/fleetgraph';
 import type { FleetGraphOnDemandRequest } from '@ship/shared';
 import { authMiddleware, getAuthContext } from '../middleware/auth.js';
+import {
+  createFleetGraphLogger,
+  createRequestScopedShipApiClient,
+  invokeFleetGraph,
+} from '../services/fleetgraph-runner.js';
+import {
+  listFleetGraphFindingsForUser,
+  runFleetGraphProactiveSweep,
+} from '../services/fleetgraph-proactive.js';
 
 const router = Router();
-const graph = createFleetGraph();
+const fleetGraphLogger = createFleetGraphLogger('FleetGraph route');
 
 const activeViewSchema = z.object({
   entity: z.object({
@@ -42,61 +46,16 @@ const onDemandRequestSchema = z.object({
   question: z.string().trim().min(1).nullable().optional(),
 });
 
-function buildInternalApiUrl(path: string): string {
-  const baseUrl = `http://127.0.0.1:${process.env.PORT ?? '3000'}`;
-  return new URL(path, baseUrl).toString();
-}
+const proactiveRunRequestSchema = z.object({
+  week_id: z.string().uuid().optional(),
+});
 
-function createRequestScopedShipApiClient(req: Request): FleetGraphShipApiClient {
-  const cookieHeader = req.headers.cookie;
-  const authHeader = req.headers.authorization;
+const findingsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(25).optional(),
+});
 
-  const baseHeaders: Record<string, string> = {
-    Accept: 'application/json',
-  };
-
-  if (cookieHeader) {
-    baseHeaders.cookie = cookieHeader;
-  }
-
-  if (typeof authHeader === 'string') {
-    baseHeaders.authorization = authHeader;
-  }
-
-  return {
-    async get<T>(path: string, init?: RequestInit): Promise<T> {
-      const response = await fetch(buildInternalApiUrl(path), {
-        method: 'GET',
-        headers: {
-          ...baseHeaders,
-          ...((init?.headers as Record<string, string> | undefined) ?? {}),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Ship API GET ${path} failed with status ${response.status}`);
-      }
-
-      return response.json() as Promise<T>;
-    },
-    async post<T>(path: string, body?: unknown, init?: RequestInit): Promise<T> {
-      const response = await fetch(buildInternalApiUrl(path), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...baseHeaders,
-          ...((init?.headers as Record<string, string> | undefined) ?? {}),
-        },
-        body: body === undefined ? undefined : JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Ship API POST ${path} failed with status ${response.status}`);
-      }
-
-      return response.json() as Promise<T>;
-    },
-  };
+function canRunProactiveSweep(req: Request): boolean {
+  return req.isApiToken === true || req.isSuperAdmin === true || req.workspaceRole === 'admin';
 }
 
 router.post('/on-demand', authMiddleware, async (req: Request, res: Response) => {
@@ -115,18 +74,7 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
       return;
     }
 
-    const runtime = createFleetGraphRuntime({
-      shipApi: createRequestScopedShipApiClient(req),
-      logger: {
-        debug: (message, meta) => console.debug(message, meta),
-        info: (message, meta) => console.info(message, meta),
-        warn: (message, meta) => console.warn(message, meta),
-        error: (message, meta) => console.error(message, meta),
-      },
-    });
-
     const input: FleetGraphRunInput = {
-      runId: randomUUID(),
       mode: 'on_demand',
       triggerType: 'user_invoke',
       workspaceId: authContext.workspaceId,
@@ -154,13 +102,11 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
       },
     };
 
-    const result = await graph.invoke(
-      input,
-      createFleetGraphRunnableConfig(runtime, {
-        checkpointNamespace: 'fleetgraph',
-        tags: input.trace?.tags,
-      })
-    );
+    const result = await invokeFleetGraph(input, {
+      shipApi: createRequestScopedShipApiClient(req),
+      logger: fleetGraphLogger,
+      checkpointNamespace: 'fleetgraph',
+    });
 
     res.json({
       status: result.status,
@@ -178,6 +124,77 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
   } catch (error) {
     console.error('FleetGraph on-demand invoke error:', error);
     res.status(500).json({ error: 'Failed to run FleetGraph on-demand analysis' });
+  }
+});
+
+router.post('/proactive/run', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+
+    if (!canRunProactiveSweep(req)) {
+      res.status(403).json({ error: 'Only workspace admins can trigger FleetGraph proactive sweeps' });
+      return;
+    }
+
+    const parsed = proactiveRunRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid FleetGraph proactive request',
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+
+    const result = await runFleetGraphProactiveSweep({
+      workspaceId: authContext.workspaceId,
+      weekId: parsed.data.week_id,
+      shipApi: createRequestScopedShipApiClient(req),
+      logger: fleetGraphLogger,
+    });
+
+    res.json({
+      status: 'ok',
+      workspaceId: authContext.workspaceId,
+      processedWeeks: result.processedWeeks,
+      surfacedFindings: result.surfacedFindings,
+      newNotifications: result.newNotifications,
+      findings: result.findings,
+    });
+  } catch (error) {
+    console.error('FleetGraph proactive sweep error:', error);
+    res.status(500).json({ error: 'Failed to run FleetGraph proactive sweep' });
+  }
+});
+
+router.get('/findings', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+
+    const parsed = findingsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid FleetGraph findings query',
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+
+    const findings = await listFleetGraphFindingsForUser({
+      workspaceId: authContext.workspaceId,
+      userId: authContext.userId,
+      limit: parsed.data.limit,
+    });
+
+    res.json({ findings });
+  } catch (error) {
+    console.error('FleetGraph findings lookup error:', error);
+    res.status(500).json({ error: 'Failed to load FleetGraph findings' });
   }
 });
 

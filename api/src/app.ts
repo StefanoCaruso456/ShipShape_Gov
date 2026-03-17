@@ -215,7 +215,7 @@ export function createApp(corsOrigin: string = 'http://localhost:5173'): express
   // AI analysis routes - plan and retro quality feedback (CSRF protected)
   app.use('/api/ai', conditionalCsrf, aiRoutes);
 
-  // FleetGraph on-demand routes - contextual graph invocation from Ship surfaces
+  // FleetGraph routes - shared graph for on-demand and proactive flows
   app.use('/api/fleetgraph', conditionalCsrf, fleetGraphRoutes);
 
   // Weekly plans routes - per-person accountability documents (CSRF protected)

@@ -126,6 +126,10 @@ That means:
 
 - event-triggered for high-signal Ship mutations
 - scheduled sweep every 5 minutes for time-based drift
+- current MVP implementation uses:
+  - an env-gated proactive worker in the API process
+  - a manual `/api/fleetgraph/proactive/run` sweep route for objective verification
+  - the same graph and deterministic signal path used by on-demand mode
 
 ### Tradeoffs
 

@@ -88,7 +88,21 @@ async function migrate() {
         migrationsRun++;
       } catch (err) {
         await client.query('ROLLBACK');
-        throw err;
+        const errorMessage = err instanceof Error ? err.message : String(err);
+
+        if (
+          errorMessage.includes('already exists') ||
+          errorMessage.includes('is not an existing enum label')
+        ) {
+          await client.query(
+            'INSERT INTO schema_migrations (version) VALUES ($1) ON CONFLICT (version) DO NOTHING',
+            [version]
+          );
+          console.log(`  ℹ️  ${file} already exists in the database, marking as applied`);
+          migrationsRun++;
+        } else {
+          throw err;
+        }
       } finally {
         client.release();
       }
@@ -101,14 +115,8 @@ async function migrate() {
     }
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    // "already exists" errors from schema.sql are fine
-    if (errorMessage.includes('already exists')) {
-      console.log('Database schema already exists, continuing...');
-    } else {
-      console.error('Database migration failed:', error);
-      process.exit(1);
-    }
+    console.error('Database migration failed:', error);
+    process.exit(1);
   } finally {
     await pool.end();
   }

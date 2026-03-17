@@ -64,15 +64,15 @@ The supervisor is responsible for:
 
 This checklist mirrors the assignment pass criteria. We should treat these as the definition of done for the first deliverable, not as optional polish.
 
-- [ ] Graph running with at least one proactive detection wired end to end
+- [x] Graph running with at least one proactive detection wired end to end
 - [ ] LangSmith tracing enabled with at least two shared trace links showing different execution paths
-- [ ] `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed
-- [ ] At least 5 use cases documented in `FLEETGRAPH.md`
-- [ ] Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions
+- [x] `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed
+- [x] At least 5 use cases documented in `FLEETGRAPH.md`
+- [x] Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions
 - [ ] At least one human-in-the-loop gate implemented
-- [ ] Running against real Ship data with no mocked responses
+- [x] Running against real Ship data with no mocked responses
 - [ ] Deployed and publicly accessible
-- [ ] Trigger model decision documented and defended in `FLEETGRAPH.md`
+- [x] Trigger model decision documented and defended in `FLEETGRAPH.md`
 
 ## Requirement-to-phase map
 
@@ -327,18 +327,19 @@ Ship one proactive detection end to end using real Ship data and a real surfaced
 ### What we plan to implement
 
 - proactive trigger path:
-  - event-driven trigger
-  - 5-minute sweep backstop
-- one MVP proactive use case wired end to end
+  - env-gated 5-minute worker sweep
+  - manual sweep endpoint for objective verification
+- one MVP proactive use case wired end to end:
+  - sprint is drifting before anyone asks
 - supervisor routing for:
   - no finding
-  - finding with insight
-  - finding with proposed action
+  - finding with persisted cooldown state
+  - finding with realtime delivery
 - proactive output surface in Ship:
-  - notification
-  - card
-  - inbox or action-item style surfacing
-- cooldown / snooze memory
+  - realtime toast
+  - open-sprint action
+  - stored finding record for later retrieval
+- cooldown / dedupe memory
 
 ### Candidate MVP proactive use cases
 
@@ -361,6 +362,8 @@ This is the first moment FleetGraph becomes a real product capability instead of
 
 - one proactive detection works against live Ship data
 - it surfaces without a user manually asking
+- it can also be triggered manually for verification
+- repeated sweeps do not rebroadcast the same finding inside the cooldown window
 - traces show a real branch path
 
 ## Phase 5: On-demand embedded chat MVP

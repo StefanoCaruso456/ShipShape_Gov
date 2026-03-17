@@ -35,3 +35,20 @@ export interface FleetGraphOnDemandRequest {
   active_view: FleetGraphActiveViewContext;
   question?: string | null;
 }
+
+export interface FleetGraphProactiveFinding {
+  id: string;
+  workspaceId: string;
+  weekId: string;
+  projectId: string | null;
+  programId: string | null;
+  title: string | null;
+  summary: string;
+  severity: 'info' | 'warning' | 'action';
+  route: string;
+  surface: FleetGraphViewSurface;
+  tab: string | null;
+  signalKinds: string[];
+  lastDetectedAt: string;
+  lastNotifiedAt: string;
+}

@@ -20,6 +20,7 @@ import { useActionItemsQuery, actionItemsKeys } from '@/hooks/useActionItemsQuer
 import { useTeamMembersQuery } from '@/hooks/useTeamMembersQuery';
 import { cn, getContrastTextColor } from '@/lib/cn';
 import { buildDocumentTree, DocumentTreeNode } from '@/lib/documentTree';
+import { listFleetGraphProactiveFindings } from '@/lib/fleetgraph';
 import { CommandPalette } from '@/components/CommandPalette';
 import { SessionTimeoutModal } from '@/components/SessionTimeoutModal';
 import { UploadNavigationWarning } from '@/components/UploadNavigationWarning';
@@ -36,12 +37,14 @@ import { SelectionPersistenceProvider } from '@/contexts/SelectionPersistenceCon
 import { ActionItemsModal } from '@/components/ActionItemsModal';
 import { AccountabilityBanner } from '@/components/AccountabilityBanner';
 import { ProjectContextSidebar } from '@/components/sidebars/ProjectContextSidebar';
+import type { FleetGraphProactiveFinding } from '@ship/shared';
 
 type Mode = 'docs' | 'issues' | 'projects' | 'programs' | 'sprints' | 'team' | 'settings' | 'dashboard' | 'project-context';
 
 export function AppLayout() {
   const { user, logout, isSuperAdmin, impersonating, endImpersonation } = useAuth();
   const { connectionState, statusMessage } = useRealtimeEvents();
+  const { showToast } = useToast();
   const { currentWorkspace, workspaces, switchWorkspace } = useWorkspace();
   const location = useLocation();
   const navigate = useNavigate();
@@ -85,6 +88,7 @@ export function AppLayout() {
   // Celebration state for when user completes an accountability item
   const [isCelebrating, setIsCelebrating] = useState(false);
   const celebrationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const seenFleetGraphFindingsRef = useRef<Set<string>>(new Set());
 
   // Listen for realtime accountability updates
   const handleAccountabilityUpdate = useCallback(() => {
@@ -106,6 +110,99 @@ export function AppLayout() {
   }, [queryClient]);
 
   useRealtimeEvent('accountability:updated', handleAccountabilityUpdate);
+
+  const hasSeenFleetGraphFinding = useCallback((findingId: string) => {
+    if (seenFleetGraphFindingsRef.current.has(findingId)) {
+      return true;
+    }
+
+    if (sessionStorage.getItem(`ship:fleetgraph:finding:${findingId}`) === 'seen') {
+      seenFleetGraphFindingsRef.current.add(findingId);
+      return true;
+    }
+
+    return false;
+  }, []);
+
+  const markFleetGraphFindingSeen = useCallback((findingId: string) => {
+    seenFleetGraphFindingsRef.current.add(findingId);
+    sessionStorage.setItem(`ship:fleetgraph:finding:${findingId}`, 'seen');
+  }, []);
+
+  const showFleetGraphFindingToast = useCallback((finding: FleetGraphProactiveFinding) => {
+    if (!currentWorkspace || finding.workspaceId !== currentWorkspace.id) {
+      return;
+    }
+
+    if (hasSeenFleetGraphFinding(finding.id)) {
+      return;
+    }
+
+    markFleetGraphFindingSeen(finding.id);
+
+    const title = finding.title ?? 'Current week';
+    const prefix =
+      finding.severity === 'action'
+        ? 'FleetGraph flagged'
+        : finding.severity === 'warning'
+          ? 'FleetGraph noticed'
+          : 'FleetGraph surfaced';
+
+    showToast(
+      `${prefix} ${title}: ${finding.summary}`,
+      finding.severity === 'action' ? 'error' : 'info',
+      7000,
+      {
+        label: 'Open Sprint',
+        onClick: () => navigate(finding.route),
+      }
+    );
+  }, [currentWorkspace, hasSeenFleetGraphFinding, markFleetGraphFindingSeen, navigate, showToast]);
+
+  const handleFleetGraphFindingEvent = useCallback((event: { data: Record<string, unknown> }) => {
+    const data = event.data as Partial<FleetGraphProactiveFinding>;
+
+    if (
+      typeof data.id !== 'string' ||
+      typeof data.workspaceId !== 'string' ||
+      typeof data.weekId !== 'string' ||
+      typeof data.summary !== 'string' ||
+      typeof data.route !== 'string' ||
+      typeof data.severity !== 'string'
+    ) {
+      return;
+    }
+
+    showFleetGraphFindingToast(data as FleetGraphProactiveFinding);
+  }, [showFleetGraphFindingToast]);
+
+  useRealtimeEvent('fleetgraph:finding', handleFleetGraphFindingEvent);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user?.id || !currentWorkspace?.id) {
+      return undefined;
+    }
+
+    void listFleetGraphProactiveFindings(1)
+      .then((findings) => {
+        if (cancelled) {
+          return;
+        }
+
+        findings.forEach((finding) => {
+          showFleetGraphFindingToast(finding);
+        });
+      })
+      .catch((error) => {
+        console.error('Failed to load FleetGraph proactive findings', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentWorkspace?.id, showFleetGraphFindingToast, user?.id]);
 
   // Cleanup celebration timeout on unmount
   useEffect(() => {
