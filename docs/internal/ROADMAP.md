@@ -101,6 +101,7 @@ This checklist mirrors the assignment pass criteria. We should treat these as th
 | One proactive detection end to end | Phase 3, Phase 4 | working proactive run against live data |
 | Context-aware on-demand mode | Phase 2, Phase 5 | embedded UI invocation from current Ship context |
 | Active page / tab awareness | Phase 2, Phase 5 | graph receives Active View Context from the current Ship surface |
+| App-native page-awareness technique | Phase 2, Phase 6 | route-to-context adapters instead of browser vision |
 | HITL gate | Phase 6 | interrupt / resume trace and approval UI |
 | Error and fallback nodes | Phase 1, Phase 7 | failure branch visible in traces |
 | LangSmith tracing from day one | Phase 0, Phase 1 | trace links for clean and problem-detected runs |
@@ -262,16 +263,32 @@ Make FleetGraph able to understand what it is looking at and fetch the minimum s
 - [x] on-demand FleetGraph API route added
 - [x] sprint/week MVP fetch path added to the graph
 - [ ] widen context resolution beyond sprint/week into issue, project, program, and person surfaces
+- [ ] add route-to-context adapters for non-document surfaces such as My Week and dashboard
 - [ ] add dedicated people/role fetches where the sprint payload is not enough
 
 ### What we plan to implement
 
+- use app-native page awareness as the implementation standard:
+  - router path
+  - entity id
+  - entity type
+  - tab
+  - workspace
+  - viewer role
 - context resolution for:
   - issue
   - week / sprint
   - project
   - program
   - person / My Week
+- route-to-context adapters for:
+  - document
+  - My Week
+  - dashboard
+  - issue
+  - project
+  - program
+  - person
 - parallel fetch nodes for:
   - entity context
   - activity
@@ -285,6 +302,12 @@ Make FleetGraph able to understand what it is looking at and fetch the minimum s
 ### Why this phase matters
 
 The graph cannot reason well without strong context. This is the layer that turns Ship’s REST API into usable graph inputs.
+
+This is also where the page-awareness technique needs to stay explicit:
+
+- use app-native typed context for runtime page awareness
+- use Playwright only for verification
+- do not use browser vision as the production mechanism
 
 ### Exit criteria
 
@@ -436,6 +459,7 @@ Move from detection only to meaningful recommendation and safe action proposal.
   - why it is at risk
   - who should act
   - what should happen next
+- widen Active View Context coverage with route-to-context adapters as new Ship surfaces gain FleetGraph entrypoints
 - action proposal node for:
   - draft comment
   - escalation proposal
@@ -568,13 +592,18 @@ The next slice we should execute is:
 1. start Phase 6 on top of the embedded on-demand FleetGraph panel
 2. add the first reasoning node for:
    - why is this sprint at risk?
-3. keep the reasoning grounded in:
+3. widen Active View Context coverage beyond week documents using route-to-context adapters for:
+   - issue
+   - project
+   - program
+   - My Week
+4. keep the reasoning grounded in:
    - fetched context
    - deterministic signals
    - finding summary
-4. add the first action proposal boundary
-5. implement the first HITL interrupt / resume path
-6. enable and capture LangSmith traces for:
+5. add the first action proposal boundary
+6. implement the first HITL interrupt / resume path
+7. enable and capture LangSmith traces for:
    - quiet path
    - flagged path
 

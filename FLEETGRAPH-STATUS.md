@@ -98,6 +98,19 @@ Built the first on-demand UI surface:
 - page / tab aware invocation using Active View Context
 - grounded answer using fetched context, signals, metrics, and finding summary
 
+## Current page-awareness technique
+
+Implemented today:
+
+- typed Active View Context from the Ship UI
+- current route, entity, and tab passed into the graph
+- sprint/week document surface covered first
+
+Expansion path:
+
+- add route-to-context adapters for issue, project, program, My Week, dashboard, and person surfaces
+- keep Playwright as a verification tool, not the production page-awareness mechanism
+
 ## Current trigger vs future trigger
 
 ### Current trigger

@@ -20,10 +20,17 @@ The graph cannot reason correctly unless it knows what the user is looking at or
 - use **Active View Context** from the UI
 - extend `CurrentDocumentContext` to carry the active tab as part of the user’s working surface
 - map supported Ship document views to typed FleetGraph entity inputs
+- treat route-to-context adapters as the standard pattern for every supported surface
 - add an on-demand FleetGraph API route that runs with the current user/session
 - fetch sprint entity, document context, activity, and review/accountability context in parallel
 - expand the week scope with related project and program IDs
 - add fallback behavior for missing or partial data
+
+Runtime rule:
+
+- use app-native typed context for page awareness
+- use Playwright only to verify that the UI is sending the right context
+- do not use browser vision as the production mechanism
 
 ## Purpose
 
@@ -39,4 +46,4 @@ Turn the graph from an empty scaffold into a context-aware system grounded in Sh
   - `/api/activity/sprint/:id`
   - `/api/claude/context?context_type=review&sprint_id=:id`
 - the graph expands sprint scope into related project and program context
-- unsupported views still fall back to the scaffold path and will be widened in later phases
+- unsupported views still fall back to the scaffold path and will be widened in later phases through route-to-context adapters
