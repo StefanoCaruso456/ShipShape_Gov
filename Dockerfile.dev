@@ -12,20 +12,22 @@ RUN npm install -g pnpm@10 && pnpm config set strict-ssl false
 # Copy all package.json files and workspace config
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY api/package.json ./api/
+COPY fleetgraph/package.json ./fleetgraph/
 COPY shared/package.json ./shared/
 
 # Create minimal web package.json - needed for workspace but won't be installed
 RUN mkdir -p web && echo '{"name":"@ship/web","version":"0.0.0","private":true}' > web/package.json
 
-# Install only api and shared dependencies (skip web entirely)
-RUN pnpm install --filter @ship/api --filter @ship/shared --ignore-scripts
+# Install only api, fleetgraph, and shared dependencies (skip web entirely)
+RUN pnpm install --filter @ship/api --filter @ship/fleetgraph --filter @ship/shared --ignore-scripts
 
-# Copy source code (only api and shared - web is excluded by .dockerignore)
+# Copy source code (only api, fleetgraph, and shared - web is excluded by .dockerignore)
 COPY shared/ ./shared/
+COPY fleetgraph/ ./fleetgraph/
 COPY api/ ./api/
 
-# Build shared types first, then API
-RUN pnpm build:shared && pnpm --filter @ship/api build
+# Build shared types first, then fleetgraph, then API
+RUN pnpm build:shared && pnpm --filter @ship/fleetgraph build && pnpm --filter @ship/api build
 
 # Expose API port
 EXPOSE 3000

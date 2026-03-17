@@ -6,7 +6,13 @@ interface CurrentDocumentContextValue {
   currentDocumentType: DocumentType;
   currentDocumentId: string | null;
   currentDocumentProjectId: string | null;
-  setCurrentDocument: (id: string | null, type: DocumentType, projectId?: string | null) => void;
+  currentDocumentTab: string | null;
+  setCurrentDocument: (
+    id: string | null,
+    type: DocumentType,
+    projectId?: string | null,
+    tab?: string | null
+  ) => void;
   clearCurrentDocument: () => void;
 }
 
@@ -16,17 +22,25 @@ export function CurrentDocumentProvider({ children }: { children: ReactNode }) {
   const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(null);
   const [currentDocumentType, setCurrentDocumentType] = useState<DocumentType>(null);
   const [currentDocumentProjectId, setCurrentDocumentProjectId] = useState<string | null>(null);
+  const [currentDocumentTab, setCurrentDocumentTab] = useState<string | null>(null);
 
-  const setCurrentDocument = useCallback((id: string | null, type: DocumentType, projectId?: string | null) => {
+  const setCurrentDocument = useCallback((
+    id: string | null,
+    type: DocumentType,
+    projectId?: string | null,
+    tab?: string | null
+  ) => {
     setCurrentDocumentId(id);
     setCurrentDocumentType(type);
     setCurrentDocumentProjectId(projectId ?? null);
+    setCurrentDocumentTab(tab ?? null);
   }, []);
 
   const clearCurrentDocument = useCallback(() => {
     setCurrentDocumentId(null);
     setCurrentDocumentType(null);
     setCurrentDocumentProjectId(null);
+    setCurrentDocumentTab(null);
   }, []);
 
   return (
@@ -35,6 +49,7 @@ export function CurrentDocumentProvider({ children }: { children: ReactNode }) {
         currentDocumentType,
         currentDocumentId,
         currentDocumentProjectId,
+        currentDocumentTab,
         setCurrentDocument,
         clearCurrentDocument,
       }}

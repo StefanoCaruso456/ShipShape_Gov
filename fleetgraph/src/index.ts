@@ -20,7 +20,13 @@ export {
   pauseForHumanApproval,
 } from './supervision.js';
 export type {
+  FleetGraphActivitySnapshot,
+  FleetGraphDocumentContextSnapshot,
   FleetGraphActor,
+  FleetGraphDerivedMetrics,
+  FleetGraphDerivedSignal,
+  FleetGraphPeopleSnapshot,
+  FleetGraphPromptInput,
   FleetGraphDerivedSignals,
   FleetGraphEntityRef,
   FleetGraphEntityType,
@@ -32,8 +38,13 @@ export type {
   FleetGraphPendingApproval,
   FleetGraphProposedAction,
   FleetGraphRunMode,
+  FleetGraphSignalKind,
+  FleetGraphSignalSeverity,
   FleetGraphScope,
+  FleetGraphSprintEntitySnapshot,
+  FleetGraphSprintReviewContextSnapshot,
   FleetGraphStatus,
   FleetGraphTraceMetadata,
   FleetGraphTriggerType,
+  FleetGraphRunInput,
 } from './types.js';

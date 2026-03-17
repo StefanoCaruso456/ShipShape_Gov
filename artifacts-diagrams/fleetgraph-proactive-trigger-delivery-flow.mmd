@@ -1,0 +1,18 @@
+flowchart TD
+    A["Manual sweep route or timed worker"] --> B["Run proactive sweep"]
+    B --> C["Invoke same FleetGraph in proactive mode"]
+    C --> D["Resolve active week scope"]
+    D --> E["Fetch sprint context"]
+    E --> F["Derive deterministic signals"]
+    F --> G{"Should surface?"}
+
+    G -->|"No"| H["Resolve prior findings if needed"]
+    G -->|"Yes"| I["Persist finding"]
+    I --> J{"Inside cooldown?"}
+    J -->|"Yes"| K["Update finding, no new broadcast"]
+    J -->|"No"| L["Broadcast fleetgraph:finding"]
+    L --> M["Ship UI shows toast with Open Sprint action"]
+
+    H --> N["Complete"]
+    K --> N
+    M --> N

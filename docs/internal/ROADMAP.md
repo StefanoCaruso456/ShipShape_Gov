@@ -22,6 +22,10 @@ Concise phase-by-phase implementation notes live here:
 
 - [fleetgraph-phases/README.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/fleetgraph-phases/README.md)
 
+Fast current-state summary:
+
+- [FLEETGRAPH-STATUS.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/FLEETGRAPH-STATUS.md)
+
 ## Architecture we are building toward
 
 FleetGraph will follow the three-layer architecture already defined in:
@@ -64,15 +68,15 @@ The supervisor is responsible for:
 
 This checklist mirrors the assignment pass criteria. We should treat these as the definition of done for the first deliverable, not as optional polish.
 
-- [ ] Graph running with at least one proactive detection wired end to end
+- [x] Graph running with at least one proactive detection wired end to end
 - [ ] LangSmith tracing enabled with at least two shared trace links showing different execution paths
-- [ ] `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed
-- [ ] At least 5 use cases documented in `FLEETGRAPH.md`
-- [ ] Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions
+- [x] `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed
+- [x] At least 5 use cases documented in `FLEETGRAPH.md`
+- [x] Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions
 - [ ] At least one human-in-the-loop gate implemented
-- [ ] Running against real Ship data with no mocked responses
+- [x] Running against real Ship data with no mocked responses
 - [ ] Deployed and publicly accessible
-- [ ] Trigger model decision documented and defended in `FLEETGRAPH.md`
+- [x] Trigger model decision documented and defended in `FLEETGRAPH.md`
 
 ## Requirement-to-phase map
 
@@ -236,6 +240,15 @@ If we skip this and start with prompts or UI, we will create duplicate logic and
 
 Make FleetGraph able to understand what it is looking at and fetch the minimum set of real Ship context needed for reasoning.
 
+### Current progress
+
+- [x] shared **Active View Context** contract added
+- [x] current document context extended to carry the active tab
+- [x] on-demand FleetGraph API route added
+- [x] sprint/week MVP fetch path added to the graph
+- [ ] widen context resolution beyond sprint/week into issue, project, program, and person surfaces
+- [ ] add dedicated people/role fetches where the sprint payload is not enough
+
 ### What we plan to implement
 
 - context resolution for:
@@ -271,21 +284,32 @@ The graph cannot reason well without strong context. This is the layer that turn
 
 Create the rules-first detection layer so FleetGraph does not depend on the LLM for basic anomaly detection.
 
+### Current progress
+
+- [x] added a dedicated deterministic signal node for the sprint/week MVP slice
+- [x] added quiet vs flagged routing after sprint context fetch
+- [x] added typed sprint metrics and signal evidence to graph state
+- [x] added live API response fields for `derivedSignals` and `finding`
+- [x] validated both:
+  - flagged sprint path
+  - quiet sprint path
+- [ ] extend the same signal model into proactive triggering and dedupe memory
+
 ### What we plan to implement
 
 - derived signal node(s) for:
-  - stale issue detection
   - missing ritual detection
-  - approval bottleneck detection
   - low activity in active sprint
+  - no completed work
+  - all work still incomplete / not started
   - unresolved changes-requested state
-- severity and confidence scoring
-- dedupe keys and finding signatures
+  - missing review on completed sprint
+- severity scoring
+- signal-level dedupe keys
 - quiet-exit logic when nothing meaningful is found
 - supervisor branch conditions for:
   - quiet exit
-  - insight only
-  - action proposal
+  - flagged finding
   - fallback
 
 ### Why this phase matters
@@ -296,7 +320,7 @@ This controls cost, improves reliability, and keeps the LLM focused on analysis 
 
 - graph can distinguish between no finding and meaningful finding
 - signals are deterministic and traceable
-- findings are ranked before reasoning
+- findings are surfaced in API output before reasoning
 
 ## Phase 4: Proactive MVP flow
 
@@ -307,18 +331,19 @@ Ship one proactive detection end to end using real Ship data and a real surfaced
 ### What we plan to implement
 
 - proactive trigger path:
-  - event-driven trigger
-  - 5-minute sweep backstop
-- one MVP proactive use case wired end to end
+  - env-gated 5-minute worker sweep
+  - manual sweep endpoint for objective verification
+- one MVP proactive use case wired end to end:
+  - sprint is drifting before anyone asks
 - supervisor routing for:
   - no finding
-  - finding with insight
-  - finding with proposed action
+  - finding with persisted cooldown state
+  - finding with realtime delivery
 - proactive output surface in Ship:
-  - notification
-  - card
-  - inbox or action-item style surfacing
-- cooldown / snooze memory
+  - realtime toast
+  - open-sprint action
+  - stored finding record for later retrieval
+- cooldown / dedupe memory
 
 ### Candidate MVP proactive use cases
 
@@ -341,6 +366,8 @@ This is the first moment FleetGraph becomes a real product capability instead of
 
 - one proactive detection works against live Ship data
 - it surfaces without a user manually asking
+- it can also be triggered manually for verification
+- repeated sweeps do not rebroadcast the same finding inside the cooldown window
 - traces show a real branch path
 
 ## Phase 5: On-demand embedded chat MVP
