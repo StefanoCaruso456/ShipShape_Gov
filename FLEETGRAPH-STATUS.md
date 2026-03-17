@@ -30,6 +30,7 @@ Both modes use the same graph.
 - real sprint/week fetch path
 - deterministic sprint-risk signals
 - quiet vs flagged graph branching
+- embedded week-document FleetGraph on-demand panel
 - proactive sweep route
 - env-gated proactive worker
 - finding persistence
@@ -39,7 +40,7 @@ Both modes use the same graph.
 
 ### Not implemented yet
 
-- embedded FleetGraph chat UI
+- full conversational FleetGraph chat UI
 - LLM reasoning node
 - action proposal flow
 - HITL approval gate
@@ -86,6 +87,16 @@ Built proactive MVP delivery:
 - cooldown / dedupe
 - realtime delivery path
 - owner-scoped findings lookup
+
+### Phase 5
+
+Built the first on-demand UI surface:
+
+- embedded FleetGraph panel on week document tabs
+- fixed MVP question:
+  - why is this sprint at risk?
+- page / tab aware invocation using Active View Context
+- grounded answer using fetched context, signals, metrics, and finding summary
 
 ## Current trigger vs future trigger
 

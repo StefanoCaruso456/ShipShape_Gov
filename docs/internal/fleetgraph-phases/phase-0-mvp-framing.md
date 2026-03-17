@@ -1,6 +1,6 @@
 # Phase 0: MVP Framing
 
-Status: `next`
+Status: `completed`
 
 ## What
 

@@ -2,6 +2,7 @@ import type {
   DocumentType,
   FleetGraphActiveViewContext,
   FleetGraphOnDemandRequest,
+  FleetGraphOnDemandResponse,
   FleetGraphProactiveFinding,
 } from '@ship/shared';
 import { apiGet, apiPost } from '@/lib/api';
@@ -23,20 +24,6 @@ const DOCUMENT_TYPE_TO_FLEETGRAPH_ENTITY: Partial<
   program: 'program',
   person: 'person',
 };
-
-export interface FleetGraphOnDemandResponse {
-  status: string;
-  stage: string | null;
-  mode: string | null;
-  triggerType: string | null;
-  activeView: FleetGraphActiveViewContext | null;
-  expandedScope: Record<string, string | null>;
-  fetched: Record<string, unknown>;
-  derivedSignals: Record<string, unknown>;
-  finding: Record<string, unknown> | null;
-  error: Record<string, unknown> | null;
-  trace: Record<string, unknown>;
-}
 
 export function buildFleetGraphActiveViewContext({
   currentDocumentId,
