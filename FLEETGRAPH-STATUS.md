@@ -105,6 +105,8 @@ Implemented today:
 - typed Active View Context from the Ship UI
 - current route, entity, and tab passed into the graph
 - sprint/week document surface covered first
+- shared current-view adapter layer in the web app
+- My Week route now publishes person-scoped Active View Context
 
 Expansion path:
 

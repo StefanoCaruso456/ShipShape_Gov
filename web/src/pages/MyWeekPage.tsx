@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams, Link, useLocation } from 'react-router-dom';
 import { useMyWeekQuery, StandupSlot } from '@/hooks/useMyWeekQuery';
 import { apiPost } from '@/lib/api';
 import { cn } from '@/lib/cn';
+import { useCurrentView } from '@/contexts/CurrentViewContext';
+import { buildFleetGraphMyWeekActiveViewContext } from '@/lib/fleetgraph';
 
 function formatDateRange(startDate: string, endDate: string): string {
   const start = new Date(startDate + 'T00:00:00Z');
@@ -28,11 +30,28 @@ function isDateToday(dateStr: string): boolean {
 export function MyWeekPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { setCurrentView, clearCurrentView } = useCurrentView();
   const weekNumberParam = searchParams.get('week_number');
   const weekNumber = weekNumberParam ? parseInt(weekNumberParam, 10) : undefined;
 
   const { data, isLoading, error } = useMyWeekQuery(weekNumber);
   const [creating, setCreating] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (data?.person_id) {
+      setCurrentView(
+        buildFleetGraphMyWeekActiveViewContext({
+          personId: data.person_id,
+          pathname: location.pathname + location.search,
+        })
+      );
+    }
+
+    return () => {
+      clearCurrentView();
+    };
+  }, [clearCurrentView, data?.person_id, location.pathname, location.search, setCurrentView]);
 
   const navigateToWeek = (wn: number) => {
     if (data && wn === data.week.current_week_number) {

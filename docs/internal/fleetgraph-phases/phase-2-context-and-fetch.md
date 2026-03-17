@@ -39,6 +39,7 @@ Turn the graph from an empty scaffold into a context-aware system grounded in Sh
 ## Outcome
 
 - sprint/week document pages now produce real Active View Context including the active tab
+- a shared current-view adapter layer now publishes Active View Context for both document and My Week surfaces
 - on-demand FleetGraph requests can run through `/api/fleetgraph/on-demand`
 - the graph now fetches real Ship REST data for the sprint-risk MVP:
   - `/api/documents/:id`

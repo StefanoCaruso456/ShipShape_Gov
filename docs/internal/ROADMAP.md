@@ -262,8 +262,9 @@ Make FleetGraph able to understand what it is looking at and fetch the minimum s
 - [x] current document context extended to carry the active tab
 - [x] on-demand FleetGraph API route added
 - [x] sprint/week MVP fetch path added to the graph
+- [x] current-view adapter layer added for document and My Week surfaces
 - [ ] widen context resolution beyond sprint/week into issue, project, program, and person surfaces
-- [ ] add route-to-context adapters for non-document surfaces such as My Week and dashboard
+- [ ] add route-to-context adapters for remaining non-document surfaces such as dashboard
 - [ ] add dedicated people/role fetches where the sprint payload is not enough
 
 ### What we plan to implement
