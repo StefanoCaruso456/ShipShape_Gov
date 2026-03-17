@@ -85,6 +85,12 @@ The on-demand mode uses **Active View Context**, which means the graph receives 
 
 That Active View Context becomes the starting point for graph reasoning.
 
+Current MVP implementation:
+
+- embedded FleetGraph panel on week document tabs
+- fixed on-demand question:
+  - why is this sprint at risk?
+
 ## Who FleetGraph Notifies
 
 FleetGraph should notify in this order:

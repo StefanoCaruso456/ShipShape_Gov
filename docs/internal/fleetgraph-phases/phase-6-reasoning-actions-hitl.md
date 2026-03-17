@@ -1,6 +1,6 @@
 # Phase 6: Reasoning, Actions, and HITL
 
-Status: `planned`
+Status: `next`
 
 ## What
 

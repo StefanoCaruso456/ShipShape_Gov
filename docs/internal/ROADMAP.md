@@ -12,7 +12,7 @@ Build FleetGraph as a LangGraph-based project intelligence system for Ship with:
 - two modes:
   - proactive
   - on-demand
-- embedded context-aware chat
+- embedded context-aware on-demand UI
 - human-in-the-loop action boundaries
 - LangSmith tracing from day one
 
@@ -35,7 +35,7 @@ Fast current-state summary:
 | Phase 2: Context and fetch | complete for sprint/week MVP | Active View Context and real fetch path work |
 | Phase 3: Deterministic signals | complete for sprint/week MVP | quiet vs flagged signal path is validated |
 | Phase 4: Proactive MVP | complete | proactive sweep, finding persistence, dedupe, and delivery exist |
-| Phase 5: On-demand UI | next | embed the user-facing FleetGraph surface in Ship |
+| Phase 5: On-demand UI | complete | embedded week-document FleetGraph panel is live |
 | Phase 6: Reasoning, actions, and HITL | pending | add explanation, action proposal, and interrupt/resume |
 | Phase 7: Failure/resume/memory hardening | pending | expand durability beyond the MVP slice |
 | Phase 8: Planning intelligence | later | expansion path after MVP |
@@ -395,11 +395,11 @@ This is the first moment FleetGraph becomes a real product capability instead of
 - repeated sweeps do not rebroadcast the same finding inside the cooldown window
 - traces show a real branch path
 
-## Phase 5: On-demand embedded chat MVP
+## Phase 5: On-demand embedded UI MVP
 
 ### Goal
 
-Add the required on-demand, context-aware chat surface using the same graph.
+Add the required on-demand, context-aware user surface using the same graph.
 
 ### What we plan to implement
 
@@ -409,7 +409,7 @@ Add the required on-demand, context-aware chat surface using the same graph.
   - why is this sprint at risk?
   - what is blocking this issue?
 - answer formatting that stays grounded in graph evidence
-- mode-specific output adapter for the chat UI
+- mode-specific output adapter for the on-demand UI
 
 We should choose one on-demand question for MVP and keep it tightly scoped enough that the answer can be grounded in real fetched context.
 
@@ -419,7 +419,7 @@ The assignment requires on-demand mode, and it is also where users will validate
 
 ### Exit criteria
 
-- chat is embedded in context, not standalone
+- UI is embedded in context, not standalone
 - user can invoke FleetGraph from a real Ship surface
 - the same graph serves both proactive and on-demand mode
 
@@ -555,7 +555,7 @@ Build in this order:
 3. Phase 2: Ship context and fetch layer
 4. Phase 3: Deterministic signals and risk detection
 5. Phase 4: Proactive MVP flow
-6. Phase 5: On-demand embedded chat MVP
+6. Phase 5: On-demand embedded UI MVP
 7. Phase 6: Reasoning, action proposal, and HITL
 8. Phase 7: Failure handling, resume, and operational memory
 9. Phase 9: Evidence, benchmarking, and submission
@@ -565,18 +565,18 @@ Build in this order:
 
 The next slice we should execute is:
 
-1. build the embedded on-demand FleetGraph surface in Ship
-2. support the MVP question:
+1. start Phase 6 on top of the embedded on-demand FleetGraph panel
+2. add the first reasoning node for:
    - why is this sprint at risk?
-3. reuse the existing Active View Context and graph response path
-4. verify the on-demand UI invokes the same shared graph as proactive mode
-5. enable and capture LangSmith traces for:
+3. keep the reasoning grounded in:
+   - fetched context
+   - deterministic signals
+   - finding summary
+4. add the first action proposal boundary
+5. implement the first HITL interrupt / resume path
+6. enable and capture LangSmith traces for:
    - quiet path
    - flagged path
-6. start Phase 6 immediately after the UI exists:
-   - reasoning node
-   - action proposal
-   - first HITL interrupt / resume flow
 
 ## Decision rule for scope
 
