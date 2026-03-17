@@ -57,11 +57,13 @@ export function buildFleetGraphActiveViewContext({
 interface BuildFleetGraphMyWeekActiveViewContextArgs {
   personId: string | null;
   pathname: string;
+  projectId?: string | null;
 }
 
 export function buildFleetGraphMyWeekActiveViewContext({
   personId,
   pathname,
+  projectId = null,
 }: BuildFleetGraphMyWeekActiveViewContextArgs): FleetGraphActiveViewContext | null {
   if (!personId) {
     return null;
@@ -76,7 +78,7 @@ export function buildFleetGraphMyWeekActiveViewContext({
     surface: 'my_week',
     route: pathname,
     tab: null,
-    projectId: null,
+    projectId,
   };
 }
 

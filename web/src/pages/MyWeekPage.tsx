@@ -5,6 +5,7 @@ import { apiPost } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { useCurrentView } from '@/contexts/CurrentViewContext';
 import { buildFleetGraphMyWeekActiveViewContext } from '@/lib/fleetgraph';
+import { FleetGraphOnDemandPanel } from '@/components/fleetgraph/FleetGraphOnDemandPanel';
 
 function formatDateRange(startDate: string, endDate: string): string {
   const start = new Date(startDate + 'T00:00:00Z');
@@ -44,6 +45,7 @@ export function MyWeekPage() {
         buildFleetGraphMyWeekActiveViewContext({
           personId: data.person_id,
           pathname: location.pathname + location.search,
+          projectId: data.projects.length === 1 ? data.projects[0]?.id ?? null : null,
         })
       );
     }
@@ -51,7 +53,14 @@ export function MyWeekPage() {
     return () => {
       clearCurrentView();
     };
-  }, [clearCurrentView, data?.person_id, location.pathname, location.search, setCurrentView]);
+  }, [
+    clearCurrentView,
+    data?.person_id,
+    data?.projects,
+    location.pathname,
+    location.search,
+    setCurrentView,
+  ]);
 
   const navigateToWeek = (wn: number) => {
     if (data && wn === data.week.current_week_number) {
@@ -165,6 +174,8 @@ export function MyWeekPage() {
           </button>
         </div>
       </div>
+
+      {projects.length === 1 && <FleetGraphOnDemandPanel />}
 
       <div className="flex-1 overflow-y-auto">
       <div className="max-w-3xl mx-auto px-6 py-8">

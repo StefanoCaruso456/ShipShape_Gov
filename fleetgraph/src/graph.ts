@@ -7,6 +7,7 @@ import { initializeOnDemandContextNode } from './nodes/initialize-on-demand-cont
 import { initializeProactiveContextNode } from './nodes/initialize-proactive-context.js';
 import { recordSignalFindingNode } from './nodes/record-signal-finding.js';
 import { resolveContextNode } from './nodes/resolve-context.js';
+import { resolveWeekScopeNode } from './nodes/resolve-week-scope.js';
 import { supervisorEntryNode } from './nodes/supervisor-entry.js';
 import { FleetGraphStateAnnotation } from './state.js';
 
@@ -22,7 +23,10 @@ export function createFleetGraph() {
       ends: ['resolveContext', 'fallback'],
     })
     .addNode('resolveContext', resolveContextNode, {
-      ends: ['fetchSprintContext', 'completeRun'],
+      ends: ['fetchSprintContext', 'resolveWeekScope', 'completeRun'],
+    })
+    .addNode('resolveWeekScope', resolveWeekScopeNode, {
+      ends: ['fetchSprintContext', 'completeRun', 'fallback'],
     })
     .addNode('fetchSprintContext', fetchSprintContextNode, {
       ends: ['deriveSprintSignals', 'completeRun', 'fallback'],

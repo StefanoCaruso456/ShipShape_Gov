@@ -35,7 +35,7 @@ Fast current-state summary:
 | Phase 2: Context and fetch | complete for sprint/week MVP | Active View Context and real fetch path work |
 | Phase 3: Deterministic signals | complete for sprint/week MVP | quiet vs flagged signal path is validated |
 | Phase 4: Proactive MVP | complete | proactive sweep, finding persistence, dedupe, and delivery exist |
-| Phase 5: On-demand UI | complete | embedded week-document FleetGraph panel is live |
+| Phase 5: On-demand UI | complete | embedded week/project FleetGraph panels are live, plus My Week when one project is in scope |
 | Phase 6: Reasoning, actions, and HITL | pending | add explanation, action proposal, and interrupt/resume |
 | Phase 7: Failure/resume/memory hardening | pending | expand durability beyond the MVP slice |
 | Phase 8: Planning intelligence | later | expansion path after MVP |
@@ -263,7 +263,8 @@ Make FleetGraph able to understand what it is looking at and fetch the minimum s
 - [x] on-demand FleetGraph API route added
 - [x] sprint/week MVP fetch path added to the graph
 - [x] current-view adapter layer added for document and My Week surfaces
-- [ ] widen context resolution beyond sprint/week into issue, project, program, and person surfaces
+- [x] widen context resolution beyond sprint/week into project and constrained My Week person surfaces
+- [ ] widen context resolution into issue, program, and broader person surfaces
 - [ ] add route-to-context adapters for remaining non-document surfaces such as dashboard
 - [ ] add dedicated people/role fetches where the sprint payload is not enough
 
@@ -428,6 +429,10 @@ Add the required on-demand, context-aware user surface using the same graph.
 ### What we plan to implement
 
 - embedded FleetGraph panel in Ship context
+- supported first on:
+  - week documents
+  - project documents
+  - My Week when one project is in scope
 - current-view context handoff into the graph
 - on-demand question flow for one strong MVP question, such as:
   - why is this sprint at risk?

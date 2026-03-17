@@ -500,7 +500,8 @@ export function UnifiedDocumentPage() {
         ? ((document.properties as { status?: string } | undefined)?.status ?? 'planning')
         : null;
     const showFleetGraphPanel =
-      document.document_type === 'sprint' && sprintStatus !== 'planning';
+      (document.document_type === 'sprint' && sprintStatus !== 'planning') ||
+      document.document_type === 'project';
 
     return (
       <div className="flex h-full flex-col">
