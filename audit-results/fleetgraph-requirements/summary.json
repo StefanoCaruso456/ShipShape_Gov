@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-03-18T04:16:21.987Z",
+  "langsmith": {
+    "tracingEnabled": false,
+    "apiKeyPresent": false,
+    "projectName": null,
+    "readyForSharedTraces": false
+  },
+  "evidence": {
+    "path": "/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.json",
+    "capturedShareLinks": [
+      "https://smith.langchain.com/public/8c5e90a5-3299-47ab-90d5-c7a16583ea13/r",
+      "https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r"
+    ],
+    "sharedTraceCount": 2,
+    "hasEnoughSharedTraces": true
+  },
+  "deployments": [
+    {
+      "baseUrl": "https://d1woqw06xb054i.cloudfront.net",
+      "app": {
+        "status": 200,
+        "reachable": true,
+        "contentType": "text/html"
+      },
+      "health": {
+        "status": 200,
+        "ok": true,
+        "body": "{\"status\":\"ok\"}"
+      },
+      "fleetgraphOnDemand": {
+        "status": 403,
+        "classification": "route_mounted",
+        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Forbidden</pre>\n</body>\n</html>\n"
+      },
+      "fleetgraphProactive": {
+        "status": 403,
+        "classification": "route_mounted",
+        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Forbidden</pre>\n</body>\n</html>\n"
+      }
+    }
+  ],
+  "requirements": {
+    "langsmithSharedTraces": "captured",
+    "publicDeployment": "verified"
+  }
+}

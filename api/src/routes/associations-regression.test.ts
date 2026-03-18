@@ -443,6 +443,11 @@ describe('Associations Regression Tests', () => {
 
       expect(response.status).toBe(200)
       expect(response.body.issues).toBeDefined()
+      expect(response.body.issues.stats.in_progress).toBe(1)
+
+      const incompleteIssue = response.body.issues.incomplete_items.find((i: any) => i.id === testIssueId)
+      expect(incompleteIssue).toBeDefined()
+      expect(incompleteIssue.status).toBe('in_progress')
     })
   })
 

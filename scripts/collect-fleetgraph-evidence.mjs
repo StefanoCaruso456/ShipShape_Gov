@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -13,6 +14,160 @@ const OUTPUT_DIR = path.resolve(
 const CAPTURE_RESUME =
   process.env.FLEETGRAPH_EVIDENCE_CAPTURE_RESUME === undefined ||
   process.env.FLEETGRAPH_EVIDENCE_CAPTURE_RESUME === 'true';
+const LANGSMITH_TRACE_RETRY_DELAYS_MS = [0, 500, 1000, 2000, 4000];
+const DEFAULT_LANGSMITH_API_URL = 'https://api.smith.langchain.com';
+const DEFAULT_LANGSMITH_WEB_URL = 'https://smith.langchain.com';
+
+function getEnv(name) {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+function isLangSmithSharingEnabled() {
+  return getEnv('FLEETGRAPH_LANGSMITH_SHARE_TRACES') === 'true';
+}
+
+function getLangSmithApiKey() {
+  return getEnv('LANGCHAIN_API_KEY') ?? getEnv('LANGSMITH_API_KEY');
+}
+
+function getLangSmithApiUrl() {
+  return getEnv('LANGCHAIN_ENDPOINT') ?? getEnv('LANGSMITH_ENDPOINT') ?? DEFAULT_LANGSMITH_API_URL;
+}
+
+function getLangSmithWebUrl() {
+  return getEnv('LANGSMITH_WEB_URL') ?? DEFAULT_LANGSMITH_WEB_URL;
+}
+
+function isLangSmithConfigured() {
+  const tracingEnabled =
+    getEnv('LANGCHAIN_TRACING_V2') === 'true' || getEnv('LANGSMITH_TRACING') === 'true';
+  const apiKey = getLangSmithApiKey();
+
+  return tracingEnabled && Boolean(apiKey);
+}
+
+async function fetchLangSmithJson(pathname, options = {}) {
+  const apiKey = getLangSmithApiKey();
+  if (!apiKey) {
+    throw new Error('LangSmith API key is not configured');
+  }
+
+  const response = await fetch(new URL(pathname, getLangSmithApiUrl()), {
+    method: options.method ?? 'GET',
+    headers: {
+      Accept: 'application/json',
+      'x-api-key': apiKey,
+      ...(options.json === undefined ? {} : { 'Content-Type': 'application/json' }),
+    },
+    body: options.json === undefined ? undefined : JSON.stringify(options.json),
+  });
+
+  if (options.allow404 && response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      `LangSmith ${options.method ?? 'GET'} ${pathname} failed with status ${response.status}`
+    );
+  }
+
+  return response.json();
+}
+
+async function readLangSmithRun(runId) {
+  return fetchLangSmithJson(`/runs/${runId}`);
+}
+
+async function readLangSmithShareUrl(runId) {
+  const payload = await fetchLangSmithJson(`/runs/${runId}/share`, {
+    allow404: true,
+  });
+
+  if (!payload?.share_token) {
+    return null;
+  }
+
+  return new URL(`/public/${payload.share_token}/r`, getLangSmithWebUrl()).toString();
+}
+
+async function createLangSmithShareUrl(runId) {
+  const payload = await fetchLangSmithJson(`/runs/${runId}/share`, {
+    method: 'PUT',
+    json: {
+      run_id: runId,
+      share_token: randomUUID(),
+    },
+  });
+
+  if (!payload?.share_token) {
+    return null;
+  }
+
+  return new URL(`/public/${payload.share_token}/r`, getLangSmithWebUrl()).toString();
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function backfillLangSmithTraceLinks(item) {
+  if (!item?.langsmithRunId || !isLangSmithConfigured()) {
+    return item;
+  }
+
+  let langsmithRunUrl = item.langsmithRunUrl ?? null;
+  let langsmithShareUrl = item.langsmithShareUrl ?? null;
+
+  for (const delayMs of LANGSMITH_TRACE_RETRY_DELAYS_MS) {
+    if (delayMs > 0) {
+      await sleep(delayMs);
+    }
+
+    let run = null;
+
+    try {
+      run = await readLangSmithRun(item.langsmithRunId);
+    } catch {
+      run = null;
+    }
+
+    if (run) {
+      if (!langsmithRunUrl) {
+        try {
+          langsmithRunUrl = run.app_path
+            ? new URL(run.app_path, getLangSmithWebUrl()).toString()
+            : null;
+        } catch {
+          langsmithRunUrl = null;
+        }
+      }
+
+      if (isLangSmithSharingEnabled() && !langsmithShareUrl) {
+        try {
+          langsmithShareUrl =
+            (await readLangSmithShareUrl(item.langsmithRunId)) ??
+            (await createLangSmithShareUrl(item.langsmithRunId));
+        } catch {
+          langsmithShareUrl = null;
+        }
+      }
+    }
+
+    if (langsmithRunUrl && (!isLangSmithSharingEnabled() || langsmithShareUrl)) {
+      break;
+    }
+  }
+
+  return {
+    ...item,
+    langsmithRunUrl,
+    langsmithShareUrl,
+  };
+}
 
 class SessionClient {
   constructor(baseUrl) {
@@ -242,7 +397,7 @@ function buildMarkdownReport(report) {
   lines.push('## Notes', '');
   lines.push(
     report.traceLinksReady
-      ? '- LangSmith trace URLs were captured in the response payloads.'
+      ? '- LangSmith trace URLs were captured for this evidence bundle.'
       : '- LangSmith trace URLs were not captured. Set `LANGCHAIN_TRACING_V2=true` and the LangSmith API key before rerunning if you want trace evidence here.'
   );
   lines.push(
@@ -413,6 +568,11 @@ async function main() {
       `${JSON.stringify(proactive, null, 2)}\n`
     );
   }
+
+  quietRun = await backfillLangSmithTraceLinks(quietRun);
+  flaggedRun = await backfillLangSmithTraceLinks(flaggedRun);
+  hitlRun = await backfillLangSmithTraceLinks(hitlRun);
+  resumeRun = await backfillLangSmithTraceLinks(resumeRun);
 
   const report = {
     generatedAt: new Date().toISOString(),

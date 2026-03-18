@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FleetGraph Feature Deck</title>
+  <style>
+    @page {
+      size: 1280px 720px;
+      margin: 0;
+    }
+
+    :root {
+      --page: #efe7da;
+      --paper: #fbf7f0;
+      --paper-strong: #ffffff;
+      --ink: #1b2b3d;
+      --muted: #617181;
+      --line: #d6cdbf;
+      --accent: #b85a2d;
+      --navy: #214160;
+      --gold: #d2a33a;
+      --what: #edf4ff;
+      --why: #fff1e4;
+      --how: #eef8ee;
+      --outcome: #f5eefc;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--page);
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+    }
+
+    .slide {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      overflow: hidden;
+      padding: 46px 54px 46px;
+      background: var(--paper);
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .slide:last-of-type {
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 20px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      pointer-events: none;
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      bottom: 20px;
+      width: 12px;
+      border-radius: 26px 0 0 26px;
+      background: linear-gradient(180deg, var(--accent), var(--gold), var(--navy));
+      pointer-events: none;
+    }
+
+    .slide-cover {
+      padding: 56px 60px 46px;
+      background:
+        linear-gradient(135deg, #fbf7f0 0%, #f8f0e5 100%);
+    }
+
+    .slide-cover::after {
+      width: 18px;
+      border-radius: 26px 0 0 26px;
+    }
+
+    .cover-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+      gap: 34px;
+      align-items: center;
+      height: 570px;
+      margin-top: 12px;
+      padding-right: 12px;
+    }
+
+    .cover-visual {
+      min-height: 520px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at top left, rgba(184, 90, 45, 0.08), transparent 28%),
+        linear-gradient(180deg, #fffdf8 0%, #f7f2e7 100%);
+    }
+
+    .cover-visual-inner {
+      position: relative;
+      height: 100%;
+      padding: 24px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(33, 65, 96, 0.08);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .visual-kicker {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .hero-flow {
+      display: grid;
+      grid-template-columns: 180px 46px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .hero-trigger-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .hero-node {
+      padding: 18px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(33, 65, 96, 0.12);
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--ink);
+      background: var(--paper-strong);
+    }
+
+    .hero-node-warm {
+      background: #fff0e4;
+    }
+
+    .hero-node-cool {
+      background: #edf4ff;
+    }
+
+    .hero-node-core {
+      min-height: 178px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+      background:
+        linear-gradient(135deg, rgba(33, 65, 96, 0.96), rgba(56, 88, 120, 0.96));
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .hero-core-label {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-core-sub {
+      font-size: 15px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.82);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .hero-arrow {
+      text-align: center;
+      font-size: 38px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .hero-phases {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .hero-phase {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: #fffaf1;
+      border: 1px solid var(--line);
+      color: var(--navy);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero-outcomes {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 26px;
+    }
+
+    .hero-outcome {
+      min-height: 112px;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .hero-outcome strong {
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .hero-outcome span {
+      font-size: 20px;
+      line-height: 1.22;
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .cover-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 10px 6px 10px 4px;
+    }
+
+    .cover-kicker {
+      margin: 0 0 18px;
+      color: var(--navy);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .slide-cover h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: 64px;
+      line-height: 0.95;
+      letter-spacing: -0.045em;
+    }
+
+    .cover-subtitle {
+      margin: 20px 0 0;
+      color: var(--accent);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .cover-summary {
+      margin: 18px 0 0;
+      max-width: 460px;
+      color: var(--ink);
+      font-size: 20px;
+      line-height: 1.42;
+      font-weight: 500;
+    }
+
+    .cover-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .cover-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .cover-rule {
+      width: 180px;
+      height: 10px;
+      margin-top: 24px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--gold), var(--navy));
+    }
+
+    .cover-detail {
+      margin: 22px 0 0;
+      max-width: 470px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.5;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .topbar,
+    .footer {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .eyebrow,
+    .meta,
+    .footer {
+      margin: 0;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .meta,
+    .footer span {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .topbar {
+      min-height: 18px;
+    }
+
+    .title-wrap {
+      position: relative;
+      z-index: 1;
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 140px;
+      gap: 18px;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 40px;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+      max-width: 900px;
+    }
+
+    .title-accent {
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--gold), var(--navy));
+      margin-bottom: 10px;
+    }
+
+    .card-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      height: 480px;
+      margin-top: 26px;
+    }
+
+    .card {
+      height: 100%;
+      padding: 20px 22px 20px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: var(--paper-strong);
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card-what {
+      background: var(--what);
+    }
+
+    .card-why {
+      background: var(--why);
+    }
+
+    .card-how {
+      background: var(--how);
+    }
+
+    .card-outcome {
+      background: var(--outcome);
+    }
+
+    .card-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 98px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--paper-strong);
+      border: 1px solid #d8dde4;
+      color: var(--navy);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .card-body {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.42;
+      font-weight: 600;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.82em;
+      background: rgba(33, 65, 96, 0.08);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    a {
+      color: var(--navy);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(33, 65, 96, 0.24);
+    }
+
+    strong {
+      font-weight: 800;
+    }
+
+    .dense h1 {
+      font-size: 36px;
+    }
+
+    .dense .card {
+      padding: 18px 20px 18px;
+    }
+
+    .dense .card-body {
+      font-size: 17px;
+      line-height: 1.36;
+    }
+
+    .footer {
+      position: absolute;
+      left: 54px;
+      right: 54px;
+      bottom: 34px;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <section class="slide slide-cover">
+    <div class="cover-grid">
+      <div class="cover-visual">
+        <div class="cover-visual-inner">
+          <p class="visual-kicker">Shared Graph Architecture</p>
+          <div class="hero-flow">
+            <div class="hero-trigger-stack">
+              <div class="hero-node hero-node-warm">Proactive Sweep</div>
+              <div class="hero-node hero-node-cool">On-Demand Context</div>
+            </div>
+            <div class="hero-arrow">→</div>
+            <div class="hero-node hero-node-core">
+              <span class="hero-core-label">Shared FleetGraph</span>
+              <span class="hero-core-sub">One graph, two triggers</span>
+            </div>
+          </div>
+          <div class="hero-phases">
+            <span class="hero-phase">Fetch</span>
+            <span class="hero-phase">Signals</span>
+            <span class="hero-phase">Reasoning</span>
+            <span class="hero-phase">HITL</span>
+          </div>
+          <div class="hero-outcomes">
+            <div class="hero-outcome">
+              <strong>Push</strong>
+              <span>Proactive findings</span>
+            </div>
+            <div class="hero-outcome">
+              <strong>Pull</strong>
+              <span>Context-aware answers</span>
+            </div>
+            <div class="hero-outcome">
+              <strong>Act</strong>
+              <span>Safe draft actions</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cover-content">
+        <p class="cover-kicker">ShipShape</p>
+        <h1>FleetGraph</h1>
+        <p class="cover-subtitle">Two Modes, One Shared Graph</p>
+        <p class="cover-summary">ShipShape FleetGraph Feature Summary</p>
+        <div class="cover-badges">
+          <span class="cover-badge">Proactive + On-Demand</span>
+          <span class="cover-badge">Shared LangGraph</span>
+          <span class="cover-badge">Human Approval Boundary</span>
+        </div>
+        <div class="cover-rule"></div>
+        <p class="cover-detail">Context-aware sprint-risk detection, grounded reasoning, and safe action proposals inside Ship</p>
+      </div>
+    </div>
+    <div class="footer">
+      <span>FleetGraph Presentation Deck</span>
+      <span>1 / 11</span>
+    </div>
+  </section>
+
+  <section class="slide dense">
+    <div class="topbar">
+      <p class="eyebrow">FleetGraph</p>
+      <p class="meta">What · Why · How · Outcome</p>
+    </div>
+    <div class="title-wrap">
+      <h1>Define The Problem</h1>
+      <div class="title-accent"></div>
+    </div>
+    <div class="card-grid">
+      
+            <article class="card card-what">
+              <div class="card-label">What</div>
+              <p class="card-body">Sprint risk is easy to miss because teams still depend on manual checking across Ship views, activity history, and review state</p>
+            </article>
+          
+            <article class="card card-why">
+              <div class="card-label">Why</div>
+              <p class="card-body">The most important problems are often silence failures, such as no progress, no standup, or no follow-up, so by the time someone asks, the sprint is already drifting</p>
+            </article>
+          
+            <article class="card card-how">
+              <div class="card-label">How</div>
+              <p class="card-body">Frame FleetGraph as a context-aware agent inside Ship that watches live project state, reasons over execution drift, and surfaces only meaningful findings</p>
+            </article>
+          
+            <article class="card card-outcome">
+              <div class="card-label">Outcome</div>
+              <p class="card-body">We establish a strong product need for an agent that can both push insights proactively and answer questions on demand</p>
+            </article>
+          
+    </div>
+    <div class="footer">
+      <span>ShipShape FleetGraph Feature Summary</span>
+      <span>2 / 11</span>
+    </div>
+  </section>
+
+  <section class="slide dense">
+    <div class="topbar">
+      <p class="eyebrow">FleetGraph</p>
+      <p class="meta">What · Why · How · Outcome</p>
+    </div>
+    <div class="title-wrap">
+      <h1>What FleetGraph Is</h1>
+      <div class="title-accent"></div>
+    </div>
+    <div class="card-grid">
+      
+            <article class="card card-what">
+              <div class="card-label">What</div>
+              <p class="card-body">FleetGraph is one shared LangGraph system inside Ship with two modes: proactive and on-demand</p>
+            </article>
+          
+            <article class="card card-why">
+              <div class="card-label">Why</div>
+              <p class="card-body">The same reasoning should work whether the trigger is a timed sweep, a future event trigger, or a user opening a Ship view and asking for help</p>
+            </article>
+          
+            <article class="card card-how">
+              <div class="card-label">How</div>
+              <p class="card-body">A supervisor-style graph routes into proactive or on-demand initialization, then reuses shared context, fetch, signal, reasoning, action, HITL, and fallback nodes</p>
+            </article>
+          
+            <article class="card card-outcome">
+              <div class="card-label">Outcome</div>
+              <p class="card-body">We avoid duplicated logic, keep behavior consistent, and make both modes traceable through the same architecture</p>
+            </article>
+          
+    </div>
+    <div class="footer">
+      <span>ShipShape FleetGraph Feature Summary</span>
+      <span>3 / 11</span>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="topbar">
+      <p class="eyebrow">FleetGraph</p>
+      <p class="meta">What · Why · How · Outcome</p>
+    </div>
+    <div class="title-wrap">
+      <h1>Agent Responsibility</h1>
+      <div class="title-accent"></div>
+    </div>
+    <div class="card-grid">
+      
+            <article class="card card-what">
+              <div class="card-label">What</div>
+              <p class="card-body">FleetGraph monitors sprint drift, stale work, low recent activity, and approval or review bottlenecks, then explains risk and proposes the next move</p>
+            </article>
+          
+            <article class="card card-why">
+              <div class="card-label">Why</div>
+              <p class="card-body">The MVP needed a narrow and defensible responsibility definition instead of a broad AI assistant with unclear boundaries</p>
+            </article>
+          
+            <article class="card card-how">
+              <div class="card-label">How</div>
+              <p class="card-body">The responsibility, autonomy boundaries, notification order, use cases, and trigger model are defined in <code>FLEETGRAPH.md</code></p>
+            </article>
+          
+            <article class="card card-outcome">
+              <div class="card-label">Outcome</div>
+              <p class="card-body">The feature has a clear scope, a clear safety boundary, and a stronger story for both implementation and grading</p>
+            </article>
+          
+    </div>
+    <div class="footer">
+      <span>ShipShape FleetGraph Feature Summary</span>
+      <span>4 / 11</span>
+    </div>
+  </section>
+
+  <section class="slide dense">
+    <div class="topbar">
+      <p class="eyebrow">FleetGraph</p>
+      <p class="meta">What · Why · How · Outcome</p>
+    </div>
+    <div class="title-wrap">
+      <h1>Proactive Mode</h1>
+      <div class="title-accent"></div>
+    </div>
+    <div class="card-grid">
+      
+            <article class="card card-what">
+              <div class="card-label">What</div>
+              <p class="card-body">FleetGraph runs without a user present to detect active sprints that are drifting before anyone asks</p>
+            </article>
+          
+            <article class="card card-why">
+              <div class="card-label">Why</div>
+              <p class="card-body">A dashboard-only or chat-only assistant would miss time-based problems caused by silence, not just explicit Ship mutations</p>
+            </article>
+          
+            <article class="card card-how">
+              <div class="card-label">How</div>
+              <p class="card-body">The MVP uses a hybrid trigger model with a manual proactive sweep route and an env-gated 5-minute worker, then persists findings, dedupes them, and delivers realtime notifications</p>
+            </article>
+          
+            <article class="card card-outcome">
+              <div class="card-label">Outcome</div>
+              <p class="card-body">At least one proactive detection path is wired end-to-end against real Ship data</p>
+            </article>
+          
+    </div>
+    <div class="footer">
+      <span>ShipShape FleetGraph Feature Summary</span>
+      <span>5 / 11</span>
+    </div>
+  </section>
+
+  <section class="slide dense">
+    <div class="topbar">
+      <p class="eyebrow">FleetGraph</p>
+      <p class="meta">What · Why · How · Outcome</p>
+    </div>
+    <div class="title-wrap">
+      <h1>On-Demand Mode</h1>
+      <div class="title-accent"></div>
+    </div>
+    <div class="card-grid">
+      
+            <article class="card card-what">
+              <div class="card-label">What</div>
+              <p class="card-body">FleetGraph answers the MVP question, <code>Why is this sprint at risk?</code>, from the current Ship view</p>
+            </article>
+          
+            <article class="card card-why">
+              <div class="card-label">Why</div>
+              <p class="card-body">Users should not lose context or switch to a standalone chatbot to understand execution risk</p>
+            </article>
+          
+            <article class="card card-how">
+              <div class="card-label">How</div>
+              <p class="card-body">The UI sends typed Active View Context with the current route, entity, tab, and project scope, and the graph resolves project or My Week views down to the current sprint before analysis</p>
+            </article>
+          
+            <article class="card card-outcome">
+              <div class="card-label">Outcome</div>
+              <p class="card-body">FleetGraph gives page-aware answers directly inside Ship on week, project, and single-project My Week surfaces</p>
+            </article>
+          
+    </div>
+    <div class="footer">
+      <span>ShipShape FleetGraph Feature Summary</span>
+      <span>6 / 11</span>
+    </div>
+  </section>
+
+  <section class="slide dense">
+    <div class="topbar">
+      <p class="eyebrow">FleetGraph</p>
+      <p class="meta">What · Why · How · Outcome</p>
+    </div>
+    <div class="title-wrap">
+      <h1>Reasoning And Branching</h1>
+      <div class="title-accent"></div>
+    </div>
+    <div class="card-grid">
+      
+            <article class="card card-what">
+              <div class="card-label">What</div>
+              <p class="card-body">FleetGraph first derives deterministic sprint-risk signals and then produces grounded reasoning over the fetched evidence</p>
+            </article>
+          
+            <article class="card card-why">
+              <div class="card-label">Why</div>
+              <p class="card-body">The model should explain suspicious state, not invent facts or act as the first filter for every run</p>
+            </article>
+          
+            <article class="card card-how">
+              <div class="card-label">How</div>
+              <p class="card-body">The graph fetches sprint data in parallel, derives signals like missing standup, no completed work, low recent activity, and changes requested, then uses optional model reasoning with deterministic fallback</p>
+            </article>
+          
+            <article class="card card-outcome">
+              <div class="card-label">Outcome</div>
+              <p class="card-body">The graph produces visibly different paths for quiet runs, surfaced findings, and fallback cases while keeping the explanation grounded</p>
+            </article>
+          
+    </div>
+    <div class="footer">
+      <span>ShipShape FleetGraph Feature Summary</span>
+      <span>7 / 11</span>
+    </div>
+  </section>
+
+  <section class="slide dense">
+    <div class="topbar">
+      <p class="eyebrow">FleetGraph</p>
+      <p class="meta">What · Why · How · Outcome</p>
+    </div>
+    <div class="title-wrap">
+      <h1>Human-In-The-Loop Actions</h1>
+      <div class="title-accent"></div>
+    </div>
+    <div class="card-grid">
+      
+            <article class="card card-what">
+              <div class="card-label">What</div>
+              <p class="card-body">FleetGraph can draft follow-up or escalation comments, but it pauses before taking a consequential action</p>
+            </article>
+          
+            <article class="card card-why">
+              <div class="card-label">Why</div>
+              <p class="card-body">The assignment requires human approval before persistent mutations, and this is the right safety boundary for Ship</p>
+            </article>
+          
+            <article class="card card-how">
+              <div class="card-label">How</div>
+              <p class="card-body">The graph proposes an action, interrupts for approve, dismiss, or snooze, records that decision in action memory, and only posts the sprint comment if the human approves</p>
+            </article>
+          
+            <article class="card card-outcome">
+              <div class="card-label">Outcome</div>
+              <p class="card-body">The system is useful without becoming reckless, and it avoids repeatedly proposing the same action after approval, dismissal, or snooze</p>
+            </article>
+          
+    </div>
+    <div class="footer">
+      <span>ShipShape FleetGraph Feature Summary</span>
+      <span>8 / 11</span>
+    </div>
+  </section>
+
+  <section class="slide dense">
+    <div class="topbar">
+      <p class="eyebrow">FleetGraph</p>
+      <p class="meta">What · Why · How · Outcome</p>
+    </div>
+    <div class="title-wrap">
+      <h1>Observability And Evidence</h1>
+      <div class="title-accent"></div>
+    </div>
+    <div class="card-grid">
+      
+            <article class="card card-what">
+              <div class="card-label">What</div>
+              <p class="card-body">FleetGraph captures execution evidence, node history, and trace metadata for each run</p>
+            </article>
+          
+            <article class="card card-why">
+              <div class="card-label">Why</div>
+              <p class="card-body">This project is graded on graph behavior and branching, not just on whether a panel appears in the UI</p>
+            </article>
+          
+            <article class="card card-how">
+              <div class="card-label">How</div>
+              <p class="card-body">Invoke and resume paths attach LangSmith callbacks, resolve shared trace links, record node-level telemetry, and use local evidence scripts to verify quiet and flagged runs</p>
+            </article>
+          
+            <article class="card card-outcome">
+              <div class="card-label">Outcome</div>
+              <p class="card-body">Local MVP evidence is strong, with two shared LangSmith traces already captured, and the main remaining verification gap is public deployment</p>
+            </article>
+          
+    </div>
+    <div class="footer">
+      <span>ShipShape FleetGraph Feature Summary</span>
+      <span>9 / 11</span>
+    </div>
+  </section>
+
+  <section class="slide dense">
+    <div class="topbar">
+      <p class="eyebrow">FleetGraph</p>
+      <p class="meta">What · Why · How · Outcome</p>
+    </div>
+    <div class="title-wrap">
+      <h1>Feature Outcomes</h1>
+      <div class="title-accent"></div>
+    </div>
+    <div class="card-grid">
+      
+            <article class="card card-what">
+              <div class="card-label">What</div>
+              <p class="card-body">The feature delivers proactive sprint-risk detection, context-aware on-demand explanation, safe action proposals, and durable operational memory</p>
+            </article>
+          
+            <article class="card card-why">
+              <div class="card-label">Why</div>
+              <p class="card-body">The goal was not just to build a graph, but to reduce time-to-awareness, reduce ambiguity, and make the next action clearer for the team</p>
+            </article>
+          
+            <article class="card card-how">
+              <div class="card-label">How</div>
+              <p class="card-body">We combined one shared graph, Active View Context, real Ship fetches, deterministic signals, grounded reasoning, HITL gating, finding persistence, and realtime delivery</p>
+            </article>
+          
+            <article class="card card-outcome">
+              <div class="card-label">Outcome</div>
+              <p class="card-body">Teams get earlier detection of execution drift, faster sprint triage, less notification spam, and a safer path from insight to action</p>
+            </article>
+          
+    </div>
+    <div class="footer">
+      <span>ShipShape FleetGraph Feature Summary</span>
+      <span>10 / 11</span>
+    </div>
+  </section>
+
+  <section class="slide dense">
+    <div class="topbar">
+      <p class="eyebrow">FleetGraph</p>
+      <p class="meta">What · Why · How · Outcome</p>
+    </div>
+    <div class="title-wrap">
+      <h1>Next Enhancements</h1>
+      <div class="title-accent"></div>
+    </div>
+    <div class="card-grid">
+      
+            <article class="card card-what">
+              <div class="card-label">What</div>
+              <p class="card-body">The remaining work is final closeout plus post-MVP expansion: public deployment, latency proof, full test-case documentation, cost analysis, Claude-aligned AI integration, and broader trigger and surface coverage</p>
+            </article>
+          
+            <article class="card card-why">
+              <div class="card-label">Why</div>
+              <p class="card-body">These are the remaining requirements for full submission readiness and the next step from a locally proven MVP to a production-ready FleetGraph feature</p>
+            </article>
+          
+            <article class="card card-how">
+              <div class="card-label">How</div>
+              <p class="card-body">Deploy FleetGraph routes publicly, prove <code>&lt; 5 minute</code> detection latency with a timed run, add trace-linked test cases for each use case in <code>FLEETGRAPH.md</code>, complete development and production AI cost analysis, align the reasoning backend with the Claude API requirement, and later add high-signal mutation triggers plus wider issue, program, and dashboard coverage</p>
+            </article>
+          
+            <article class="card card-outcome">
+              <div class="card-label">Outcome</div>
+              <p class="card-body">FleetGraph moves from a strong local MVP to a fully compliant, measurable, publicly verifiable, and expandable Ship intelligence layer</p>
+            </article>
+          
+    </div>
+    <div class="footer">
+      <span>ShipShape FleetGraph Feature Summary</span>
+      <span>11 / 11</span>
+    </div>
+  </section>
+</body>
+</html>

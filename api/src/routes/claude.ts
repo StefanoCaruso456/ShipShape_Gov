@@ -175,7 +175,7 @@ async function getStandupContext(sprintId: string, workspaceId: string) {
     SELECT
       d.id,
       d.title,
-      d.properties->>'status' as status,
+      COALESCE(d.properties->>'state', d.properties->>'status') as status,
       d.properties->>'priority' as priority,
       d.properties->>'assignee_id' as assignee_id
     FROM documents d
@@ -303,7 +303,7 @@ async function getReviewContext(sprintId: string, workspaceId: string) {
     SELECT
       d.id,
       d.title,
-      d.properties->>'status' as status,
+      COALESCE(d.properties->>'state', d.properties->>'status') as status,
       d.properties->>'priority' as priority,
       d.properties->>'added_mid_sprint' as added_mid_sprint,
       d.properties->>'cancelled' as cancelled
@@ -423,7 +423,7 @@ async function getRetroContext(projectId: string, workspaceId: string) {
       d.id,
       d.title,
       d.sprint_number,
-      d.properties->>'status' as status,
+      COALESCE(d.properties->>'state', d.properties->>'status') as status,
       d.properties->>'plan' as plan
     FROM documents d
     JOIN document_associations da ON da.document_id = d.id AND da.related_id = $1 AND da.relationship_type = 'project'
@@ -477,7 +477,7 @@ async function getRetroContext(projectId: string, workspaceId: string) {
     SELECT
       d.id,
       d.title,
-      d.properties->>'status' as status,
+      COALESCE(d.properties->>'state', d.properties->>'status') as status,
       d.properties->>'priority' as priority
     FROM documents d
     JOIN document_associations da ON da.document_id = d.id AND da.related_id = $1 AND da.relationship_type = 'project'

@@ -39,7 +39,7 @@ Fast current-state summary:
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
 | Phase 8: Planning intelligence | later | expansion path after MVP |
-| Phase 9: Evidence and submission | in progress | evidence harness and local bundle exist; shared LangSmith links and deployment proof remain |
+| Phase 9: Evidence and submission | complete | shared LangSmith links are captured and the public CloudFront deployment is verified |
 
 ## Architecture we are building toward
 
@@ -84,22 +84,26 @@ The supervisor is responsible for:
 This checklist mirrors the assignment pass criteria. We should treat these as the definition of done for the first deliverable, not as optional polish.
 
 - [x] Graph running with at least one proactive detection wired end to end
-- [ ] LangSmith tracing enabled with at least two shared trace links showing different execution paths
+- [x] LangSmith tracing enabled with at least two shared trace links showing different execution paths
 - [x] `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed
 - [x] At least 5 use cases documented in `FLEETGRAPH.md`
 - [x] Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions
 - [x] At least one human-in-the-loop gate implemented
 - [x] Running against real Ship data with no mocked responses
-- [ ] Deployed and publicly accessible
+- [x] Deployed and publicly accessible
 - [x] Trigger model decision documented and defended in `FLEETGRAPH.md`
 
 Current audit:
 
-- `LangSmith tracing...` is the main partial requirement:
-  - tracing is part of the architecture and state model
-  - run-id / run-URL capture support and a local evidence harness now exist
-  - the shared trace-link evidence bundle is still open
-- `Deployed and publicly accessible` is still open and belongs to Phase 9
+- `LangSmith tracing...` is now complete:
+  - local evidence capture produced two shared trace links
+  - the traces were captured in the `shipshape` LangSmith project
+- `Deployed and publicly accessible` is now complete and remains repeatable
+  - the live public CloudFront deployment responds at `https://d1woqw06xb054i.cloudfront.net`
+  - `/health` returns `{"status":"ok"}`
+  - both FleetGraph public routes are mounted and return authenticated API responses (`403` when unauthenticated)
+  - deployment verification still uses:
+    - [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
 
 ## Requirement-to-phase map
 
@@ -190,6 +194,8 @@ Current evidence harness:
 
 - [collect-fleetgraph-evidence.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.mjs)
 - [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md)
+- [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
+- [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-requirements/summary.md)
 
 ## Phase plan
 
@@ -585,6 +591,26 @@ This is the broader product opportunity and a major differentiator, but it shoul
 
 Close the loop on delivery requirements and prove the system works.
 
+### Incremental closeout plan
+
+Treat the remaining work as four explicit sub-steps:
+
+1. **Phase 9A: Evidence readiness**
+   - normalize runtime data so healthy runs can exit quietly
+   - keep at least one clearly flagged path intact
+   - rerun local evidence capture until both quiet and flagged runs exist
+2. **Phase 9B: LangSmith trace capture**
+   - export LangSmith tracing env vars
+   - rerun evidence capture in a traced environment
+   - save at least two shared trace links with different execution paths
+3. **Phase 9C: Public deployment**
+   - deploy both API and frontend with the FleetGraph branch
+   - do not count a public URL as complete unless the FleetGraph API routes are live
+4. **Phase 9D: Public verification and packaging**
+   - rerun the public verification harness
+   - attach evidence bundle outputs and trace links
+   - close the checklist only after both requirements above are objectively green
+
 ### What we have implemented so far
 
 - evidence harness script for local FleetGraph capture
@@ -598,10 +624,20 @@ Close the loop on delivery requirements and prove the system works.
 
 ### What is still open
 
-- at least two shared LangSmith traces with different execution paths
-- quiet-path evidence from the current seed state or a traced healthy scenario
-- deployment verification
-- public URL proof
+- Phase 8 product-expansion work
+
+### Current blockers
+
+- no MVP submission blockers remain
+
+### Current status by sub-step
+
+| Sub-step | Status | Notes |
+|---|---|---|
+| Phase 9A: Evidence readiness | complete | local evidence harness now captures both quiet and flagged runs after issue-state normalization in the Claude review/retro context |
+| Phase 9B: LangSmith trace capture | complete | shared traces are captured in the `shipshape` LangSmith project |
+| Phase 9C: Public deployment | complete | API and frontend are deployed together on the public CloudFront environment |
+| Phase 9D: Public verification and packaging | complete | verification harness is green against the live public FleetGraph deployment |
 
 ### Why this phase matters
 
@@ -633,15 +669,7 @@ Build in this order:
 
 The next slice we should execute is:
 
-1. **Finish Phase 9**
-   - rerun the evidence harness with LangSmith enabled
-   - capture and save shared LangSmith traces for:
-     - quiet path
-     - flagged path
-     - interrupt / resume path
-   - verify deployed behavior
-   - package final runtime evidence
-2. **Then Phase 8**
+1. **Phase 8**
    - extend beyond sprint risk into:
      - capacity
      - scope creep

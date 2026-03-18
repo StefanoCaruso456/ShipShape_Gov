@@ -102,7 +102,7 @@ echo "EB Environment: $ENV_NAME"
 # The api/package.json build script copies SQL files automatically
 echo "Building..."
 cd "$PROJECT_ROOT"
-rm -rf shared/dist shared/tsconfig.tsbuildinfo api/dist api/tsconfig.tsbuildinfo
+rm -rf shared/dist shared/tsconfig.tsbuildinfo fleetgraph/dist fleetgraph/tsconfig.tsbuildinfo api/dist api/tsconfig.tsbuildinfo
 pnpm build:shared && pnpm build:api
 
 # Verify SQL files are present (fail fast if missing)
@@ -183,6 +183,8 @@ zip -r "$BUNDLE" \
   pnpm-workspace.yaml \
   api/dist \
   api/package.json \
+  fleetgraph/dist \
+  fleetgraph/package.json \
   shared/dist \
   shared/package.json \
   -x "*.git*"
