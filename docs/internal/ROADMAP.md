@@ -98,8 +98,13 @@ Current audit:
 - `LangSmith tracing...` is the main partial requirement:
   - tracing is part of the architecture and state model
   - run-id / run-URL capture support and a local evidence harness now exist
+  - this shell currently has no LangSmith tracing env configured
   - the shared trace-link evidence bundle is still open
 - `Deployed and publicly accessible` is still open and belongs to Phase 9
+  - public Ship URLs are reachable
+  - the deployed environments do not yet expose FleetGraph routes
+  - deployment verification now has a repeatable check:
+    - [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
 
 ## Requirement-to-phase map
 
@@ -190,6 +195,8 @@ Current evidence harness:
 
 - [collect-fleetgraph-evidence.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.mjs)
 - [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md)
+- [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
+- [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-requirements/summary.md)
 
 ## Phase plan
 
@@ -600,8 +607,8 @@ Close the loop on delivery requirements and prove the system works.
 
 - at least two shared LangSmith traces with different execution paths
 - quiet-path evidence from the current seed state or a traced healthy scenario
-- deployment verification
-- public URL proof
+- deployment verification with FleetGraph routes live
+- public URL proof for a FleetGraph-enabled environment
 
 ### Why this phase matters
 
@@ -639,7 +646,9 @@ The next slice we should execute is:
      - quiet path
      - flagged path
      - interrupt / resume path
-   - verify deployed behavior
+   - deploy the FleetGraph branch to a public Ship environment
+   - rerun deployed verification:
+     - [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
    - package final runtime evidence
 2. **Then Phase 8**
    - extend beyond sprint risk into:

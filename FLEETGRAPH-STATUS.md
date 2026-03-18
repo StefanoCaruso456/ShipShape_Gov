@@ -63,6 +63,7 @@ Both modes use the same graph.
 - wider issue / program / dashboard surface coverage
 - high-signal mutation trigger / pub-sub delivery path
 - real LangSmith trace-link evidence bundle
+- deployed public FleetGraph environment verification
 - deployment evidence and LangSmith submission package
 
 ## MVP requirement audit
@@ -70,13 +71,13 @@ Both modes use the same graph.
 | Requirement | Status | Notes |
 |---|---|---|
 | Graph running with at least one proactive detection wired end to end | complete | proactive sweep, finding persistence, dedupe, and delivery are implemented |
-| LangSmith tracing enabled with at least two shared trace links showing different execution paths | partial | run-id / URL capture support and the local evidence harness now exist, but the shared trace-link bundle still depends on a traced environment |
+| LangSmith tracing enabled with at least two shared trace links showing different execution paths | partial | run-id / URL capture support and the local evidence harness now exist, but this shell still has no LangSmith tracing env configured |
 | `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed | complete | root source-of-truth doc exists and is filled out |
 | At least 5 use cases documented in `FLEETGRAPH.md` | complete | use-case table is present |
 | Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions | complete | graph diagram and node outline are documented |
 | At least one human-in-the-loop gate implemented | complete | approve / dismiss / snooze interrupt-resume flow is live |
 | Running against real Ship data with no mocked responses | complete | on-demand and proactive paths have been validated against real Ship data |
-| Deployed and publicly accessible | open | still part of Phase 9 |
+| Deployed and publicly accessible | open | public Ship URLs respond, but the deployed environments currently return `Cannot POST /api/fleetgraph/on-demand`, so FleetGraph itself is not publicly deployed yet |
 | Trigger model decision documented and defended in `FLEETGRAPH.md` | complete | hybrid trigger model and current-vs-future trigger sections are documented |
 
 ## Phase summary
@@ -186,7 +187,16 @@ Still open in this phase:
 
 - shared LangSmith links from a traced environment
 - a real quiet-path evidence run against current seed data
-- public deployment verification
+- public deployment verification for FleetGraph itself
+
+Current remote verification:
+
+- `https://dev.ship.awsdev.treasury.gov` is reachable
+- `https://shadow.ship.awsdev.treasury.gov` is reachable
+- both `/health` endpoints return `{"status":"ok"}`
+- both deployed environments still fail FleetGraph route checks:
+  - dev returns `Cannot POST /api/fleetgraph/on-demand`
+  - shadow falls back to the SPA shell for FleetGraph POSTs
 
 ## Current page-awareness technique
 
@@ -231,7 +241,9 @@ Choose one of these next, depending on priority:
 - **Finish Phase 9** if the goal is MVP proof and submission readiness:
   - rerun the evidence harness with LangSmith enabled
   - save two shared LangSmith links
-  - verify the deployed public URL
+  - deploy the FleetGraph branch to a public Ship environment
+  - rerun the public verification script:
+    - [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
 - **Phase 8** if the goal is product expansion:
   - planning intelligence
   - capacity / scope / dependency signals

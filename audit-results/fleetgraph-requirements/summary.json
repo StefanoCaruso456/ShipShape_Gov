@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-03-18T02:14:01.330Z",
+  "langsmith": {
+    "tracingEnabled": false,
+    "apiKeyPresent": false,
+    "projectName": null,
+    "readyForSharedTraces": false
+  },
+  "deployments": [
+    {
+      "baseUrl": "https://dev.ship.awsdev.treasury.gov",
+      "app": {
+        "status": 200,
+        "reachable": true,
+        "contentType": "text/html"
+      },
+      "health": {
+        "status": 200,
+        "ok": true,
+        "body": "{\"status\":\"ok\"}"
+      },
+      "fleetgraphOnDemand": {
+        "status": 404,
+        "classification": "route_missing",
+        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/fleetgraph/on-demand</pre>\n</body>\n</ht"
+      },
+      "fleetgraphProactive": {
+        "status": 404,
+        "classification": "route_missing",
+        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/fleetgraph/proactive/run</pre>\n</body>\n"
+      }
+    },
+    {
+      "baseUrl": "https://shadow.ship.awsdev.treasury.gov",
+      "app": {
+        "status": 200,
+        "reachable": true,
+        "contentType": "text/html"
+      },
+      "health": {
+        "status": 200,
+        "ok": true,
+        "body": "{\"status\":\"ok\"}"
+      },
+      "fleetgraphOnDemand": {
+        "status": 200,
+        "classification": "spa_fallback",
+        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Pr"
+      },
+      "fleetgraphProactive": {
+        "status": 200,
+        "classification": "spa_fallback",
+        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Pr"
+      }
+    }
+  ],
+  "requirements": {
+    "langsmithSharedTraces": "blocked_by_env",
+    "publicDeployment": "not_verified"
+  }
+}

@@ -40,6 +40,8 @@ Make the build defensible, reproducible, and ready to submit.
 
 - local evidence harness:
   - [collect-fleetgraph-evidence.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.mjs)
+- requirement verification harness:
+  - [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
 - generated evidence bundle:
   - [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md)
   - [summary.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.json)
@@ -47,6 +49,9 @@ Make the build defensible, reproducible, and ready to submit.
   - [hitl-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/hitl-run.json)
   - [resume-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/resume-run.json)
   - [proactive-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/proactive-run.json)
+- generated requirement verification bundle:
+  - [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-requirements/summary.md)
+  - [summary.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-requirements/summary.json)
 - LangSmith run-id / URL capture support when tracing is configured
 
 ## Current result
@@ -63,3 +68,15 @@ Still open:
 - shared LangSmith trace links
 - a quiet-path evidence run from a traced healthy scenario
 - deployment verification and public URL proof
+
+Current blocker details:
+
+- public Ship URLs respond, but deployed FleetGraph routes are not live yet
+- this shell currently has no LangSmith tracing env configured
+
+Closeout order:
+
+1. export LangSmith tracing env vars
+2. rerun the evidence harness and save shared trace links
+3. deploy the FleetGraph branch to a public Ship environment
+4. rerun the requirement verification harness
