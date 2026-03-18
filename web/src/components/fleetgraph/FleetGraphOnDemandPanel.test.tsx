@@ -163,4 +163,37 @@ describe('FleetGraphOnDemandPanel', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Why is this sprint at risk?' })).toBeDisabled();
   });
+
+  it('renders a graph-supplied scope error instead of a misleading stable summary', async () => {
+    mockUseFleetGraphActiveView.mockReturnValue(activeView);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...response,
+      derivedSignals: {
+        ...response.derivedSignals,
+        severity: 'none',
+        reasons: [],
+        summary: null,
+        shouldSurface: false,
+        signals: [],
+      },
+      finding: null,
+      error: {
+        code: 'WEEK_SCOPE_NOT_FOUND',
+        message: 'No active sprint was found for this project.',
+        retryable: false,
+        source: 'resolveWeekScope',
+      },
+    } satisfies FleetGraphOnDemandResponse);
+
+    render(<FleetGraphOnDemandPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Why is this sprint at risk?' }));
+
+    expect(
+      await screen.findByText('No active sprint was found for this project.')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("FleetGraph doesn't see a meaningful sprint-risk signal on this view right now.")
+    ).not.toBeInTheDocument();
+  });
 });

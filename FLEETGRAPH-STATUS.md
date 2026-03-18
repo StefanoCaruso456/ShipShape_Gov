@@ -31,6 +31,8 @@ Both modes use the same graph.
 - deterministic sprint-risk signals
 - quiet vs flagged graph branching
 - embedded week-document FleetGraph on-demand panel
+- embedded project-document FleetGraph on-demand panel
+- single-project My Week FleetGraph on-demand panel
 - proactive sweep route
 - env-gated proactive worker
 - finding persistence
@@ -93,10 +95,29 @@ Built proactive MVP delivery:
 Built the first on-demand UI surface:
 
 - embedded FleetGraph panel on week document tabs
+- embedded FleetGraph panel on project document tabs
+- embedded FleetGraph panel on My Week when one project is in scope
 - fixed MVP question:
   - why is this sprint at risk?
 - page / tab aware invocation using Active View Context
 - grounded answer using fetched context, signals, metrics, and finding summary
+
+## Current page-awareness technique
+
+Implemented today:
+
+- typed Active View Context from the Ship UI
+- current route, entity, and tab passed into the graph
+- sprint/week document surface covered first
+- shared current-view adapter layer in the web app
+- project documents now resolve to the current sprint through the graph
+- My Week route now publishes person-scoped Active View Context
+- My Week can narrow to a single project when one project is in scope
+
+Expansion path:
+
+- add route-to-context adapters for issue, project, program, My Week, dashboard, and person surfaces
+- keep Playwright as a verification tool, not the production page-awareness mechanism
 
 ## Current trigger vs future trigger
 

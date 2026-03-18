@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildFleetGraphActiveViewContext } from './fleetgraph';
+import {
+  buildFleetGraphActiveViewContext,
+  buildFleetGraphMyWeekActiveViewContext,
+} from './fleetgraph';
 
 describe('buildFleetGraphActiveViewContext', () => {
   it('maps sprint documents to a week active-view entity', () => {
@@ -34,5 +37,44 @@ describe('buildFleetGraphActiveViewContext', () => {
     });
 
     expect(activeView).toBeNull();
+  });
+
+  it('maps My Week to a person-scoped active view', () => {
+    const activeView = buildFleetGraphMyWeekActiveViewContext({
+      personId: '44444444-4444-4444-4444-444444444444',
+      pathname: '/my-week?week_number=14',
+    });
+
+    expect(activeView).toEqual({
+      entity: {
+        id: '44444444-4444-4444-4444-444444444444',
+        type: 'person',
+        sourceDocumentType: 'person',
+      },
+      surface: 'my_week',
+      route: '/my-week?week_number=14',
+      tab: null,
+      projectId: null,
+    });
+  });
+
+  it('preserves a narrowed project when My Week already has a single project in scope', () => {
+    const activeView = buildFleetGraphMyWeekActiveViewContext({
+      personId: '44444444-4444-4444-4444-444444444444',
+      pathname: '/my-week?week_number=14',
+      projectId: '55555555-5555-5555-5555-555555555555',
+    });
+
+    expect(activeView).toEqual({
+      entity: {
+        id: '44444444-4444-4444-4444-444444444444',
+        type: 'person',
+        sourceDocumentType: 'person',
+      },
+      surface: 'my_week',
+      route: '/my-week?week_number=14',
+      tab: null,
+      projectId: '55555555-5555-5555-5555-555555555555',
+    });
   });
 });

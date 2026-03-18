@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useEffect, Suspense } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UnifiedEditor } from '@/components/UnifiedEditor';
 import type { UnifiedDocument, SidebarData } from '@/components/UnifiedEditor';
@@ -14,6 +14,7 @@ import { issueKeys } from '@/hooks/useIssuesQuery';
 import { projectKeys, useProjectWeeksQuery } from '@/hooks/useProjectsQuery';
 import { TabBar } from '@/components/ui/TabBar';
 import { useCurrentDocument } from '@/contexts/CurrentDocumentContext';
+import { useCurrentView } from '@/contexts/CurrentViewContext';
 import { FleetGraphOnDemandPanel } from '@/components/fleetgraph/FleetGraphOnDemandPanel';
 import {
   getTabsForDocument,
@@ -22,6 +23,7 @@ import {
   type DocumentResponse,
   type TabCounts,
 } from '@/lib/document-tabs';
+import { buildFleetGraphActiveViewContext } from '@/lib/fleetgraph';
 
 /**
  * UnifiedDocumentPage - Renders any document type via /documents/:id route
@@ -33,6 +35,7 @@ import {
 export function UnifiedDocumentPage() {
   const { id, '*': wildcardPath } = useParams<{ id: string; '*'?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Parse wildcard path into tab and nested path
   // Example: /documents/abc/sprints/xyz -> wildcardPath = "sprints/xyz" -> tab = "sprints", nestedPath = "xyz"
@@ -43,6 +46,7 @@ export function UnifiedDocumentPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { setCurrentDocument, clearCurrentDocument } = useCurrentDocument();
+  const { setCurrentView, clearCurrentView } = useCurrentView();
 
   // Fetch the document by ID
   const { data: document, isLoading, error } = useQuery<DocumentResponse>({
@@ -82,11 +86,21 @@ export function UnifiedDocumentPage() {
         ? (document.properties?.project_id as string | undefined) ?? null
         : null;
       setCurrentDocument(id, docType, projectId, activeTab || null);
+      setCurrentView(
+        buildFleetGraphActiveViewContext({
+          currentDocumentId: id,
+          currentDocumentType: docType,
+          currentDocumentProjectId: projectId,
+          currentDocumentTab: activeTab || null,
+          pathname: location.pathname,
+        })
+      );
     }
     return () => {
       clearCurrentDocument();
+      clearCurrentView();
     };
-  }, [activeTab, clearCurrentDocument, document, id, setCurrentDocument]);
+  }, [activeTab, clearCurrentDocument, clearCurrentView, document, id, location.pathname, setCurrentDocument, setCurrentView]);
 
   // Redirect to clean URL if tab is invalid (prevents broken bookmarks and typos)
   useEffect(() => {
@@ -486,7 +500,8 @@ export function UnifiedDocumentPage() {
         ? ((document.properties as { status?: string } | undefined)?.status ?? 'planning')
         : null;
     const showFleetGraphPanel =
-      document.document_type === 'sprint' && sprintStatus !== 'planning';
+      (document.document_type === 'sprint' && sprintStatus !== 'planning') ||
+      document.document_type === 'project';
 
     return (
       <div className="flex h-full flex-col">

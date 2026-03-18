@@ -18,6 +18,7 @@ FleetGraph should not just detect problems. It should explain why they matter an
 ## How
 
 - add a reasoning node on top of deterministic signals and fetched evidence
+- widen Active View Context coverage with route-to-context adapters as FleetGraph expands beyond week documents
 - generate evidence-backed recommendations
 - pause the graph before consequential mutations
 - resume through a typed approval path

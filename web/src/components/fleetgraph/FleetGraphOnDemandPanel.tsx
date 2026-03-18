@@ -73,7 +73,7 @@ function buildContextSummary(
 }
 
 function buildSummary(result: FleetGraphOnDemandResponse | null): string | null {
-  if (!result) {
+  if (!result || result.error) {
     return null;
   }
 
@@ -183,6 +183,7 @@ export function FleetGraphOnDemandPanel({
   const severity = result?.derivedSignals.severity ?? 'none';
   const severityStyle = SEVERITY_STYLES[severity];
   const summary = buildSummary(result);
+  const responseError = result?.error?.message ?? null;
   const contextSummary = buildContextSummary(activeView, result);
 
   return (
@@ -245,9 +246,9 @@ export function FleetGraphOnDemandPanel({
             </p>
           )}
 
-          {error && (
+          {(error || responseError) && (
             <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-              {error}
+              {error ?? responseError}
             </div>
           )}
 

@@ -296,7 +296,41 @@ The LLM should analyze suspicious scopes, not act as the first filter for every 
 
 On-demand mode must use **Active View Context**, not a generic chat prompt with no page awareness.
 
-### 6. Use Ship REST APIs only
+### 6. Use app-native page awareness, not browser vision
+
+FleetGraph should know where the user is from the Ship app itself.
+
+Primary runtime technique:
+
+- route path
+- current entity id
+- current entity type
+- current tab
+- current workspace
+- current user role
+
+Implementation pattern:
+
+- use typed **Active View Context** from the UI
+- add route-to-context adapters per surface:
+  - document
+  - My Week
+  - dashboard
+  - issue
+  - project
+  - program
+  - person
+- expand that context with Ship REST fetches after the graph receives it
+
+Do not use these as the primary runtime mechanism:
+
+- Playwright or browser vision
+- code/spec scanning
+- direct database reads for current page state
+
+Those are useful for testing, validation, or data expansion, but not for determining what page or tab the user is on right now.
+
+### 7. Use Ship REST APIs only
 
 Ship remains the source of truth. FleetGraph should not read the database directly.
 

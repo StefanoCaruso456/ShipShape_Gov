@@ -4,7 +4,7 @@ import { getFleetGraphRuntime } from '../runtime.js';
 import type { FleetGraphState } from '../state.js';
 import { createHandoff } from '../supervision.js';
 
-type ResolveContextTargets = 'fetchSprintContext' | 'completeRun';
+type ResolveContextTargets = 'fetchSprintContext' | 'resolveWeekScope' | 'completeRun';
 
 export async function resolveContextNode(
   state: FleetGraphState,
@@ -39,7 +39,11 @@ export async function resolveContextNode(
     }
   }
 
-  const nextTarget: ResolveContextTargets = expandedScope.weekId ? 'fetchSprintContext' : 'completeRun';
+  const nextTarget: ResolveContextTargets = expandedScope.weekId
+    ? 'fetchSprintContext'
+    : expandedScope.projectId || expandedScope.personId
+      ? 'resolveWeekScope'
+      : 'completeRun';
 
   return new Command({
     goto: nextTarget,
@@ -51,7 +55,9 @@ export async function resolveContextNode(
         nextTarget,
         nextTarget === 'fetchSprintContext'
           ? 'resolved sprint scope for phase-two fetch'
-          : 'resolved non-sprint scope without additional phase-two fetch'
+          : nextTarget === 'resolveWeekScope'
+            ? 'resolved non-week scope that needs sprint lookup'
+            : 'resolved non-sprint scope without additional phase-two fetch'
       ),
     },
   });

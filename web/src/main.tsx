@@ -13,6 +13,7 @@ import { IssuesProvider } from '@/contexts/IssuesContext';
 import { ProjectsProvider } from '@/contexts/ProjectsContext';
 import { ArchivedPersonsProvider } from '@/contexts/ArchivedPersonsContext';
 import { CurrentDocumentProvider } from '@/contexts/CurrentDocumentContext';
+import { CurrentViewProvider } from '@/contexts/CurrentViewContext';
 import { UploadProvider } from '@/contexts/UploadContext';
 import { ReviewQueueProvider } from '@/contexts/ReviewQueueContext';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -317,23 +318,25 @@ function AppRoutes() {
         path="/"
         element={
           <ProtectedRoute>
-            <CurrentDocumentProvider>
-              <ArchivedPersonsProvider>
-                <DocumentsProvider>
-                  <ProgramsProvider>
-                    <ProjectsProvider>
-                      <IssuesProvider>
-                        <UploadProvider>
-                          <LazyRoute>
-                            <AppLayout />
-                          </LazyRoute>
-                        </UploadProvider>
-                      </IssuesProvider>
-                    </ProjectsProvider>
-                  </ProgramsProvider>
-                </DocumentsProvider>
-              </ArchivedPersonsProvider>
-            </CurrentDocumentProvider>
+            <CurrentViewProvider>
+              <CurrentDocumentProvider>
+                <ArchivedPersonsProvider>
+                  <DocumentsProvider>
+                    <ProgramsProvider>
+                      <ProjectsProvider>
+                        <IssuesProvider>
+                          <UploadProvider>
+                            <LazyRoute>
+                              <AppLayout />
+                            </LazyRoute>
+                          </UploadProvider>
+                        </IssuesProvider>
+                      </ProjectsProvider>
+                    </ProgramsProvider>
+                  </DocumentsProvider>
+                </ArchivedPersonsProvider>
+              </CurrentDocumentProvider>
+            </CurrentViewProvider>
           </ProtectedRoute>
         }
       >

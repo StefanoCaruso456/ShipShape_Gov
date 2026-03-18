@@ -54,6 +54,34 @@ export function buildFleetGraphActiveViewContext({
   };
 }
 
+interface BuildFleetGraphMyWeekActiveViewContextArgs {
+  personId: string | null;
+  pathname: string;
+  projectId?: string | null;
+}
+
+export function buildFleetGraphMyWeekActiveViewContext({
+  personId,
+  pathname,
+  projectId = null,
+}: BuildFleetGraphMyWeekActiveViewContextArgs): FleetGraphActiveViewContext | null {
+  if (!personId) {
+    return null;
+  }
+
+  return {
+    entity: {
+      id: personId,
+      type: 'person',
+      sourceDocumentType: 'person',
+    },
+    surface: 'my_week',
+    route: pathname,
+    tab: null,
+    projectId,
+  };
+}
+
 export async function invokeFleetGraphOnDemand(
   request: FleetGraphOnDemandRequest
 ): Promise<FleetGraphOnDemandResponse> {
