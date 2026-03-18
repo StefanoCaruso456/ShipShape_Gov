@@ -211,15 +211,56 @@ export interface FleetGraphFinding {
   severity: FleetGraphDerivedSignals['severity'];
 }
 
+export type FleetGraphReasoningConfidence = 'low' | 'medium' | 'high';
+
+export interface FleetGraphReasoning {
+  summary: string;
+  evidence: string[];
+  whyNow: string | null;
+  recommendedNextStep: string | null;
+  confidence: FleetGraphReasoningConfidence;
+}
+
+export type FleetGraphActionType =
+  | 'draft_follow_up_comment'
+  | 'draft_escalation_comment';
+
 export interface FleetGraphProposedAction {
-  type: string;
+  type: FleetGraphActionType;
   targetId: string | null;
   summary: string;
+  rationale: string;
+  draftComment: string;
+  targetRoute: string | null;
+  fingerprint: string;
 }
 
 export interface FleetGraphPendingApproval {
-  actionType: string;
+  actionType: FleetGraphActionType;
   reason: string;
+  proposal: FleetGraphProposedAction;
+}
+
+export type FleetGraphHumanDecisionOutcome = 'approve' | 'dismiss' | 'snooze';
+
+export interface FleetGraphHumanDecision {
+  outcome: FleetGraphHumanDecisionOutcome;
+  note?: string;
+  snoozeMinutes?: number | null;
+}
+
+export interface FleetGraphActionResult {
+  outcome: 'approved' | 'dismissed' | 'snoozed' | 'skipped';
+  summary: string;
+  note: string | null;
+  snoozedUntil: string | null;
+  executedCommentId: string | null;
+}
+
+export interface FleetGraphActionMemoryRecord {
+  status: 'approved' | 'dismissed' | 'snoozed';
+  snoozedUntil: string | null;
+  executedCommentId: string | null;
 }
 
 export interface FleetGraphErrorState {

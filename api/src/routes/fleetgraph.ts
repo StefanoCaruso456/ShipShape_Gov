@@ -1,14 +1,20 @@
+import { randomUUID } from 'crypto';
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import {
   type FleetGraphRunInput,
 } from '@ship/fleetgraph';
-import type { FleetGraphOnDemandRequest } from '@ship/shared';
+import type {
+  FleetGraphOnDemandRequest,
+  FleetGraphOnDemandResumeRequest,
+} from '@ship/shared';
 import { authMiddleware, getAuthContext } from '../middleware/auth.js';
 import {
   createFleetGraphLogger,
   createRequestScopedShipApiClient,
   invokeFleetGraph,
+  resumeFleetGraph,
+  type FleetGraphInvokeResult,
 } from '../services/fleetgraph-runner.js';
 import {
   listFleetGraphFindingsForUser,
@@ -46,6 +52,15 @@ const onDemandRequestSchema = z.object({
   question: z.string().trim().min(1).nullable().optional(),
 });
 
+const onDemandResumeRequestSchema = z.object({
+  thread_id: z.string().min(1),
+  decision: z.object({
+    outcome: z.enum(['approve', 'dismiss', 'snooze']),
+    note: z.string().trim().max(2000).nullable().optional(),
+    snooze_minutes: z.number().int().min(1).max(24 * 60).nullable().optional(),
+  }),
+});
+
 const proactiveRunRequestSchema = z.object({
   week_id: z.string().uuid().optional(),
 });
@@ -56,6 +71,42 @@ const findingsQuerySchema = z.object({
 
 function canRunProactiveSweep(req: Request): boolean {
   return req.isApiToken === true || req.isSuperAdmin === true || req.workspaceRole === 'admin';
+}
+
+function extractPendingApproval(result: FleetGraphInvokeResult) {
+  const interruptValue = result.__interrupt__?.[0]?.value;
+  if (!interruptValue || typeof interruptValue !== 'object') {
+    return null;
+  }
+
+  const maybePendingApproval = (interruptValue as { pendingApproval?: unknown }).pendingApproval;
+  return maybePendingApproval && typeof maybePendingApproval === 'object'
+    ? maybePendingApproval
+    : null;
+}
+
+function buildOnDemandResponse(result: FleetGraphInvokeResult, threadId: string | null) {
+  const pendingApproval = extractPendingApproval(result);
+  const isInterrupted = pendingApproval !== null;
+
+  return {
+    threadId,
+    status: isInterrupted ? 'waiting_on_human' : result.status,
+    stage: isInterrupted ? 'waiting_on_human' : result.stage,
+    mode: result.mode,
+    triggerType: result.triggerType,
+    activeView: result.activeView,
+    expandedScope: result.expandedScope,
+    fetched: result.fetched,
+    derivedSignals: result.derivedSignals,
+    finding: result.finding,
+    reasoning: result.reasoning,
+    proposedAction: result.proposedAction,
+    pendingApproval,
+    actionResult: result.actionResult,
+    error: result.error,
+    trace: result.trace,
+  };
 }
 
 router.post('/on-demand', authMiddleware, async (req: Request, res: Response) => {
@@ -75,6 +126,7 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
     }
 
     const input: FleetGraphRunInput = {
+      runId: randomUUID(),
       mode: 'on_demand',
       triggerType: 'user_invoke',
       workspaceId: authContext.workspaceId,
@@ -108,22 +160,50 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
       checkpointNamespace: 'fleetgraph',
     });
 
-    res.json({
-      status: result.status,
-      stage: result.stage,
-      mode: result.mode,
-      triggerType: result.triggerType,
-      activeView: result.activeView,
-      expandedScope: result.expandedScope,
-      fetched: result.fetched,
-      derivedSignals: result.derivedSignals,
-      finding: result.finding,
-      error: result.error,
-      trace: result.trace,
-    });
+    res.json(buildOnDemandResponse(result, input.runId ?? null));
   } catch (error) {
     console.error('FleetGraph on-demand invoke error:', error);
     res.status(500).json({ error: 'Failed to run FleetGraph on-demand analysis' });
+  }
+});
+
+router.post('/on-demand/resume', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+
+    const parsed = onDemandResumeRequestSchema.safeParse(
+      req.body satisfies FleetGraphOnDemandResumeRequest
+    );
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid FleetGraph on-demand resume request',
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+
+    const result = await resumeFleetGraph(
+      parsed.data.thread_id,
+      {
+        outcome: parsed.data.decision.outcome,
+        note: parsed.data.decision.note ?? undefined,
+        snoozeMinutes: parsed.data.decision.snooze_minutes ?? undefined,
+      },
+      {
+        shipApi: createRequestScopedShipApiClient(req),
+        logger: fleetGraphLogger,
+        checkpointNamespace: 'fleetgraph',
+        tags: ['fleetgraph', 'on-demand', 'resume'],
+      }
+    );
+
+    res.json(buildOnDemandResponse(result, parsed.data.thread_id));
+  } catch (error) {
+    console.error('FleetGraph on-demand resume error:', error);
+    res.status(500).json({ error: 'Failed to resume FleetGraph on-demand analysis' });
   }
 });
 

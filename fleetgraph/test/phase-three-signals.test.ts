@@ -149,10 +149,17 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
       })
     );
 
-    expect(result.status).toBe('completed');
+    const interruptValue = (result as typeof result & {
+      __interrupt__?: Array<{ value?: unknown }>;
+    }).__interrupt__?.[0]?.value as { pendingApproval?: unknown } | undefined;
+
+    expect(result.status).toBe('running');
     expect(result.derivedSignals.shouldSurface).toBe(true);
     expect(result.derivedSignals.severity).toBe('action');
     expect(result.finding).not.toBeNull();
+    expect(result.reasoning).not.toBeNull();
+    expect(result.proposedAction).not.toBeNull();
+    expect(interruptValue?.pendingApproval).toBeTruthy();
     expect(result.derivedSignals.signals.map((signal) => signal.kind)).toEqual(
       expect.arrayContaining(['missing_standup', 'no_completed_work', 'work_not_started', 'low_recent_activity'])
     );
