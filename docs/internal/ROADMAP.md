@@ -626,7 +626,6 @@ Treat the remaining work as four explicit sub-steps:
 ### What is still open
 
 - at least two shared LangSmith traces with different execution paths
-- quiet-path evidence from the current seed state or a traced healthy scenario
 - deployment verification with FleetGraph routes live
 - public URL proof for a FleetGraph-enabled environment
 
@@ -640,7 +639,7 @@ Treat the remaining work as four explicit sub-steps:
 
 | Sub-step | Status | Notes |
 |---|---|---|
-| Phase 9A: Evidence readiness | in progress | quiet-path evidence is still being closed; first fix is issue-state normalization in the Claude review/retro context |
+| Phase 9A: Evidence readiness | complete | local evidence harness now captures both quiet and flagged runs after issue-state normalization in the Claude review/retro context |
 | Phase 9B: LangSmith trace capture | blocked by env | no tracing env vars are configured in this shell |
 | Phase 9C: Public deployment | not started | public Ship exists, but deployed FleetGraph routes are missing |
 | Phase 9D: Public verification and packaging | in progress | verification harness exists, but the final green run is not available yet |
@@ -676,9 +675,6 @@ Build in this order:
 The next slice we should execute is:
 
 1. **Finish Phase 9**
-   - complete Phase 9A:
-     - rerun local evidence capture after the issue-state normalization fix
-     - confirm both quiet and flagged runs can be produced
    - complete Phase 9B:
      - rerun the evidence harness with LangSmith enabled
      - capture and save shared LangSmith traces for:

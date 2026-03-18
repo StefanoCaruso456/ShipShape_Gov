@@ -1,6 +1,6 @@
 # FleetGraph Evidence Bundle
 
-Generated: 2026-03-18T02:02:03.604Z
+Generated: 2026-03-18T02:38:39.054Z
 API URL: http://localhost:3000
 Actor: dev@ship.local
 
@@ -8,16 +8,27 @@ Actor: dev@ship.local
 
 ### quietRun
 
-Not captured.
+- weekId: 64c5489f-50f0-4182-8ed6-17edb54e14da
+- title: Week 14
+- status: completed
+- stage: action_not_proposed
+- terminalOutcome: quiet
+- signalSeverity: none
+- pendingApproval: false
+- reasoningSource: deterministic
+- LangSmith run id: not captured
+- LangSmith run URL: not captured
+- LangSmith share URL: not captured
+- Braintrust span id: not captured
 
 ### flaggedRun
 
-- weekId: c3619719-f4cd-474a-88d1-83d11558193f
+- weekId: 4ff0de90-33a8-422f-86ef-d1c1504ec9e3
 - title: Week 14
 - status: waiting_on_human
 - stage: waiting_on_human
 - terminalOutcome: waiting_on_human
-- signalSeverity: action
+- signalSeverity: warning
 - pendingApproval: true
 - reasoningSource: deterministic
 - LangSmith run id: not captured
@@ -27,12 +38,12 @@ Not captured.
 
 ### hitlRun
 
-- weekId: c3619719-f4cd-474a-88d1-83d11558193f
+- weekId: 4ff0de90-33a8-422f-86ef-d1c1504ec9e3
 - title: Week 14
 - status: waiting_on_human
 - stage: waiting_on_human
 - terminalOutcome: waiting_on_human
-- signalSeverity: action
+- signalSeverity: warning
 - pendingApproval: true
 - reasoningSource: deterministic
 - LangSmith run id: not captured
@@ -42,12 +53,12 @@ Not captured.
 
 ### resumeRun
 
-- weekId: c3619719-f4cd-474a-88d1-83d11558193f
+- weekId: 4ff0de90-33a8-422f-86ef-d1c1504ec9e3
 - title: Week 14
 - status: completed
 - stage: action_dismissed
 - terminalOutcome: suppressed
-- signalSeverity: action
+- signalSeverity: warning
 - pendingApproval: false
 - reasoningSource: deterministic
 - LangSmith run id: not captured

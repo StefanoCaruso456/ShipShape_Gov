@@ -178,6 +178,7 @@ Started the evidence and submission slice:
   - [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md)
   - [summary.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.json)
 - captured live evidence for:
+  - quiet on-demand run
   - flagged on-demand run
   - HITL waiting path
   - HITL resume / dismiss path
@@ -186,7 +187,6 @@ Started the evidence and submission slice:
 Still open in this phase:
 
 - shared LangSmith links from a traced environment
-- a real quiet-path evidence run against current seed data
 - public deployment verification for FleetGraph itself
 
 Current remote verification:

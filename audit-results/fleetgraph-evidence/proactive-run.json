@@ -1,29 +1,27 @@
 {
   "status": "ok",
-  "workspaceId": "693b06d0-e0ac-4304-92e3-33cb51cf7d90",
+  "workspaceId": "d5c678c4-c893-4d12-b176-57d2a39578a7",
   "processedWeeks": 1,
   "surfacedFindings": 1,
   "newNotifications": 1,
   "findings": [
     {
-      "id": "38d9799e-a307-4ad3-aa62-7b20839584b1",
-      "workspaceId": "693b06d0-e0ac-4304-92e3-33cb51cf7d90",
-      "weekId": "c3619719-f4cd-474a-88d1-83d11558193f",
-      "projectId": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
-      "programId": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+      "id": "0928b6e7-bf55-479d-8824-707b32e795c7",
+      "workspaceId": "d5c678c4-c893-4d12-b176-57d2a39578a7",
+      "weekId": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
+      "projectId": "751a3dc3-abe4-4303-bd2a-128371970e47",
+      "programId": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
       "title": "Week 14",
-      "summary": "All sprint issues are still incomplete and none are marked in progress. No standups have been logged for this active sprint yet. The sprint has tracked work but nothing has been completed yet.",
-      "severity": "action",
-      "route": "/documents/c3619719-f4cd-474a-88d1-83d11558193f/issues",
+      "summary": "No standups have been logged for this active sprint yet.",
+      "severity": "warning",
+      "route": "/documents/4ff0de90-33a8-422f-86ef-d1c1504ec9e3/issues",
       "surface": "document",
       "tab": "issues",
       "signalKinds": [
-        "missing_standup",
-        "no_completed_work",
-        "work_not_started"
+        "missing_standup"
       ],
-      "lastDetectedAt": "2026-03-18T02:02:03.000Z",
-      "lastNotifiedAt": "2026-03-18T02:02:03.000Z"
+      "lastDetectedAt": "2026-03-18T02:38:39.000Z",
+      "lastNotifiedAt": "2026-03-18T02:38:39.000Z"
     }
   ]
 }

@@ -1,31 +1,31 @@
 {
-  "threadId": "776328c4-e2ea-4b50-a3f6-f56cc33f2ae4",
+  "threadId": "70272fc4-7fab-4d57-ae3e-b2e81ec1260d",
   "status": "completed",
   "stage": "action_dismissed",
   "mode": "on_demand",
   "triggerType": "user_invoke",
   "activeView": {
     "entity": {
-      "id": "c3619719-f4cd-474a-88d1-83d11558193f",
+      "id": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
       "type": "week",
       "sourceDocumentType": "sprint"
     },
     "surface": "document",
-    "route": "/documents/c3619719-f4cd-474a-88d1-83d11558193f/issues",
+    "route": "/documents/4ff0de90-33a8-422f-86ef-d1c1504ec9e3/issues",
     "tab": "issues",
     "projectId": null
   },
   "expandedScope": {
     "issueId": null,
-    "weekId": "c3619719-f4cd-474a-88d1-83d11558193f",
-    "projectId": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
-    "programId": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+    "weekId": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
+    "projectId": "751a3dc3-abe4-4303-bd2a-128371970e47",
+    "programId": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
     "personId": null
   },
   "fetched": {
     "entity": {
-      "id": "c3619719-f4cd-474a-88d1-83d11558193f",
-      "workspace_id": "693b06d0-e0ac-4304-92e3-33cb51cf7d90",
+      "id": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
+      "workspace_id": "d5c678c4-c893-4d12-b176-57d2a39578a7",
       "document_type": "sprint",
       "title": "Week 14",
       "content": {
@@ -42,12 +42,12 @@
       "properties": {
         "plan": "If we complete these features, we will unblock the next milestone.",
         "status": "active",
-        "owner_id": "6f86ccf4-4848-4d29-ad20-caec2140d79b",
-        "confidence": 79.41234412753894,
-        "project_id": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+        "owner_id": "9b80200f-b2fd-41d7-8867-57adf9e7f534",
+        "confidence": 76.72391092517213,
+        "project_id": "751a3dc3-abe4-4303-bd2a-128371970e47",
         "assignee_ids": [
-          "e418170a-aa2e-4645-adb2-9d43e6066bc6",
-          "7f5b9bed-85a3-41a7-9a31-f4f96e4da927"
+          "31aa69ce-07fe-4a55-ab72-708cb5454e7c",
+          "c68c86c4-f542-4d07-b8dd-9ae6ceb872c4"
         ],
         "sprint_number": 14,
         "success_criteria": "All planned stories marked done, tests passing"
@@ -65,13 +65,13 @@
       "converted_by": null,
       "original_type": null,
       "conversion_count": 0,
-      "created_at": "2026-03-18T02:01:49.054Z",
-      "updated_at": "2026-03-18T02:01:49.054Z",
+      "created_at": "2026-03-18T02:38:23.548Z",
+      "updated_at": "2026-03-18T02:38:23.548Z",
       "created_by": null,
       "visibility": "workspace",
       "can_access": true,
-      "confidence": 79.41234412753894,
-      "owner_id": "e418170a-aa2e-4645-adb2-9d43e6066bc6",
+      "confidence": 76.72391092517213,
+      "owner_id": "31aa69ce-07fe-4a55-ab72-708cb5454e7c",
       "owner": null,
       "accountable_id": null,
       "consulted_ids": [],
@@ -82,13 +82,13 @@
       "plan": "If we complete these features, we will unblock the next milestone.",
       "belongs_to": [
         {
-          "id": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+          "id": "751a3dc3-abe4-4303-bd2a-128371970e47",
           "type": "project",
           "title": "API Platform - Core Features",
           "color": "#6366f1"
         },
         {
-          "id": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+          "id": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
           "type": "program",
           "title": "API Platform",
           "color": "#10B981"
@@ -97,11 +97,11 @@
     },
     "supporting": {
       "current": {
-        "id": "c3619719-f4cd-474a-88d1-83d11558193f",
+        "id": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
         "title": "Week 14",
         "document_type": "sprint",
         "ticket_number": null,
-        "program_id": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+        "program_id": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
         "program_name": "API Platform",
         "program_color": "#10B981"
       },
@@ -110,14 +110,14 @@
       "belongs_to": [
         {
           "type": "program",
-          "id": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+          "id": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
           "title": "API Platform",
           "document_type": "program",
           "color": "#10B981"
         },
         {
           "type": "project",
-          "id": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+          "id": "751a3dc3-abe4-4303-bd2a-128371970e47",
           "title": "API Platform - Core Features",
           "document_type": "project",
           "color": "#6366f1"
@@ -125,17 +125,17 @@
       ],
       "breadcrumbs": [
         {
-          "id": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+          "id": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
           "title": "API Platform",
           "type": "program"
         },
         {
-          "id": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+          "id": "751a3dc3-abe4-4303-bd2a-128371970e47",
           "title": "API Platform - Core Features",
           "type": "project"
         },
         {
-          "id": "c3619719-f4cd-474a-88d1-83d11558193f",
+          "id": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
           "title": "Week 14",
           "type": "sprint",
           "ticket_number": null
@@ -269,20 +269,20 @@
     "accountability": {
       "context_type": "review",
       "sprint": {
-        "id": "c3619719-f4cd-474a-88d1-83d11558193f",
+        "id": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
         "title": "Week 14",
         "number": "14",
         "status": "active",
         "plan": "If we complete these features, we will unblock the next milestone."
       },
       "program": {
-        "id": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+        "id": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
         "name": "API Platform",
         "description": null,
         "goals": null
       },
       "project": {
-        "id": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+        "id": "751a3dc3-abe4-4303-bd2a-128371970e47",
         "name": "API Platform - Core Features",
         "plan": "Building core features will establish the product foundation and attract early adopters.",
         "ice_scores": {
@@ -296,58 +296,59 @@
       "issues": {
         "stats": {
           "total": 6,
-          "completed": 0,
-          "in_progress": 0,
+          "completed": 2,
+          "in_progress": 2,
           "planned_at_start": 6,
           "added_mid_sprint": 0,
           "cancelled": 0
         },
-        "completed_items": [],
+        "completed_items": [
+          {
+            "id": "58442e47-d4f6-42da-9175-fd6d2ed36d54",
+            "title": "Implement core features",
+            "status": "done",
+            "priority": "high",
+            "added_mid_sprint": null,
+            "cancelled": null
+          },
+          {
+            "id": "9bbc7c01-4fd6-401d-9398-622d1521edc3",
+            "title": "Add input validation",
+            "status": "done",
+            "priority": "high",
+            "added_mid_sprint": null,
+            "cancelled": null
+          }
+        ],
         "incomplete_items": [
           {
-            "id": "37a0f3f7-d564-4595-8694-103bf4ef53d7",
-            "title": "Implement core features",
-            "status": null,
-            "priority": "high",
-            "added_mid_sprint": null,
-            "cancelled": null
-          },
-          {
-            "id": "9ebb93bd-9c52-43ff-ab59-8fb3d9c460bd",
-            "title": "Add input validation",
-            "status": null,
-            "priority": "high",
-            "added_mid_sprint": null,
-            "cancelled": null
-          },
-          {
-            "id": "21286300-c156-45d9-a61b-dfe8446fa9c3",
+            "id": "f27b8e5c-7eb9-4fab-a20b-e36bfca05727",
             "title": "Create error handling",
-            "status": null,
+            "status": "in_progress",
             "priority": "high",
             "added_mid_sprint": null,
             "cancelled": null
           },
           {
-            "id": "9c22b7b4-cf7d-4ad0-a16d-a39ae39efdd9",
+            "id": "585e98d2-f414-41af-9b20-4c22d296eaf0",
             "title": "Build user interface",
-            "status": null,
+            "status": "in_progress",
             "priority": "medium",
             "added_mid_sprint": null,
             "cancelled": null
           },
           {
-            "id": "fd9ac601-4e89-4f80-a32b-71ed10632a4a",
+            "id": "d39f6f28-c4a2-4f53-aec5-6b4538d92800",
             "title": "Add unit tests",
-            "status": null,
+            "status": "todo",
             "priority": "medium",
             "added_mid_sprint": null,
             "cancelled": null
           },
           {
-            "id": "ebe6cf86-a033-4021-8664-472771940272",
+            "id": "19540aee-51f4-473e-8993-777f7879bb37",
             "title": "Write integration tests",
-            "status": null,
+            "status": "todo",
             "priority": "low",
             "added_mid_sprint": null,
             "cancelled": null
@@ -358,7 +359,7 @@
       "clarifying_questions_context": [
         "The sprint plan was: \"If we complete these features, we will unblock the next milestone.\". Was this validated or invalidated?",
         "What evidence supports your conclusion about the plan?",
-        "Only 0% of issues were completed. What prevented full completion?",
+        "Only 33% of issues were completed. What prevented full completion?",
         "What would you do differently next sprint?",
         "What worked well that should be repeated?"
       ]
@@ -369,13 +370,11 @@
     }
   },
   "derivedSignals": {
-    "severity": "action",
+    "severity": "warning",
     "reasons": [
-      "No standups have been logged for this active sprint yet.",
-      "The sprint has tracked work but nothing has been completed yet.",
-      "All sprint issues are still incomplete and none are marked in progress."
+      "No standups have been logged for this active sprint yet."
     ],
-    "summary": "All sprint issues are still incomplete and none are marked in progress. No standups have been logged for this active sprint yet. The sprint has tracked work but nothing has been completed yet.",
+    "summary": "No standups have been logged for this active sprint yet.",
     "shouldSurface": true,
     "signals": [
       {
@@ -386,65 +385,43 @@
           "Standup count is 0.",
           "Sprint has 6 tracked issues."
         ],
-        "dedupeKey": "c3619719-f4cd-474a-88d1-83d11558193f:missing_standup"
-      },
-      {
-        "kind": "no_completed_work",
-        "severity": "warning",
-        "summary": "The sprint has tracked work but nothing has been completed yet.",
-        "evidence": [
-          "Completed issues: 0 of 6.",
-          "In-progress issues: 0."
-        ],
-        "dedupeKey": "c3619719-f4cd-474a-88d1-83d11558193f:no_completed_work"
-      },
-      {
-        "kind": "work_not_started",
-        "severity": "action",
-        "summary": "All sprint issues are still incomplete and none are marked in progress.",
-        "evidence": [
-          "Incomplete issues: 6 of 6.",
-          "Completed issues: 0."
-        ],
-        "dedupeKey": "c3619719-f4cd-474a-88d1-83d11558193f:work_not_started"
+        "dedupeKey": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3:missing_standup"
       }
     ],
     "metrics": {
       "totalIssues": 6,
-      "completedIssues": 0,
-      "inProgressIssues": 0,
-      "incompleteIssues": 6,
+      "completedIssues": 2,
+      "inProgressIssues": 2,
+      "incompleteIssues": 4,
       "cancelledIssues": 0,
       "standupCount": 0,
       "recentActivityCount": 7,
       "recentActiveDays": 1,
-      "completionRate": 0
+      "completionRate": 0.3333333333333333
     }
   },
   "finding": {
-    "summary": "All sprint issues are still incomplete and none are marked in progress. No standups have been logged for this active sprint yet. The sprint has tracked work but nothing has been completed yet.",
-    "severity": "action"
+    "summary": "No standups have been logged for this active sprint yet.",
+    "severity": "warning"
   },
   "reasoning": {
-    "summary": "All sprint issues are still incomplete and none are marked in progress. No standups have been logged for this active sprint yet. The sprint has tracked work but nothing has been completed yet.",
+    "summary": "No standups have been logged for this active sprint yet.",
     "evidence": [
       "Standup count is 0.",
-      "Sprint has 6 tracked issues.",
-      "Completed issues: 0 of 6.",
-      "In-progress issues: 0."
+      "Sprint has 6 tracked issues."
     ],
     "whyNow": "This matters now because you are looking at the issues tab for API Platform - Core Features, and the current execution signals point to sprint drift.",
     "recommendedNextStep": "Get a same-day owner update, post a standup, and either move work into progress or reduce scope.",
-    "confidence": "high"
+    "confidence": "medium"
   },
   "proposedAction": {
-    "type": "draft_escalation_comment",
-    "targetId": "c3619719-f4cd-474a-88d1-83d11558193f",
-    "summary": "Draft an escalation comment on Week 14 to force a same-day decision on scope, blockers, and ownership.",
+    "type": "draft_follow_up_comment",
+    "targetId": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
+    "summary": "Draft a follow-up comment on Week 14 asking for a same-day status update and next checkpoint.",
     "rationale": "Get a same-day owner update, post a standup, and either move work into progress or reduce scope.",
-    "draftComment": "Project: API Platform - Core Features. Week 14 appears stalled based on the current evidence. Please confirm today whether the team should de-scope work, reassign ownership, or escalate a blocker, and identify the decision owner in this thread.",
-    "targetRoute": "/documents/c3619719-f4cd-474a-88d1-83d11558193f/issues",
-    "fingerprint": "c3619719-f4cd-474a-88d1-83d11558193f:draft_escalation_comment:fad70c44132d5bb0"
+    "draftComment": "Project: API Platform - Core Features. Week 14 is showing risk signals from the current sprint evidence. Please post a short update today with blockers, owner status, and the next concrete checkpoint so the team can decide whether to keep or reduce scope.",
+    "targetRoute": "/documents/4ff0de90-33a8-422f-86ef-d1c1504ec9e3/issues",
+    "fingerprint": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3:draft_follow_up_comment:b686d54c8550f942"
   },
   "pendingApproval": null,
   "actionResult": {
@@ -469,9 +446,9 @@
     "lastTripReason": null
   },
   "timing": {
-    "startedAt": "2026-03-18T02:02:03.204Z",
-    "lastNodeAt": "2026-03-18T02:02:03.581Z",
-    "deadlineAt": "2026-03-18T02:04:03.204Z"
+    "startedAt": "2026-03-18T02:38:38.623Z",
+    "lastNodeAt": "2026-03-18T02:38:39.010Z",
+    "deadlineAt": "2026-03-18T02:40:38.623Z"
   },
   "reasoningSource": "deterministic",
   "suppressionReason": null,
@@ -482,9 +459,9 @@
     {
       "node": "supervisorEntry",
       "phase": "control",
-      "startedAt": "2026-03-18T02:02:03.204Z",
-      "finishedAt": "2026-03-18T02:02:03.204Z",
-      "latencyMs": 0,
+      "startedAt": "2026-03-18T02:38:38.623Z",
+      "finishedAt": "2026-03-18T02:38:38.625Z",
+      "latencyMs": 2,
       "status": "ok",
       "goto": "initializeOnDemandContext",
       "errorCode": null
@@ -492,9 +469,9 @@
     {
       "node": "initializeOnDemandContext",
       "phase": "context",
-      "startedAt": "2026-03-18T02:02:03.205Z",
-      "finishedAt": "2026-03-18T02:02:03.205Z",
-      "latencyMs": 0,
+      "startedAt": "2026-03-18T02:38:38.632Z",
+      "finishedAt": "2026-03-18T02:38:38.633Z",
+      "latencyMs": 1,
       "status": "ok",
       "goto": "resolveContext",
       "errorCode": null
@@ -502,9 +479,9 @@
     {
       "node": "resolveContext",
       "phase": "context",
-      "startedAt": "2026-03-18T02:02:03.206Z",
-      "finishedAt": "2026-03-18T02:02:03.206Z",
-      "latencyMs": 0,
+      "startedAt": "2026-03-18T02:38:38.639Z",
+      "finishedAt": "2026-03-18T02:38:38.640Z",
+      "latencyMs": 1,
       "status": "ok",
       "goto": "fetchSprintContext",
       "errorCode": null
@@ -512,9 +489,9 @@
     {
       "node": "fetchSprintContext",
       "phase": "fetch",
-      "startedAt": "2026-03-18T02:02:03.207Z",
-      "finishedAt": "2026-03-18T02:02:03.245Z",
-      "latencyMs": 38,
+      "startedAt": "2026-03-18T02:38:38.646Z",
+      "finishedAt": "2026-03-18T02:38:38.772Z",
+      "latencyMs": 126,
       "status": "ok",
       "goto": "deriveSprintSignals",
       "errorCode": null
@@ -522,9 +499,9 @@
     {
       "node": "deriveSprintSignals",
       "phase": "signals",
-      "startedAt": "2026-03-18T02:02:03.246Z",
-      "finishedAt": "2026-03-18T02:02:03.246Z",
-      "latencyMs": 0,
+      "startedAt": "2026-03-18T02:38:38.778Z",
+      "finishedAt": "2026-03-18T02:38:38.779Z",
+      "latencyMs": 1,
       "status": "ok",
       "goto": "recordSignalFinding",
       "errorCode": null
@@ -532,8 +509,8 @@
     {
       "node": "recordSignalFinding",
       "phase": "signals",
-      "startedAt": "2026-03-18T02:02:03.247Z",
-      "finishedAt": "2026-03-18T02:02:03.247Z",
+      "startedAt": "2026-03-18T02:38:38.785Z",
+      "finishedAt": "2026-03-18T02:38:38.785Z",
       "latencyMs": 0,
       "status": "ok",
       "goto": "reasonAboutSprint",
@@ -542,8 +519,8 @@
     {
       "node": "reasonAboutSprint",
       "phase": "reasoning",
-      "startedAt": "2026-03-18T02:02:03.248Z",
-      "finishedAt": "2026-03-18T02:02:03.248Z",
+      "startedAt": "2026-03-18T02:38:38.787Z",
+      "finishedAt": "2026-03-18T02:38:38.787Z",
       "latencyMs": 0,
       "status": "ok",
       "goto": "proposeSprintAction",
@@ -552,9 +529,9 @@
     {
       "node": "proposeSprintAction",
       "phase": "action",
-      "startedAt": "2026-03-18T02:02:03.248Z",
-      "finishedAt": "2026-03-18T02:02:03.249Z",
-      "latencyMs": 1,
+      "startedAt": "2026-03-18T02:38:38.791Z",
+      "finishedAt": "2026-03-18T02:38:38.793Z",
+      "latencyMs": 2,
       "status": "ok",
       "goto": "humanApprovalGate",
       "errorCode": null
@@ -562,9 +539,9 @@
     {
       "node": "humanApprovalGate",
       "phase": "hitl",
-      "startedAt": "2026-03-18T02:02:03.580Z",
-      "finishedAt": "2026-03-18T02:02:03.581Z",
-      "latencyMs": 1,
+      "startedAt": "2026-03-18T02:38:39.008Z",
+      "finishedAt": "2026-03-18T02:38:39.010Z",
+      "latencyMs": 2,
       "status": "interrupted",
       "goto": "completeRun",
       "errorCode": null

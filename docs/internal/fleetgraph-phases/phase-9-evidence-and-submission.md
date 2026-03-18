@@ -58,6 +58,7 @@ Make the build defensible, reproducible, and ready to submit.
 
 We now have objective local evidence for:
 
+- quiet on-demand path
 - flagged on-demand path
 - HITL waiting path
 - HITL resume / dismiss path
@@ -66,7 +67,6 @@ We now have objective local evidence for:
 Still open:
 
 - shared LangSmith trace links
-- a quiet-path evidence run from a traced healthy scenario
 - deployment verification and public URL proof
 
 Current blocker details:
@@ -97,6 +97,10 @@ Exit criteria:
 
 - local evidence harness captures a quiet path
 - local evidence harness still captures a flagged path
+
+Status:
+
+- complete
 
 ### Phase 9B: LangSmith trace capture
 
