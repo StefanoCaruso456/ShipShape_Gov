@@ -76,7 +76,7 @@ Both modes use the same graph.
 | Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions | complete | graph diagram and node outline are documented |
 | At least one human-in-the-loop gate implemented | complete | approve / dismiss / snooze interrupt-resume flow is live |
 | Running against real Ship data with no mocked responses | complete | on-demand and proactive paths have been validated against real Ship data |
-| Deployed and publicly accessible | open | public Ship URLs respond, but the deployed environments currently return `Cannot POST /api/fleetgraph/on-demand`, so FleetGraph itself is not publicly deployed yet |
+| Deployed and publicly accessible | complete | FleetGraph is live on the public CloudFront deployment at `https://d1woqw06xb054i.cloudfront.net`; both FleetGraph routes are mounted and return `403 Forbidden` when unauthenticated rather than `404` or SPA fallback |
 | Trigger model decision documented and defended in `FLEETGRAPH.md` | complete | hybrid trigger model and current-vs-future trigger sections are documented |
 
 ## Phase summary
@@ -184,18 +184,13 @@ Built the evidence and submission slice so far:
   - quiet on-demand path
   - problem-detected on-demand path
 
-Still open in this phase:
+Public deployment verification is now complete:
 
-- public deployment verification for FleetGraph itself
-
-Current remote verification:
-
-- `https://dev.ship.awsdev.treasury.gov` is reachable
-- `https://shadow.ship.awsdev.treasury.gov` is reachable
-- both `/health` endpoints return `{"status":"ok"}`
-- both deployed environments still fail FleetGraph route checks:
-  - dev returns `Cannot POST /api/fleetgraph/on-demand`
-  - shadow falls back to the SPA shell for FleetGraph POSTs
+- `https://d1woqw06xb054i.cloudfront.net` is reachable
+- `/health` returns `{"status":"ok"}`
+- public FleetGraph routes are mounted:
+  - `POST /api/fleetgraph/on-demand` returns `403 Forbidden` when unauthenticated
+  - `POST /api/fleetgraph/proactive/run` returns `403 Forbidden` when unauthenticated
 
 ## Current page-awareness technique
 
@@ -237,12 +232,6 @@ Still planned:
 
 Choose one of these next, depending on priority:
 
-- **Finish Phase 9** if the goal is MVP proof and submission readiness:
-  - rerun the evidence harness with LangSmith enabled
-  - save two shared LangSmith links
-  - deploy the FleetGraph branch to a public Ship environment
-  - rerun the public verification script:
-    - [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
 - **Phase 8** if the goal is product expansion:
   - planning intelligence
   - capacity / scope / dependency signals

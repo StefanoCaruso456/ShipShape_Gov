@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -20,13 +21,28 @@ const EVIDENCE_SUMMARY_PATH = path.resolve(
 function parsePublicUrls() {
   const raw = process.env.FLEETGRAPH_PUBLIC_URLS;
   if (!raw) {
-    return DEFAULT_PUBLIC_URLS;
+    const terraformUrl = getTerraformPublicUrl();
+    return terraformUrl ? [terraformUrl] : DEFAULT_PUBLIC_URLS;
   }
 
   return raw
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
+}
+
+function getTerraformPublicUrl() {
+  try {
+    const domain = execFileSync('terraform', ['output', '-raw', 'cloudfront_domain_name'], {
+      cwd: path.resolve(process.cwd(), 'terraform'),
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+
+    return domain ? `https://${domain}` : null;
+  } catch {
+    return null;
+  }
 }
 
 function normalizeBaseUrl(value) {

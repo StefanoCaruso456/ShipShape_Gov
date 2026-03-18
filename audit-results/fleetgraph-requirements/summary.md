@@ -1,11 +1,11 @@
 # FleetGraph Requirement Verification
 
-Generated: 2026-03-18T03:08:01.611Z
+Generated: 2026-03-18T04:16:21.987Z
 
 ## Remaining requirement status
 
 - LangSmith shared traces: captured
-- Public deployment: not_verified
+- Public deployment: verified
 
 ## LangSmith readiness
 
@@ -24,24 +24,15 @@ Generated: 2026-03-18T03:08:01.611Z
 
 ## Public deployment verification
 
-### https://dev.ship.awsdev.treasury.gov
+### https://d1woqw06xb054i.cloudfront.net
 
 - App reachable: true (status 200)
 - Health endpoint: true (status 200)
-- FleetGraph on-demand route: route_missing (status 404)
-- FleetGraph proactive route: route_missing (status 404)
-
-### https://shadow.ship.awsdev.treasury.gov
-
-- App reachable: true (status 200)
-- Health endpoint: true (status 200)
-- FleetGraph on-demand route: spa_fallback (status 200)
-- FleetGraph proactive route: spa_fallback (status 200)
+- FleetGraph on-demand route: route_mounted (status 403)
+- FleetGraph proactive route: route_mounted (status 403)
 
 ## Objective next steps
 
 1. LangSmith shared trace requirement is complete.
-2. Deploy both API and frontend with the FleetGraph branch.
-3. Rerun this verification script against the deployed URL.
-4. Confirm the deployed FleetGraph routes no longer return `Cannot POST` or SPA fallback.
+2. Deployment verification is complete.
 

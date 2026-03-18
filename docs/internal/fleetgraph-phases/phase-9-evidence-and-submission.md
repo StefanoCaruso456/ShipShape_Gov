@@ -1,6 +1,6 @@
 # Phase 9: Evidence and Submission
 
-Status: `in progress`
+Status: `complete`
 
 ## What
 
@@ -64,21 +64,19 @@ We now have objective local evidence for:
 - HITL resume / dismiss path
 - proactive sweep path
 
-Still open:
+Public deployment proof is now complete:
 
-- deployment verification and public URL proof
+- `https://d1woqw06xb054i.cloudfront.net` is live
+- `/health` returns `{"status":"ok"}`
+- public FleetGraph routes are mounted and return `403 Forbidden` when unauthenticated
+- the requirement verification harness is green against the public deployment
 
-Current blocker details:
+Closeout order completed:
 
-- public Ship URLs respond, but deployed FleetGraph routes are not live yet
-- public verification remains the only open submission blocker
-
-Closeout order:
-
-1. export LangSmith tracing env vars
-2. rerun the evidence harness and save shared trace links
-3. deploy the FleetGraph branch to a public Ship environment
-4. rerun the requirement verification harness
+1. exported LangSmith tracing env vars and captured shared trace links
+2. reran the evidence harness and saved shared trace links
+3. deployed the FleetGraph branch to the public Ship environment
+4. reran the requirement verification harness against the live public URL
 
 ## Incremental closeout plan
 
@@ -133,6 +131,10 @@ Exit criteria:
 - API and frontend are deployed together
 - public FleetGraph routes respond as real API routes, not `Cannot POST` or SPA fallback
 
+Status:
+
+- complete
+
 ### Phase 9D: Public verification and packaging
 
 Goal:
@@ -144,3 +146,7 @@ Exit criteria:
 - public verification harness is green
 - trace links are attached
 - evidence bundle is ready for submission
+
+Status:
+
+- complete

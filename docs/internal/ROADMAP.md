@@ -39,7 +39,7 @@ Fast current-state summary:
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
 | Phase 8: Planning intelligence | later | expansion path after MVP |
-| Phase 9: Evidence and submission | in progress | shared LangSmith links are captured; deployment proof remains |
+| Phase 9: Evidence and submission | complete | shared LangSmith links are captured and the public CloudFront deployment is verified |
 
 ## Architecture we are building toward
 
@@ -90,7 +90,7 @@ This checklist mirrors the assignment pass criteria. We should treat these as th
 - [x] Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions
 - [x] At least one human-in-the-loop gate implemented
 - [x] Running against real Ship data with no mocked responses
-- [ ] Deployed and publicly accessible
+- [x] Deployed and publicly accessible
 - [x] Trigger model decision documented and defended in `FLEETGRAPH.md`
 
 Current audit:
@@ -98,10 +98,11 @@ Current audit:
 - `LangSmith tracing...` is now complete:
   - local evidence capture produced two shared trace links
   - the traces were captured in the `shipshape` LangSmith project
-- `Deployed and publicly accessible` is still open and belongs to Phase 9
-  - public Ship URLs are reachable
-  - the deployed environments do not yet expose FleetGraph routes
-  - deployment verification now has a repeatable check:
+- `Deployed and publicly accessible` is now complete and remains repeatable
+  - the live public CloudFront deployment responds at `https://d1woqw06xb054i.cloudfront.net`
+  - `/health` returns `{"status":"ok"}`
+  - both FleetGraph public routes are mounted and return authenticated API responses (`403` when unauthenticated)
+  - deployment verification still uses:
     - [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
 
 ## Requirement-to-phase map
@@ -623,12 +624,11 @@ Treat the remaining work as four explicit sub-steps:
 
 ### What is still open
 
-- deployment verification with FleetGraph routes live
-- public URL proof for a FleetGraph-enabled environment
+- Phase 8 product-expansion work
 
 ### Current blockers
 
-- public Ship is reachable, but FleetGraph routes are not live on the deployed environments
+- no MVP submission blockers remain
 
 ### Current status by sub-step
 
@@ -636,8 +636,8 @@ Treat the remaining work as four explicit sub-steps:
 |---|---|---|
 | Phase 9A: Evidence readiness | complete | local evidence harness now captures both quiet and flagged runs after issue-state normalization in the Claude review/retro context |
 | Phase 9B: LangSmith trace capture | complete | shared traces are captured in the `shipshape` LangSmith project |
-| Phase 9C: Public deployment | not started | public Ship exists, but deployed FleetGraph routes are missing |
-| Phase 9D: Public verification and packaging | in progress | verification harness exists, but the final green run is not available yet |
+| Phase 9C: Public deployment | complete | API and frontend are deployed together on the public CloudFront environment |
+| Phase 9D: Public verification and packaging | complete | verification harness is green against the live public FleetGraph deployment |
 
 ### Why this phase matters
 
@@ -669,20 +669,7 @@ Build in this order:
 
 The next slice we should execute is:
 
-1. **Finish Phase 9**
-   - complete Phase 9B:
-     - rerun the evidence harness with LangSmith enabled
-     - capture and save shared LangSmith traces for:
-     - quiet path
-     - flagged path
-     - interrupt / resume path
-   - complete Phase 9C:
-     - deploy the FleetGraph branch to a public Ship environment
-   - complete Phase 9D:
-     - rerun deployed verification:
-     - [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
-     - package final runtime evidence
-2. **Then Phase 8**
+1. **Phase 8**
    - extend beyond sprint risk into:
      - capacity
      - scope creep

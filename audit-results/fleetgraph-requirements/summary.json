@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-18T03:08:01.611Z",
+  "generatedAt": "2026-03-18T04:16:21.987Z",
   "langsmith": {
     "tracingEnabled": false,
     "apiKeyPresent": false,
@@ -17,7 +17,7 @@
   },
   "deployments": [
     {
-      "baseUrl": "https://dev.ship.awsdev.treasury.gov",
+      "baseUrl": "https://d1woqw06xb054i.cloudfront.net",
       "app": {
         "status": 200,
         "reachable": true,
@@ -29,42 +29,19 @@
         "body": "{\"status\":\"ok\"}"
       },
       "fleetgraphOnDemand": {
-        "status": 404,
-        "classification": "route_missing",
-        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/fleetgraph/on-demand</pre>\n</body>\n</ht"
+        "status": 403,
+        "classification": "route_mounted",
+        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Forbidden</pre>\n</body>\n</html>\n"
       },
       "fleetgraphProactive": {
-        "status": 404,
-        "classification": "route_missing",
-        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/fleetgraph/proactive/run</pre>\n</body>\n"
-      }
-    },
-    {
-      "baseUrl": "https://shadow.ship.awsdev.treasury.gov",
-      "app": {
-        "status": 200,
-        "reachable": true,
-        "contentType": "text/html"
-      },
-      "health": {
-        "status": 200,
-        "ok": true,
-        "body": "{\"status\":\"ok\"}"
-      },
-      "fleetgraphOnDemand": {
-        "status": 200,
-        "classification": "spa_fallback",
-        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Pr"
-      },
-      "fleetgraphProactive": {
-        "status": 200,
-        "classification": "spa_fallback",
-        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Pr"
+        "status": 403,
+        "classification": "route_mounted",
+        "bodyPreview": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Forbidden</pre>\n</body>\n</html>\n"
       }
     }
   ],
   "requirements": {
     "langsmithSharedTraces": "captured",
-    "publicDeployment": "not_verified"
+    "publicDeployment": "verified"
   }
 }

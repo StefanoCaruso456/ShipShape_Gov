@@ -13,6 +13,7 @@ RUN npm install -g pnpm@9.15.4 && pnpm config set strict-ssl false
 # Copy package files for dependency installation
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY api/package.json ./api/
+COPY fleetgraph/package.json ./fleetgraph/
 COPY shared/package.json ./shared/
 
 # Install production dependencies only (ignore prepare scripts that require dev deps)
@@ -20,6 +21,7 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts && pnpm store prune
 
 # Copy pre-built dist directories (built locally before deployment)
 COPY shared/dist/ ./shared/dist/
+COPY fleetgraph/dist/ ./fleetgraph/dist/
 COPY api/dist/ ./api/dist/
 
 # Expose port
