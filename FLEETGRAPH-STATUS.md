@@ -66,6 +66,20 @@ Both modes use the same graph.
 - populated `langsmithRunId` in FleetGraph runtime state
 - deployment evidence and LangSmith submission package
 
+## MVP requirement audit
+
+| Requirement | Status | Notes |
+|---|---|---|
+| Graph running with at least one proactive detection wired end to end | complete | proactive sweep, finding persistence, dedupe, and delivery are implemented |
+| LangSmith tracing enabled with at least two shared trace links showing different execution paths | partial | LangSmith is part of the architecture, but the shared trace-link evidence bundle is still open |
+| `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed | complete | root source-of-truth doc exists and is filled out |
+| At least 5 use cases documented in `FLEETGRAPH.md` | complete | use-case table is present |
+| Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions | complete | graph diagram and node outline are documented |
+| At least one human-in-the-loop gate implemented | complete | approve / dismiss / snooze interrupt-resume flow is live |
+| Running against real Ship data with no mocked responses | complete | on-demand and proactive paths have been validated against real Ship data |
+| Deployed and publicly accessible | open | still part of Phase 9 |
+| Trigger model decision documented and defended in `FLEETGRAPH.md` | complete | hybrid trigger model and current-vs-future trigger sections are documented |
+
 ## Phase summary
 
 ### Phase 1

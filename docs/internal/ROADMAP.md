@@ -93,6 +93,13 @@ This checklist mirrors the assignment pass criteria. We should treat these as th
 - [ ] Deployed and publicly accessible
 - [x] Trigger model decision documented and defended in `FLEETGRAPH.md`
 
+Current audit:
+
+- `LangSmith tracing...` is the main partial requirement:
+  - tracing is part of the architecture and state model
+  - the shared trace-link evidence bundle is still open
+- `Deployed and publicly accessible` is still open and belongs to Phase 9
+
 ## Requirement-to-phase map
 
 | Requirement | Primary phase(s) | Verification output |
