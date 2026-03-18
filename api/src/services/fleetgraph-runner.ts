@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import type { Request } from 'express';
+import { Command } from '@langchain/langgraph';
 import {
   createFleetGraph,
   createFleetGraphRunnableConfig,
@@ -9,8 +10,16 @@ import {
   type FleetGraphShipApiClient,
   type FleetGraphState,
 } from '@ship/fleetgraph';
+import { createFleetGraphActionMemoryStore } from './fleetgraph-action-memory.js';
+import { createFleetGraphReasoner } from './fleetgraph-reasoner.js';
 
 const graph = createFleetGraph();
+
+export type FleetGraphInvokeResult = FleetGraphState & {
+  __interrupt__?: Array<{
+    value?: unknown;
+  }>;
+};
 
 function buildInternalApiUrl(path: string): string {
   const baseUrl = `http://127.0.0.1:${process.env.PORT ?? '3000'}`;
@@ -107,15 +116,19 @@ export async function invokeFleetGraph(
     logger?: FleetGraphLogger;
     checkpointNamespace?: string;
   }
-): Promise<FleetGraphState> {
+): Promise<FleetGraphInvokeResult> {
   const normalizedInput: FleetGraphRunInput = {
     ...input,
     runId: input.runId ?? randomUUID(),
   };
 
+  const logger = options.logger ?? createFleetGraphLogger('FleetGraph');
+
   const runtime = createFleetGraphRuntime({
     shipApi: options.shipApi,
-    logger: options.logger ?? createFleetGraphLogger('FleetGraph'),
+    logger,
+    reasoner: createFleetGraphReasoner(logger),
+    actionMemory: createFleetGraphActionMemoryStore(),
   });
 
   return graph.invoke(
@@ -125,5 +138,35 @@ export async function invokeFleetGraph(
       checkpointNamespace: options.checkpointNamespace ?? 'fleetgraph',
       tags: normalizedInput.trace?.tags,
     })
-  );
+  ) as Promise<FleetGraphInvokeResult>;
+}
+
+export async function resumeFleetGraph(
+  threadId: string,
+  resumeValue: unknown,
+  options: {
+    shipApi: FleetGraphShipApiClient;
+    logger?: FleetGraphLogger;
+    checkpointNamespace?: string;
+    tags?: string[];
+  }
+): Promise<FleetGraphInvokeResult> {
+  const logger = options.logger ?? createFleetGraphLogger('FleetGraph');
+  const runtime = createFleetGraphRuntime({
+    shipApi: options.shipApi,
+    logger,
+    reasoner: createFleetGraphReasoner(logger),
+    actionMemory: createFleetGraphActionMemoryStore(),
+  });
+
+  return graph.invoke(
+    new Command({
+      resume: resumeValue,
+    }),
+    createFleetGraphRunnableConfig(runtime, {
+      threadId,
+      checkpointNamespace: options.checkpointNamespace ?? 'fleetgraph',
+      tags: options.tags,
+    })
+  ) as Promise<FleetGraphInvokeResult>;
 }

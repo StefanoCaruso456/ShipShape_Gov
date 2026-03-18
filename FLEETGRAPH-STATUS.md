@@ -33,6 +33,10 @@ Both modes use the same graph.
 - embedded week-document FleetGraph on-demand panel
 - embedded project-document FleetGraph on-demand panel
 - single-project My Week FleetGraph on-demand panel
+- grounded reasoning node for the sprint-risk MVP question
+- draft follow-up and escalation action proposals
+- HITL interrupt / resume path with approve, dismiss, and snooze
+- action memory for suppression after approval, dismiss, or snooze
 - proactive sweep route
 - env-gated proactive worker
 - finding persistence
@@ -43,9 +47,8 @@ Both modes use the same graph.
 ### Not implemented yet
 
 - full conversational FleetGraph chat UI
-- LLM reasoning node
-- action proposal flow
-- HITL approval gate
+- wider issue / program / dashboard surface coverage
+- Phase 7 durability and failure-hardening work
 - deployment evidence and LangSmith submission package
 
 ## Phase summary
@@ -102,6 +105,19 @@ Built the first on-demand UI surface:
 - page / tab aware invocation using Active View Context
 - grounded answer using fetched context, signals, metrics, and finding summary
 
+### Phase 6
+
+Built the first reasoning and HITL slice:
+
+- grounded explanation node over fetched context and deterministic signals
+- optional model-backed reasoner with deterministic fallback
+- draft follow-up and escalation proposals
+- interrupt / resume approval gate
+- approve / dismiss / snooze decisions
+- first approved action execution:
+  - post a sprint comment
+- action memory for suppression after prior human decisions
+
 ## Current page-awareness technique
 
 Implemented today:
@@ -137,6 +153,15 @@ Still planned:
 - high-signal Ship mutation trigger
 - webhook or pub/sub style trigger path
 - direct event-to-graph invocation for important changes
+
+## Recommended next step
+
+Start Phase 7 and harden the new Phase 6 loop:
+
+- durable interrupt / resume behavior beyond the current MVP slice
+- wider action-memory rules and replay safety
+- stronger failure classification around reasoning and action execution
+- broader surface coverage after the core loop is stable
 
 ## Best reference files
 

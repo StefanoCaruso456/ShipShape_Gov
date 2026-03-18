@@ -65,6 +65,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.985.0
         version: 3.985.0
+      '@langchain/langgraph':
+        specifier: ^1.0.2
+        version: 1.2.2(@langchain/core@1.1.32(ws@8.19.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76)
       '@modelcontextprotocol/sdk':
         specifier: ^1.26.0
         version: 1.26.0(@cfworker/json-schema@4.1.1)(zod@3.25.76)

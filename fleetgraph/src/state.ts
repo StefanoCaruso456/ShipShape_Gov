@@ -12,11 +12,13 @@ import type {
   FleetGraphPendingApproval,
   FleetGraphPromptInput,
   FleetGraphProposedAction,
+  FleetGraphReasoning,
   FleetGraphRunMode,
   FleetGraphScope,
   FleetGraphStatus,
   FleetGraphTraceMetadata,
   FleetGraphTriggerType,
+  FleetGraphActionResult,
 } from './types.js';
 
 export const FleetGraphStateAnnotation = Annotation.Root({
@@ -105,7 +107,15 @@ export const FleetGraphStateAnnotation = Annotation.Root({
     reducer: (left, right) => right ?? left,
     default: () => null,
   }),
+  reasoning: Annotation<FleetGraphReasoning | null>({
+    reducer: (left, right) => right ?? left,
+    default: () => null,
+  }),
   proposedAction: Annotation<FleetGraphProposedAction | null>({
+    reducer: (left, right) => right ?? left,
+    default: () => null,
+  }),
+  actionResult: Annotation<FleetGraphActionResult | null>({
     reducer: (left, right) => right ?? left,
     default: () => null,
   }),

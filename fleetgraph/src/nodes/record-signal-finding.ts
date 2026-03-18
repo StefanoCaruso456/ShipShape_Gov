@@ -3,7 +3,7 @@ import type { RunnableConfig } from '@langchain/core/runnables';
 import type { FleetGraphState } from '../state.js';
 import { createHandoff } from '../supervision.js';
 
-type RecordSignalFindingTargets = 'completeRun';
+type RecordSignalFindingTargets = 'reasonAboutSprint' | 'completeRun';
 
 export async function recordSignalFindingNode(
   state: FleetGraphState,
@@ -14,8 +14,11 @@ export async function recordSignalFindingNode(
     state.derivedSignals.reasons[0] ??
     'FleetGraph detected sprint conditions that need attention.';
 
+  const nextTarget: RecordSignalFindingTargets =
+    state.mode === 'on_demand' ? 'reasonAboutSprint' : 'completeRun';
+
   return new Command({
-    goto: 'completeRun',
+    goto: nextTarget,
     update: {
       stage: 'signal_finding_recorded',
       finding: {
@@ -24,8 +27,10 @@ export async function recordSignalFindingNode(
       },
       handoff: createHandoff(
         'recordSignalFinding',
-        'completeRun',
-        'recorded deterministic sprint finding for downstream reasoning/output'
+        nextTarget,
+        state.mode === 'on_demand'
+          ? 'recorded deterministic sprint finding before the reasoning layer'
+          : 'recorded deterministic sprint finding for downstream proactive output'
       ),
     },
   });

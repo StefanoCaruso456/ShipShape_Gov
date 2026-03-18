@@ -36,7 +36,7 @@ Fast current-state summary:
 | Phase 3: Deterministic signals | complete for sprint/week MVP | quiet vs flagged signal path is validated |
 | Phase 4: Proactive MVP | complete | proactive sweep, finding persistence, dedupe, and delivery exist |
 | Phase 5: On-demand UI | complete | embedded week/project FleetGraph panels are live, plus My Week when one project is in scope |
-| Phase 6: Reasoning, actions, and HITL | pending | add explanation, action proposal, and interrupt/resume |
+| Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | pending | expand durability beyond the MVP slice |
 | Phase 8: Planning intelligence | later | expansion path after MVP |
 | Phase 9: Evidence and submission | pending | LangSmith links, deployment, and final proof |
@@ -88,7 +88,7 @@ This checklist mirrors the assignment pass criteria. We should treat these as th
 - [x] `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed
 - [x] At least 5 use cases documented in `FLEETGRAPH.md`
 - [x] Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions
-- [ ] At least one human-in-the-loop gate implemented
+- [x] At least one human-in-the-loop gate implemented
 - [x] Running against real Ship data with no mocked responses
 - [ ] Deployed and publicly accessible
 - [x] Trigger model decision documented and defended in `FLEETGRAPH.md`
@@ -257,6 +257,8 @@ If we skip this and start with prompts or UI, we will create duplicate logic and
 Make FleetGraph able to understand what it is looking at and fetch the minimum set of real Ship context needed for reasoning.
 
 ### Current progress
+
+Phase 2 is complete for the sprint/week MVP slice.
 
 - [x] shared **Active View Context** contract added
 - [x] current document context extended to carry the active tab
@@ -595,23 +597,31 @@ Build in this order:
 
 The next slice we should execute is:
 
-1. start Phase 6 on top of the embedded on-demand FleetGraph panel
+1. start Phase 6 on top of the already-supported on-demand surfaces:
+   - week documents
+   - project documents
+   - My Week when one project is in scope
 2. add the first reasoning node for:
    - why is this sprint at risk?
-3. widen Active View Context coverage beyond week documents using route-to-context adapters for:
-   - issue
-   - project
-   - program
-   - My Week
-4. keep the reasoning grounded in:
+3. keep the reasoning grounded in:
    - fetched context
    - deterministic signals
    - finding summary
-5. add the first action proposal boundary
-6. implement the first HITL interrupt / resume path
-7. enable and capture LangSmith traces for:
+4. add the first action proposal boundary for:
+   - draft follow-up
+   - draft escalation
+5. implement the first HITL interrupt / resume path with:
+   - approve
+   - dismiss
+   - snooze
+6. enable and capture LangSmith traces for:
    - quiet path
    - flagged path
+   - interrupt / resume path
+7. continue widening Active View Context coverage after the first reasoning slice, focusing next on:
+   - issue
+   - program
+   - dashboard
 
 ## Decision rule for scope
 

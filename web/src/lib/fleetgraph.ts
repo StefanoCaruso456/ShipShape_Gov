@@ -2,6 +2,7 @@ import type {
   DocumentType,
   FleetGraphActiveViewContext,
   FleetGraphOnDemandRequest,
+  FleetGraphOnDemandResumeRequest,
   FleetGraphOnDemandResponse,
   FleetGraphProactiveFinding,
 } from '@ship/shared';
@@ -89,6 +90,17 @@ export async function invokeFleetGraphOnDemand(
   if (!response.ok) {
     throw new Error('FleetGraph on-demand request failed');
   }
+  return response.json();
+}
+
+export async function resumeFleetGraphOnDemand(
+  request: FleetGraphOnDemandResumeRequest
+): Promise<FleetGraphOnDemandResponse> {
+  const response = await apiPost('/api/fleetgraph/on-demand/resume', request);
+  if (!response.ok) {
+    throw new Error('FleetGraph on-demand resume request failed');
+  }
+
   return response.json();
 }
 

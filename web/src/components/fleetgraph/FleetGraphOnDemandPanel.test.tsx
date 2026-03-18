@@ -27,6 +27,7 @@ const activeView: FleetGraphActiveViewContext = {
 };
 
 const response: FleetGraphOnDemandResponse = {
+  threadId: null,
   status: 'completed',
   stage: 'completed',
   mode: 'on_demand',
@@ -117,6 +118,18 @@ const response: FleetGraphOnDemandResponse = {
       'All sprint issues are still incomplete and none are marked in progress. No standups have been logged for this active sprint yet.',
     severity: 'action',
   },
+  reasoning: {
+    summary:
+      'FleetGraph sees clear execution drift because all work is still untouched and no standup has been logged.',
+    evidence: ['Completed issues: 0 of 6.', 'Standups logged: 0.'],
+    whyNow: 'You are already on the issues tab for this sprint, so the current execution risk is directly relevant.',
+    recommendedNextStep:
+      'Ask for a same-day owner update, post a standup, and either move work in progress or reduce scope.',
+    confidence: 'high',
+  },
+  proposedAction: null,
+  pendingApproval: null,
+  actionResult: null,
   error: null,
   trace: {
     runName: 'fleetgraph-on-demand',

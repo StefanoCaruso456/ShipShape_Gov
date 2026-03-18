@@ -36,6 +36,17 @@ export interface FleetGraphOnDemandRequest {
   question?: string | null;
 }
 
+export interface FleetGraphResumeDecision {
+  outcome: 'approve' | 'dismiss' | 'snooze';
+  note?: string | null;
+  snooze_minutes?: number | null;
+}
+
+export interface FleetGraphOnDemandResumeRequest {
+  thread_id: string;
+  decision: FleetGraphResumeDecision;
+}
+
 export type FleetGraphSignalSeverity = 'info' | 'warning' | 'action';
 
 export type FleetGraphDerivedSignalsSeverity = 'none' | FleetGraphSignalSeverity;
@@ -81,6 +92,42 @@ export interface FleetGraphDerivedSignals {
 export interface FleetGraphOnDemandFinding {
   summary: string;
   severity: FleetGraphDerivedSignalsSeverity;
+}
+
+export interface FleetGraphOnDemandReasoning {
+  summary: string;
+  evidence: string[];
+  whyNow: string | null;
+  recommendedNextStep: string | null;
+  confidence: 'low' | 'medium' | 'high';
+}
+
+export type FleetGraphOnDemandActionType =
+  | 'draft_follow_up_comment'
+  | 'draft_escalation_comment';
+
+export interface FleetGraphOnDemandProposedAction {
+  type: FleetGraphOnDemandActionType;
+  targetId: string | null;
+  summary: string;
+  rationale: string;
+  draftComment: string;
+  targetRoute: string | null;
+  fingerprint: string;
+}
+
+export interface FleetGraphOnDemandPendingApproval {
+  actionType: FleetGraphOnDemandActionType;
+  reason: string;
+  proposal: FleetGraphOnDemandProposedAction;
+}
+
+export interface FleetGraphOnDemandActionResult {
+  outcome: 'approved' | 'dismissed' | 'snoozed' | 'skipped';
+  summary: string;
+  note: string | null;
+  snoozedUntil: string | null;
+  executedCommentId: string | null;
 }
 
 export interface FleetGraphOnDemandFetchedEntity {
@@ -141,6 +188,7 @@ export interface FleetGraphOnDemandExpandedScope {
 }
 
 export interface FleetGraphOnDemandResponse {
+  threadId: string | null;
   status: string;
   stage: string | null;
   mode: string | null;
@@ -150,6 +198,10 @@ export interface FleetGraphOnDemandResponse {
   fetched: FleetGraphOnDemandFetchedPayloads;
   derivedSignals: FleetGraphDerivedSignals;
   finding: FleetGraphOnDemandFinding | null;
+  reasoning: FleetGraphOnDemandReasoning | null;
+  proposedAction: FleetGraphOnDemandProposedAction | null;
+  pendingApproval: FleetGraphOnDemandPendingApproval | null;
+  actionResult: FleetGraphOnDemandActionResult | null;
   error: {
     code?: string;
     message?: string;

@@ -5,7 +5,7 @@ import { getFleetGraphRuntime } from '../runtime.js';
 import type { FleetGraphState } from '../state.js';
 import { createHandoff } from '../supervision.js';
 
-type DeriveSprintSignalsTargets = 'recordSignalFinding' | 'completeRun';
+type DeriveSprintSignalsTargets = 'recordSignalFinding' | 'reasonAboutSprint' | 'completeRun';
 
 export async function deriveSprintSignalsNode(
   state: FleetGraphState,
@@ -24,7 +24,9 @@ export async function deriveSprintSignalsNode(
 
   const nextTarget: DeriveSprintSignalsTargets = derivedSignals.shouldSurface
     ? 'recordSignalFinding'
-    : 'completeRun';
+    : state.mode === 'on_demand'
+      ? 'reasonAboutSprint'
+      : 'completeRun';
 
   runtime.logger.info('FleetGraph deterministic signals derived', {
     weekId: state.expandedScope.weekId,
@@ -43,7 +45,9 @@ export async function deriveSprintSignalsNode(
         nextTarget,
         derivedSignals.shouldSurface
           ? 'deterministic sprint signals found a condition worth surfacing'
-          : 'deterministic sprint signals found nothing worth surfacing'
+          : state.mode === 'on_demand'
+            ? 'deterministic signals are quiet, but on-demand mode still needs an explanation'
+            : 'deterministic sprint signals found nothing worth surfacing'
       ),
     },
   });

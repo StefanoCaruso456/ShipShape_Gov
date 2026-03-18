@@ -6,7 +6,7 @@ import type {
   FleetGraphOnDemandResponse,
 } from '@ship/shared';
 import { cn } from '@/lib/cn';
-import { invokeFleetGraphOnDemand } from '@/lib/fleetgraph';
+import { invokeFleetGraphOnDemand, resumeFleetGraphOnDemand } from '@/lib/fleetgraph';
 import { useFleetGraphActiveView } from '@/hooks/useFleetGraphActiveView';
 
 const DEFAULT_QUESTION = 'Why is this sprint at risk?';
@@ -78,6 +78,7 @@ function buildSummary(result: FleetGraphOnDemandResponse | null): string | null 
   }
 
   return (
+    result?.reasoning?.summary ??
     result.finding?.summary ??
     result.derivedSignals.summary ??
     "FleetGraph doesn't see a meaningful sprint-risk signal on this view right now."
@@ -185,6 +186,38 @@ export function FleetGraphOnDemandPanel({
   const summary = buildSummary(result);
   const responseError = result?.error?.message ?? null;
   const contextSummary = buildContextSummary(activeView, result);
+  const pendingApproval = result?.pendingApproval ?? null;
+
+  const handleDecision = useCallback(
+    async (outcome: 'approve' | 'dismiss' | 'snooze') => {
+      if (!result?.threadId || isRunning) {
+        return;
+      }
+
+      setIsRunning(true);
+      setError(null);
+
+      try {
+        const response = await resumeFleetGraphOnDemand({
+          thread_id: result.threadId,
+          decision: {
+            outcome,
+            snooze_minutes: outcome === 'snooze' ? 240 : null,
+          },
+        });
+        setResult(response);
+      } catch (resumeError) {
+        const message =
+          resumeError instanceof Error
+            ? resumeError.message
+            : 'FleetGraph could not finish the approval flow.';
+        setError(message);
+      } finally {
+        setIsRunning(false);
+      }
+    },
+    [isRunning, result]
+  );
 
   return (
     <section className="border-b border-border px-4 py-3">
@@ -257,6 +290,15 @@ export function FleetGraphOnDemandPanel({
               <div className="rounded-lg border border-border/60 bg-background/60 px-4 py-3">
                 <div className="text-[11px] uppercase tracking-wide text-muted">FleetGraph answer</div>
                 <p className="mt-2 text-sm leading-6 text-foreground">{summary}</p>
+                {result?.reasoning?.whyNow && (
+                  <p className="mt-3 text-xs leading-5 text-muted">{result.reasoning.whyNow}</p>
+                )}
+                {result?.reasoning?.recommendedNextStep && (
+                  <div className="mt-3 rounded-md border border-border/60 bg-background/70 px-3 py-2">
+                    <div className="text-[11px] uppercase tracking-wide text-muted">Recommended next step</div>
+                    <p className="mt-1 text-sm text-foreground">{result.reasoning.recommendedNextStep}</p>
+                  </div>
+                )}
               </div>
 
               <div className="grid gap-2 md:grid-cols-4">
@@ -286,6 +328,80 @@ export function FleetGraphOnDemandPanel({
                       <SignalItem key={signal.dedupeKey} signal={signal} />
                     ))}
                   </div>
+                </div>
+              )}
+
+              {result?.reasoning?.evidence && result.reasoning.evidence.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[11px] uppercase tracking-wide text-muted">Grounding evidence</div>
+                  <ul className="space-y-1 text-sm text-muted">
+                    {result.reasoning.evidence.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {result?.proposedAction && (
+                <div className="rounded-lg border border-border/60 bg-background/60 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-wide text-muted">Proposed action</div>
+                  <p className="mt-2 text-sm text-foreground">{result.proposedAction.summary}</p>
+                  <p className="mt-2 text-xs leading-5 text-muted">{result.proposedAction.rationale}</p>
+                  <div className="mt-3 rounded-md border border-border/60 bg-background/70 px-3 py-2">
+                    <div className="text-[11px] uppercase tracking-wide text-muted">Draft comment</div>
+                    <p className="mt-1 text-sm leading-6 text-foreground">{result.proposedAction.draftComment}</p>
+                  </div>
+
+                  {pendingApproval && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleDecision('approve')}
+                        disabled={isRunning}
+                        className={cn(
+                          'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                          isRunning
+                            ? 'cursor-not-allowed bg-border/70 text-muted'
+                            : 'bg-accent text-white hover:bg-accent/90'
+                        )}
+                      >
+                        Approve and post
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDecision('dismiss')}
+                        disabled={isRunning}
+                        className={cn(
+                          'rounded-md border px-3 py-1.5 text-sm font-medium transition-colors',
+                          isRunning
+                            ? 'cursor-not-allowed border-border/50 text-muted'
+                            : 'border-border text-foreground hover:bg-background/80'
+                        )}
+                      >
+                        Dismiss
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDecision('snooze')}
+                        disabled={isRunning}
+                        className={cn(
+                          'rounded-md border px-3 py-1.5 text-sm font-medium transition-colors',
+                          isRunning
+                            ? 'cursor-not-allowed border-border/50 text-muted'
+                            : 'border-border text-foreground hover:bg-background/80'
+                        )}
+                      >
+                        Snooze 4h
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {result?.actionResult && (
+                <div className="rounded-lg border border-border/60 bg-background/60 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-wide text-muted">Action outcome</div>
+                  <p className="mt-2 text-sm text-foreground">{result.actionResult.summary}</p>
                 </div>
               )}
             </div>

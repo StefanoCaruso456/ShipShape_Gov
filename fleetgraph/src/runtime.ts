@@ -1,6 +1,12 @@
 import { randomUUID } from 'crypto';
 import type Anthropic from '@anthropic-ai/sdk';
 import type { RunnableConfig } from '@langchain/core/runnables';
+import type {
+  FleetGraphActionMemoryRecord,
+  FleetGraphHumanDecision,
+  FleetGraphProposedAction,
+  FleetGraphReasoning,
+} from './types.js';
 
 export interface FleetGraphLogger {
   debug(message: string, meta?: Record<string, unknown>): void;
@@ -19,9 +25,54 @@ export interface FleetGraphShipApiClient {
   post<T>(path: string, body?: unknown, init?: RequestInit): Promise<T>;
 }
 
+export interface FleetGraphReasoningService {
+  reasonAboutSprint(input: {
+    activeViewRoute: string | null;
+    question: string | null;
+    findingSummary: string | null;
+    derivedSignals: {
+      severity: string;
+      summary: string | null;
+      reasons: string[];
+      metrics: Record<string, unknown>;
+      signals: Array<{
+        kind: string;
+        severity: string;
+        summary: string;
+        evidence: string[];
+      }>;
+    };
+    fetched: Record<string, unknown>;
+  }): Promise<FleetGraphReasoning | null>;
+}
+
+export interface FleetGraphActionMemoryStore {
+  getLatestDecision(input: {
+    workspaceId: string;
+    weekId: string;
+    actorUserId: string;
+    actionFingerprint: string;
+    now: Date;
+  }): Promise<FleetGraphActionMemoryRecord | null>;
+  recordDecision(input: {
+    workspaceId: string;
+    weekId: string;
+    actorUserId: string;
+    actionFingerprint: string;
+    actionType: FleetGraphProposedAction['type'];
+    proposalSummary: string;
+    draftComment: string;
+    decision: FleetGraphHumanDecision;
+    now: Date;
+    executedCommentId?: string | null;
+  }): Promise<FleetGraphActionMemoryRecord>;
+}
+
 export interface FleetGraphRuntimeContext {
   shipApi: FleetGraphShipApiClient;
   claude: Anthropic | null;
+  reasoner: FleetGraphReasoningService | null;
+  actionMemory: FleetGraphActionMemoryStore | null;
   langSmithEnabled: boolean;
   logger: FleetGraphLogger;
   cache: FleetGraphCache | null;
@@ -64,6 +115,8 @@ export function createFleetGraphRuntime(
   return {
     shipApi: overrides.shipApi ?? noopShipApi,
     claude: overrides.claude ?? null,
+    reasoner: overrides.reasoner ?? null,
+    actionMemory: overrides.actionMemory ?? null,
     langSmithEnabled:
       overrides.langSmithEnabled ??
       (process.env.LANGCHAIN_TRACING_V2 === 'true' &&

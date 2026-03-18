@@ -21,6 +21,12 @@ The MVP is intentionally narrow.
 - **On-demand MVP question**: why is this sprint at risk?
 - **First human-in-the-loop boundary**: FleetGraph may draft an escalation or follow-up recommendation, but it must pause before notifying or persisting that action
 
+Current MVP implementation of that boundary:
+
+- FleetGraph prepares a draft sprint comment
+- the human can approve, dismiss, or snooze
+- only approval allows the comment mutation to execute
+
 This is the smallest slice that still proves:
 
 - two modes

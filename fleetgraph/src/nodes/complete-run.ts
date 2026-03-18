@@ -22,6 +22,6 @@ export async function completeRunNode(
 
   return {
     status: 'completed',
-    stage: 'completed',
+    stage: state.stage ?? 'completed',
   };
 }
