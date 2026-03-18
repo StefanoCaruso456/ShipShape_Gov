@@ -592,6 +592,26 @@ This is the broader product opportunity and a major differentiator, but it shoul
 
 Close the loop on delivery requirements and prove the system works.
 
+### Incremental closeout plan
+
+Treat the remaining work as four explicit sub-steps:
+
+1. **Phase 9A: Evidence readiness**
+   - normalize runtime data so healthy runs can exit quietly
+   - keep at least one clearly flagged path intact
+   - rerun local evidence capture until both quiet and flagged runs exist
+2. **Phase 9B: LangSmith trace capture**
+   - export LangSmith tracing env vars
+   - rerun evidence capture in a traced environment
+   - save at least two shared trace links with different execution paths
+3. **Phase 9C: Public deployment**
+   - deploy both API and frontend with the FleetGraph branch
+   - do not count a public URL as complete unless the FleetGraph API routes are live
+4. **Phase 9D: Public verification and packaging**
+   - rerun the public verification harness
+   - attach evidence bundle outputs and trace links
+   - close the checklist only after both requirements above are objectively green
+
 ### What we have implemented so far
 
 - evidence harness script for local FleetGraph capture
@@ -609,6 +629,21 @@ Close the loop on delivery requirements and prove the system works.
 - quiet-path evidence from the current seed state or a traced healthy scenario
 - deployment verification with FleetGraph routes live
 - public URL proof for a FleetGraph-enabled environment
+
+### Current blockers
+
+- local quiet-path evidence is not yet captured reliably
+- this shell has no LangSmith tracing env configured
+- public Ship is reachable, but FleetGraph routes are not live on the deployed environments
+
+### Current status by sub-step
+
+| Sub-step | Status | Notes |
+|---|---|---|
+| Phase 9A: Evidence readiness | in progress | quiet-path evidence is still being closed; first fix is issue-state normalization in the Claude review/retro context |
+| Phase 9B: LangSmith trace capture | blocked by env | no tracing env vars are configured in this shell |
+| Phase 9C: Public deployment | not started | public Ship exists, but deployed FleetGraph routes are missing |
+| Phase 9D: Public verification and packaging | in progress | verification harness exists, but the final green run is not available yet |
 
 ### Why this phase matters
 
@@ -641,15 +676,21 @@ Build in this order:
 The next slice we should execute is:
 
 1. **Finish Phase 9**
-   - rerun the evidence harness with LangSmith enabled
-   - capture and save shared LangSmith traces for:
+   - complete Phase 9A:
+     - rerun local evidence capture after the issue-state normalization fix
+     - confirm both quiet and flagged runs can be produced
+   - complete Phase 9B:
+     - rerun the evidence harness with LangSmith enabled
+     - capture and save shared LangSmith traces for:
      - quiet path
      - flagged path
      - interrupt / resume path
-   - deploy the FleetGraph branch to a public Ship environment
-   - rerun deployed verification:
+   - complete Phase 9C:
+     - deploy the FleetGraph branch to a public Ship environment
+   - complete Phase 9D:
+     - rerun deployed verification:
      - [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
-   - package final runtime evidence
+     - package final runtime evidence
 2. **Then Phase 8**
    - extend beyond sprint risk into:
      - capacity

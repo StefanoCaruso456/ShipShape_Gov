@@ -80,3 +80,55 @@ Closeout order:
 2. rerun the evidence harness and save shared trace links
 3. deploy the FleetGraph branch to a public Ship environment
 4. rerun the requirement verification harness
+
+## Incremental closeout plan
+
+### Phase 9A: Evidence readiness
+
+Goal:
+
+- ensure we can capture both quiet and flagged runs reliably against real Ship data
+
+Current focus:
+
+- normalize issue progress reads in the Claude review/retro context so seeded issue state maps correctly into FleetGraph signals
+
+Exit criteria:
+
+- local evidence harness captures a quiet path
+- local evidence harness still captures a flagged path
+
+### Phase 9B: LangSmith trace capture
+
+Goal:
+
+- collect the trace links required for submission
+
+Exit criteria:
+
+- tracing env is enabled
+- at least two shared trace links are saved
+- links show different execution paths
+
+### Phase 9C: Public deployment
+
+Goal:
+
+- make FleetGraph reachable on a public Ship environment
+
+Exit criteria:
+
+- API and frontend are deployed together
+- public FleetGraph routes respond as real API routes, not `Cannot POST` or SPA fallback
+
+### Phase 9D: Public verification and packaging
+
+Goal:
+
+- package the final evidence bundle with objective verification
+
+Exit criteria:
+
+- public verification harness is green
+- trace links are attached
+- evidence bundle is ready for submission
