@@ -1,0 +1,6 @@
+interface:
+  display_name: FleetGraph Reasoning
+  short_description: Improve grounded FleetGraph reasoning and deterministic fallbacks.
+  default_prompt: Improve FleetGraph sprint-risk reasoning while keeping it grounded in Active View Context, fetched evidence, and deterministic signals.
+policy:
+  allow_implicit_invocation: true

@@ -125,6 +125,35 @@ FleetGraph must always ask for human approval before:
 - notifying people beyond the directly responsible chain
 - approving or requesting changes on formal review workflows
 
+## Skills, Tools, and Actions
+
+FleetGraph uses three layers:
+
+1. graph state and rules
+2. a bounded action catalog
+3. runtime-owned executors
+
+The model should never see raw backend freedom.
+
+Current bounded action catalog:
+
+- `draft_follow_up_comment`
+- `draft_escalation_comment`
+
+Current design rules:
+
+- reasoning skills help the model interpret sprint evidence
+- action definitions stay typed and schema-first
+- runtime executors own real mutations
+- consequential actions stay behind HITL
+
+Current references:
+
+- [fleetgraph-skills-and-tools.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-skills-and-tools.md)
+- [catalog.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/fleetgraph/src/actions/catalog.ts)
+- [.agents/skills/fleetgraph-reasoning/SKILL.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/.agents/skills/fleetgraph-reasoning/SKILL.md)
+- [.agents/skills/fleetgraph-action-catalog/SKILL.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/.agents/skills/fleetgraph-action-catalog/SKILL.md)
+
 ## Trigger Model
 
 FleetGraph uses a **hybrid trigger model**.
@@ -176,6 +205,57 @@ That means:
 - high-signal Ship mutation trigger
 - webhook or pub/sub style delivery
 - direct event-to-graph invocation for important changes
+
+## Runtime Guardrails and Telemetry
+
+FleetGraph now tracks runtime durability explicitly in graph state.
+
+Current hardening fields include:
+
+- attempt counters for reasoning, resume, and action execution
+- transition budget and retry budget
+- run start time, last-node time, and deadline time
+- last-node and compact node history
+- reasoning source:
+  - `deterministic`
+  - `model`
+- suppression reason:
+  - `approved_before`
+  - `dismissed_before`
+  - `snoozed`
+- terminal outcomes:
+  - `quiet`
+  - `finding_only`
+  - `waiting_on_human`
+  - `action_executed`
+  - `suppressed`
+  - `failed_retryable`
+  - `failed_terminal`
+
+Current guardrail behavior:
+
+- hard stop if transition count exceeds budget
+- hard stop if resume count exceeds budget
+- deterministic fallback when reasoning retries exceed budget
+- retry classification only for retryable failures
+- deadline-based timeout classification
+
+Current telemetry model:
+
+- one top-level Braintrust span per FleetGraph invoke or resume
+- child spans for:
+  - fetch
+  - signal derivation
+  - reasoning
+  - HITL pause / resume
+  - action execution
+- per-node latency tracked in compact node history
+
+Current telemetry references:
+
+- [fleetgraph-telemetry.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api/src/services/fleetgraph-telemetry.ts)
+- [node-runtime.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/fleetgraph/src/node-runtime.ts)
+- [outcomes.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/fleetgraph/src/outcomes.ts)
 
 ## Use Cases
 

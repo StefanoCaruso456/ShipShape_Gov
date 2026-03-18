@@ -1,6 +1,10 @@
 import { Command } from '@langchain/langgraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
-import { getFleetGraphRuntime } from '../runtime.js';
+import {
+  beginFleetGraphNode,
+  createFleetGraphCommand,
+  createFleetGraphFailureCommand,
+} from '../node-runtime.js';
 import type { FleetGraphState } from '../state.js';
 import type {
   FleetGraphActivitySnapshot,
@@ -9,7 +13,7 @@ import type {
   FleetGraphSprintEntitySnapshot,
   FleetGraphSprintReviewContextSnapshot,
 } from '../types.js';
-import { createHandoff, createIntervention } from '../supervision.js';
+import { createHandoff } from '../supervision.js';
 
 type FetchSprintContextTargets = 'deriveSprintSignals' | 'completeRun' | 'fallback';
 
@@ -17,21 +21,31 @@ export async function fetchSprintContextNode(
   state: FleetGraphState,
   config?: RunnableConfig
 ): Promise<Command<FetchSprintContextTargets>> {
-  const runtime = getFleetGraphRuntime(config);
+  const started = beginFleetGraphNode(state, config, {
+    nodeName: 'fetchSprintContext',
+    phase: 'fetch',
+    guardFailureTarget: 'fallback',
+  });
+  const runtime = started.runtime;
+
+  if ('command' in started) {
+    return started.command;
+  }
   const sprintId = state.expandedScope.weekId;
 
   if (!sprintId) {
-    return new Command({
-      goto: 'completeRun',
-      update: {
+    return createFleetGraphCommand(
+      started.context,
+      'completeRun',
+      {
         stage: 'fetch_sprint_context_skipped',
         handoff: createHandoff(
           'fetchSprintContext',
           'completeRun',
           'no sprint scope available for phase-two fetch'
         ),
-      },
-    });
+      }
+    );
   }
 
   runtime.logger.info('Fetching FleetGraph sprint context', {
@@ -56,9 +70,10 @@ export async function fetchSprintContextNode(
       accountableId: entity.accountable_id ?? null,
     };
 
-    return new Command({
-      goto: 'deriveSprintSignals',
-      update: {
+    return createFleetGraphCommand(
+      started.context,
+      'deriveSprintSignals',
+      {
         stage: 'sprint_context_fetched',
         expandedScope: {
           ...state.expandedScope,
@@ -86,8 +101,8 @@ export async function fetchSprintContextNode(
           'deriveSprintSignals',
           'fetched sprint context from Ship REST APIs'
         ),
-      },
-    });
+      }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown FleetGraph sprint fetch failure';
 
@@ -96,25 +111,16 @@ export async function fetchSprintContextNode(
       message,
     });
 
-    return new Command({
+    return createFleetGraphFailureCommand(started.context, {
       goto: 'fallback',
-      update: {
-        status: 'failed',
-        stage: 'fetch_sprint_context',
-        error: {
-          code: 'SPRINT_CONTEXT_FETCH_FAILED',
-          message,
-          retryable: true,
-          source: 'fetchSprintContext',
-        },
-        interventions: [
-          createIntervention(
-            'retry',
-            'Sprint context fetch failed while loading Ship REST context',
-            'fetch_sprint_context'
-          ),
-        ],
+      stage: 'fetch_sprint_context',
+      error: {
+        code: 'SPRINT_CONTEXT_FETCH_FAILED',
+        message,
+        retryable: true,
+        source: 'fetchSprintContext',
       },
+      reason: 'Sprint context fetch failed while loading Ship REST context',
     });
   }
 }

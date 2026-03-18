@@ -104,7 +104,16 @@ function buildOnDemandResponse(result: FleetGraphInvokeResult, threadId: string 
     proposedAction: result.proposedAction,
     pendingApproval,
     actionResult: result.actionResult,
+    attempts: result.attempts,
+    guard: result.guard,
+    timing: result.timing,
+    reasoningSource: result.reasoningSource,
+    suppressionReason: result.suppressionReason,
+    terminalOutcome: isInterrupted ? 'waiting_on_human' : result.terminalOutcome,
     error: result.error,
+    lastNode: result.lastNode,
+    nodeHistory: result.nodeHistory,
+    telemetry: result.telemetry,
     trace: result.trace,
   };
 }

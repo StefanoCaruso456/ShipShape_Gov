@@ -1,17 +1,27 @@
 import { Command } from '@langchain/langgraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import { buildSprintActionProposal } from '../actions/propose-sprint-action.js';
-import { getFleetGraphRuntime } from '../runtime.js';
+import { getFleetGraphActionDefinition } from '../actions/catalog.js';
+import { beginFleetGraphNode, createFleetGraphCommand } from '../node-runtime.js';
 import type { FleetGraphState } from '../state.js';
 import { createHandoff } from '../supervision.js';
 
-type ProposeSprintActionTargets = 'humanApprovalGate' | 'completeRun';
+type ProposeSprintActionTargets = 'humanApprovalGate' | 'completeRun' | 'fallback';
 
 export async function proposeSprintActionNode(
   state: FleetGraphState,
   config?: RunnableConfig
 ): Promise<Command<ProposeSprintActionTargets>> {
-  const runtime = getFleetGraphRuntime(config);
+  const started = beginFleetGraphNode(state, config, {
+    nodeName: 'proposeSprintAction',
+    phase: 'action',
+    guardFailureTarget: 'fallback',
+  });
+  const runtime = started.runtime;
+
+  if ('command' in started) {
+    return started.command;
+  }
   const proposedAction = buildSprintActionProposal({
     activeView: state.activeView,
     weekId: state.expandedScope.weekId,
@@ -26,11 +36,13 @@ export async function proposeSprintActionNode(
     !state.expandedScope.weekId ||
     !state.actor?.id
   ) {
-    return new Command({
-      goto: 'completeRun',
-      update: {
+    return createFleetGraphCommand(
+      started.context,
+      'completeRun',
+      {
         stage: 'action_not_proposed',
         proposedAction: null,
+        pendingApproval: null,
         handoff: createHandoff(
           'proposeSprintAction',
           'completeRun',
@@ -38,8 +50,8 @@ export async function proposeSprintActionNode(
             ? 'skipped action proposal because required actor or scope data is missing'
             : 'signals and reasoning did not produce a follow-up action'
         ),
-      },
-    });
+      }
+    );
   }
 
   if (runtime.actionMemory) {
@@ -64,11 +76,19 @@ export async function proposeSprintActionNode(
             ? 'FleetGraph is not re-proposing this action because you already dismissed the same draft.'
             : 'FleetGraph is respecting the active snooze window for this draft action.';
 
-        return new Command({
-          goto: 'completeRun',
-          update: {
+        return createFleetGraphCommand(
+          started.context,
+          'completeRun',
+          {
             stage: 'action_suppressed_by_memory',
             proposedAction: null,
+            pendingApproval: null,
+            suppressionReason:
+              existingDecision.status === 'approved'
+                ? 'approved_before'
+                : existingDecision.status === 'dismissed'
+                  ? 'dismissed_before'
+                  : 'snoozed',
             actionResult: {
               outcome: 'skipped',
               summary,
@@ -81,22 +101,30 @@ export async function proposeSprintActionNode(
               'completeRun',
               'suppressed action proposal using stored human decisions'
             ),
-          },
-        });
+          }
+        );
       }
     }
   }
 
-  return new Command({
-    goto: 'humanApprovalGate',
-    update: {
+  const actionDefinition = getFleetGraphActionDefinition(proposedAction.type);
+
+  return createFleetGraphCommand(
+    started.context,
+    'humanApprovalGate',
+    {
       stage: 'action_proposed',
       proposedAction,
+      pendingApproval: {
+        actionType: actionDefinition.type,
+        reason: proposedAction.summary,
+        proposal: proposedAction,
+      },
       handoff: createHandoff(
         'proposeSprintAction',
         'humanApprovalGate',
         'prepared a draft action that needs human approval before mutation'
       ),
-    },
-  });
+    }
+  );
 }

@@ -21,13 +21,13 @@ export function createFleetGraph() {
       ends: ['initializeProactiveContext', 'initializeOnDemandContext', 'fallback'],
     })
     .addNode('initializeProactiveContext', initializeProactiveContextNode, {
-      ends: ['resolveContext'],
+      ends: ['resolveContext', 'fallback'],
     })
     .addNode('initializeOnDemandContext', initializeOnDemandContextNode, {
       ends: ['resolveContext', 'fallback'],
     })
     .addNode('resolveContext', resolveContextNode, {
-      ends: ['fetchSprintContext', 'resolveWeekScope', 'completeRun'],
+      ends: ['fetchSprintContext', 'resolveWeekScope', 'completeRun', 'fallback'],
     })
     .addNode('resolveWeekScope', resolveWeekScopeNode, {
       ends: ['fetchSprintContext', 'completeRun', 'fallback'],
@@ -36,19 +36,19 @@ export function createFleetGraph() {
       ends: ['deriveSprintSignals', 'completeRun', 'fallback'],
     })
     .addNode('deriveSprintSignals', deriveSprintSignalsNode, {
-      ends: ['recordSignalFinding', 'reasonAboutSprint', 'completeRun'],
+      ends: ['recordSignalFinding', 'reasonAboutSprint', 'completeRun', 'fallback'],
     })
     .addNode('recordSignalFinding', recordSignalFindingNode, {
-      ends: ['reasonAboutSprint', 'completeRun'],
+      ends: ['reasonAboutSprint', 'completeRun', 'fallback'],
     })
     .addNode('reasonAboutSprint', reasonAboutSprintNode, {
       ends: ['proposeSprintAction', 'completeRun', 'fallback'],
     })
     .addNode('proposeSprintAction', proposeSprintActionNode, {
-      ends: ['humanApprovalGate', 'completeRun'],
+      ends: ['humanApprovalGate', 'completeRun', 'fallback'],
     })
     .addNode('humanApprovalGate', humanApprovalGateNode, {
-      ends: ['executeProposedAction', 'completeRun'],
+      ends: ['executeProposedAction', 'completeRun', 'fallback'],
     })
     .addNode('executeProposedAction', executeProposedActionNode, {
       ends: ['completeRun', 'fallback'],

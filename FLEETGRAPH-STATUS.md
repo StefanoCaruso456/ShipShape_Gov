@@ -37,6 +37,19 @@ Both modes use the same graph.
 - draft follow-up and escalation action proposals
 - HITL interrupt / resume path with approve, dismiss, and snooze
 - action memory for suppression after approval, dismiss, or snooze
+- bounded action catalog with strict schemas
+- reasoning-source tracking:
+  - `deterministic`
+  - `model`
+- runtime guardrails:
+  - transition budget
+  - retry budget
+  - resume budget
+  - deadline budget
+- compact node history and per-node latency tracking
+- terminal outcome classification
+- Braintrust top-level and child-span telemetry
+- FleetGraph reasoning and action-catalog skills
 - proactive sweep route
 - env-gated proactive worker
 - finding persistence
@@ -48,7 +61,9 @@ Both modes use the same graph.
 
 - full conversational FleetGraph chat UI
 - wider issue / program / dashboard surface coverage
-- Phase 7 durability and failure-hardening work
+- high-signal mutation trigger / pub-sub delivery path
+- real LangSmith trace-link evidence bundle
+- populated `langsmithRunId` in FleetGraph runtime state
 - deployment evidence and LangSmith submission package
 
 ## Phase summary
@@ -118,6 +133,26 @@ Built the first reasoning and HITL slice:
   - post a sprint comment
 - action memory for suppression after prior human decisions
 
+### Phase 7
+
+Built runtime hardening for the MVP slice:
+
+- attempt counters for reasoning, resume, and action execution
+- transition, retry, and deadline guardrails
+- deterministic fallback when reasoning exceeds budget
+- hard-stop protection for over-transition and over-resume loops
+- terminal outcome classes:
+  - `quiet`
+  - `finding_only`
+  - `waiting_on_human`
+  - `action_executed`
+  - `suppressed`
+  - `failed_retryable`
+  - `failed_terminal`
+- per-node latency telemetry and compact node trace history
+- Braintrust top-level and child-span instrumentation
+- bounded action catalog and FleetGraph reasoning/action skills
+
 ## Current page-awareness technique
 
 Implemented today:
@@ -156,16 +191,21 @@ Still planned:
 
 ## Recommended next step
 
-Start Phase 7 and harden the new Phase 6 loop:
+Choose one of these next, depending on priority:
 
-- durable interrupt / resume behavior beyond the current MVP slice
-- wider action-memory rules and replay safety
-- stronger failure classification around reasoning and action execution
-- broader surface coverage after the core loop is stable
+- **Phase 9 first** if the goal is MVP proof and submission readiness:
+  - LangSmith trace links
+  - deployment verification
+  - final evidence bundle
+- **Phase 8 first** if the goal is product expansion:
+  - planning intelligence
+  - capacity / scope / dependency signals
+  - broader portfolio reasoning
 
 ## Best reference files
 
 - [FLEETGRAPH.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/FLEETGRAPH.md)
+- [fleetgraph-skills-and-tools.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-skills-and-tools.md)
 - [ROADMAP.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/ROADMAP.md)
 - [fleetgraph-phases/README.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/fleetgraph-phases/README.md)
 - [fleetgraph-three-layer-architecture.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-three-layer-architecture.md)

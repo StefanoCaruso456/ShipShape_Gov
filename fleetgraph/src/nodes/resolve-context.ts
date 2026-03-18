@@ -1,16 +1,29 @@
 import { Command } from '@langchain/langgraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
-import { getFleetGraphRuntime } from '../runtime.js';
+import { beginFleetGraphNode, createFleetGraphCommand } from '../node-runtime.js';
 import type { FleetGraphState } from '../state.js';
 import { createHandoff } from '../supervision.js';
 
-type ResolveContextTargets = 'fetchSprintContext' | 'resolveWeekScope' | 'completeRun';
+type ResolveContextTargets =
+  | 'fetchSprintContext'
+  | 'resolveWeekScope'
+  | 'completeRun'
+  | 'fallback';
 
 export async function resolveContextNode(
   state: FleetGraphState,
   config?: RunnableConfig
 ): Promise<Command<ResolveContextTargets>> {
-  const runtime = getFleetGraphRuntime(config);
+  const started = beginFleetGraphNode(state, config, {
+    nodeName: 'resolveContext',
+    phase: 'context',
+    guardFailureTarget: 'fallback',
+  });
+  const runtime = started.runtime;
+
+  if ('command' in started) {
+    return started.command;
+  }
 
   runtime.logger.debug('Resolving FleetGraph context scope', {
     mode: state.mode,
@@ -45,9 +58,10 @@ export async function resolveContextNode(
       ? 'resolveWeekScope'
       : 'completeRun';
 
-  return new Command({
-    goto: nextTarget,
-    update: {
+  return createFleetGraphCommand(
+    started.context,
+    nextTarget,
+    {
       stage: 'context_resolved',
       expandedScope,
       handoff: createHandoff(
@@ -59,6 +73,6 @@ export async function resolveContextNode(
             ? 'resolved non-week scope that needs sprint lookup'
             : 'resolved non-sprint scope without additional phase-two fetch'
       ),
-    },
-  });
+    }
+  );
 }

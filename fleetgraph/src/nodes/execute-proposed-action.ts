@@ -1,9 +1,14 @@
 import { randomUUID } from 'crypto';
 import { Command } from '@langchain/langgraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
-import { getFleetGraphRuntime } from '../runtime.js';
+import { getFleetGraphActionDefinition } from '../actions/catalog.js';
+import {
+  beginFleetGraphNode,
+  createFleetGraphCommand,
+  createFleetGraphFailureCommand,
+} from '../node-runtime.js';
 import type { FleetGraphState } from '../state.js';
-import { createHandoff, createIntervention } from '../supervision.js';
+import { createHandoff } from '../supervision.js';
 
 type ExecuteProposedActionTargets = 'completeRun' | 'fallback';
 
@@ -11,13 +16,27 @@ export async function executeProposedActionNode(
   state: FleetGraphState,
   config?: RunnableConfig
 ): Promise<Command<ExecuteProposedActionTargets>> {
-  const runtime = getFleetGraphRuntime(config);
+  const started = beginFleetGraphNode(state, config, {
+    nodeName: 'executeProposedAction',
+    phase: 'action',
+    guardFailureTarget: 'fallback',
+  });
+  const runtime = started.runtime;
+
+  if ('command' in started) {
+    return started.command;
+  }
 
   if (!state.proposedAction?.targetId) {
-    return new Command({
-      goto: 'completeRun',
-      update: {
+    return createFleetGraphCommand(
+      started.context,
+      'completeRun',
+      {
         stage: 'action_execution_skipped',
+        attempts: {
+          ...state.attempts,
+          actionExecution: state.attempts.actionExecution + 1,
+        },
         actionResult: {
           outcome: 'skipped',
           summary: 'FleetGraph skipped action execution because no valid target was available.',
@@ -30,11 +49,14 @@ export async function executeProposedActionNode(
           'completeRun',
           'skipped execution because the action target is missing'
         ),
-      },
-    });
+      }
+    );
   }
 
   try {
+    const actionExecutionAttempts = state.attempts.actionExecution + 1;
+    const actionDefinition = getFleetGraphActionDefinition(state.proposedAction.type);
+
     const createdComment = await runtime.shipApi.post<{ id: string }>(
       `/api/documents/${state.proposedAction.targetId}/comments`,
       {
@@ -65,14 +87,22 @@ export async function executeProposedActionNode(
       });
     }
 
-    return new Command({
-      goto: 'completeRun',
-      update: {
+    return createFleetGraphCommand(
+      started.context,
+      'completeRun',
+      {
         status: 'completed',
         stage: 'action_executed',
+        attempts: {
+          ...state.attempts,
+          actionExecution: actionExecutionAttempts,
+        },
         actionResult: {
           outcome: 'approved',
-          summary: 'FleetGraph posted the approved draft comment to the sprint document.',
+          summary:
+            actionDefinition.executor === 'post_comment'
+              ? 'FleetGraph posted the approved draft comment to the sprint document.'
+              : 'FleetGraph executed the approved action.',
           note: null,
           snoozedUntil: null,
           executedCommentId: createdComment.id,
@@ -82,34 +112,32 @@ export async function executeProposedActionNode(
           'completeRun',
           'executed the approved draft action against the sprint document'
         ),
-      },
-    });
+      }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown FleetGraph action execution failure';
+    const actionExecutionAttempts = state.attempts.actionExecution + 1;
 
     runtime.logger.error('FleetGraph action execution failed', {
       targetId: state.proposedAction.targetId,
       message,
     });
 
-    return new Command({
+    return createFleetGraphFailureCommand(started.context, {
       goto: 'fallback',
+      stage: 'execute_proposed_action',
+      error: {
+        code: 'PROPOSED_ACTION_EXECUTION_FAILED',
+        message,
+        retryable: true,
+        source: 'executeProposedAction',
+      },
+      reason: 'FleetGraph failed while executing the approved draft action',
       update: {
-        status: 'failed',
-        stage: 'execute_proposed_action',
-        error: {
-          code: 'PROPOSED_ACTION_EXECUTION_FAILED',
-          message,
-          retryable: true,
-          source: 'executeProposedAction',
+        attempts: {
+          ...state.attempts,
+          actionExecution: actionExecutionAttempts,
         },
-        interventions: [
-          createIntervention(
-            'retry',
-            'FleetGraph failed while executing the approved draft action',
-            'execute_proposed_action'
-          ),
-        ],
       },
     });
   }

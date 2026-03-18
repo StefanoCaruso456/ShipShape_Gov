@@ -6,6 +6,8 @@ import type {
   FleetGraphHumanDecision,
   FleetGraphProposedAction,
   FleetGraphReasoning,
+  FleetGraphReasoningSource,
+  FleetGraphSignalSeverity,
 } from './types.js';
 
 export interface FleetGraphLogger {
@@ -68,12 +70,56 @@ export interface FleetGraphActionMemoryStore {
   }): Promise<FleetGraphActionMemoryRecord>;
 }
 
+export interface FleetGraphGuardrailConfig {
+  maxTransitions: number;
+  maxRetries: number;
+  maxResumeCount: number;
+  maxReasoningAttempts: number;
+  deadlineMs: number;
+  maxNodeHistoryEntries: number;
+}
+
+export interface FleetGraphTelemetrySpanHandle {
+  id: string | null;
+}
+
+export interface FleetGraphTelemetryService {
+  getTopLevelSpanId(): string | null;
+  getLangSmithRunId(): string | null;
+  startNodeSpan(input: {
+    nodeName: string;
+    phase: string;
+    mode: string | null;
+    surface: string | null;
+    route: string | null;
+    entityType: string | null;
+    weekId: string | null;
+    projectId: string | null;
+    programId: string | null;
+    triggerType: string | null;
+  }): FleetGraphTelemetrySpanHandle | null;
+  finishNodeSpan(
+    span: FleetGraphTelemetrySpanHandle | null,
+    input: {
+      status: 'ok' | 'interrupted' | 'guardrail_stop' | 'error';
+      latencyMs: number;
+      signalSeverity: FleetGraphSignalSeverity | 'none' | null;
+      reasoningSource: FleetGraphReasoningSource | null;
+      actionOutcome: string | null;
+      errorClass: string | null;
+      metadata?: Record<string, unknown>;
+    }
+  ): void;
+}
+
 export interface FleetGraphRuntimeContext {
   shipApi: FleetGraphShipApiClient;
   claude: Anthropic | null;
   reasoner: FleetGraphReasoningService | null;
   actionMemory: FleetGraphActionMemoryStore | null;
   langSmithEnabled: boolean;
+  guardrails: FleetGraphGuardrailConfig;
+  telemetry: FleetGraphTelemetryService | null;
   logger: FleetGraphLogger;
   cache: FleetGraphCache | null;
   now(): Date;
@@ -109,6 +155,15 @@ const noopShipApi: FleetGraphShipApiClient = {
   },
 };
 
+const DEFAULT_GUARDRAILS: FleetGraphGuardrailConfig = {
+  maxTransitions: 24,
+  maxRetries: 2,
+  maxResumeCount: 2,
+  maxReasoningAttempts: 2,
+  deadlineMs: 2 * 60 * 1000,
+  maxNodeHistoryEntries: 40,
+};
+
 export function createFleetGraphRuntime(
   overrides: Partial<FleetGraphRuntimeContext> = {}
 ): FleetGraphRuntimeContext {
@@ -121,6 +176,8 @@ export function createFleetGraphRuntime(
       overrides.langSmithEnabled ??
       (process.env.LANGCHAIN_TRACING_V2 === 'true' &&
         Boolean(process.env.LANGCHAIN_API_KEY)),
+    guardrails: overrides.guardrails ?? DEFAULT_GUARDRAILS,
+    telemetry: overrides.telemetry ?? null,
     logger: overrides.logger ?? consoleLogger,
     cache: overrides.cache ?? null,
     now: overrides.now ?? (() => new Date()),
