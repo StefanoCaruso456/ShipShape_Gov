@@ -138,6 +138,26 @@ Still planned:
 - webhook or pub/sub style trigger path
 - direct event-to-graph invocation for important changes
 
+## Recommended next step
+
+Start Phase 6 on the surfaces that already work cleanly today:
+
+- week documents
+- project documents
+- My Week when one project is in scope
+
+The next implementation focus should be:
+
+- add the first reasoning node for:
+  - why is this sprint at risk?
+- add the first action proposal:
+  - draft follow-up
+  - draft escalation
+- add the first HITL path:
+  - approve
+  - dismiss
+  - snooze
+
 ## Best reference files
 
 - [FLEETGRAPH.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/FLEETGRAPH.md)
