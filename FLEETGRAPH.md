@@ -60,6 +60,18 @@ FleetGraph is not responsible for:
 - mutating project state without review
 - becoming a second source of truth outside Ship
 
+### Responsibility Answers
+
+| Question | Answer |
+|---|---|
+| What does this agent monitor proactively? | Active sprint drift. In MVP that means low or missing recent activity, stale or blocked work, missing standups, no completed work, work not started, missing review, and approval or review friction that puts sprint delivery at risk. |
+| What does it reason about when invoked on demand? | Why the sprint in the current view is at risk right now, which signals matter most, who should act next, and whether FleetGraph should prepare a follow-up or escalation draft. |
+| What can it do autonomously? | Resolve scope from the current view, fetch Ship REST data, derive and rank findings, explain likely causes, surface in-app findings, prepare a bounded draft action, and manage dedupe, snooze, and cooldown memory. |
+| What must it always ask a human about before acting? | Any consequential action: posting a persistent comment, notifying people beyond the directly responsible chain, changing issue or sprint state, or creating follow-up work. |
+| Who does it notify, and under what conditions? | Responsible owner first when a real sprint-risk finding is worth surfacing. Accountable person next if the risk is severe or unresolved. Manager or director only if the chain has stalled or the impact is cross-project. Informed roles only for high-signal summaries. |
+| How does it know who is on a project and what their role is? | From Ship REST data and the authenticated actor context. The graph uses sprint, project, program, and people context such as owner, assignee, accountable, and workspace role fields returned by Ship APIs. |
+| How does the on-demand mode use context from the current view? | The UI sends typed Active View Context: current route, surface, entity id, entity type, tab, and project scope. The graph uses that as the starting point, resolves it to the current sprint when needed, then reasons over fetched Ship evidence for that scope. |
+
 ## How the Two Modes Work
 
 FleetGraph operates in two modes through the **same graph architecture**.
