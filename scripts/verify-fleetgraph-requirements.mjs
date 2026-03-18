@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const DEFAULT_PUBLIC_URLS = [
@@ -11,6 +11,10 @@ const DEFAULT_PUBLIC_URLS = [
 const OUTPUT_DIR = path.resolve(
   process.cwd(),
   process.env.FLEETGRAPH_REQUIREMENTS_OUTPUT_DIR ?? 'audit-results/fleetgraph-requirements'
+);
+const EVIDENCE_SUMMARY_PATH = path.resolve(
+  process.cwd(),
+  process.env.FLEETGRAPH_EVIDENCE_SUMMARY_PATH ?? 'audit-results/fleetgraph-evidence/summary.json'
 );
 
 function parsePublicUrls() {
@@ -41,6 +45,34 @@ function getTracingReadiness() {
     projectName: projectName ?? null,
     readyForSharedTraces: tracingEnabled && apiKeyPresent,
   };
+}
+
+async function readEvidenceSummary() {
+  try {
+    const raw = await readFile(EVIDENCE_SUMMARY_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+
+    const capturedShareLinks = [
+      parsed?.quietRun?.langsmithShareUrl,
+      parsed?.flaggedRun?.langsmithShareUrl,
+      parsed?.hitlRun?.langsmithShareUrl,
+      parsed?.resumeRun?.langsmithShareUrl,
+    ].filter((value) => typeof value === 'string' && value.length > 0);
+
+    return {
+      path: EVIDENCE_SUMMARY_PATH,
+      capturedShareLinks,
+      sharedTraceCount: capturedShareLinks.length,
+      hasEnoughSharedTraces: capturedShareLinks.length >= 2,
+    };
+  } catch {
+    return {
+      path: EVIDENCE_SUMMARY_PATH,
+      capturedShareLinks: [],
+      sharedTraceCount: 0,
+      hasEnoughSharedTraces: false,
+    };
+  }
 }
 
 async function fetchText(url, options = {}) {
@@ -116,7 +148,7 @@ async function verifyPublicUrl(baseUrl) {
   };
 }
 
-function summarizeRequirementStatus(tracing, deployments) {
+function summarizeRequirementStatus(tracing, evidence, deployments) {
   const deploymentReady = deployments.some(
     (item) =>
       item.app.reachable &&
@@ -126,7 +158,11 @@ function summarizeRequirementStatus(tracing, deployments) {
   );
 
   return {
-    langsmithSharedTraces: tracing.readyForSharedTraces ? 'ready_to_capture' : 'blocked_by_env',
+    langsmithSharedTraces: evidence.hasEnoughSharedTraces
+      ? 'captured'
+      : tracing.readyForSharedTraces
+        ? 'ready_to_capture'
+        : 'blocked_by_env',
     publicDeployment: deploymentReady ? 'verified' : 'not_verified',
   };
 }
@@ -149,9 +185,22 @@ function buildMarkdownReport(report) {
     `- Project name: ${report.langsmith.projectName ?? 'not set'}`,
     `- Ready for shared traces: ${report.langsmith.readyForSharedTraces}`,
     '',
-    '## Public deployment verification',
+    '## Local evidence bundle',
+    '',
+    `- Evidence summary path: ${report.evidence.path}`,
+    `- Shared trace count: ${report.evidence.sharedTraceCount}`,
     '',
   ];
+
+  if (report.evidence.capturedShareLinks.length > 0) {
+    lines.push(...report.evidence.capturedShareLinks.map((link) => `- Shared trace: ${link}`));
+    lines.push('');
+  }
+
+  lines.push(
+    '## Public deployment verification',
+    '',
+  );
 
   for (const item of report.deployments) {
     lines.push(`### ${item.baseUrl}`);
@@ -169,7 +218,9 @@ function buildMarkdownReport(report) {
 
   lines.push('## Objective next steps', '');
 
-  if (!report.langsmith.readyForSharedTraces) {
+  if (report.requirements.langsmithSharedTraces === 'captured') {
+    lines.push('1. LangSmith shared trace requirement is complete.');
+  } else if (!report.langsmith.readyForSharedTraces) {
     lines.push('1. Export LangSmith tracing env vars before rerunning the evidence harness.');
   } else {
     lines.push('1. Rerun the FleetGraph evidence harness and save at least two shared LangSmith traces.');
@@ -191,16 +242,18 @@ function buildMarkdownReport(report) {
 async function main() {
   const publicUrls = parsePublicUrls().map(normalizeBaseUrl);
   const tracing = getTracingReadiness();
+  const evidence = await readEvidenceSummary();
   const deployments = [];
 
   for (const publicUrl of publicUrls) {
     deployments.push(await verifyPublicUrl(publicUrl));
   }
 
-  const requirements = summarizeRequirementStatus(tracing, deployments);
+  const requirements = summarizeRequirementStatus(tracing, evidence, deployments);
   const report = {
     generatedAt: new Date().toISOString(),
     langsmith: tracing,
+    evidence,
     deployments,
     requirements,
   };

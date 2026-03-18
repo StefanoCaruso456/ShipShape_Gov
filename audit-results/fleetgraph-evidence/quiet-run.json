@@ -1,5 +1,5 @@
 {
-  "threadId": "3fe35371-c4ba-45bf-b6da-5781cb14a77b",
+  "threadId": "1ccd2aaa-cfcf-498e-b2d1-145bdabb6206",
   "status": "completed",
   "stage": "action_not_proposed",
   "mode": "on_demand",
@@ -82,16 +82,16 @@
       "plan": "If we complete these features, we will unblock the next milestone.",
       "belongs_to": [
         {
-          "id": "3c0ab9bf-ec1c-46cb-a9be-4d8d7353f010",
-          "type": "program",
-          "title": "Ship Core",
-          "color": "#3B82F6"
-        },
-        {
           "id": "b0903fdf-0bee-487d-a29c-253ae70b1414",
           "type": "project",
           "title": "Ship Core - Core Features",
           "color": "#6366f1"
+        },
+        {
+          "id": "3c0ab9bf-ec1c-46cb-a9be-4d8d7353f010",
+          "type": "program",
+          "title": "Ship Core",
+          "color": "#3B82F6"
         }
       ]
     },
@@ -558,9 +558,9 @@
     "lastTripReason": null
   },
   "timing": {
-    "startedAt": "2026-03-18T02:38:38.978Z",
-    "lastNodeAt": "2026-03-18T02:38:38.993Z",
-    "deadlineAt": "2026-03-18T02:40:38.978Z"
+    "startedAt": "2026-03-18T03:05:50.194Z",
+    "lastNodeAt": "2026-03-18T03:05:50.224Z",
+    "deadlineAt": "2026-03-18T03:07:50.194Z"
   },
   "reasoningSource": "deterministic",
   "suppressionReason": null,
@@ -571,9 +571,9 @@
     {
       "node": "supervisorEntry",
       "phase": "control",
-      "startedAt": "2026-03-18T02:38:38.978Z",
-      "finishedAt": "2026-03-18T02:38:38.978Z",
-      "latencyMs": 0,
+      "startedAt": "2026-03-18T03:05:50.194Z",
+      "finishedAt": "2026-03-18T03:05:50.195Z",
+      "latencyMs": 1,
       "status": "ok",
       "goto": "initializeOnDemandContext",
       "errorCode": null
@@ -581,8 +581,8 @@
     {
       "node": "initializeOnDemandContext",
       "phase": "context",
-      "startedAt": "2026-03-18T02:38:38.978Z",
-      "finishedAt": "2026-03-18T02:38:38.979Z",
+      "startedAt": "2026-03-18T03:05:50.198Z",
+      "finishedAt": "2026-03-18T03:05:50.199Z",
       "latencyMs": 1,
       "status": "ok",
       "goto": "resolveContext",
@@ -591,9 +591,9 @@
     {
       "node": "resolveContext",
       "phase": "context",
-      "startedAt": "2026-03-18T02:38:38.979Z",
-      "finishedAt": "2026-03-18T02:38:38.980Z",
-      "latencyMs": 1,
+      "startedAt": "2026-03-18T03:05:50.202Z",
+      "finishedAt": "2026-03-18T03:05:50.202Z",
+      "latencyMs": 0,
       "status": "ok",
       "goto": "fetchSprintContext",
       "errorCode": null
@@ -601,9 +601,9 @@
     {
       "node": "fetchSprintContext",
       "phase": "fetch",
-      "startedAt": "2026-03-18T02:38:38.980Z",
-      "finishedAt": "2026-03-18T02:38:38.989Z",
-      "latencyMs": 9,
+      "startedAt": "2026-03-18T03:05:50.205Z",
+      "finishedAt": "2026-03-18T03:05:50.215Z",
+      "latencyMs": 10,
       "status": "ok",
       "goto": "deriveSprintSignals",
       "errorCode": null
@@ -611,8 +611,8 @@
     {
       "node": "deriveSprintSignals",
       "phase": "signals",
-      "startedAt": "2026-03-18T02:38:38.990Z",
-      "finishedAt": "2026-03-18T02:38:38.990Z",
+      "startedAt": "2026-03-18T03:05:50.219Z",
+      "finishedAt": "2026-03-18T03:05:50.219Z",
       "latencyMs": 0,
       "status": "ok",
       "goto": "reasonAboutSprint",
@@ -621,9 +621,9 @@
     {
       "node": "reasonAboutSprint",
       "phase": "reasoning",
-      "startedAt": "2026-03-18T02:38:38.991Z",
-      "finishedAt": "2026-03-18T02:38:38.992Z",
-      "latencyMs": 1,
+      "startedAt": "2026-03-18T03:05:50.221Z",
+      "finishedAt": "2026-03-18T03:05:50.221Z",
+      "latencyMs": 0,
       "status": "ok",
       "goto": "proposeSprintAction",
       "errorCode": null
@@ -631,8 +631,8 @@
     {
       "node": "proposeSprintAction",
       "phase": "action",
-      "startedAt": "2026-03-18T02:38:38.993Z",
-      "finishedAt": "2026-03-18T02:38:38.993Z",
+      "startedAt": "2026-03-18T03:05:50.224Z",
+      "finishedAt": "2026-03-18T03:05:50.224Z",
       "latencyMs": 0,
       "status": "ok",
       "goto": "completeRun",
@@ -640,9 +640,9 @@
     }
   ],
   "telemetry": {
-    "langsmithRunId": null,
-    "langsmithRunUrl": null,
-    "langsmithShareUrl": null,
+    "langsmithRunId": "019cfee8-1b6b-7539-875b-c92618eee720",
+    "langsmithRunUrl": "https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee8-1b6b-7539-875b-c92618eee720?poll=true",
+    "langsmithShareUrl": "https://smith.langchain.com/public/8c5e90a5-3299-47ab-90d5-c7a16583ea13/r",
     "braintrustSpanId": null
   },
   "trace": {

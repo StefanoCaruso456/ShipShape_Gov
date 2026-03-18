@@ -39,7 +39,7 @@ Fast current-state summary:
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
 | Phase 8: Planning intelligence | later | expansion path after MVP |
-| Phase 9: Evidence and submission | in progress | evidence harness and local bundle exist; shared LangSmith links and deployment proof remain |
+| Phase 9: Evidence and submission | in progress | shared LangSmith links are captured; deployment proof remains |
 
 ## Architecture we are building toward
 
@@ -84,7 +84,7 @@ The supervisor is responsible for:
 This checklist mirrors the assignment pass criteria. We should treat these as the definition of done for the first deliverable, not as optional polish.
 
 - [x] Graph running with at least one proactive detection wired end to end
-- [ ] LangSmith tracing enabled with at least two shared trace links showing different execution paths
+- [x] LangSmith tracing enabled with at least two shared trace links showing different execution paths
 - [x] `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed
 - [x] At least 5 use cases documented in `FLEETGRAPH.md`
 - [x] Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions
@@ -95,11 +95,9 @@ This checklist mirrors the assignment pass criteria. We should treat these as th
 
 Current audit:
 
-- `LangSmith tracing...` is the main partial requirement:
-  - tracing is part of the architecture and state model
-  - run-id / run-URL capture support and a local evidence harness now exist
-  - this shell currently has no LangSmith tracing env configured
-  - the shared trace-link evidence bundle is still open
+- `LangSmith tracing...` is now complete:
+  - local evidence capture produced two shared trace links
+  - the traces were captured in the `shipshape` LangSmith project
 - `Deployed and publicly accessible` is still open and belongs to Phase 9
   - public Ship URLs are reachable
   - the deployed environments do not yet expose FleetGraph routes
@@ -625,14 +623,11 @@ Treat the remaining work as four explicit sub-steps:
 
 ### What is still open
 
-- at least two shared LangSmith traces with different execution paths
 - deployment verification with FleetGraph routes live
 - public URL proof for a FleetGraph-enabled environment
 
 ### Current blockers
 
-- local quiet-path evidence is not yet captured reliably
-- this shell has no LangSmith tracing env configured
 - public Ship is reachable, but FleetGraph routes are not live on the deployed environments
 
 ### Current status by sub-step
@@ -640,7 +635,7 @@ Treat the remaining work as four explicit sub-steps:
 | Sub-step | Status | Notes |
 |---|---|---|
 | Phase 9A: Evidence readiness | complete | local evidence harness now captures both quiet and flagged runs after issue-state normalization in the Claude review/retro context |
-| Phase 9B: LangSmith trace capture | blocked by env | no tracing env vars are configured in this shell |
+| Phase 9B: LangSmith trace capture | complete | shared traces are captured in the `shipshape` LangSmith project |
 | Phase 9C: Public deployment | not started | public Ship exists, but deployed FleetGraph routes are missing |
 | Phase 9D: Public verification and packaging | in progress | verification harness exists, but the final green run is not available yet |
 

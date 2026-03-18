@@ -44,6 +44,16 @@ services:
       DATABASE_URL: postgres://ship:ship_dev_password@postgres:5432/ship_dev
       SESSION_SECRET: local-dev-session-secret-not-for-production
       CORS_ORIGIN: http://localhost:5173
+      LANGCHAIN_TRACING_V2: ${LANGCHAIN_TRACING_V2:-}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-}
+      LANGCHAIN_API_KEY: ${LANGCHAIN_API_KEY:-}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGCHAIN_PROJECT: ${LANGCHAIN_PROJECT:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-}
+      LANGCHAIN_ENDPOINT: ${LANGCHAIN_ENDPOINT:-https://api.smith.langchain.com}
+      LANGSMITH_ENDPOINT: ${LANGSMITH_ENDPOINT:-https://api.smith.langchain.com}
+      LANGSMITH_WEB_URL: ${LANGSMITH_WEB_URL:-https://smith.langchain.com}
+      FLEETGRAPH_LANGSMITH_SHARE_TRACES: ${FLEETGRAPH_LANGSMITH_SHARE_TRACES:-}
     depends_on:
       postgres:
         condition: service_healthy

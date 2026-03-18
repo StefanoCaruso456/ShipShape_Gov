@@ -66,13 +66,12 @@ We now have objective local evidence for:
 
 Still open:
 
-- shared LangSmith trace links
 - deployment verification and public URL proof
 
 Current blocker details:
 
 - public Ship URLs respond, but deployed FleetGraph routes are not live yet
-- this shell currently has no LangSmith tracing env configured
+- public verification remains the only open submission blocker
 
 Closeout order:
 
@@ -113,6 +112,15 @@ Exit criteria:
 - tracing env is enabled
 - at least two shared trace links are saved
 - links show different execution paths
+
+Status:
+
+- complete
+
+Completed evidence:
+
+- quiet-path shared LangSmith trace captured in the `shipshape` project
+- problem-detected shared LangSmith trace captured in the `shipshape` project
 
 ### Phase 9C: Public deployment
 

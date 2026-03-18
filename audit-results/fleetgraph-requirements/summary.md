@@ -1,10 +1,10 @@
 # FleetGraph Requirement Verification
 
-Generated: 2026-03-18T02:14:01.330Z
+Generated: 2026-03-18T03:08:01.611Z
 
 ## Remaining requirement status
 
-- LangSmith shared traces: blocked_by_env
+- LangSmith shared traces: captured
 - Public deployment: not_verified
 
 ## LangSmith readiness
@@ -13,6 +13,14 @@ Generated: 2026-03-18T02:14:01.330Z
 - API key present: false
 - Project name: not set
 - Ready for shared traces: false
+
+## Local evidence bundle
+
+- Evidence summary path: /Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.json
+- Shared trace count: 2
+
+- Shared trace: https://smith.langchain.com/public/8c5e90a5-3299-47ab-90d5-c7a16583ea13/r
+- Shared trace: https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r
 
 ## Public deployment verification
 
@@ -32,7 +40,7 @@ Generated: 2026-03-18T02:14:01.330Z
 
 ## Objective next steps
 
-1. Export LangSmith tracing env vars before rerunning the evidence harness.
+1. LangSmith shared trace requirement is complete.
 2. Deploy both API and frontend with the FleetGraph branch.
 3. Rerun this verification script against the deployed URL.
 4. Confirm the deployed FleetGraph routes no longer return `Cannot POST` or SPA fallback.

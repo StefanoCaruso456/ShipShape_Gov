@@ -1,4 +1,6 @@
+import type { RunnableConfig } from '@langchain/core/runnables';
 import { RunCollectorCallbackHandler } from '@langchain/core/tracers/run_collector';
+import { LangChainTracer } from '@langchain/core/tracers/tracer_langchain';
 import { Client } from 'langsmith';
 import type { Run } from 'langsmith/schemas';
 
@@ -8,7 +10,15 @@ interface FleetGraphLangSmithTraceMetadata {
   shareUrl: string | null;
 }
 
+export interface FleetGraphLangSmithSession {
+  collector: RunCollectorCallbackHandler;
+  callbacks: NonNullable<RunnableConfig['callbacks']>;
+}
+
 let clientSingleton: Client | null | undefined;
+const TRACE_RESOLUTION_RETRY_DELAYS_MS = [0, 250, 500, 1000, 2000];
+const DEFAULT_LANGSMITH_API_URL = 'https://api.smith.langchain.com';
+const DEFAULT_LANGSMITH_WEB_URL = 'https://smith.langchain.com';
 
 function getEnv(name: string): string | undefined {
   const value = process.env[name]?.trim();
@@ -38,8 +48,8 @@ function getLangSmithClient(): Client | null {
 
   clientSingleton = new Client({
     apiKey: getEnv('LANGCHAIN_API_KEY') ?? getEnv('LANGSMITH_API_KEY'),
-    apiUrl: getEnv('LANGCHAIN_ENDPOINT') ?? getEnv('LANGSMITH_ENDPOINT'),
-    webUrl: getEnv('LANGSMITH_WEB_URL'),
+    apiUrl: getEnv('LANGCHAIN_ENDPOINT') ?? getEnv('LANGSMITH_ENDPOINT') ?? DEFAULT_LANGSMITH_API_URL,
+    webUrl: getEnv('LANGSMITH_WEB_URL') ?? DEFAULT_LANGSMITH_WEB_URL,
   });
 
   return clientSingleton;
@@ -58,17 +68,89 @@ function getRootRun(collector: RunCollectorCallbackHandler | null): Run | null {
   return rootRun ?? null;
 }
 
-export function createFleetGraphLangSmithCollector(): RunCollectorCallbackHandler | null {
+function getLangSmithProjectName(): string | undefined {
+  return getEnv('LANGCHAIN_PROJECT') ?? getEnv('LANGSMITH_PROJECT');
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function resolveLangSmithUrls(
+  client: Client,
+  runId: string
+): Promise<Pick<FleetGraphLangSmithTraceMetadata, 'runUrl' | 'shareUrl'>> {
+  let runUrl: string | null = null;
+  let shareUrl: string | null = null;
+
+  for (const delayMs of TRACE_RESOLUTION_RETRY_DELAYS_MS) {
+    if (delayMs > 0) {
+      await sleep(delayMs);
+    }
+
+    let run: Run | null = null;
+
+    try {
+      run = await client.readRun(runId);
+    } catch {
+      run = null;
+    }
+
+    if (run) {
+      try {
+        runUrl = await client.getRunUrl({ run });
+      } catch {
+        runUrl = null;
+      }
+
+      if (shouldShareLangSmithRuns()) {
+        try {
+          shareUrl = (await client.readRunSharedLink(runId)) ?? (await client.shareRun(runId));
+        } catch {
+          shareUrl = null;
+        }
+      }
+    }
+
+    if (runUrl && (!shouldShareLangSmithRuns() || shareUrl)) {
+      break;
+    }
+  }
+
+  return {
+    runUrl,
+    shareUrl,
+  };
+}
+
+export function createFleetGraphLangSmithSession(): FleetGraphLangSmithSession | null {
   if (!isLangSmithTracingEnabled()) {
     return null;
   }
 
-  return new RunCollectorCallbackHandler();
+  const client = getLangSmithClient();
+  if (!client) {
+    return null;
+  }
+
+  const collector = new RunCollectorCallbackHandler();
+  const tracer = new LangChainTracer({
+    client,
+    projectName: getLangSmithProjectName(),
+  });
+
+  return {
+    collector,
+    callbacks: [collector, tracer],
+  };
 }
 
 export async function resolveFleetGraphLangSmithTrace(
-  collector: RunCollectorCallbackHandler | null
+  session: FleetGraphLangSmithSession | null
 ): Promise<FleetGraphLangSmithTraceMetadata> {
+  const collector = session?.collector ?? null;
   const rootRun = getRootRun(collector);
   if (!rootRun) {
     return {
@@ -87,22 +169,7 @@ export async function resolveFleetGraphLangSmithTrace(
     };
   }
 
-  let runUrl: string | null = null;
-  let shareUrl: string | null = null;
-
-  try {
-    runUrl = await client.getRunUrl({ run: rootRun });
-  } catch {
-    runUrl = null;
-  }
-
-  if (shouldShareLangSmithRuns()) {
-    try {
-      shareUrl = (await client.readRunSharedLink(rootRun.id)) ?? (await client.shareRun(rootRun.id));
-    } catch {
-      shareUrl = null;
-    }
-  }
+  const { runUrl, shareUrl } = await resolveLangSmithUrls(client, rootRun.id);
 
   return {
     runId: rootRun.id,

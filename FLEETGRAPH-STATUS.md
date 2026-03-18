@@ -62,16 +62,15 @@ Both modes use the same graph.
 - full conversational FleetGraph chat UI
 - wider issue / program / dashboard surface coverage
 - high-signal mutation trigger / pub-sub delivery path
-- real LangSmith trace-link evidence bundle
 - deployed public FleetGraph environment verification
-- deployment evidence and LangSmith submission package
+- final deployment evidence package
 
 ## MVP requirement audit
 
 | Requirement | Status | Notes |
 |---|---|---|
 | Graph running with at least one proactive detection wired end to end | complete | proactive sweep, finding persistence, dedupe, and delivery are implemented |
-| LangSmith tracing enabled with at least two shared trace links showing different execution paths | partial | run-id / URL capture support and the local evidence harness now exist, but this shell still has no LangSmith tracing env configured |
+| LangSmith tracing enabled with at least two shared trace links showing different execution paths | complete | two shared LangSmith trace links are captured in the `shipshape` project from quiet and problem-detected local runs |
 | `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed | complete | root source-of-truth doc exists and is filled out |
 | At least 5 use cases documented in `FLEETGRAPH.md` | complete | use-case table is present |
 | Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions | complete | graph diagram and node outline are documented |
@@ -169,9 +168,9 @@ Built runtime hardening for the MVP slice:
 
 ### Phase 9
 
-Started the evidence and submission slice:
+Built the evidence and submission slice so far:
 
-- LangSmith run-id and run-URL capture support when tracing is configured
+- LangSmith run-id, run-URL, and share-URL capture support
 - repeatable local evidence harness:
   - [collect-fleetgraph-evidence.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.mjs)
 - generated evidence bundle from the local stack:
@@ -180,13 +179,13 @@ Started the evidence and submission slice:
 - captured live evidence for:
   - quiet on-demand run
   - flagged on-demand run
-  - HITL waiting path
-  - HITL resume / dismiss path
   - proactive sweep path
+- captured shared LangSmith traces for:
+  - quiet on-demand path
+  - problem-detected on-demand path
 
 Still open in this phase:
 
-- shared LangSmith links from a traced environment
 - public deployment verification for FleetGraph itself
 
 Current remote verification:

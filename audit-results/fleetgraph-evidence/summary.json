@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-18T02:38:39.054Z",
+  "generatedAt": "2026-03-18T03:06:12.296Z",
   "apiUrl": "http://localhost:3000",
   "actorEmail": "dev@ship.local",
   "quietRun": {
-    "threadId": "3fe35371-c4ba-45bf-b6da-5781cb14a77b",
+    "threadId": "1ccd2aaa-cfcf-498e-b2d1-145bdabb6206",
     "status": "completed",
     "stage": "action_not_proposed",
     "terminalOutcome": "quiet",
@@ -13,47 +13,15 @@
     "shouldSurface": false,
     "pendingApproval": false,
     "reasoningSource": "deterministic",
-    "langsmithRunId": null,
-    "langsmithRunUrl": null,
-    "langsmithShareUrl": null,
+    "langsmithRunId": "019cfee8-1b6b-7539-875b-c92618eee720",
+    "langsmithRunUrl": "https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee8-1b6b-7539-875b-c92618eee720?poll=true",
+    "langsmithShareUrl": "https://smith.langchain.com/public/8c5e90a5-3299-47ab-90d5-c7a16583ea13/r",
     "braintrustSpanId": null
   },
   "flaggedRun": {
-    "threadId": "70272fc4-7fab-4d57-ae3e-b2e81ec1260d",
-    "status": "waiting_on_human",
-    "stage": "waiting_on_human",
-    "terminalOutcome": "waiting_on_human",
-    "weekId": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
-    "title": "Week 14",
-    "signalSeverity": "warning",
-    "shouldSurface": true,
-    "pendingApproval": true,
-    "reasoningSource": "deterministic",
-    "langsmithRunId": null,
-    "langsmithRunUrl": null,
-    "langsmithShareUrl": null,
-    "braintrustSpanId": null
-  },
-  "hitlRun": {
-    "threadId": "70272fc4-7fab-4d57-ae3e-b2e81ec1260d",
-    "status": "waiting_on_human",
-    "stage": "waiting_on_human",
-    "terminalOutcome": "waiting_on_human",
-    "weekId": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
-    "title": "Week 14",
-    "signalSeverity": "warning",
-    "shouldSurface": true,
-    "pendingApproval": true,
-    "reasoningSource": "deterministic",
-    "langsmithRunId": null,
-    "langsmithRunUrl": null,
-    "langsmithShareUrl": null,
-    "braintrustSpanId": null
-  },
-  "resumeRun": {
-    "threadId": "70272fc4-7fab-4d57-ae3e-b2e81ec1260d",
+    "threadId": "e2727e45-63b7-4208-b58e-0c6f0846b283",
     "status": "completed",
-    "stage": "action_dismissed",
+    "stage": "action_suppressed_by_memory",
     "terminalOutcome": "suppressed",
     "weekId": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
     "title": "Week 14",
@@ -61,15 +29,17 @@
     "shouldSurface": true,
     "pendingApproval": false,
     "reasoningSource": "deterministic",
-    "langsmithRunId": null,
-    "langsmithRunUrl": null,
-    "langsmithShareUrl": null,
+    "langsmithRunId": "019cfee7-af2e-763b-8991-1bffdbfbe3af",
+    "langsmithRunUrl": "https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee7-af2e-763b-8991-1bffdbfbe3af?poll=true",
+    "langsmithShareUrl": "https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r",
     "braintrustSpanId": null
   },
+  "hitlRun": null,
+  "resumeRun": null,
   "proactiveRun": {
     "processedWeeks": 1,
     "surfacedFindings": 1,
-    "newNotifications": 1
+    "newNotifications": 0
   },
-  "traceLinksReady": false
+  "traceLinksReady": true
 }

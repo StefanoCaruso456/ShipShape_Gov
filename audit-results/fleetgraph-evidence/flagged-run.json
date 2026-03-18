@@ -1,7 +1,7 @@
 {
-  "threadId": "70272fc4-7fab-4d57-ae3e-b2e81ec1260d",
-  "status": "waiting_on_human",
-  "stage": "waiting_on_human",
+  "threadId": "e2727e45-63b7-4208-b58e-0c6f0846b283",
+  "status": "completed",
+  "stage": "action_suppressed_by_memory",
   "mode": "on_demand",
   "triggerType": "user_invoke",
   "activeView": {
@@ -414,29 +414,15 @@
     "recommendedNextStep": "Get a same-day owner update, post a standup, and either move work into progress or reduce scope.",
     "confidence": "medium"
   },
-  "proposedAction": {
-    "type": "draft_follow_up_comment",
-    "targetId": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
-    "summary": "Draft a follow-up comment on Week 14 asking for a same-day status update and next checkpoint.",
-    "rationale": "Get a same-day owner update, post a standup, and either move work into progress or reduce scope.",
-    "draftComment": "Project: API Platform - Core Features. Week 14 is showing risk signals from the current sprint evidence. Please post a short update today with blockers, owner status, and the next concrete checkpoint so the team can decide whether to keep or reduce scope.",
-    "targetRoute": "/documents/4ff0de90-33a8-422f-86ef-d1c1504ec9e3/issues",
-    "fingerprint": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3:draft_follow_up_comment:b686d54c8550f942"
+  "proposedAction": null,
+  "pendingApproval": null,
+  "actionResult": {
+    "outcome": "skipped",
+    "summary": "FleetGraph is not re-proposing this action because you already dismissed the same draft.",
+    "note": null,
+    "snoozedUntil": null,
+    "executedCommentId": null
   },
-  "pendingApproval": {
-    "actionType": "draft_follow_up_comment",
-    "reason": "Draft a follow-up comment on Week 14 asking for a same-day status update and next checkpoint.",
-    "proposal": {
-      "type": "draft_follow_up_comment",
-      "targetId": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3",
-      "summary": "Draft a follow-up comment on Week 14 asking for a same-day status update and next checkpoint.",
-      "rationale": "Get a same-day owner update, post a standup, and either move work into progress or reduce scope.",
-      "draftComment": "Project: API Platform - Core Features. Week 14 is showing risk signals from the current sprint evidence. Please post a short update today with blockers, owner status, and the next concrete checkpoint so the team can decide whether to keep or reduce scope.",
-      "targetRoute": "/documents/4ff0de90-33a8-422f-86ef-d1c1504ec9e3/issues",
-      "fingerprint": "4ff0de90-33a8-422f-86ef-d1c1504ec9e3:draft_follow_up_comment:b686d54c8550f942"
-    }
-  },
-  "actionResult": null,
   "attempts": {
     "reasoning": 1,
     "resume": 0,
@@ -452,22 +438,22 @@
     "lastTripReason": null
   },
   "timing": {
-    "startedAt": "2026-03-18T02:38:38.623Z",
-    "lastNodeAt": "2026-03-18T02:38:38.793Z",
-    "deadlineAt": "2026-03-18T02:40:38.623Z"
+    "startedAt": "2026-03-18T03:05:22.511Z",
+    "lastNodeAt": "2026-03-18T03:05:22.575Z",
+    "deadlineAt": "2026-03-18T03:07:22.511Z"
   },
   "reasoningSource": "deterministic",
-  "suppressionReason": null,
-  "terminalOutcome": "waiting_on_human",
+  "suppressionReason": "dismissed_before",
+  "terminalOutcome": "suppressed",
   "error": null,
   "lastNode": "proposeSprintAction",
   "nodeHistory": [
     {
       "node": "supervisorEntry",
       "phase": "control",
-      "startedAt": "2026-03-18T02:38:38.623Z",
-      "finishedAt": "2026-03-18T02:38:38.625Z",
-      "latencyMs": 2,
+      "startedAt": "2026-03-18T03:05:22.511Z",
+      "finishedAt": "2026-03-18T03:05:22.511Z",
+      "latencyMs": 0,
       "status": "ok",
       "goto": "initializeOnDemandContext",
       "errorCode": null
@@ -475,9 +461,9 @@
     {
       "node": "initializeOnDemandContext",
       "phase": "context",
-      "startedAt": "2026-03-18T02:38:38.632Z",
-      "finishedAt": "2026-03-18T02:38:38.633Z",
-      "latencyMs": 1,
+      "startedAt": "2026-03-18T03:05:22.516Z",
+      "finishedAt": "2026-03-18T03:05:22.516Z",
+      "latencyMs": 0,
       "status": "ok",
       "goto": "resolveContext",
       "errorCode": null
@@ -485,9 +471,9 @@
     {
       "node": "resolveContext",
       "phase": "context",
-      "startedAt": "2026-03-18T02:38:38.639Z",
-      "finishedAt": "2026-03-18T02:38:38.640Z",
-      "latencyMs": 1,
+      "startedAt": "2026-03-18T03:05:22.519Z",
+      "finishedAt": "2026-03-18T03:05:22.519Z",
+      "latencyMs": 0,
       "status": "ok",
       "goto": "fetchSprintContext",
       "errorCode": null
@@ -495,9 +481,9 @@
     {
       "node": "fetchSprintContext",
       "phase": "fetch",
-      "startedAt": "2026-03-18T02:38:38.646Z",
-      "finishedAt": "2026-03-18T02:38:38.772Z",
-      "latencyMs": 126,
+      "startedAt": "2026-03-18T03:05:22.523Z",
+      "finishedAt": "2026-03-18T03:05:22.560Z",
+      "latencyMs": 37,
       "status": "ok",
       "goto": "deriveSprintSignals",
       "errorCode": null
@@ -505,9 +491,9 @@
     {
       "node": "deriveSprintSignals",
       "phase": "signals",
-      "startedAt": "2026-03-18T02:38:38.778Z",
-      "finishedAt": "2026-03-18T02:38:38.779Z",
-      "latencyMs": 1,
+      "startedAt": "2026-03-18T03:05:22.563Z",
+      "finishedAt": "2026-03-18T03:05:22.563Z",
+      "latencyMs": 0,
       "status": "ok",
       "goto": "recordSignalFinding",
       "errorCode": null
@@ -515,8 +501,8 @@
     {
       "node": "recordSignalFinding",
       "phase": "signals",
-      "startedAt": "2026-03-18T02:38:38.785Z",
-      "finishedAt": "2026-03-18T02:38:38.785Z",
+      "startedAt": "2026-03-18T03:05:22.566Z",
+      "finishedAt": "2026-03-18T03:05:22.566Z",
       "latencyMs": 0,
       "status": "ok",
       "goto": "reasonAboutSprint",
@@ -525,9 +511,9 @@
     {
       "node": "reasonAboutSprint",
       "phase": "reasoning",
-      "startedAt": "2026-03-18T02:38:38.787Z",
-      "finishedAt": "2026-03-18T02:38:38.787Z",
-      "latencyMs": 0,
+      "startedAt": "2026-03-18T03:05:22.568Z",
+      "finishedAt": "2026-03-18T03:05:22.569Z",
+      "latencyMs": 1,
       "status": "ok",
       "goto": "proposeSprintAction",
       "errorCode": null
@@ -535,18 +521,18 @@
     {
       "node": "proposeSprintAction",
       "phase": "action",
-      "startedAt": "2026-03-18T02:38:38.791Z",
-      "finishedAt": "2026-03-18T02:38:38.793Z",
-      "latencyMs": 2,
+      "startedAt": "2026-03-18T03:05:22.572Z",
+      "finishedAt": "2026-03-18T03:05:22.575Z",
+      "latencyMs": 3,
       "status": "ok",
-      "goto": "humanApprovalGate",
+      "goto": "completeRun",
       "errorCode": null
     }
   ],
   "telemetry": {
-    "langsmithRunId": null,
-    "langsmithRunUrl": null,
-    "langsmithShareUrl": null,
+    "langsmithRunId": "019cfee7-af2e-763b-8991-1bffdbfbe3af",
+    "langsmithRunUrl": "https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee7-af2e-763b-8991-1bffdbfbe3af?poll=true",
+    "langsmithShareUrl": "https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r",
     "braintrustSpanId": null
   },
   "trace": {

@@ -1,10 +1,19 @@
 {
-  "generatedAt": "2026-03-18T02:14:01.330Z",
+  "generatedAt": "2026-03-18T03:08:01.611Z",
   "langsmith": {
     "tracingEnabled": false,
     "apiKeyPresent": false,
     "projectName": null,
     "readyForSharedTraces": false
+  },
+  "evidence": {
+    "path": "/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.json",
+    "capturedShareLinks": [
+      "https://smith.langchain.com/public/8c5e90a5-3299-47ab-90d5-c7a16583ea13/r",
+      "https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r"
+    ],
+    "sharedTraceCount": 2,
+    "hasEnoughSharedTraces": true
   },
   "deployments": [
     {
@@ -55,7 +64,7 @@
     }
   ],
   "requirements": {
-    "langsmithSharedTraces": "blocked_by_env",
+    "langsmithSharedTraces": "captured",
     "publicDeployment": "not_verified"
   }
 }

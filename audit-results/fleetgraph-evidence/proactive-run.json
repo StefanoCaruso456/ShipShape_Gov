@@ -3,7 +3,7 @@
   "workspaceId": "d5c678c4-c893-4d12-b176-57d2a39578a7",
   "processedWeeks": 1,
   "surfacedFindings": 1,
-  "newNotifications": 1,
+  "newNotifications": 0,
   "findings": [
     {
       "id": "0928b6e7-bf55-479d-8824-707b32e795c7",
@@ -20,7 +20,7 @@
       "signalKinds": [
         "missing_standup"
       ],
-      "lastDetectedAt": "2026-03-18T02:38:39.000Z",
+      "lastDetectedAt": "2026-03-18T03:05:59.000Z",
       "lastNotifiedAt": "2026-03-18T02:38:39.000Z"
     }
   ]
