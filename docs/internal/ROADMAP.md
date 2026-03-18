@@ -37,9 +37,9 @@ Fast current-state summary:
 | Phase 4: Proactive MVP | complete | proactive sweep, finding persistence, dedupe, and delivery exist |
 | Phase 5: On-demand UI | complete | embedded week/project FleetGraph panels are live, plus My Week when one project is in scope |
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
-| Phase 7: Failure/resume/memory hardening | pending | expand durability beyond the MVP slice |
+| Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
 | Phase 8: Planning intelligence | later | expansion path after MVP |
-| Phase 9: Evidence and submission | pending | LangSmith links, deployment, and final proof |
+| Phase 9: Evidence and submission | in progress | evidence harness and local bundle exist; shared LangSmith links and deployment proof remain |
 
 ## Architecture we are building toward
 
@@ -93,6 +93,14 @@ This checklist mirrors the assignment pass criteria. We should treat these as th
 - [ ] Deployed and publicly accessible
 - [x] Trigger model decision documented and defended in `FLEETGRAPH.md`
 
+Current audit:
+
+- `LangSmith tracing...` is the main partial requirement:
+  - tracing is part of the architecture and state model
+  - run-id / run-URL capture support and a local evidence harness now exist
+  - the shared trace-link evidence bundle is still open
+- `Deployed and publicly accessible` is still open and belongs to Phase 9
+
 ## Requirement-to-phase map
 
 | Requirement | Primary phase(s) | Verification output |
@@ -103,7 +111,9 @@ This checklist mirrors the assignment pass criteria. We should treat these as th
 | Active page / tab awareness | Phase 2, Phase 5 | graph receives Active View Context from the current Ship surface |
 | App-native page-awareness technique | Phase 2, Phase 6 | route-to-context adapters instead of browser vision |
 | HITL gate | Phase 6 | interrupt / resume trace and approval UI |
-| Error and fallback nodes | Phase 1, Phase 7 | failure branch visible in traces |
+| Error and fallback nodes | Phase 1, Phase 7 | failure branch visible in traces and terminal outcomes |
+| Runtime hardening and telemetry | Phase 7 | transition budgets, deadline budgets, node history, Braintrust spans |
+| Bounded action schemas and skills | Phase 6, Phase 7 | typed action catalog and skill-guided reasoning/actions |
 | LangSmith tracing from day one | Phase 0, Phase 1 | trace links for clean and problem-detected runs |
 | `FLEETGRAPH.md` core sections | Phase 0, Phase 9 | committed root file with required sections |
 | Trigger model defended | Phase 0, Phase 4, Phase 9 | documented hybrid decision and observed behavior |
@@ -175,6 +185,11 @@ Before submission:
 - deployed URL works
 - the system is running against real Ship data
 - evidence is saved for the final write-up
+
+Current evidence harness:
+
+- [collect-fleetgraph-evidence.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.mjs)
+- [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md)
 
 ## Phase plan
 
@@ -493,21 +508,32 @@ This is what makes FleetGraph an agent instead of a monitor.
 
 Make FleetGraph durable enough to survive real runtime conditions.
 
-### What we plan to implement
+### What we implemented for the MVP slice
 
 - failure classification:
   - retryable
   - terminal
-  - low-confidence
-- fallback response behavior
-- checkpoint-aware resume
-- finding memory store for:
-  - dedupe
-  - cooldown
-  - snooze
-  - last surfaced timestamp
-- traceable intervention events
-- checkpoint-aware restart and supervised resume rules
+  - timeout
+- fallback response behavior with terminal outcome classes
+- checkpoint-aware resume with resume budget protection
+- state fields for:
+  - attempts
+  - guard budgets
+  - timing
+  - reasoning source
+  - suppression reason
+  - last node
+  - compact node history
+  - telemetry ids
+- hard stops for:
+  - max transitions
+  - max resumes
+  - expired deadlines
+- reasoning fallback after budget exhaustion
+- Braintrust telemetry:
+  - one top-level run/span per invoke or resume
+  - child spans for fetch, signals, reasoning, HITL pause/resume, and action execution
+- bounded action catalog and FleetGraph reasoning/action skills
 
 ### Why this phase matters
 
@@ -519,6 +545,8 @@ A graph that only works on the happy path is not enough for this project or for 
 - retryable failures can be retried
 - interrupts and resumes are traceable
 - repeated alert spam is controlled
+- transition and resume loops hard stop safely
+- telemetry is emitted per run and per major node
 
 ## Phase 8: Planning-intelligence expansion path
 
@@ -557,16 +585,23 @@ This is the broader product opportunity and a major differentiator, but it shoul
 
 Close the loop on delivery requirements and prove the system works.
 
-### What we plan to implement
+### What we have implemented so far
 
-- at least two shared LangSmith traces with different execution paths
+- evidence harness script for local FleetGraph capture
+- local evidence bundle written to:
+  - `audit-results/fleetgraph-evidence/`
+- LangSmith run-id and run-URL capture support when tracing is configured
 - documented trigger model and graph diagram in `FLEETGRAPH.md`
 - documented test cases tied to use cases
-- detection latency measurement
-- cost-per-run estimate
-- estimated runs per day
-- development cost tracking
+- cost analysis reference already exists in:
+  - `artifacts-documentation/ai-cost-analysis.md`
+
+### What is still open
+
+- at least two shared LangSmith traces with different execution paths
+- quiet-path evidence from the current seed state or a traced healthy scenario
 - deployment verification
+- public URL proof
 
 ### Why this phase matters
 
@@ -577,6 +612,7 @@ This project is graded on architecture, execution, and proof. We need both worki
 - MVP checklist is fully covered
 - traces are shareable
 - `FLEETGRAPH.md` is complete enough for submission
+- the evidence harness outputs are attached or referenced
 
 ## Recommended build order
 
@@ -597,27 +633,20 @@ Build in this order:
 
 The next slice we should execute is:
 
-1. start Phase 6 on top of the already-supported on-demand surfaces:
-   - week documents
-   - project documents
-   - My Week when one project is in scope
-2. add the first reasoning node for:
-   - why is this sprint at risk?
-3. keep the reasoning grounded in:
-   - fetched context
-   - deterministic signals
-   - finding summary
-4. add the first action proposal boundary for:
-   - draft follow-up
-   - draft escalation
-5. implement the first HITL interrupt / resume path with:
-   - approve
-   - dismiss
-   - snooze
-6. enable and capture LangSmith traces for:
-   - quiet path
-   - flagged path
-   - interrupt / resume path
+1. **Finish Phase 9**
+   - rerun the evidence harness with LangSmith enabled
+   - capture and save shared LangSmith traces for:
+     - quiet path
+     - flagged path
+     - interrupt / resume path
+   - verify deployed behavior
+   - package final runtime evidence
+2. **Then Phase 8**
+   - extend beyond sprint risk into:
+     - capacity
+     - scope creep
+     - dependency risk
+     - release confidence
 7. continue widening Active View Context coverage after the first reasoning slice, focusing next on:
    - issue
    - program

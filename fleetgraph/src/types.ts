@@ -221,6 +221,8 @@ export interface FleetGraphReasoning {
   confidence: FleetGraphReasoningConfidence;
 }
 
+export type FleetGraphReasoningSource = 'deterministic' | 'model';
+
 export type FleetGraphActionType =
   | 'draft_follow_up_comment'
   | 'draft_escalation_comment';
@@ -257,6 +259,11 @@ export interface FleetGraphActionResult {
   executedCommentId: string | null;
 }
 
+export type FleetGraphSuppressionReason =
+  | 'approved_before'
+  | 'dismissed_before'
+  | 'snoozed';
+
 export interface FleetGraphActionMemoryRecord {
   status: 'approved' | 'dismissed' | 'snoozed';
   snoozedUntil: string | null;
@@ -268,6 +275,61 @@ export interface FleetGraphErrorState {
   message: string;
   retryable: boolean;
   source: string | null;
+}
+
+export type FleetGraphTerminalOutcome =
+  | 'quiet'
+  | 'finding_only'
+  | 'waiting_on_human'
+  | 'action_executed'
+  | 'suppressed'
+  | 'failed_retryable'
+  | 'failed_terminal';
+
+export interface FleetGraphAttempts {
+  reasoning: number;
+  resume: number;
+  actionExecution: number;
+}
+
+export interface FleetGraphGuardState {
+  maxTransitions: number;
+  transitionCount: number;
+  maxRetries: number;
+  maxResumeCount: number;
+  maxReasoningAttempts: number;
+  circuitBreakerOpen: boolean;
+  lastTripReason: string | null;
+}
+
+export interface FleetGraphTimingState {
+  startedAt: string | null;
+  lastNodeAt: string | null;
+  deadlineAt: string | null;
+}
+
+export type FleetGraphNodeTraceStatus =
+  | 'ok'
+  | 'interrupted'
+  | 'guardrail_stop'
+  | 'error';
+
+export interface FleetGraphNodeTraceEntry {
+  node: string;
+  phase: string;
+  startedAt: string;
+  finishedAt: string;
+  latencyMs: number;
+  status: FleetGraphNodeTraceStatus;
+  goto: string | null;
+  errorCode: string | null;
+}
+
+export interface FleetGraphTelemetryState {
+  langsmithRunId: string | null;
+  langsmithRunUrl: string | null;
+  langsmithShareUrl: string | null;
+  braintrustSpanId: string | null;
 }
 
 export interface FleetGraphTraceMetadata {

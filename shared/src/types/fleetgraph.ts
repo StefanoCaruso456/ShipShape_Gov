@@ -102,6 +102,8 @@ export interface FleetGraphOnDemandReasoning {
   confidence: 'low' | 'medium' | 'high';
 }
 
+export type FleetGraphReasoningSource = 'deterministic' | 'model';
+
 export type FleetGraphOnDemandActionType =
   | 'draft_follow_up_comment'
   | 'draft_escalation_comment';
@@ -128,6 +130,60 @@ export interface FleetGraphOnDemandActionResult {
   note: string | null;
   snoozedUntil: string | null;
   executedCommentId: string | null;
+}
+
+export type FleetGraphSuppressionReason =
+  | 'approved_before'
+  | 'dismissed_before'
+  | 'snoozed';
+
+export type FleetGraphTerminalOutcome =
+  | 'quiet'
+  | 'finding_only'
+  | 'waiting_on_human'
+  | 'action_executed'
+  | 'suppressed'
+  | 'failed_retryable'
+  | 'failed_terminal';
+
+export interface FleetGraphAttempts {
+  reasoning: number;
+  resume: number;
+  actionExecution: number;
+}
+
+export interface FleetGraphGuardState {
+  maxTransitions: number;
+  transitionCount: number;
+  maxRetries: number;
+  maxResumeCount: number;
+  maxReasoningAttempts: number;
+  circuitBreakerOpen: boolean;
+  lastTripReason: string | null;
+}
+
+export interface FleetGraphTimingState {
+  startedAt: string | null;
+  lastNodeAt: string | null;
+  deadlineAt: string | null;
+}
+
+export interface FleetGraphNodeTraceEntry {
+  node: string;
+  phase: string;
+  startedAt: string;
+  finishedAt: string;
+  latencyMs: number;
+  status: 'ok' | 'interrupted' | 'guardrail_stop' | 'error';
+  goto: string | null;
+  errorCode: string | null;
+}
+
+export interface FleetGraphTelemetryState {
+  langsmithRunId: string | null;
+  langsmithRunUrl: string | null;
+  langsmithShareUrl: string | null;
+  braintrustSpanId: string | null;
 }
 
 export interface FleetGraphOnDemandFetchedEntity {
@@ -202,12 +258,21 @@ export interface FleetGraphOnDemandResponse {
   proposedAction: FleetGraphOnDemandProposedAction | null;
   pendingApproval: FleetGraphOnDemandPendingApproval | null;
   actionResult: FleetGraphOnDemandActionResult | null;
+  attempts: FleetGraphAttempts;
+  guard: FleetGraphGuardState;
+  timing: FleetGraphTimingState;
+  reasoningSource: FleetGraphReasoningSource | null;
+  suppressionReason: FleetGraphSuppressionReason | null;
+  terminalOutcome: FleetGraphTerminalOutcome | null;
   error: {
     code?: string;
     message?: string;
     retryable?: boolean;
     source?: string | null;
   } | null;
+  lastNode: string | null;
+  nodeHistory: FleetGraphNodeTraceEntry[];
+  telemetry: FleetGraphTelemetryState;
   trace: {
     runName: string | null;
     tags: string[];

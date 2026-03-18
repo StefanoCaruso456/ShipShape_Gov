@@ -1,0 +1,6 @@
+interface:
+  display_name: FleetGraph Action Catalog
+  short_description: Extend FleetGraph actions with bounded schemas and HITL-safe executors.
+  default_prompt: Add or revise FleetGraph actions using the bounded action catalog pattern, strict schemas, and runtime-owned executors.
+policy:
+  allow_implicit_invocation: true

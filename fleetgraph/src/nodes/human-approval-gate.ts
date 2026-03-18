@@ -1,11 +1,16 @@
 import { Command } from '@langchain/langgraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
-import { getFleetGraphRuntime } from '../runtime.js';
+import {
+  beginFleetGraphNode,
+  createFleetGraphCommand,
+  createFleetGraphFailureCommand,
+  startFleetGraphNodeSpan,
+} from '../node-runtime.js';
 import type { FleetGraphState } from '../state.js';
 import { createHandoff, createIntervention, pauseForHumanApproval } from '../supervision.js';
 import type { FleetGraphHumanDecision } from '../types.js';
 
-type HumanApprovalGateTargets = 'executeProposedAction' | 'completeRun';
+type HumanApprovalGateTargets = 'executeProposedAction' | 'completeRun' | 'fallback';
 
 function normalizeDecision(input: unknown): FleetGraphHumanDecision {
   if (!input || typeof input !== 'object') {
@@ -33,29 +38,61 @@ export async function humanApprovalGateNode(
   state: FleetGraphState,
   config?: RunnableConfig
 ): Promise<Command<HumanApprovalGateTargets>> {
-  const runtime = getFleetGraphRuntime(config);
+  const started = beginFleetGraphNode(state, config, {
+    nodeName: 'humanApprovalGate',
+    phase: 'hitl',
+    guardFailureTarget: 'fallback',
+    startSpan: false,
+  });
+  const runtime = started.runtime;
+
+  if ('command' in started) {
+    return started.command;
+  }
 
   if (!state.proposedAction) {
-    return new Command({
-      goto: 'completeRun',
-      update: {
+    const tracedContext = startFleetGraphNodeSpan(started.context);
+
+    return createFleetGraphCommand(
+      tracedContext,
+      'completeRun',
+      {
         stage: 'human_gate_skipped',
         handoff: createHandoff(
           'humanApprovalGate',
           'completeRun',
           'no proposed action requires human approval'
         ),
-      },
-    });
+      }
+    );
   }
 
   const decision = normalizeDecision(
-    pauseForHumanApproval({
-      actionType: state.proposedAction.type,
-      reason: state.proposedAction.summary,
-      proposal: state.proposedAction,
-    })
+    pauseForHumanApproval(
+      state.pendingApproval ?? {
+        actionType: state.proposedAction.type,
+        reason: state.proposedAction.summary,
+        proposal: state.proposedAction,
+      }
+    )
   );
+  const tracedContext = startFleetGraphNodeSpan(started.context);
+  const resumeAttempts = state.attempts.resume + 1;
+
+  if (resumeAttempts > tracedContext.effectiveGuard.maxResumeCount) {
+    return createFleetGraphFailureCommand(tracedContext, {
+      goto: 'fallback',
+      stage: 'human_approval_gate',
+      error: {
+        code: 'MAX_RESUMES_EXCEEDED',
+        message: 'FleetGraph exceeded the allowed number of human resume attempts.',
+        retryable: false,
+        source: 'humanApprovalGate',
+      },
+      reason: 'FleetGraph exceeded the allowed number of human resume attempts.',
+      interventionKind: 'fail_safe_exit',
+    });
+  }
 
   if (decision.outcome !== 'approve') {
     const record =
@@ -80,12 +117,17 @@ export async function humanApprovalGateNode(
             executedCommentId: null,
           };
 
-    return new Command({
-      goto: 'completeRun',
-      update: {
+    return createFleetGraphCommand(
+      tracedContext,
+      'completeRun',
+      {
         status: 'completed',
         stage: decision.outcome === 'snooze' ? 'action_snoozed' : 'action_dismissed',
         pendingApproval: null,
+        attempts: {
+          ...state.attempts,
+          resume: resumeAttempts,
+        },
         actionResult: {
           outcome: decision.outcome === 'snooze' ? 'snoozed' : 'dismissed',
           summary:
@@ -113,15 +155,23 @@ export async function humanApprovalGateNode(
             : 'human dismissed the draft action'
         ),
       },
-    });
+      {
+        status: 'interrupted',
+      }
+    );
   }
 
-  return new Command({
-    goto: 'executeProposedAction',
-    update: {
+  return createFleetGraphCommand(
+    tracedContext,
+    'executeProposedAction',
+    {
       status: 'running',
       stage: 'human_approved_action',
       pendingApproval: null,
+      attempts: {
+        ...state.attempts,
+        resume: resumeAttempts,
+      },
       interventions: [
         createIntervention(
           'resume',
@@ -135,5 +185,8 @@ export async function humanApprovalGateNode(
         'human approved the draft action for execution'
       ),
     },
-  });
+    {
+      status: 'interrupted',
+    }
+  );
 }

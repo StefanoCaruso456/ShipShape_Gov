@@ -1,69 +1,81 @@
 import { Annotation } from '@langchain/langgraph';
 import type { FleetGraphActiveViewContext } from '@ship/shared';
 import type {
+  FleetGraphAttempts,
   FleetGraphActor,
   FleetGraphDerivedSignals,
   FleetGraphEntityRef,
   FleetGraphErrorState,
   FleetGraphFetchedPayloads,
   FleetGraphFinding,
+  FleetGraphGuardState,
   FleetGraphHandoff,
   FleetGraphInterventionEvent,
+  FleetGraphNodeTraceEntry,
   FleetGraphPendingApproval,
   FleetGraphPromptInput,
   FleetGraphProposedAction,
   FleetGraphReasoning,
+  FleetGraphReasoningSource,
   FleetGraphRunMode,
   FleetGraphScope,
   FleetGraphStatus,
+  FleetGraphSuppressionReason,
+  FleetGraphTelemetryState,
+  FleetGraphTerminalOutcome,
+  FleetGraphTimingState,
   FleetGraphTraceMetadata,
   FleetGraphTriggerType,
   FleetGraphActionResult,
 } from './types.js';
 
+function replaceValue<T>(left: T, right: T | undefined): T {
+  return right === undefined ? left : right;
+}
+
 export const FleetGraphStateAnnotation = Annotation.Root({
   runId: Annotation<string | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   status: Annotation<FleetGraphStatus>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => 'starting',
   }),
   stage: Annotation<string | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   mode: Annotation<FleetGraphRunMode | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   triggerType: Annotation<FleetGraphTriggerType | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   workspaceId: Annotation<string | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   actor: Annotation<FleetGraphActor | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   activeView: Annotation<FleetGraphActiveViewContext | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   contextEntity: Annotation<FleetGraphEntityRef | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   prompt: Annotation<FleetGraphPromptInput | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   expandedScope: Annotation<FleetGraphScope>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => ({
       issueId: null,
       weekId: null,
@@ -73,7 +85,7 @@ export const FleetGraphStateAnnotation = Annotation.Root({
     }),
   }),
   fetched: Annotation<FleetGraphFetchedPayloads>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => ({
       entity: null,
       activity: null,
@@ -83,7 +95,7 @@ export const FleetGraphStateAnnotation = Annotation.Root({
     }),
   }),
   derivedSignals: Annotation<FleetGraphDerivedSignals>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => ({
       severity: 'none',
       reasons: [],
@@ -104,27 +116,67 @@ export const FleetGraphStateAnnotation = Annotation.Root({
     }),
   }),
   finding: Annotation<FleetGraphFinding | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   reasoning: Annotation<FleetGraphReasoning | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   proposedAction: Annotation<FleetGraphProposedAction | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   actionResult: Annotation<FleetGraphActionResult | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
+    default: () => null,
+  }),
+  attempts: Annotation<FleetGraphAttempts>({
+    reducer: replaceValue,
+    default: () => ({
+      reasoning: 0,
+      resume: 0,
+      actionExecution: 0,
+    }),
+  }),
+  guard: Annotation<FleetGraphGuardState>({
+    reducer: replaceValue,
+    default: () => ({
+      maxTransitions: 0,
+      transitionCount: 0,
+      maxRetries: 0,
+      maxResumeCount: 0,
+      maxReasoningAttempts: 0,
+      circuitBreakerOpen: false,
+      lastTripReason: null,
+    }),
+  }),
+  timing: Annotation<FleetGraphTimingState>({
+    reducer: replaceValue,
+    default: () => ({
+      startedAt: null,
+      lastNodeAt: null,
+      deadlineAt: null,
+    }),
+  }),
+  reasoningSource: Annotation<FleetGraphReasoningSource | null>({
+    reducer: replaceValue,
+    default: () => null,
+  }),
+  suppressionReason: Annotation<FleetGraphSuppressionReason | null>({
+    reducer: replaceValue,
+    default: () => null,
+  }),
+  terminalOutcome: Annotation<FleetGraphTerminalOutcome | null>({
+    reducer: replaceValue,
     default: () => null,
   }),
   pendingApproval: Annotation<FleetGraphPendingApproval | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   handoff: Annotation<FleetGraphHandoff | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
   interventions: Annotation<FleetGraphInterventionEvent[]>({
@@ -132,11 +184,28 @@ export const FleetGraphStateAnnotation = Annotation.Root({
     default: () => [],
   }),
   error: Annotation<FleetGraphErrorState | null>({
-    reducer: (left, right) => right ?? left,
+    reducer: replaceValue,
     default: () => null,
   }),
-  trace: Annotation<FleetGraphTraceMetadata>({
+  lastNode: Annotation<string | null>({
+    reducer: replaceValue,
+    default: () => null,
+  }),
+  nodeHistory: Annotation<FleetGraphNodeTraceEntry[]>({
     reducer: (left, right) => right ?? left,
+    default: () => [],
+  }),
+  telemetry: Annotation<FleetGraphTelemetryState>({
+    reducer: replaceValue,
+    default: () => ({
+      langsmithRunId: null,
+      langsmithRunUrl: null,
+      langsmithShareUrl: null,
+      braintrustSpanId: null,
+    }),
+  }),
+  trace: Annotation<FleetGraphTraceMetadata>({
+    reducer: replaceValue,
     default: () => ({
       runName: null,
       tags: [],

@@ -1,8 +1,13 @@
 import { Command } from '@langchain/langgraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
-import { getFleetGraphRuntime } from '../runtime.js';
+import {
+  beginFleetGraphNode,
+  createFleetGraphCommand,
+  createFleetGraphFailureCommand,
+  type FleetGraphNodeContext,
+} from '../node-runtime.js';
 import type { FleetGraphState } from '../state.js';
-import { createHandoff, createIntervention } from '../supervision.js';
+import { createHandoff } from '../supervision.js';
 
 type ResolveWeekScopeTargets = 'fetchSprintContext' | 'completeRun' | 'fallback';
 
@@ -40,29 +45,22 @@ function buildMyWeekScopePath(route: string | null): string {
 }
 
 function failWeekScopeResolution(
+  context: FleetGraphNodeContext,
   code: string,
   message: string,
   source: string
 ): Command<ResolveWeekScopeTargets> {
-  return new Command({
+  return createFleetGraphFailureCommand(context, {
     goto: 'fallback',
-    update: {
-      status: 'failed',
-      stage: 'resolve_week_scope',
-      error: {
-        code,
-        message,
-        retryable: false,
-        source,
-      },
-      interventions: [
-        createIntervention(
-          'fail_safe_exit',
-          message,
-          'resolve_week_scope'
-        ),
-      ],
+    stage: 'resolve_week_scope',
+    error: {
+      code,
+      message,
+      retryable: false,
+      source,
     },
+    reason: message,
+    interventionKind: 'fail_safe_exit',
   });
 }
 
@@ -70,7 +68,16 @@ export async function resolveWeekScopeNode(
   state: FleetGraphState,
   config?: RunnableConfig
 ): Promise<Command<ResolveWeekScopeTargets>> {
-  const runtime = getFleetGraphRuntime(config);
+  const started = beginFleetGraphNode(state, config, {
+    nodeName: 'resolveWeekScope',
+    phase: 'context',
+    guardFailureTarget: 'fallback',
+  });
+  const runtime = started.runtime;
+
+  if ('command' in started) {
+    return started.command;
+  }
   const activeView = state.activeView;
   const projectIdFromScope = state.expandedScope.projectId ?? state.activeView?.projectId ?? null;
   const personId = state.expandedScope.personId;
@@ -89,9 +96,10 @@ export async function resolveWeekScopeNode(
         `/api/weeks/lookup?project_id=${encodeURIComponent(projectIdFromScope)}&sprint_number=${weeks.current_sprint_number}`
       );
 
-      return new Command({
-        goto: 'fetchSprintContext',
-        update: {
+      return createFleetGraphCommand(
+        started.context,
+        'fetchSprintContext',
+        {
           stage: 'week_scope_resolved',
           expandedScope: {
             ...state.expandedScope,
@@ -103,8 +111,8 @@ export async function resolveWeekScopeNode(
             'fetchSprintContext',
             'resolved project scope to the current sprint'
           ),
-        },
-      });
+        }
+      );
     }
 
     if (personId && activeView?.surface === 'my_week') {
@@ -123,6 +131,7 @@ export async function resolveWeekScopeNode(
             : 'My Week spans multiple projects. Open a specific project or week document for sprint-level analysis.';
 
         return failWeekScopeResolution(
+          started.context,
           myWeek.projects.length === 0 ? 'MY_WEEK_NO_PROJECT_SCOPE' : 'MY_WEEK_AMBIGUOUS_SCOPE',
           message,
           'resolveWeekScope'
@@ -133,9 +142,10 @@ export async function resolveWeekScopeNode(
         `/api/weeks/lookup?project_id=${encodeURIComponent(resolvedProjectId)}&sprint_number=${myWeek.week.week_number}`
       );
 
-      return new Command({
-        goto: 'fetchSprintContext',
-        update: {
+      return createFleetGraphCommand(
+        started.context,
+        'fetchSprintContext',
+        {
           stage: 'week_scope_resolved',
           activeView: {
             ...activeView,
@@ -151,21 +161,22 @@ export async function resolveWeekScopeNode(
             'fetchSprintContext',
             'resolved my-week scope to a single project sprint'
           ),
-        },
-      });
+        }
+      );
     }
 
-    return new Command({
-      goto: 'completeRun',
-      update: {
+    return createFleetGraphCommand(
+      started.context,
+      'completeRun',
+      {
         stage: 'week_scope_resolution_skipped',
         handoff: createHandoff(
           'resolveWeekScope',
           'completeRun',
           'no project or my-week scope available for sprint resolution'
         ),
-      },
-    });
+      }
+    );
   } catch (error) {
     if (isShipApiStatusError(error, 404)) {
       const message = projectIdFromScope
@@ -173,6 +184,7 @@ export async function resolveWeekScopeNode(
         : 'No sprint was found for the selected My Week scope.';
 
       return failWeekScopeResolution(
+        started.context,
         'WEEK_SCOPE_NOT_FOUND',
         message,
         'resolveWeekScope'
@@ -190,25 +202,16 @@ export async function resolveWeekScopeNode(
       message,
     });
 
-    return new Command({
+    return createFleetGraphFailureCommand(started.context, {
       goto: 'fallback',
-      update: {
-        status: 'failed',
-        stage: 'resolve_week_scope',
-        error: {
-          code: 'WEEK_SCOPE_RESOLUTION_FAILED',
-          message,
-          retryable: true,
-          source: 'resolveWeekScope',
-        },
-        interventions: [
-          createIntervention(
-            'retry',
-            'Week scope resolution failed while mapping the current surface to a sprint',
-            'resolve_week_scope'
-          ),
-        ],
+      stage: 'resolve_week_scope',
+      error: {
+        code: 'WEEK_SCOPE_RESOLUTION_FAILED',
+        message,
+        retryable: true,
+        source: 'resolveWeekScope',
       },
+      reason: 'Week scope resolution failed while mapping the current surface to a sprint',
     });
   }
 }

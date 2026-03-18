@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import type { FleetGraphActiveViewContext } from '@ship/shared';
+import { getFleetGraphActionDefinition } from './catalog.js';
 import type {
   FleetGraphDerivedSignals,
   FleetGraphFetchedPayloads,
@@ -69,9 +70,10 @@ export function buildSprintActionProposal(
   const draftComment = shouldEscalate
     ? `${projectLine}${sprintTitle} appears stalled based on the current evidence. Please confirm today whether the team should de-scope work, reassign ownership, or escalate a blocker, and identify the decision owner in this thread.`
     : `${projectLine}${sprintTitle} is showing risk signals from the current sprint evidence. Please post a short update today with blockers, owner status, and the next concrete checkpoint so the team can decide whether to keep or reduce scope.`;
+  const actionDefinition = getFleetGraphActionDefinition(type);
 
   return {
-    type,
+    type: actionDefinition.type,
     targetId: weekId,
     summary,
     rationale,

@@ -37,6 +37,19 @@ Both modes use the same graph.
 - draft follow-up and escalation action proposals
 - HITL interrupt / resume path with approve, dismiss, and snooze
 - action memory for suppression after approval, dismiss, or snooze
+- bounded action catalog with strict schemas
+- reasoning-source tracking:
+  - `deterministic`
+  - `model`
+- runtime guardrails:
+  - transition budget
+  - retry budget
+  - resume budget
+  - deadline budget
+- compact node history and per-node latency tracking
+- terminal outcome classification
+- Braintrust top-level and child-span telemetry
+- FleetGraph reasoning and action-catalog skills
 - proactive sweep route
 - env-gated proactive worker
 - finding persistence
@@ -48,8 +61,23 @@ Both modes use the same graph.
 
 - full conversational FleetGraph chat UI
 - wider issue / program / dashboard surface coverage
-- Phase 7 durability and failure-hardening work
+- high-signal mutation trigger / pub-sub delivery path
+- real LangSmith trace-link evidence bundle
 - deployment evidence and LangSmith submission package
+
+## MVP requirement audit
+
+| Requirement | Status | Notes |
+|---|---|---|
+| Graph running with at least one proactive detection wired end to end | complete | proactive sweep, finding persistence, dedupe, and delivery are implemented |
+| LangSmith tracing enabled with at least two shared trace links showing different execution paths | partial | run-id / URL capture support and the local evidence harness now exist, but the shared trace-link bundle still depends on a traced environment |
+| `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed | complete | root source-of-truth doc exists and is filled out |
+| At least 5 use cases documented in `FLEETGRAPH.md` | complete | use-case table is present |
+| Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions | complete | graph diagram and node outline are documented |
+| At least one human-in-the-loop gate implemented | complete | approve / dismiss / snooze interrupt-resume flow is live |
+| Running against real Ship data with no mocked responses | complete | on-demand and proactive paths have been validated against real Ship data |
+| Deployed and publicly accessible | open | still part of Phase 9 |
+| Trigger model decision documented and defended in `FLEETGRAPH.md` | complete | hybrid trigger model and current-vs-future trigger sections are documented |
 
 ## Phase summary
 
@@ -118,6 +146,48 @@ Built the first reasoning and HITL slice:
   - post a sprint comment
 - action memory for suppression after prior human decisions
 
+### Phase 7
+
+Built runtime hardening for the MVP slice:
+
+- attempt counters for reasoning, resume, and action execution
+- transition, retry, and deadline guardrails
+- deterministic fallback when reasoning exceeds budget
+- hard-stop protection for over-transition and over-resume loops
+- terminal outcome classes:
+  - `quiet`
+  - `finding_only`
+  - `waiting_on_human`
+  - `action_executed`
+  - `suppressed`
+  - `failed_retryable`
+  - `failed_terminal`
+- per-node latency telemetry and compact node trace history
+- Braintrust top-level and child-span instrumentation
+- bounded action catalog and FleetGraph reasoning/action skills
+
+### Phase 9
+
+Started the evidence and submission slice:
+
+- LangSmith run-id and run-URL capture support when tracing is configured
+- repeatable local evidence harness:
+  - [collect-fleetgraph-evidence.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.mjs)
+- generated evidence bundle from the local stack:
+  - [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md)
+  - [summary.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.json)
+- captured live evidence for:
+  - flagged on-demand run
+  - HITL waiting path
+  - HITL resume / dismiss path
+  - proactive sweep path
+
+Still open in this phase:
+
+- shared LangSmith links from a traced environment
+- a real quiet-path evidence run against current seed data
+- public deployment verification
+
 ## Current page-awareness technique
 
 Implemented today:
@@ -156,16 +226,21 @@ Still planned:
 
 ## Recommended next step
 
-Start Phase 7 and harden the new Phase 6 loop:
+Choose one of these next, depending on priority:
 
-- durable interrupt / resume behavior beyond the current MVP slice
-- wider action-memory rules and replay safety
-- stronger failure classification around reasoning and action execution
-- broader surface coverage after the core loop is stable
+- **Finish Phase 9** if the goal is MVP proof and submission readiness:
+  - rerun the evidence harness with LangSmith enabled
+  - save two shared LangSmith links
+  - verify the deployed public URL
+- **Phase 8** if the goal is product expansion:
+  - planning intelligence
+  - capacity / scope / dependency signals
+  - broader portfolio reasoning
 
 ## Best reference files
 
 - [FLEETGRAPH.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/FLEETGRAPH.md)
+- [fleetgraph-skills-and-tools.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-skills-and-tools.md)
 - [ROADMAP.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/ROADMAP.md)
 - [fleetgraph-phases/README.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/fleetgraph-phases/README.md)
 - [fleetgraph-three-layer-architecture.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-three-layer-architecture.md)

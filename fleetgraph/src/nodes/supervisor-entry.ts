@@ -1,6 +1,10 @@
 import { Command } from '@langchain/langgraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
-import { getFleetGraphRuntime } from '../runtime.js';
+import {
+  beginFleetGraphNode,
+  createFleetGraphCommand,
+  createFleetGraphFailureCommand,
+} from '../node-runtime.js';
 import type { FleetGraphState } from '../state.js';
 import { createHandoff, createIntervention } from '../supervision.js';
 
@@ -13,7 +17,16 @@ export async function supervisorEntryNode(
   state: FleetGraphState,
   config?: RunnableConfig
 ): Promise<Command<SupervisorTargets>> {
-  const runtime = getFleetGraphRuntime(config);
+  const started = beginFleetGraphNode(state, config, {
+    nodeName: 'supervisorEntry',
+    phase: 'control',
+    guardFailureTarget: 'fallback',
+  });
+  const runtime = started.runtime;
+
+  if ('command' in started) {
+    return started.command;
+  }
 
   runtime.logger.info('FleetGraph supervisor entry', {
     mode: state.mode,
@@ -21,9 +34,10 @@ export async function supervisorEntryNode(
   });
 
   if (state.mode === 'proactive') {
-    return new Command({
-      goto: 'initializeProactiveContext',
-      update: {
+    return createFleetGraphCommand(
+      started.context,
+      'initializeProactiveContext',
+      {
         status: 'running',
         stage: 'supervisor_entry',
         handoff: createHandoff(
@@ -35,14 +49,15 @@ export async function supervisorEntryNode(
           runName: state.trace.runName ?? 'fleetgraph-proactive',
           tags: Array.from(new Set([...state.trace.tags, 'mode:proactive'])),
         },
-      },
-    });
+      }
+    );
   }
 
   if (state.mode === 'on_demand') {
-    return new Command({
-      goto: 'initializeOnDemandContext',
-      update: {
+    return createFleetGraphCommand(
+      started.context,
+      'initializeOnDemandContext',
+      {
         status: 'running',
         stage: 'supervisor_entry',
         handoff: createHandoff(
@@ -54,28 +69,20 @@ export async function supervisorEntryNode(
           runName: state.trace.runName ?? 'fleetgraph-on-demand',
           tags: Array.from(new Set([...state.trace.tags, 'mode:on_demand'])),
         },
-      },
-    });
+      }
+    );
   }
 
-  return new Command({
+  return createFleetGraphFailureCommand(started.context, {
     goto: 'fallback',
-    update: {
-      status: 'failed',
-      stage: 'supervisor_entry',
-      error: {
-        code: 'INVALID_MODE',
-        message: 'FleetGraph run mode is missing or invalid',
-        retryable: false,
-        source: 'supervisorEntry',
-      },
-      interventions: [
-        createIntervention(
-          'fail_safe_exit',
-          'Invalid or missing run mode',
-          'supervisor_entry'
-        ),
-      ],
+    stage: 'supervisor_entry',
+    error: {
+      code: 'INVALID_MODE',
+      message: 'FleetGraph run mode is missing or invalid',
+      retryable: false,
+      source: 'supervisorEntry',
     },
+    reason: 'Invalid or missing run mode',
+    interventionKind: 'fail_safe_exit',
   });
 }

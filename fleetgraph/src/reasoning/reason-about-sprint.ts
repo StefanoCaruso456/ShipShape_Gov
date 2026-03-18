@@ -7,6 +7,7 @@ import type {
   FleetGraphFetchedPayloads,
   FleetGraphFinding,
   FleetGraphReasoning,
+  FleetGraphReasoningSource,
 } from '../types.js';
 
 interface ReasonAboutSprintArgs {
@@ -15,6 +16,12 @@ interface ReasonAboutSprintArgs {
   finding: FleetGraphFinding | null;
   fetched: FleetGraphFetchedPayloads;
   derivedSignals: FleetGraphDerivedSignals;
+  forceDeterministic?: boolean;
+}
+
+export interface FleetGraphReasoningResult {
+  reasoning: FleetGraphReasoning;
+  source: FleetGraphReasoningSource;
 }
 
 function buildStableSummary(
@@ -85,8 +92,8 @@ function buildReasoningFallback(args: ReasonAboutSprintArgs): FleetGraphReasonin
 export async function reasonAboutSprint(
   args: ReasonAboutSprintArgs,
   runtime: FleetGraphRuntimeContext
-): Promise<FleetGraphReasoning> {
-  if (runtime.reasoner) {
+): Promise<FleetGraphReasoningResult> {
+  if (!args.forceDeterministic && runtime.reasoner) {
     try {
       const reasoning = await runtime.reasoner.reasonAboutSprint({
         activeViewRoute: args.activeView?.route ?? null,
@@ -115,7 +122,10 @@ export async function reasonAboutSprint(
       });
 
       if (reasoning) {
-        return reasoning;
+        return {
+          reasoning,
+          source: 'model',
+        };
       }
     } catch (error) {
       runtime.logger.warn('FleetGraph reasoning service failed; using deterministic fallback', {
@@ -124,5 +134,8 @@ export async function reasonAboutSprint(
     }
   }
 
-  return buildReasoningFallback(args);
+  return {
+    reasoning: buildReasoningFallback(args),
+    source: 'deterministic',
+  };
 }
