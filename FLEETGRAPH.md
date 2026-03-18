@@ -271,16 +271,15 @@ Current telemetry references:
 
 ## Use Cases
 
-The MVP starts narrow, but FleetGraph is designed to support a broader set of useful project workflows.
+The MVP use cases below are intentionally limited to the paths that are implemented and evidenced today.
 
 | Use Case | Role | Mode | Trigger | What FleetGraph detects or produces | What the human decides |
 |---|---|---|---|---|---|
-| Sprint is drifting before anyone asks | PM | Proactive | Sprint has open work, low activity, stale issues, or unresolved review friction | Sprint risk summary with top causes and recommended intervention | Whether to message owner, rebalance, escalate, or defer |
-| Explain why a sprint is at risk | PM | On-demand | User opens a sprint / week and invokes FleetGraph | Context-aware explanation of risk, blockers, and next steps | Which action to take now |
-| Missing ritual with active work | Engineer | Proactive | Business day passes with active sprint work and missing standup or weekly artifact | Missing-ritual alert with direct path to the required artifact | Whether to act now or snooze |
-| Turn a stale issue into a next step | Engineer or PM | On-demand | User opens an issue and asks what is blocking it | Likely blockers plus a concrete follow-up draft | Whether to post or edit the draft |
-| Identify where director attention is needed | Director | Proactive | Program has multiple active projects and one exceeds the risk threshold | Ranked intervention brief with ownership and likely blocked decision | Whether to escalate, reassign, or ask for review |
-| Escalate intake sitting too long | PM | Proactive | Feedback remains in triage too long with no owner | Triage recommendation with likely owning scope and disposition | Whether to accept, reject, assign, or create follow-up work |
+| Stable sprint check from the current sprint tab | PM or engineer | On-demand | User opens an active sprint and invokes FleetGraph | Context-aware stable answer with no proposed action | Whether to keep the current plan |
+| Explain why an active sprint is at risk | PM | On-demand | User opens a sprint / week with missing ritual evidence and invokes FleetGraph | Grounded explanation of the current risk and likely next step | Which action to take now |
+| Propose a follow-up and pause for approval | PM | On-demand | User invokes FleetGraph on a risky sprint where a same-day owner follow-up is warranted | Draft follow-up comment plus HITL approval gate | Whether to approve, dismiss, or snooze |
+| Remember a human dismissal and stop repeating the same draft | PM | On-demand | User dismisses the proposed draft and later re-checks the same sprint pattern | Suppressed duplicate action proposal with recorded decision memory | Whether to revisit the issue later |
+| Surface sprint drift without being asked | PM | Proactive | Scheduled or manual sweep sees an active sprint with missing standup and warning-level drift | Stored finding and push-style notification candidate for the sprint owner | Whether to follow up, defer, or ignore |
 
 ## Graph Diagram
 
@@ -447,17 +446,22 @@ Those are useful for testing, validation, or data expansion, but not for determi
 
 Ship remains the source of truth. FleetGraph should not read the database directly.
 
-## Initial Test Cases
+## Test Cases
 
-These are the first MVP test cases we should prove.
+The table below maps each MVP use case to the exact test state, expected output, and trace evidence.
 
-| Test Case | Ship state | Expected result |
-|---|---|---|
-| Clean proactive run | Active sprint with healthy activity and no risk condition | Graph exits quietly |
-| Sprint drift proactive run | Active sprint with stale issues and low activity | Graph surfaces sprint-risk finding |
-| On-demand sprint question | User invokes FleetGraph from a sprint view | Graph explains why the sprint is at risk using current view context |
-| Missing context failure | On-demand invocation without Active View Context | Graph fails safely through fallback |
-| HITL action proposal | Risk is high enough to suggest escalation | Graph pauses for approval before action |
+| Use case | Ship state that triggers the agent | Expected detection or output | LangSmith trace |
+|---|---|---|---|
+| Stable sprint check from the current sprint tab | Active sprint `Week 14` on the current sprint tab, recent activity visible, `3/9` issues complete, `3` in progress, and no warning signals derived | Quiet on-demand path with a stable explanation and no proposed action | [Quiet shared trace](https://smith.langchain.com/public/8c5e90a5-3299-47ab-90d5-c7a16583ea13/r) |
+| Explain why an active sprint is at risk | Active sprint `Week 14` with no standups logged for the sprint and warning-level derived signals | Grounded risk explanation from the current sprint view with the missing-standup signal called out | [Flagged shared trace](https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r) |
+| Propose a follow-up and pause for approval | Same missing-standup sprint state, but action memory allows a new draft follow-up to be proposed | `waiting_on_human` outcome with a draft follow-up comment and approve / dismiss / snooze options | [HITL run](https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee2-b2ed-74eb-a463-70482d76af12?poll=true) and [local evidence](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/hitl-run.json) |
+| Remember a human dismissal and stop repeating the same draft | Same risky sprint after the human dismisses the draft follow-up and the graph is resumed on the saved thread | Completed run with `action_dismissed`, stored memory, and no executed mutation | [Resume run](https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee2-d1ce-706e-9dbb-e313189af39a?poll=true) and [local evidence](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/resume-run.json) |
+| Surface sprint drift without being asked | Manual or scheduled proactive sweep processes the same warning-level sprint state with no standups logged | Proactive sweep stores a warning finding for the sprint and targets it for push delivery | [Flagged shared trace for the same sprint-risk state](https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r) and [proactive evidence](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/proactive-run.json) |
+
+Notes:
+
+- The proactive row intentionally reuses the flagged sprint trace because proactive and on-demand mode run through the same graph; the difference is the trigger, not the graph state being analyzed.
+- The HITL and resume rows use exact LangSmith run URLs reconstructed from the captured run IDs in the local evidence bundle because only the quiet and flagged runs were persisted with public share URLs.
 
 ## Observability
 
@@ -482,10 +486,11 @@ Current evidence harness:
 - [verify-fleetgraph-requirements.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/verify-fleetgraph-requirements.mjs)
 - [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-requirements/summary.md)
 
-Current closeout blockers:
+Current evidence status:
 
-- LangSmith trace links still require a traced environment
-- public Ship URLs respond today, but the deployed FleetGraph routes are not live yet
+- two shared LangSmith traces are already captured
+- HITL and resume evidence are captured locally and tied to exact LangSmith run IDs
+- public FleetGraph routes are verified as mounted in the deployed environment
 
 ## Cost Analysis
 
@@ -501,6 +506,6 @@ It will include:
 ## Current status
 
 - `PRESEARCH.md` completed
-- Phase 1 graph foundation implemented
-- `FLEETGRAPH.md` created
-- next step: wire Phase 2 real Ship context and fetch nodes for the sprint-risk MVP
+- `FLEETGRAPH.md` completed for MVP scope, graph outline, and test-case documentation
+- shared LangSmith traces captured for quiet and flagged paths
+- deployed FleetGraph routes verified as mounted
