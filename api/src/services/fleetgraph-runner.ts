@@ -11,6 +11,10 @@ import {
   type FleetGraphState,
 } from '@ship/fleetgraph';
 import { createFleetGraphActionMemoryStore } from './fleetgraph-action-memory.js';
+import {
+  createFleetGraphLangSmithCollector,
+  resolveFleetGraphLangSmithTrace,
+} from './fleetgraph-langsmith.js';
 import { createFleetGraphReasoner } from './fleetgraph-reasoner.js';
 import { createFleetGraphTelemetryRun } from './fleetgraph-telemetry.js';
 
@@ -21,6 +25,23 @@ export type FleetGraphInvokeResult = FleetGraphState & {
     value?: unknown;
   }>;
 };
+
+async function enrichFleetGraphResultWithLangSmithTrace(
+  result: FleetGraphInvokeResult,
+  collector: ReturnType<typeof createFleetGraphLangSmithCollector>
+): Promise<FleetGraphInvokeResult> {
+  const trace = await resolveFleetGraphLangSmithTrace(collector);
+
+  return {
+    ...result,
+    telemetry: {
+      ...result.telemetry,
+      langsmithRunId: trace.runId ?? result.telemetry.langsmithRunId,
+      langsmithRunUrl: trace.runUrl ?? result.telemetry.langsmithRunUrl,
+      langsmithShareUrl: trace.shareUrl ?? result.telemetry.langsmithShareUrl,
+    },
+  };
+}
 
 function buildInternalApiUrl(path: string): string {
   const baseUrl = `http://127.0.0.1:${process.env.PORT ?? '3000'}`;
@@ -125,6 +146,7 @@ export async function invokeFleetGraph(
 
   const logger = options.logger ?? createFleetGraphLogger('FleetGraph');
   const telemetryRun = createFleetGraphTelemetryRun(normalizedInput, logger);
+  const langSmithCollector = createFleetGraphLangSmithCollector();
   const startedAt = Date.now();
 
   const runtime = createFleetGraphRuntime({
@@ -142,15 +164,21 @@ export async function invokeFleetGraph(
         threadId: normalizedInput.runId,
         checkpointNamespace: options.checkpointNamespace ?? 'fleetgraph',
         tags: normalizedInput.trace?.tags,
+        callbacks: langSmithCollector ? [langSmithCollector] : undefined,
       })
     )) as FleetGraphInvokeResult;
 
-    telemetryRun.finish({
+    const enrichedResult = await enrichFleetGraphResultWithLangSmithTrace(
       result,
+      langSmithCollector
+    );
+
+    telemetryRun.finish({
+      result: enrichedResult,
       latencyMs: Date.now() - startedAt,
     });
 
-    return result;
+    return enrichedResult;
   } catch (error) {
     telemetryRun.finish({
       error,
@@ -182,6 +210,7 @@ export async function resumeFleetGraph(
     },
   };
   const telemetryRun = createFleetGraphTelemetryRun(telemetryInput, logger);
+  const langSmithCollector = createFleetGraphLangSmithCollector();
   const startedAt = Date.now();
   const runtime = createFleetGraphRuntime({
     shipApi: options.shipApi,
@@ -200,15 +229,21 @@ export async function resumeFleetGraph(
         threadId,
         checkpointNamespace: options.checkpointNamespace ?? 'fleetgraph',
         tags: options.tags,
+        callbacks: langSmithCollector ? [langSmithCollector] : undefined,
       })
     )) as FleetGraphInvokeResult;
 
-    telemetryRun.finish({
+    const enrichedResult = await enrichFleetGraphResultWithLangSmithTrace(
       result,
+      langSmithCollector
+    );
+
+    telemetryRun.finish({
+      result: enrichedResult,
       latencyMs: Date.now() - startedAt,
     });
 
-    return result;
+    return enrichedResult;
   } catch (error) {
     telemetryRun.finish({
       error,

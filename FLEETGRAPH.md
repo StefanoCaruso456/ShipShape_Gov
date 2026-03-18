@@ -448,6 +448,11 @@ The MVP must produce at least two shared trace links showing:
 - a clean / quiet path
 - a problem-detected path
 
+Current evidence harness:
+
+- [collect-fleetgraph-evidence.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.mjs)
+- [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md)
+
 ## Cost Analysis
 
 This section will be completed in the final submission.

@@ -157,6 +157,8 @@ const response: FleetGraphOnDemandResponse = {
   nodeHistory: [],
   telemetry: {
     langsmithRunId: null,
+    langsmithRunUrl: null,
+    langsmithShareUrl: null,
     braintrustSpanId: null,
   },
   trace: {

@@ -1,0 +1,29 @@
+{
+  "status": "ok",
+  "workspaceId": "693b06d0-e0ac-4304-92e3-33cb51cf7d90",
+  "processedWeeks": 1,
+  "surfacedFindings": 1,
+  "newNotifications": 1,
+  "findings": [
+    {
+      "id": "38d9799e-a307-4ad3-aa62-7b20839584b1",
+      "workspaceId": "693b06d0-e0ac-4304-92e3-33cb51cf7d90",
+      "weekId": "c3619719-f4cd-474a-88d1-83d11558193f",
+      "projectId": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+      "programId": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+      "title": "Week 14",
+      "summary": "All sprint issues are still incomplete and none are marked in progress. No standups have been logged for this active sprint yet. The sprint has tracked work but nothing has been completed yet.",
+      "severity": "action",
+      "route": "/documents/c3619719-f4cd-474a-88d1-83d11558193f/issues",
+      "surface": "document",
+      "tab": "issues",
+      "signalKinds": [
+        "missing_standup",
+        "no_completed_work",
+        "work_not_started"
+      ],
+      "lastDetectedAt": "2026-03-18T02:02:03.000Z",
+      "lastNotifiedAt": "2026-03-18T02:02:03.000Z"
+    }
+  ]
+}

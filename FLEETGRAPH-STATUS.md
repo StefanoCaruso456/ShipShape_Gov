@@ -63,7 +63,6 @@ Both modes use the same graph.
 - wider issue / program / dashboard surface coverage
 - high-signal mutation trigger / pub-sub delivery path
 - real LangSmith trace-link evidence bundle
-- populated `langsmithRunId` in FleetGraph runtime state
 - deployment evidence and LangSmith submission package
 
 ## MVP requirement audit
@@ -71,7 +70,7 @@ Both modes use the same graph.
 | Requirement | Status | Notes |
 |---|---|---|
 | Graph running with at least one proactive detection wired end to end | complete | proactive sweep, finding persistence, dedupe, and delivery are implemented |
-| LangSmith tracing enabled with at least two shared trace links showing different execution paths | partial | LangSmith is part of the architecture, but the shared trace-link evidence bundle is still open |
+| LangSmith tracing enabled with at least two shared trace links showing different execution paths | partial | run-id / URL capture support and the local evidence harness now exist, but the shared trace-link bundle still depends on a traced environment |
 | `FLEETGRAPH.md` created with Agent Responsibility and Use Cases sections completed | complete | root source-of-truth doc exists and is filled out |
 | At least 5 use cases documented in `FLEETGRAPH.md` | complete | use-case table is present |
 | Graph outline completed in `FLEETGRAPH.md` with node types, edges, and branching conditions | complete | graph diagram and node outline are documented |
@@ -167,6 +166,28 @@ Built runtime hardening for the MVP slice:
 - Braintrust top-level and child-span instrumentation
 - bounded action catalog and FleetGraph reasoning/action skills
 
+### Phase 9
+
+Started the evidence and submission slice:
+
+- LangSmith run-id and run-URL capture support when tracing is configured
+- repeatable local evidence harness:
+  - [collect-fleetgraph-evidence.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.mjs)
+- generated evidence bundle from the local stack:
+  - [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md)
+  - [summary.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.json)
+- captured live evidence for:
+  - flagged on-demand run
+  - HITL waiting path
+  - HITL resume / dismiss path
+  - proactive sweep path
+
+Still open in this phase:
+
+- shared LangSmith links from a traced environment
+- a real quiet-path evidence run against current seed data
+- public deployment verification
+
 ## Current page-awareness technique
 
 Implemented today:
@@ -207,11 +228,11 @@ Still planned:
 
 Choose one of these next, depending on priority:
 
-- **Phase 9 first** if the goal is MVP proof and submission readiness:
-  - LangSmith trace links
-  - deployment verification
-  - final evidence bundle
-- **Phase 8 first** if the goal is product expansion:
+- **Finish Phase 9** if the goal is MVP proof and submission readiness:
+  - rerun the evidence harness with LangSmith enabled
+  - save two shared LangSmith links
+  - verify the deployed public URL
+- **Phase 8** if the goal is product expansion:
   - planning intelligence
   - capacity / scope / dependency signals
   - broader portfolio reasoning

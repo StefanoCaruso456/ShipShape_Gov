@@ -181,6 +181,8 @@ export interface FleetGraphNodeTraceEntry {
 
 export interface FleetGraphTelemetryState {
   langsmithRunId: string | null;
+  langsmithRunUrl: string | null;
+  langsmithShareUrl: string | null;
   braintrustSpanId: string | null;
 }
 

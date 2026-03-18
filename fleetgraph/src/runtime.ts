@@ -200,10 +200,12 @@ export function createFleetGraphRunnableConfig(
     threadId?: string;
     checkpointNamespace?: string;
     tags?: string[];
+    callbacks?: RunnableConfig['callbacks'];
   } = {}
 ): RunnableConfig {
   return {
     tags: options.tags,
+    callbacks: options.callbacks,
     configurable: {
       runtime,
       thread_id: options.threadId ?? randomUUID(),

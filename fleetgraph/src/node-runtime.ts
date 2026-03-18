@@ -99,6 +99,8 @@ function resolveTelemetryState(
 ): FleetGraphTelemetryState {
   return {
     langsmithRunId: runtime.telemetry?.getLangSmithRunId() ?? state.telemetry.langsmithRunId,
+    langsmithRunUrl: state.telemetry.langsmithRunUrl,
+    langsmithShareUrl: state.telemetry.langsmithShareUrl,
     braintrustSpanId: runtime.telemetry?.getTopLevelSpanId() ?? state.telemetry.braintrustSpanId,
   };
 }

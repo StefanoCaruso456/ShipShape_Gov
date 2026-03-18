@@ -199,6 +199,8 @@ export const FleetGraphStateAnnotation = Annotation.Root({
     reducer: replaceValue,
     default: () => ({
       langsmithRunId: null,
+      langsmithRunUrl: null,
+      langsmithShareUrl: null,
       braintrustSpanId: null,
     }),
   }),

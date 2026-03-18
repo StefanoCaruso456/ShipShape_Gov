@@ -1,0 +1,589 @@
+{
+  "threadId": "776328c4-e2ea-4b50-a3f6-f56cc33f2ae4",
+  "status": "completed",
+  "stage": "action_dismissed",
+  "mode": "on_demand",
+  "triggerType": "user_invoke",
+  "activeView": {
+    "entity": {
+      "id": "c3619719-f4cd-474a-88d1-83d11558193f",
+      "type": "week",
+      "sourceDocumentType": "sprint"
+    },
+    "surface": "document",
+    "route": "/documents/c3619719-f4cd-474a-88d1-83d11558193f/issues",
+    "tab": "issues",
+    "projectId": null
+  },
+  "expandedScope": {
+    "issueId": null,
+    "weekId": "c3619719-f4cd-474a-88d1-83d11558193f",
+    "projectId": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+    "programId": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+    "personId": null
+  },
+  "fetched": {
+    "entity": {
+      "id": "c3619719-f4cd-474a-88d1-83d11558193f",
+      "workspace_id": "693b06d0-e0ac-4304-92e3-33cb51cf7d90",
+      "document_type": "sprint",
+      "title": "Week 14",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "yjs_state": null,
+      "parent_id": null,
+      "position": 0,
+      "properties": {
+        "plan": "If we complete these features, we will unblock the next milestone.",
+        "status": "active",
+        "owner_id": "6f86ccf4-4848-4d29-ad20-caec2140d79b",
+        "confidence": 79.41234412753894,
+        "project_id": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+        "assignee_ids": [
+          "e418170a-aa2e-4645-adb2-9d43e6066bc6",
+          "7f5b9bed-85a3-41a7-9a31-f4f96e4da927"
+        ],
+        "sprint_number": 14,
+        "success_criteria": "All planned stories marked done, tests passing"
+      },
+      "ticket_number": null,
+      "archived_at": null,
+      "deleted_at": null,
+      "started_at": null,
+      "completed_at": null,
+      "cancelled_at": null,
+      "reopened_at": null,
+      "converted_to_id": null,
+      "converted_from_id": null,
+      "converted_at": null,
+      "converted_by": null,
+      "original_type": null,
+      "conversion_count": 0,
+      "created_at": "2026-03-18T02:01:49.054Z",
+      "updated_at": "2026-03-18T02:01:49.054Z",
+      "created_by": null,
+      "visibility": "workspace",
+      "can_access": true,
+      "confidence": 79.41234412753894,
+      "owner_id": "e418170a-aa2e-4645-adb2-9d43e6066bc6",
+      "owner": null,
+      "accountable_id": null,
+      "consulted_ids": [],
+      "informed_ids": [],
+      "has_design_review": null,
+      "design_review_notes": null,
+      "status": "active",
+      "plan": "If we complete these features, we will unblock the next milestone.",
+      "belongs_to": [
+        {
+          "id": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+          "type": "project",
+          "title": "API Platform - Core Features",
+          "color": "#6366f1"
+        },
+        {
+          "id": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+          "type": "program",
+          "title": "API Platform",
+          "color": "#10B981"
+        }
+      ]
+    },
+    "supporting": {
+      "current": {
+        "id": "c3619719-f4cd-474a-88d1-83d11558193f",
+        "title": "Week 14",
+        "document_type": "sprint",
+        "ticket_number": null,
+        "program_id": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+        "program_name": "API Platform",
+        "program_color": "#10B981"
+      },
+      "ancestors": [],
+      "children": [],
+      "belongs_to": [
+        {
+          "type": "program",
+          "id": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+          "title": "API Platform",
+          "document_type": "program",
+          "color": "#10B981"
+        },
+        {
+          "type": "project",
+          "id": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+          "title": "API Platform - Core Features",
+          "document_type": "project",
+          "color": "#6366f1"
+        }
+      ],
+      "breadcrumbs": [
+        {
+          "id": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+          "title": "API Platform",
+          "type": "program"
+        },
+        {
+          "id": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+          "title": "API Platform - Core Features",
+          "type": "project"
+        },
+        {
+          "id": "c3619719-f4cd-474a-88d1-83d11558193f",
+          "title": "Week 14",
+          "type": "sprint",
+          "ticket_number": null
+        }
+      ]
+    },
+    "activity": {
+      "days": [
+        {
+          "date": "2026-02-17",
+          "count": 0
+        },
+        {
+          "date": "2026-02-18",
+          "count": 0
+        },
+        {
+          "date": "2026-02-19",
+          "count": 0
+        },
+        {
+          "date": "2026-02-20",
+          "count": 0
+        },
+        {
+          "date": "2026-02-21",
+          "count": 0
+        },
+        {
+          "date": "2026-02-22",
+          "count": 0
+        },
+        {
+          "date": "2026-02-23",
+          "count": 0
+        },
+        {
+          "date": "2026-02-24",
+          "count": 0
+        },
+        {
+          "date": "2026-02-25",
+          "count": 0
+        },
+        {
+          "date": "2026-02-26",
+          "count": 0
+        },
+        {
+          "date": "2026-02-27",
+          "count": 0
+        },
+        {
+          "date": "2026-02-28",
+          "count": 0
+        },
+        {
+          "date": "2026-03-01",
+          "count": 0
+        },
+        {
+          "date": "2026-03-02",
+          "count": 0
+        },
+        {
+          "date": "2026-03-03",
+          "count": 0
+        },
+        {
+          "date": "2026-03-04",
+          "count": 0
+        },
+        {
+          "date": "2026-03-05",
+          "count": 0
+        },
+        {
+          "date": "2026-03-06",
+          "count": 0
+        },
+        {
+          "date": "2026-03-07",
+          "count": 0
+        },
+        {
+          "date": "2026-03-08",
+          "count": 0
+        },
+        {
+          "date": "2026-03-09",
+          "count": 0
+        },
+        {
+          "date": "2026-03-10",
+          "count": 0
+        },
+        {
+          "date": "2026-03-11",
+          "count": 0
+        },
+        {
+          "date": "2026-03-12",
+          "count": 0
+        },
+        {
+          "date": "2026-03-13",
+          "count": 0
+        },
+        {
+          "date": "2026-03-14",
+          "count": 0
+        },
+        {
+          "date": "2026-03-15",
+          "count": 0
+        },
+        {
+          "date": "2026-03-16",
+          "count": 0
+        },
+        {
+          "date": "2026-03-17",
+          "count": 0
+        },
+        {
+          "date": "2026-03-18",
+          "count": 7
+        }
+      ]
+    },
+    "accountability": {
+      "context_type": "review",
+      "sprint": {
+        "id": "c3619719-f4cd-474a-88d1-83d11558193f",
+        "title": "Week 14",
+        "number": "14",
+        "status": "active",
+        "plan": "If we complete these features, we will unblock the next milestone."
+      },
+      "program": {
+        "id": "be152113-1be3-4e01-a0e1-82246e6d2c95",
+        "name": "API Platform",
+        "description": null,
+        "goals": null
+      },
+      "project": {
+        "id": "3df67945-8a46-4b1a-9bdc-bc0da0f3ddf6",
+        "name": "API Platform - Core Features",
+        "plan": "Building core features will establish the product foundation and attract early adopters.",
+        "ice_scores": {
+          "impact": null,
+          "confidence": null,
+          "ease": null
+        },
+        "monetary_impact_expected": null
+      },
+      "standups": [],
+      "issues": {
+        "stats": {
+          "total": 6,
+          "completed": 0,
+          "in_progress": 0,
+          "planned_at_start": 6,
+          "added_mid_sprint": 0,
+          "cancelled": 0
+        },
+        "completed_items": [],
+        "incomplete_items": [
+          {
+            "id": "37a0f3f7-d564-4595-8694-103bf4ef53d7",
+            "title": "Implement core features",
+            "status": null,
+            "priority": "high",
+            "added_mid_sprint": null,
+            "cancelled": null
+          },
+          {
+            "id": "9ebb93bd-9c52-43ff-ab59-8fb3d9c460bd",
+            "title": "Add input validation",
+            "status": null,
+            "priority": "high",
+            "added_mid_sprint": null,
+            "cancelled": null
+          },
+          {
+            "id": "21286300-c156-45d9-a61b-dfe8446fa9c3",
+            "title": "Create error handling",
+            "status": null,
+            "priority": "high",
+            "added_mid_sprint": null,
+            "cancelled": null
+          },
+          {
+            "id": "9c22b7b4-cf7d-4ad0-a16d-a39ae39efdd9",
+            "title": "Build user interface",
+            "status": null,
+            "priority": "medium",
+            "added_mid_sprint": null,
+            "cancelled": null
+          },
+          {
+            "id": "fd9ac601-4e89-4f80-a32b-71ed10632a4a",
+            "title": "Add unit tests",
+            "status": null,
+            "priority": "medium",
+            "added_mid_sprint": null,
+            "cancelled": null
+          },
+          {
+            "id": "ebe6cf86-a033-4021-8664-472771940272",
+            "title": "Write integration tests",
+            "status": null,
+            "priority": "low",
+            "added_mid_sprint": null,
+            "cancelled": null
+          }
+        ]
+      },
+      "existing_review": null,
+      "clarifying_questions_context": [
+        "The sprint plan was: \"If we complete these features, we will unblock the next milestone.\". Was this validated or invalidated?",
+        "What evidence supports your conclusion about the plan?",
+        "Only 0% of issues were completed. What prevented full completion?",
+        "What would you do differently next sprint?",
+        "What worked well that should be repeated?"
+      ]
+    },
+    "people": {
+      "owner": null,
+      "accountableId": null
+    }
+  },
+  "derivedSignals": {
+    "severity": "action",
+    "reasons": [
+      "No standups have been logged for this active sprint yet.",
+      "The sprint has tracked work but nothing has been completed yet.",
+      "All sprint issues are still incomplete and none are marked in progress."
+    ],
+    "summary": "All sprint issues are still incomplete and none are marked in progress. No standups have been logged for this active sprint yet. The sprint has tracked work but nothing has been completed yet.",
+    "shouldSurface": true,
+    "signals": [
+      {
+        "kind": "missing_standup",
+        "severity": "warning",
+        "summary": "No standups have been logged for this active sprint yet.",
+        "evidence": [
+          "Standup count is 0.",
+          "Sprint has 6 tracked issues."
+        ],
+        "dedupeKey": "c3619719-f4cd-474a-88d1-83d11558193f:missing_standup"
+      },
+      {
+        "kind": "no_completed_work",
+        "severity": "warning",
+        "summary": "The sprint has tracked work but nothing has been completed yet.",
+        "evidence": [
+          "Completed issues: 0 of 6.",
+          "In-progress issues: 0."
+        ],
+        "dedupeKey": "c3619719-f4cd-474a-88d1-83d11558193f:no_completed_work"
+      },
+      {
+        "kind": "work_not_started",
+        "severity": "action",
+        "summary": "All sprint issues are still incomplete and none are marked in progress.",
+        "evidence": [
+          "Incomplete issues: 6 of 6.",
+          "Completed issues: 0."
+        ],
+        "dedupeKey": "c3619719-f4cd-474a-88d1-83d11558193f:work_not_started"
+      }
+    ],
+    "metrics": {
+      "totalIssues": 6,
+      "completedIssues": 0,
+      "inProgressIssues": 0,
+      "incompleteIssues": 6,
+      "cancelledIssues": 0,
+      "standupCount": 0,
+      "recentActivityCount": 7,
+      "recentActiveDays": 1,
+      "completionRate": 0
+    }
+  },
+  "finding": {
+    "summary": "All sprint issues are still incomplete and none are marked in progress. No standups have been logged for this active sprint yet. The sprint has tracked work but nothing has been completed yet.",
+    "severity": "action"
+  },
+  "reasoning": {
+    "summary": "All sprint issues are still incomplete and none are marked in progress. No standups have been logged for this active sprint yet. The sprint has tracked work but nothing has been completed yet.",
+    "evidence": [
+      "Standup count is 0.",
+      "Sprint has 6 tracked issues.",
+      "Completed issues: 0 of 6.",
+      "In-progress issues: 0."
+    ],
+    "whyNow": "This matters now because you are looking at the issues tab for API Platform - Core Features, and the current execution signals point to sprint drift.",
+    "recommendedNextStep": "Get a same-day owner update, post a standup, and either move work into progress or reduce scope.",
+    "confidence": "high"
+  },
+  "proposedAction": {
+    "type": "draft_escalation_comment",
+    "targetId": "c3619719-f4cd-474a-88d1-83d11558193f",
+    "summary": "Draft an escalation comment on Week 14 to force a same-day decision on scope, blockers, and ownership.",
+    "rationale": "Get a same-day owner update, post a standup, and either move work into progress or reduce scope.",
+    "draftComment": "Project: API Platform - Core Features. Week 14 appears stalled based on the current evidence. Please confirm today whether the team should de-scope work, reassign ownership, or escalate a blocker, and identify the decision owner in this thread.",
+    "targetRoute": "/documents/c3619719-f4cd-474a-88d1-83d11558193f/issues",
+    "fingerprint": "c3619719-f4cd-474a-88d1-83d11558193f:draft_escalation_comment:fad70c44132d5bb0"
+  },
+  "pendingApproval": null,
+  "actionResult": {
+    "outcome": "dismissed",
+    "summary": "FleetGraph dismissed this draft action for the current sprint pattern.",
+    "note": "Phase 9 evidence capture dismiss",
+    "snoozedUntil": null,
+    "executedCommentId": null
+  },
+  "attempts": {
+    "reasoning": 1,
+    "resume": 1,
+    "actionExecution": 0
+  },
+  "guard": {
+    "maxTransitions": 24,
+    "transitionCount": 9,
+    "maxRetries": 2,
+    "maxResumeCount": 2,
+    "maxReasoningAttempts": 2,
+    "circuitBreakerOpen": false,
+    "lastTripReason": null
+  },
+  "timing": {
+    "startedAt": "2026-03-18T02:02:03.204Z",
+    "lastNodeAt": "2026-03-18T02:02:03.581Z",
+    "deadlineAt": "2026-03-18T02:04:03.204Z"
+  },
+  "reasoningSource": "deterministic",
+  "suppressionReason": null,
+  "terminalOutcome": "suppressed",
+  "error": null,
+  "lastNode": "humanApprovalGate",
+  "nodeHistory": [
+    {
+      "node": "supervisorEntry",
+      "phase": "control",
+      "startedAt": "2026-03-18T02:02:03.204Z",
+      "finishedAt": "2026-03-18T02:02:03.204Z",
+      "latencyMs": 0,
+      "status": "ok",
+      "goto": "initializeOnDemandContext",
+      "errorCode": null
+    },
+    {
+      "node": "initializeOnDemandContext",
+      "phase": "context",
+      "startedAt": "2026-03-18T02:02:03.205Z",
+      "finishedAt": "2026-03-18T02:02:03.205Z",
+      "latencyMs": 0,
+      "status": "ok",
+      "goto": "resolveContext",
+      "errorCode": null
+    },
+    {
+      "node": "resolveContext",
+      "phase": "context",
+      "startedAt": "2026-03-18T02:02:03.206Z",
+      "finishedAt": "2026-03-18T02:02:03.206Z",
+      "latencyMs": 0,
+      "status": "ok",
+      "goto": "fetchSprintContext",
+      "errorCode": null
+    },
+    {
+      "node": "fetchSprintContext",
+      "phase": "fetch",
+      "startedAt": "2026-03-18T02:02:03.207Z",
+      "finishedAt": "2026-03-18T02:02:03.245Z",
+      "latencyMs": 38,
+      "status": "ok",
+      "goto": "deriveSprintSignals",
+      "errorCode": null
+    },
+    {
+      "node": "deriveSprintSignals",
+      "phase": "signals",
+      "startedAt": "2026-03-18T02:02:03.246Z",
+      "finishedAt": "2026-03-18T02:02:03.246Z",
+      "latencyMs": 0,
+      "status": "ok",
+      "goto": "recordSignalFinding",
+      "errorCode": null
+    },
+    {
+      "node": "recordSignalFinding",
+      "phase": "signals",
+      "startedAt": "2026-03-18T02:02:03.247Z",
+      "finishedAt": "2026-03-18T02:02:03.247Z",
+      "latencyMs": 0,
+      "status": "ok",
+      "goto": "reasonAboutSprint",
+      "errorCode": null
+    },
+    {
+      "node": "reasonAboutSprint",
+      "phase": "reasoning",
+      "startedAt": "2026-03-18T02:02:03.248Z",
+      "finishedAt": "2026-03-18T02:02:03.248Z",
+      "latencyMs": 0,
+      "status": "ok",
+      "goto": "proposeSprintAction",
+      "errorCode": null
+    },
+    {
+      "node": "proposeSprintAction",
+      "phase": "action",
+      "startedAt": "2026-03-18T02:02:03.248Z",
+      "finishedAt": "2026-03-18T02:02:03.249Z",
+      "latencyMs": 1,
+      "status": "ok",
+      "goto": "humanApprovalGate",
+      "errorCode": null
+    },
+    {
+      "node": "humanApprovalGate",
+      "phase": "hitl",
+      "startedAt": "2026-03-18T02:02:03.580Z",
+      "finishedAt": "2026-03-18T02:02:03.581Z",
+      "latencyMs": 1,
+      "status": "interrupted",
+      "goto": "completeRun",
+      "errorCode": null
+    }
+  ],
+  "telemetry": {
+    "langsmithRunId": null,
+    "langsmithRunUrl": null,
+    "langsmithShareUrl": null,
+    "braintrustSpanId": null
+  },
+  "trace": {
+    "runName": "fleetgraph-on-demand",
+    "tags": [
+      "fleetgraph",
+      "on-demand",
+      "week",
+      "document",
+      "mode:on_demand"
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-03-18T02:02:03.604Z",
+  "apiUrl": "http://localhost:3000",
+  "actorEmail": "dev@ship.local",
+  "quietRun": null,
+  "flaggedRun": {
+    "threadId": "776328c4-e2ea-4b50-a3f6-f56cc33f2ae4",
+    "status": "waiting_on_human",
+    "stage": "waiting_on_human",
+    "terminalOutcome": "waiting_on_human",
+    "weekId": "c3619719-f4cd-474a-88d1-83d11558193f",
+    "title": "Week 14",
+    "signalSeverity": "action",
+    "shouldSurface": true,
+    "pendingApproval": true,
+    "reasoningSource": "deterministic",
+    "langsmithRunId": null,
+    "langsmithRunUrl": null,
+    "langsmithShareUrl": null,
+    "braintrustSpanId": null
+  },
+  "hitlRun": {
+    "threadId": "776328c4-e2ea-4b50-a3f6-f56cc33f2ae4",
+    "status": "waiting_on_human",
+    "stage": "waiting_on_human",
+    "terminalOutcome": "waiting_on_human",
+    "weekId": "c3619719-f4cd-474a-88d1-83d11558193f",
+    "title": "Week 14",
+    "signalSeverity": "action",
+    "shouldSurface": true,
+    "pendingApproval": true,
+    "reasoningSource": "deterministic",
+    "langsmithRunId": null,
+    "langsmithRunUrl": null,
+    "langsmithShareUrl": null,
+    "braintrustSpanId": null
+  },
+  "resumeRun": {
+    "threadId": "776328c4-e2ea-4b50-a3f6-f56cc33f2ae4",
+    "status": "completed",
+    "stage": "action_dismissed",
+    "terminalOutcome": "suppressed",
+    "weekId": "c3619719-f4cd-474a-88d1-83d11558193f",
+    "title": "Week 14",
+    "signalSeverity": "action",
+    "shouldSurface": true,
+    "pendingApproval": false,
+    "reasoningSource": "deterministic",
+    "langsmithRunId": null,
+    "langsmithRunUrl": null,
+    "langsmithShareUrl": null,
+    "braintrustSpanId": null
+  },
+  "proactiveRun": {
+    "processedWeeks": 1,
+    "surfacedFindings": 1,
+    "newNotifications": 1
+  },
+  "traceLinksReady": false
+}

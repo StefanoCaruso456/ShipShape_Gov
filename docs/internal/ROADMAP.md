@@ -39,7 +39,7 @@ Fast current-state summary:
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
 | Phase 8: Planning intelligence | later | expansion path after MVP |
-| Phase 9: Evidence and submission | pending | LangSmith links, deployment, and final proof |
+| Phase 9: Evidence and submission | in progress | evidence harness and local bundle exist; shared LangSmith links and deployment proof remain |
 
 ## Architecture we are building toward
 
@@ -97,6 +97,7 @@ Current audit:
 
 - `LangSmith tracing...` is the main partial requirement:
   - tracing is part of the architecture and state model
+  - run-id / run-URL capture support and a local evidence harness now exist
   - the shared trace-link evidence bundle is still open
 - `Deployed and publicly accessible` is still open and belongs to Phase 9
 
@@ -184,6 +185,11 @@ Before submission:
 - deployed URL works
 - the system is running against real Ship data
 - evidence is saved for the final write-up
+
+Current evidence harness:
+
+- [collect-fleetgraph-evidence.mjs](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.mjs)
+- [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md)
 
 ## Phase plan
 
@@ -579,16 +585,23 @@ This is the broader product opportunity and a major differentiator, but it shoul
 
 Close the loop on delivery requirements and prove the system works.
 
-### What we plan to implement
+### What we have implemented so far
 
-- at least two shared LangSmith traces with different execution paths
+- evidence harness script for local FleetGraph capture
+- local evidence bundle written to:
+  - `audit-results/fleetgraph-evidence/`
+- LangSmith run-id and run-URL capture support when tracing is configured
 - documented trigger model and graph diagram in `FLEETGRAPH.md`
 - documented test cases tied to use cases
-- detection latency measurement
-- cost-per-run estimate
-- estimated runs per day
-- development cost tracking
+- cost analysis reference already exists in:
+  - `artifacts-documentation/ai-cost-analysis.md`
+
+### What is still open
+
+- at least two shared LangSmith traces with different execution paths
+- quiet-path evidence from the current seed state or a traced healthy scenario
 - deployment verification
+- public URL proof
 
 ### Why this phase matters
 
@@ -599,6 +612,7 @@ This project is graded on architecture, execution, and proof. We need both worki
 - MVP checklist is fully covered
 - traces are shareable
 - `FLEETGRAPH.md` is complete enough for submission
+- the evidence harness outputs are attached or referenced
 
 ## Recommended build order
 
@@ -617,16 +631,17 @@ Build in this order:
 
 ## Immediate next implementation slice
 
-The next slice we should execute is one of these:
+The next slice we should execute is:
 
-1. **Phase 9: Evidence and submission**
+1. **Finish Phase 9**
+   - rerun the evidence harness with LangSmith enabled
    - capture and save shared LangSmith traces for:
      - quiet path
      - flagged path
      - interrupt / resume path
    - verify deployed behavior
    - package final runtime evidence
-2. **Phase 8: Planning intelligence**
+2. **Then Phase 8**
    - extend beyond sprint risk into:
      - capacity
      - scope creep
