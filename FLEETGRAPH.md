@@ -286,29 +286,44 @@ The MVP starts narrow, but FleetGraph is designed to support a broader set of us
 
 ```mermaid
 flowchart TD
-  A["Trigger<br/>Event / Sweep / UI Invoke"] --> B["Supervisor / Control Plane"]
-  B --> C{"Mode"}
+  A[Trigger]
+  B[Supervisor]
+  C{Mode}
+  D[Initialize Proactive Context]
+  E[Initialize On-Demand Context]
+  F[Resolve Context]
+  G[Fetch Ship Data in Parallel]
+  H[Derive Signals]
+  I[Reason About Sprint]
+  J{Outcome}
+  K[Quiet Exit]
+  L[Surface Finding]
+  M[Propose Action]
+  N{Human Approval}
+  O[Execute Action]
+  P[Persist Dismiss or Snooze Memory]
+  Q[Fallback]
 
-  C -->|"Proactive"| D["Initialize Proactive Context"]
-  C -->|"On-Demand"| E["Initialize On-Demand Context<br/>using Active View Context"]
-
-  D --> F["Resolve Scope"]
+  A --> B
+  B --> C
+  C -->|Proactive| D
+  C -->|On-demand| E
+  D --> F
   E --> F
-
-  F --> G["Parallel Fetch Nodes"]
-  G --> H["Derived Signals"]
-  H --> I["Reasoning Node"]
-
-  I --> J{"Outcome"}
-  J -->|"No meaningful finding"| K["Quiet Exit / Contextual Answer"]
-  J -->|"Insight only"| L["Surface Finding"]
-  J -->|"Action proposal"| M["Prepare Action"]
-
-  M --> N{"Human Gate"}
-  N -->|"Approve"| O["Execute Action"]
-  N -->|"Dismiss / Snooze"| P["Persist Operational Memory"]
-
-  G --> Q["Fallback / Error Path"]
+  F --> G
+  G --> H
+  H --> I
+  I --> J
+  J -->|No issue| K
+  J -->|Finding only| L
+  J -->|Action needed| M
+  M --> N
+  N -->|Approve| O
+  N -->|Dismiss or snooze| P
+  F --> Q
+  G --> Q
+  I --> Q
+  O --> Q
 ```
 
 Useful flow diagrams:
