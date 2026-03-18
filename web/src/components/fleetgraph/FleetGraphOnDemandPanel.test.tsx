@@ -1,10 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FleetGraphActiveViewContext, FleetGraphOnDemandResponse } from '@ship/shared';
 import { FleetGraphOnDemandPanel } from './FleetGraphOnDemandPanel';
 
 const mockUseFleetGraphActiveView = vi.fn();
 const mockInvokeFleetGraphOnDemand = vi.fn();
+const mockResumeFleetGraphOnDemand = vi.fn();
 
 vi.mock('@/hooks/useFleetGraphActiveView', () => ({
   useFleetGraphActiveView: () => mockUseFleetGraphActiveView(),
@@ -12,6 +13,7 @@ vi.mock('@/hooks/useFleetGraphActiveView', () => ({
 
 vi.mock('@/lib/fleetgraph', () => ({
   invokeFleetGraphOnDemand: (request: unknown) => mockInvokeFleetGraphOnDemand(request),
+  resumeFleetGraphOnDemand: (request: unknown) => mockResumeFleetGraphOnDemand(request),
 }));
 
 const activeView: FleetGraphActiveViewContext = {
@@ -26,8 +28,8 @@ const activeView: FleetGraphActiveViewContext = {
   projectId: '22222222-2222-2222-2222-222222222222',
 };
 
-const response: FleetGraphOnDemandResponse = {
-  threadId: null,
+const baseResponse: FleetGraphOnDemandResponse = {
+  threadId: 'thread-1',
   status: 'completed',
   stage: 'completed',
   mode: 'on_demand',
@@ -122,7 +124,8 @@ const response: FleetGraphOnDemandResponse = {
     summary:
       'FleetGraph sees clear execution drift because all work is still untouched and no standup has been logged.',
     evidence: ['Completed issues: 0 of 6.', 'Standups logged: 0.'],
-    whyNow: 'You are already on the issues tab for this sprint, so the current execution risk is directly relevant.',
+    whyNow:
+      'You are already on the issues tab for this sprint, so the current execution risk is directly relevant.',
     recommendedNextStep:
       'Ask for a same-day owner update, post a standup, and either move work in progress or reduce scope.',
     confidence: 'high',
@@ -171,15 +174,21 @@ describe('FleetGraphOnDemandPanel', () => {
   beforeEach(() => {
     mockUseFleetGraphActiveView.mockReset();
     mockInvokeFleetGraphOnDemand.mockReset();
+    mockResumeFleetGraphOnDemand.mockReset();
+    window.localStorage.clear();
   });
 
-  it('invokes FleetGraph for the current tab and renders the resulting evidence', async () => {
+  it('opens the drawer, sends a typed question, and renders the returned answer', async () => {
     mockUseFleetGraphActiveView.mockReturnValue(activeView);
-    mockInvokeFleetGraphOnDemand.mockResolvedValue(response);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue(baseResponse);
 
     render(<FleetGraphOnDemandPanel />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Why is this sprint at risk?' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Why is this sprint at risk?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send FleetGraph message' }));
 
     await waitFor(() => {
       expect(mockInvokeFleetGraphOnDemand).toHaveBeenCalledWith({
@@ -188,55 +197,104 @@ describe('FleetGraphOnDemandPanel', () => {
       });
     });
 
-    expect(await screen.findByText('FleetGraph answer')).toBeInTheDocument();
-    expect(screen.getAllByText(/All sprint issues are still incomplete/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Needs action').length).toBeGreaterThan(0);
-    expect(screen.getByText(/API Platform - Core Features/)).toBeInTheDocument();
-    expect(screen.getByText('Standups')).toBeInTheDocument();
+    expect(await screen.findByText('Grounded answer')).toBeInTheDocument();
+    expect(screen.getAllByText(/FleetGraph sees clear execution drift/).length).toBeGreaterThan(0);
+    expect(screen.getByText('Recommended next step')).toBeInTheDocument();
     expect(screen.getByText('What FleetGraph saw')).toBeInTheDocument();
+    expect(screen.getByText(/API Platform - Core Features/)).toBeInTheDocument();
   });
 
-  it('shows a context wait state when no active view is available yet', () => {
+  it('shows the wait state when page context is not available', () => {
     mockUseFleetGraphActiveView.mockReturnValue(null);
 
     render(<FleetGraphOnDemandPanel />);
 
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+
     expect(
-      screen.getByText('FleetGraph is waiting for page context before it can analyze this sprint.')
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Why is this sprint at risk?' })).toBeDisabled();
+      screen.getAllByText('Open a sprint, project, or My Week view to use FleetGraph here.')
+        .length
+    ).toBeGreaterThan(0);
+    expect(screen.getByRole('textbox')).toBeDisabled();
   });
 
-  it('renders a graph-supplied scope error instead of a misleading stable summary', async () => {
+  it('supports HITL decisions from the drawer', async () => {
     mockUseFleetGraphActiveView.mockReturnValue(activeView);
     mockInvokeFleetGraphOnDemand.mockResolvedValue({
-      ...response,
-      derivedSignals: {
-        ...response.derivedSignals,
-        severity: 'none',
-        reasons: [],
-        summary: null,
-        shouldSurface: false,
-        signals: [],
+      ...baseResponse,
+      status: 'waiting_on_human',
+      stage: 'waiting_on_human',
+      terminalOutcome: 'waiting_on_human',
+      proposedAction: {
+        type: 'draft_follow_up_comment',
+        targetId: activeView.entity.id,
+        summary: 'Draft a same-day status follow-up for Week 14.',
+        rationale: 'No standup has been logged and work has not started.',
+        draftComment: 'Can you post a same-day status update and confirm the next checkpoint?',
+        targetRoute: activeView.route,
+        fingerprint: 'follow-up-1',
       },
-      finding: null,
-      error: {
-        code: 'WEEK_SCOPE_NOT_FOUND',
-        message: 'No active sprint was found for this project.',
-        retryable: false,
-        source: 'resolveWeekScope',
+      pendingApproval: {
+        actionType: 'draft_follow_up_comment',
+        reason: 'Draft a same-day status follow-up for Week 14.',
+        proposal: {
+          type: 'draft_follow_up_comment',
+          targetId: activeView.entity.id,
+          summary: 'Draft a same-day status follow-up for Week 14.',
+          rationale: 'No standup has been logged and work has not started.',
+          draftComment: 'Can you post a same-day status update and confirm the next checkpoint?',
+          targetRoute: activeView.route,
+          fingerprint: 'follow-up-1',
+        },
       },
-    } satisfies FleetGraphOnDemandResponse);
+    });
+    mockResumeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      proposedAction: {
+        type: 'draft_follow_up_comment',
+        targetId: activeView.entity.id,
+        summary: 'Draft a same-day status follow-up for Week 14.',
+        rationale: 'No standup has been logged and work has not started.',
+        draftComment: 'Can you post a same-day status update and confirm the next checkpoint?',
+        targetRoute: activeView.route,
+        fingerprint: 'follow-up-1',
+      },
+      pendingApproval: null,
+      actionResult: {
+        outcome: 'dismissed',
+        summary: 'FleetGraph dismissed this draft action for the current sprint pattern.',
+        note: null,
+        snoozedUntil: null,
+        executedCommentId: null,
+      },
+      stage: 'action_dismissed',
+      terminalOutcome: 'suppressed',
+    });
 
     render(<FleetGraphOnDemandPanel />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Why is this sprint at risk?' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'What should happen next?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send FleetGraph message' }));
+
+    expect(await screen.findByText('Approve and post')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+
+    await waitFor(() => {
+      expect(mockResumeFleetGraphOnDemand).toHaveBeenCalledWith({
+        thread_id: 'thread-1',
+        decision: {
+          outcome: 'dismiss',
+          snooze_minutes: null,
+        },
+      });
+    });
 
     expect(
-      await screen.findByText('No active sprint was found for this project.')
+      await screen.findByText('FleetGraph dismissed this draft action for the current sprint pattern.')
     ).toBeInTheDocument();
-    expect(
-      screen.queryByText("FleetGraph doesn't see a meaningful sprint-risk signal on this view right now.")
-    ).not.toBeInTheDocument();
   });
 });

@@ -15,7 +15,6 @@ import { projectKeys, useProjectWeeksQuery } from '@/hooks/useProjectsQuery';
 import { TabBar } from '@/components/ui/TabBar';
 import { useCurrentDocument } from '@/contexts/CurrentDocumentContext';
 import { useCurrentView } from '@/contexts/CurrentViewContext';
-import { FleetGraphOnDemandPanel } from '@/components/fleetgraph/FleetGraphOnDemandPanel';
 import {
   getTabsForDocument,
   documentTypeHasTabs,
@@ -495,14 +494,6 @@ export function UnifiedDocumentPage() {
     const tabs = resolveTabLabels(tabConfig, document, tabCounts);
     const currentTabConfig = tabConfig.find(t => t.id === activeTab) || tabConfig[0];
     const TabComponent = currentTabConfig?.component;
-    const sprintStatus =
-      document.document_type === 'sprint'
-        ? ((document.properties as { status?: string } | undefined)?.status ?? 'planning')
-        : null;
-    const showFleetGraphPanel =
-      (document.document_type === 'sprint' && sprintStatus !== 'planning') ||
-      document.document_type === 'project';
-
     return (
       <div className="flex h-full flex-col">
         {/* Tab bar */}
@@ -524,7 +515,6 @@ export function UnifiedDocumentPage() {
         {/* Content area with lazy-loaded tab component */}
         <div className="flex-1 overflow-hidden">
           <div className="flex h-full min-h-0 flex-col">
-            {showFleetGraphPanel && <FleetGraphOnDemandPanel />}
             <div className="min-h-0 flex-1">
               <Suspense
                 fallback={

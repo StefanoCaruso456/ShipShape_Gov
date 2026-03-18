@@ -37,6 +37,7 @@ import { SelectionPersistenceProvider } from '@/contexts/SelectionPersistenceCon
 import { ActionItemsModal } from '@/components/ActionItemsModal';
 import { AccountabilityBanner } from '@/components/AccountabilityBanner';
 import { ProjectContextSidebar } from '@/components/sidebars/ProjectContextSidebar';
+import { FleetGraphOnDemandPanel } from '@/components/fleetgraph/FleetGraphOnDemandPanel';
 import type { FleetGraphProactiveFinding } from '@ship/shared';
 
 type Mode = 'docs' | 'issues' | 'projects' | 'programs' | 'sprints' | 'team' | 'settings' | 'dashboard' | 'project-context';
@@ -700,6 +701,8 @@ export function AppLayout() {
         open={actionItemsModalOpen}
         onClose={() => setActionItemsModalOpen(false)}
       />
+
+      <FleetGraphOnDemandPanel />
     </div>
     </SelectionPersistenceProvider>
     </TooltipProvider>
