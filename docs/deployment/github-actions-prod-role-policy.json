@@ -31,15 +31,8 @@
       "Sid": "ElasticBeanstalkEnvironmentRead",
       "Effect": "Allow",
       "Action": [
-        "autoscaling:DescribeAutoScalingGroups",
-        "autoscaling:DescribeAutoScalingInstances",
-        "autoscaling:DescribeScalingActivities",
-        "autoscaling:DescribeLaunchConfigurations",
-        "ec2:DescribeInstances",
-        "ec2:DescribeInstanceStatus",
-        "ec2:DescribeSecurityGroups",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeVpcs",
+        "autoscaling:Describe*",
+        "ec2:Describe*",
         "elasticloadbalancing:Describe*",
         "cloudwatch:DescribeAlarms",
         "cloudwatch:GetMetricStatistics"
@@ -56,6 +49,7 @@
       ],
       "Resource": [
         "arn:aws:s3:::elasticbeanstalk-us-east-1-958126465649",
+        "arn:aws:s3:::elasticbeanstalk-env-resources-us-east-1",
         "arn:aws:s3:::ship-frontend-dev-958126465649"
       ]
     },
@@ -71,6 +65,7 @@
       ],
       "Resource": [
         "arn:aws:s3:::elasticbeanstalk-us-east-1-958126465649/*",
+        "arn:aws:s3:::elasticbeanstalk-env-resources-us-east-1/*",
         "arn:aws:s3:::ship-frontend-dev-958126465649/*"
       ]
     },
