@@ -6,6 +6,29 @@ interface PopulateDemoWorkspaceOptions {
   ownerUserId: string;
 }
 
+interface DemoWorkspaceScanRow {
+  workspace_name: string;
+  owner_user_id: string | null;
+  program_count: string;
+  project_count: string;
+  welcome_doc_count: string;
+}
+
+export function shouldBackfillDemoWorkspace(row: DemoWorkspaceScanRow): boolean {
+  const programCount = Number(row.program_count);
+  const projectCount = Number(row.project_count);
+  const welcomeDocCount = Number(row.welcome_doc_count);
+  const looksLikeSetupWorkspace = row.workspace_name.endsWith("'s Workspace");
+
+  return (
+    looksLikeSetupWorkspace &&
+    programCount === 0 &&
+    projectCount === 0 &&
+    welcomeDocCount > 0 &&
+    Boolean(row.owner_user_id)
+  );
+}
+
 async function createAssociation(
   pool: pg.Pool,
   documentId: string,
@@ -121,17 +144,17 @@ export async function populateDemoWorkspaceProgramsAndProjects(
 }
 
 export async function backfillDemoWorkspaceDataForSetupWorkspaces(pool: pg.Pool): Promise<void> {
-  const result = await pool.query<{
+  const result = await pool.query<DemoWorkspaceScanRow & {
     workspace_id: string;
-    owner_user_id: string | null;
     member_count: string;
-    program_count: string;
-    project_count: string;
-    welcome_doc_count: string;
   }>(`
     SELECT
       w.id AS workspace_id,
-      (array_agg(DISTINCT wm.user_id) FILTER (WHERE wm.user_id IS NOT NULL))[1] AS owner_user_id,
+      w.name AS workspace_name,
+      COALESCE(
+        MAX(CASE WHEN wm.role = 'admin' THEN wm.user_id END),
+        (array_agg(DISTINCT wm.user_id) FILTER (WHERE wm.user_id IS NOT NULL))[1]
+      ) AS owner_user_id,
       COUNT(DISTINCT wm.user_id)::text AS member_count,
       COUNT(DISTINCT CASE WHEN d.document_type = 'program' THEN d.id END)::text AS program_count,
       COUNT(DISTINCT CASE WHEN d.document_type = 'project' THEN d.id END)::text AS project_count,
@@ -140,35 +163,40 @@ export async function backfillDemoWorkspaceDataForSetupWorkspaces(pool: pg.Pool)
     LEFT JOIN workspace_memberships wm ON wm.workspace_id = w.id
     LEFT JOIN documents d ON d.workspace_id = w.id AND d.archived_at IS NULL
     WHERE w.archived_at IS NULL
-    GROUP BY w.id
+    GROUP BY w.id, w.name
   `);
 
-  for (const row of result.rows) {
-    const memberCount = Number(row.member_count);
-    const programCount = Number(row.program_count);
-    const projectCount = Number(row.project_count);
-    const welcomeDocCount = Number(row.welcome_doc_count);
+  let candidates = 0;
+  let workspacesUpdated = 0;
 
-    if (
-      memberCount !== 1 ||
-      programCount > 0 ||
-      projectCount > 0 ||
-      welcomeDocCount === 0 ||
-      !row.owner_user_id
-    ) {
+  for (const row of result.rows) {
+    if (!shouldBackfillDemoWorkspace(row)) {
       continue;
     }
 
+    const ownerUserId = row.owner_user_id;
+    if (!ownerUserId) {
+      continue;
+    }
+
+    candidates++;
+
     const populated = await populateDemoWorkspaceProgramsAndProjects(pool, {
       workspaceId: row.workspace_id,
-      ownerUserId: row.owner_user_id,
+      ownerUserId,
     });
 
     if (populated.programsCreated > 0 || populated.projectsCreated > 0) {
+      workspacesUpdated++;
       console.log(
         `✅ Demo workspace data backfilled for ${row.workspace_id}: ` +
           `${populated.programsCreated} programs, ${populated.projectsCreated} projects`
       );
     }
   }
+
+  console.log(
+    `ℹ️ Demo workspace backfill scan complete: ` +
+      `${candidates} candidate workspace(s), ${workspacesUpdated} updated`
+  );
 }
