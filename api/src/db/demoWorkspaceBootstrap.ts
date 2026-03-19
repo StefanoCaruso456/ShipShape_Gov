@@ -14,6 +14,13 @@ interface DemoWorkspaceScanRow {
   welcome_doc_count: string;
 }
 
+export const DEMO_WORKSPACE_OWNER_SELECTION_SQL = `
+  COALESCE(
+    (array_agg(DISTINCT wm.user_id) FILTER (WHERE wm.role = 'admin' AND wm.user_id IS NOT NULL))[1],
+    (array_agg(DISTINCT wm.user_id) FILTER (WHERE wm.user_id IS NOT NULL))[1]
+  ) AS owner_user_id
+`.trim();
+
 export function shouldBackfillDemoWorkspace(row: DemoWorkspaceScanRow): boolean {
   const programCount = Number(row.program_count);
   const projectCount = Number(row.project_count);
@@ -151,10 +158,7 @@ export async function backfillDemoWorkspaceDataForSetupWorkspaces(pool: pg.Pool)
     SELECT
       w.id AS workspace_id,
       w.name AS workspace_name,
-      COALESCE(
-        MAX(CASE WHEN wm.role = 'admin' THEN wm.user_id END),
-        (array_agg(DISTINCT wm.user_id) FILTER (WHERE wm.user_id IS NOT NULL))[1]
-      ) AS owner_user_id,
+      ${DEMO_WORKSPACE_OWNER_SELECTION_SQL},
       COUNT(DISTINCT wm.user_id)::text AS member_count,
       COUNT(DISTINCT CASE WHEN d.document_type = 'program' THEN d.id END)::text AS program_count,
       COUNT(DISTINCT CASE WHEN d.document_type = 'project' THEN d.id END)::text AS project_count,
