@@ -292,7 +292,7 @@ export function FleetGraphOnDemandPanel({
   }, [activeViewKey]);
 
   useEffect(() => {
-    if (!open) {
+    if (!open || !supportedActiveView) {
       return;
     }
 
@@ -441,6 +441,52 @@ export function FleetGraphOnDemandPanel({
       }
     },
     [submitQuestion]
+  );
+
+  const composer = supportedActiveView ? (
+    <div className="rounded-[28px] border border-white/10 bg-white/5 p-3 shadow-inner shadow-black/20">
+      <textarea
+        ref={textareaRef}
+        value={draftQuestion}
+        onChange={(event) => setDraftQuestion(event.target.value)}
+        onKeyDown={handleComposerKeyDown}
+        placeholder="Ask about sprint risk, next steps, or what needs attention..."
+        disabled={!!activeTurnId}
+        rows={3}
+        className="max-h-40 min-h-[72px] w-full resize-none bg-transparent text-sm leading-6 text-foreground outline-none placeholder:text-muted disabled:cursor-not-allowed disabled:text-muted"
+      />
+
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <div className="text-xs text-muted">FleetGraph uses the current page as context.</div>
+        <button
+          type="button"
+          onClick={() => {
+            void submitQuestion();
+          }}
+          disabled={!draftQuestion.trim() || !!activeTurnId}
+          className={cn(
+            'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-colors',
+            !draftQuestion.trim() || activeTurnId
+              ? 'cursor-not-allowed bg-white/5 text-muted'
+              : 'bg-accent text-white hover:bg-accent/90'
+          )}
+          aria-label="Send FleetGraph message"
+        >
+          <SendIcon className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  ) : (
+    <div className="rounded-[28px] border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/20">
+      <div className="text-[11px] uppercase tracking-[0.18em] text-muted">Unavailable here</div>
+      <p className="mt-2 text-sm leading-6 text-foreground">
+        {unavailableReason}
+      </p>
+      <p className="mt-3 text-xs leading-5 text-muted">
+        FleetGraph is currently wired into sprint, project, and My Week views. Open one of those
+        pages to ask a question.
+      </p>
+    </div>
   );
 
   return (
@@ -757,42 +803,7 @@ export function FleetGraphOnDemandPanel({
           </div>
 
           <div className="border-t border-white/10 bg-[#121212]/90 px-5 py-4">
-            <div className="rounded-[28px] border border-white/10 bg-white/5 p-3 shadow-inner shadow-black/20">
-              <textarea
-                ref={textareaRef}
-                value={draftQuestion}
-                onChange={(event) => setDraftQuestion(event.target.value)}
-                onKeyDown={handleComposerKeyDown}
-                placeholder={
-                  unavailableReason ?? 'Ask about sprint risk, next steps, or what needs attention...'
-                }
-                disabled={!supportedActiveView || !!activeTurnId}
-                rows={3}
-                className="max-h-40 min-h-[72px] w-full resize-none bg-transparent text-sm leading-6 text-foreground outline-none placeholder:text-muted disabled:cursor-not-allowed disabled:text-muted"
-              />
-
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <div className="text-xs text-muted">
-                  {unavailableReason ?? 'FleetGraph uses the current page as context.'}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void submitQuestion();
-                  }}
-                  disabled={!supportedActiveView || !draftQuestion.trim() || !!activeTurnId}
-                  className={cn(
-                    'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-colors',
-                    !supportedActiveView || !draftQuestion.trim() || activeTurnId
-                      ? 'cursor-not-allowed bg-white/5 text-muted'
-                      : 'bg-accent text-white hover:bg-accent/90'
-                  )}
-                  aria-label="Send FleetGraph message"
-                >
-                  <SendIcon className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+            {composer}
           </div>
         </div>
       </aside>

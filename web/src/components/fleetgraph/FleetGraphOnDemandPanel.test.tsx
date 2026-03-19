@@ -204,7 +204,7 @@ describe('FleetGraphOnDemandPanel', () => {
     expect(screen.getByText(/API Platform - Core Features/)).toBeInTheDocument();
   });
 
-  it('shows the wait state when page context is not available', () => {
+  it('shows an unsupported-surface state when page context is not available', () => {
     mockUseFleetGraphActiveView.mockReturnValue(null);
 
     render(<FleetGraphOnDemandPanel />);
@@ -215,7 +215,8 @@ describe('FleetGraphOnDemandPanel', () => {
       screen.getAllByText('Open a sprint, project, or My Week view to use FleetGraph here.')
         .length
     ).toBeGreaterThan(0);
-    expect(screen.getByRole('textbox')).toBeDisabled();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.getByText('Unavailable here')).toBeInTheDocument();
   });
 
   it('supports HITL decisions from the drawer', async () => {

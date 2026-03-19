@@ -4,6 +4,14 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import type {
+  FleetGraphOnDemandRequest,
+  FleetGraphOnDemandResponse,
+  FleetGraphOnDemandResumeRequest,
+  FleetGraphReasoningSource,
+  FleetGraphTerminalOutcome,
+} from '../shared/src/types/fleetgraph.js';
+
 const API_URL = process.env.FLEETGRAPH_EVIDENCE_API_URL ?? 'http://localhost:3000';
 const EMAIL = process.env.FLEETGRAPH_EVIDENCE_EMAIL ?? 'dev@ship.local';
 const PASSWORD = process.env.FLEETGRAPH_EVIDENCE_PASSWORD ?? 'admin123';
@@ -14,32 +22,111 @@ const OUTPUT_DIR = path.resolve(
 const CAPTURE_RESUME =
   process.env.FLEETGRAPH_EVIDENCE_CAPTURE_RESUME === undefined ||
   process.env.FLEETGRAPH_EVIDENCE_CAPTURE_RESUME === 'true';
-const LANGSMITH_TRACE_RETRY_DELAYS_MS = [0, 500, 1000, 2000, 4000];
+const LANGSMITH_TRACE_RETRY_DELAYS_MS = [0, 500, 1000, 2000, 4000] as const;
 const DEFAULT_LANGSMITH_API_URL = 'https://api.smith.langchain.com';
 const DEFAULT_LANGSMITH_WEB_URL = 'https://smith.langchain.com';
 
-function getEnv(name) {
+interface LangSmithJsonRequestOptions {
+  method?: 'GET' | 'PUT';
+  json?: unknown;
+  allow404?: boolean;
+}
+
+interface LangSmithRunPayload {
+  app_path?: string | null;
+}
+
+interface LangSmithSharePayload {
+  share_token?: string | null;
+}
+
+type HeadersWithSetCookie = Headers & {
+  getSetCookie?: () => string[];
+};
+
+interface SessionRequestOptions {
+  method?: 'GET' | 'POST';
+  json?: unknown;
+  headers?: Record<string, string>;
+  expectedStatus?: number;
+}
+
+interface CsrfTokenResponse {
+  token?: string;
+}
+
+interface WeekSummary {
+  id?: string | null;
+  sprint_number?: number | null;
+}
+
+interface FleetGraphRunSummary {
+  threadId: string | null;
+  status: string;
+  stage: string | null;
+  terminalOutcome: FleetGraphTerminalOutcome | null;
+  weekId: string | null;
+  title: string | null;
+  signalSeverity: FleetGraphOnDemandResponse['derivedSignals']['severity'];
+  shouldSurface: boolean;
+  pendingApproval: boolean;
+  reasoningSource: FleetGraphReasoningSource | null;
+  langsmithRunId: string | null;
+  langsmithRunUrl: string | null;
+  langsmithShareUrl: string | null;
+  braintrustSpanId: string | null;
+}
+
+interface FleetGraphProactiveRunResponse {
+  processedWeeks?: number;
+  surfacedFindings?: number;
+  newNotifications?: number;
+}
+
+interface FleetGraphProactiveRunSummary {
+  processedWeeks: number;
+  surfacedFindings: number;
+  newNotifications: number;
+}
+
+interface FleetGraphEvidenceReport {
+  generatedAt: string;
+  apiUrl: string;
+  actorEmail: string;
+  quietRun: FleetGraphRunSummary | null;
+  flaggedRun: FleetGraphRunSummary | null;
+  hitlRun: FleetGraphRunSummary | null;
+  resumeRun: FleetGraphRunSummary | null;
+  proactiveRun: FleetGraphProactiveRunSummary | null;
+  traceLinksReady: boolean;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getEnv(name: string): string | undefined {
   const value = process.env[name]?.trim();
   return value ? value : undefined;
 }
 
-function isLangSmithSharingEnabled() {
+function isLangSmithSharingEnabled(): boolean {
   return getEnv('FLEETGRAPH_LANGSMITH_SHARE_TRACES') === 'true';
 }
 
-function getLangSmithApiKey() {
+function getLangSmithApiKey(): string | undefined {
   return getEnv('LANGCHAIN_API_KEY') ?? getEnv('LANGSMITH_API_KEY');
 }
 
-function getLangSmithApiUrl() {
+function getLangSmithApiUrl(): string {
   return getEnv('LANGCHAIN_ENDPOINT') ?? getEnv('LANGSMITH_ENDPOINT') ?? DEFAULT_LANGSMITH_API_URL;
 }
 
-function getLangSmithWebUrl() {
+function getLangSmithWebUrl(): string {
   return getEnv('LANGSMITH_WEB_URL') ?? DEFAULT_LANGSMITH_WEB_URL;
 }
 
-function isLangSmithConfigured() {
+function isLangSmithConfigured(): boolean {
   const tracingEnabled =
     getEnv('LANGCHAIN_TRACING_V2') === 'true' || getEnv('LANGSMITH_TRACING') === 'true';
   const apiKey = getLangSmithApiKey();
@@ -47,7 +134,10 @@ function isLangSmithConfigured() {
   return tracingEnabled && Boolean(apiKey);
 }
 
-async function fetchLangSmithJson(pathname, options = {}) {
+async function fetchLangSmithJson<T>(
+  pathname: string,
+  options: LangSmithJsonRequestOptions = {}
+): Promise<T | null> {
   const apiKey = getLangSmithApiKey();
   if (!apiKey) {
     throw new Error('LangSmith API key is not configured');
@@ -73,15 +163,15 @@ async function fetchLangSmithJson(pathname, options = {}) {
     );
   }
 
-  return response.json();
+  return (await response.json()) as T;
 }
 
-async function readLangSmithRun(runId) {
-  return fetchLangSmithJson(`/runs/${runId}`);
+async function readLangSmithRun(runId: string): Promise<LangSmithRunPayload | null> {
+  return fetchLangSmithJson<LangSmithRunPayload>(`/runs/${runId}`);
 }
 
-async function readLangSmithShareUrl(runId) {
-  const payload = await fetchLangSmithJson(`/runs/${runId}/share`, {
+async function readLangSmithShareUrl(runId: string): Promise<string | null> {
+  const payload = await fetchLangSmithJson<LangSmithSharePayload>(`/runs/${runId}/share`, {
     allow404: true,
   });
 
@@ -92,8 +182,8 @@ async function readLangSmithShareUrl(runId) {
   return new URL(`/public/${payload.share_token}/r`, getLangSmithWebUrl()).toString();
 }
 
-async function createLangSmithShareUrl(runId) {
-  const payload = await fetchLangSmithJson(`/runs/${runId}/share`, {
+async function createLangSmithShareUrl(runId: string): Promise<string | null> {
+  const payload = await fetchLangSmithJson<LangSmithSharePayload>(`/runs/${runId}/share`, {
     method: 'PUT',
     json: {
       run_id: runId,
@@ -108,26 +198,28 @@ async function createLangSmithShareUrl(runId) {
   return new URL(`/public/${payload.share_token}/r`, getLangSmithWebUrl()).toString();
 }
 
-function sleep(ms) {
+function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 }
 
-async function backfillLangSmithTraceLinks(item) {
+async function backfillLangSmithTraceLinks<T extends FleetGraphRunSummary>(
+  item: T | null
+): Promise<T | null> {
   if (!item?.langsmithRunId || !isLangSmithConfigured()) {
     return item;
   }
 
-  let langsmithRunUrl = item.langsmithRunUrl ?? null;
-  let langsmithShareUrl = item.langsmithShareUrl ?? null;
+  let langsmithRunUrl = item.langsmithRunUrl;
+  let langsmithShareUrl = item.langsmithShareUrl;
 
   for (const delayMs of LANGSMITH_TRACE_RETRY_DELAYS_MS) {
     if (delayMs > 0) {
       await sleep(delayMs);
     }
 
-    let run = null;
+    let run: LangSmithRunPayload | null = null;
 
     try {
       run = await readLangSmithRun(item.langsmithRunId);
@@ -170,38 +262,38 @@ async function backfillLangSmithTraceLinks(item) {
 }
 
 class SessionClient {
-  constructor(baseUrl) {
+  private readonly baseUrl: string;
+  private readonly cookies = new Map<string, string>();
+
+  constructor(baseUrl: string) {
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    this.cookies = new Map();
   }
 
-  updateCookies(response) {
-    const values =
-      typeof response.headers.getSetCookie === 'function'
-        ? response.headers.getSetCookie()
-        : [];
+  private updateCookies(response: Response): void {
+    const values = (response.headers as HeadersWithSetCookie).getSetCookie?.() ?? [];
     const fallback = response.headers.get('set-cookie');
     const cookieHeaders = values.length > 0 ? values : fallback ? [fallback] : [];
 
     for (const header of cookieHeaders) {
-      const [pair] = header.split(';', 1);
+      const [pair = ''] = header.split(';', 1);
       const separator = pair.indexOf('=');
       if (separator <= 0) {
         continue;
       }
+
       const name = pair.slice(0, separator).trim();
       const value = pair.slice(separator + 1).trim();
       this.cookies.set(name, value);
     }
   }
 
-  getCookieHeader() {
+  private getCookieHeader(): string {
     return Array.from(this.cookies.entries())
       .map(([name, value]) => `${name}=${value}`)
       .join('; ');
   }
 
-  async request(endpoint, options = {}) {
+  async request<T>(endpoint: string, options: SessionRequestOptions = {}): Promise<T> {
     const {
       method = 'GET',
       json = undefined,
@@ -209,7 +301,7 @@ class SessionClient {
       expectedStatus = 200,
     } = options;
 
-    const requestHeaders = {
+    const requestHeaders: Record<string, string> = {
       Accept: 'application/json',
       ...headers,
     };
@@ -232,7 +324,7 @@ class SessionClient {
     this.updateCookies(response);
 
     const text = await response.text();
-    let payload;
+    let payload: unknown;
 
     try {
       payload = text ? JSON.parse(text) : null;
@@ -242,25 +334,37 @@ class SessionClient {
 
     if (response.status !== expectedStatus) {
       throw new Error(
-        `${method} ${endpoint} failed with status ${response.status}: ${typeof payload === 'string' ? payload : JSON.stringify(payload)}`
+        `${method} ${endpoint} failed with status ${response.status}: ${
+          typeof payload === 'string' ? payload : JSON.stringify(payload)
+        }`
       );
     }
 
-    return payload;
+    return payload as T;
   }
 }
 
-function readWeekListPayload(payload) {
-  const weeks = Array.isArray(payload?.weeks) ? payload.weeks : [];
+function readWeekListPayload(payload: unknown): {
+  weeks: WeekSummary[];
+  currentSprintNumber: number | null;
+} {
+  if (!isRecord(payload)) {
+    return { weeks: [], currentSprintNumber: null };
+  }
+
+  const weeks = Array.isArray(payload.weeks) ? (payload.weeks as WeekSummary[]) : [];
   const currentSprintNumber =
-    typeof payload?.current_sprint_number === 'number' ? payload.current_sprint_number : null;
+    typeof payload.current_sprint_number === 'number' ? payload.current_sprint_number : null;
 
   return { weeks, currentSprintNumber };
 }
 
-function pickWeekSearchOrder(weeks, currentSprintNumber) {
-  const currentWeeks = [];
-  const otherWeeks = [];
+function pickWeekSearchOrder(
+  weeks: WeekSummary[],
+  currentSprintNumber: number | null
+): WeekSummary[] {
+  const currentWeeks: WeekSummary[] = [];
+  const otherWeeks: WeekSummary[] = [];
 
   for (const week of weeks) {
     if (week?.sprint_number === currentSprintNumber) {
@@ -273,7 +377,7 @@ function pickWeekSearchOrder(weeks, currentSprintNumber) {
   return [...currentWeeks, ...otherWeeks];
 }
 
-function buildOnDemandRequest(weekId) {
+function buildOnDemandRequest(weekId: string): FleetGraphOnDemandRequest {
   return {
     active_view: {
       entity: {
@@ -290,7 +394,7 @@ function buildOnDemandRequest(weekId) {
   };
 }
 
-function buildProjectOnDemandRequest(projectId) {
+function buildProjectOnDemandRequest(projectId: string): FleetGraphOnDemandRequest {
   return {
     active_view: {
       entity: {
@@ -307,26 +411,29 @@ function buildProjectOnDemandRequest(projectId) {
   };
 }
 
-function summarizeRun(result) {
+function summarizeRun(result: FleetGraphOnDemandResponse): FleetGraphRunSummary {
   return {
     threadId: result.threadId,
     status: result.status,
     stage: result.stage,
     terminalOutcome: result.terminalOutcome,
-    weekId: result.expandedScope?.weekId ?? null,
-    title: result.fetched?.entity?.title ?? null,
-    signalSeverity: result.derivedSignals?.severity ?? 'none',
-    shouldSurface: result.derivedSignals?.shouldSurface ?? false,
+    weekId: result.expandedScope.weekId ?? null,
+    title: result.fetched.entity?.title ?? null,
+    signalSeverity: result.derivedSignals.severity,
+    shouldSurface: result.derivedSignals.shouldSurface,
     pendingApproval: Boolean(result.pendingApproval),
     reasoningSource: result.reasoningSource ?? null,
-    langsmithRunId: result.telemetry?.langsmithRunId ?? null,
-    langsmithRunUrl: result.telemetry?.langsmithRunUrl ?? null,
-    langsmithShareUrl: result.telemetry?.langsmithShareUrl ?? null,
-    braintrustSpanId: result.telemetry?.braintrustSpanId ?? null,
+    langsmithRunId: result.telemetry.langsmithRunId ?? null,
+    langsmithRunUrl: result.telemetry.langsmithRunUrl ?? null,
+    langsmithShareUrl: result.telemetry.langsmithShareUrl ?? null,
+    braintrustSpanId: result.telemetry.braintrustSpanId ?? null,
   };
 }
 
-function shouldReplaceFlaggedRun(currentSummary, nextSummary) {
+function shouldReplaceFlaggedRun(
+  currentSummary: FleetGraphRunSummary | null,
+  nextSummary: FleetGraphRunSummary
+): boolean {
   if (!currentSummary) {
     return true;
   }
@@ -349,7 +456,7 @@ function shouldReplaceFlaggedRun(currentSummary, nextSummary) {
   return false;
 }
 
-function buildMarkdownReport(report) {
+function buildMarkdownReport(report: FleetGraphEvidenceReport): string {
   const lines = [
     '# FleetGraph Evidence Bundle',
     '',
@@ -361,8 +468,15 @@ function buildMarkdownReport(report) {
     '',
   ];
 
-  for (const section of ['quietRun', 'flaggedRun', 'hitlRun', 'resumeRun', 'proactiveRun']) {
-    const item = report[section];
+  const runSections = [
+    ['quietRun', report.quietRun],
+    ['flaggedRun', report.flaggedRun],
+    ['hitlRun', report.hitlRun],
+    ['resumeRun', report.resumeRun],
+    ['proactiveRun', report.proactiveRun],
+  ] as const;
+
+  for (const [section, item] of runSections) {
     lines.push(`### ${section}`);
     if (!item) {
       lines.push('', 'Not captured.', '');
@@ -412,16 +526,28 @@ function buildMarkdownReport(report) {
   return `${lines.join('\n')}\n`;
 }
 
-async function main() {
+async function writeJsonSnapshot(filename: string, payload: unknown): Promise<void> {
+  await writeFile(path.join(OUTPUT_DIR, filename), `${JSON.stringify(payload, null, 2)}\n`);
+}
+
+async function fetchCsrfToken(client: SessionClient): Promise<string> {
+  const csrf = await client.request<CsrfTokenResponse>('/api/csrf-token');
+  if (typeof csrf.token !== 'string' || csrf.token.length === 0) {
+    throw new Error('Failed to fetch CSRF token');
+  }
+
+  return csrf.token;
+}
+
+function readId(value: unknown): string | null {
+  return isRecord(value) && typeof value.id === 'string' && value.id.length > 0 ? value.id : null;
+}
+
+async function main(): Promise<void> {
   await mkdir(OUTPUT_DIR, { recursive: true });
 
   const client = new SessionClient(API_URL);
-  const csrf = await client.request('/api/csrf-token');
-  const csrfToken = csrf?.token;
-
-  if (typeof csrfToken !== 'string' || csrfToken.length === 0) {
-    throw new Error('Failed to fetch CSRF token');
-  }
+  const csrfToken = await fetchCsrfToken(client);
 
   await client.request('/api/auth/login', {
     method: 'POST',
@@ -434,24 +560,23 @@ async function main() {
     },
   });
 
-  const weeksPayload = await client.request('/api/weeks');
+  const weeksPayload = await client.request<unknown>('/api/weeks');
   const { weeks, currentSprintNumber } = readWeekListPayload(weeksPayload);
   const searchOrder = pickWeekSearchOrder(weeks, currentSprintNumber);
 
-  let quietRun = null;
-  let flaggedRun = null;
-  let hitlRun = null;
+  let quietRun: FleetGraphRunSummary | null = null;
+  let flaggedRun: FleetGraphRunSummary | null = null;
+  let hitlRun: FleetGraphRunSummary | null = null;
 
   for (const week of searchOrder) {
-    if (!week?.id) {
+    if (typeof week.id !== 'string' || week.id.length === 0) {
       continue;
     }
 
-    const nextCsrf = await client.request('/api/csrf-token');
-    const result = await client.request('/api/fleetgraph/on-demand', {
+    const result = await client.request<FleetGraphOnDemandResponse>('/api/fleetgraph/on-demand', {
       method: 'POST',
       headers: {
-        'X-CSRF-Token': nextCsrf.token,
+        'X-CSRF-Token': await fetchCsrfToken(client),
       },
       json: buildOnDemandRequest(week.id),
     });
@@ -460,29 +585,17 @@ async function main() {
 
     if (!quietRun && summary.terminalOutcome === 'quiet') {
       quietRun = summary;
-      await writeFile(
-        path.join(OUTPUT_DIR, 'quiet-run.json'),
-        `${JSON.stringify(result, null, 2)}\n`
-      );
+      await writeJsonSnapshot('quiet-run.json', result);
     }
 
     if (summary.shouldSurface && shouldReplaceFlaggedRun(flaggedRun, summary)) {
       flaggedRun = summary;
-      await writeFile(
-        path.join(OUTPUT_DIR, 'flagged-run.json'),
-        `${JSON.stringify(result, null, 2)}\n`
-      );
+      await writeJsonSnapshot('flagged-run.json', result);
     }
 
     if (!hitlRun && summary.pendingApproval) {
-      hitlRun = {
-        ...summary,
-        threadId: result.threadId,
-      };
-      await writeFile(
-        path.join(OUTPUT_DIR, 'hitl-run.json'),
-        `${JSON.stringify(result, null, 2)}\n`
-      );
+      hitlRun = summary;
+      await writeJsonSnapshot('hitl-run.json', result);
     }
 
     if (quietRun && flaggedRun && hitlRun) {
@@ -491,71 +604,68 @@ async function main() {
   }
 
   if (!quietRun) {
-    const projects = await client.request('/api/projects');
+    const projects = await client.request<unknown>('/api/projects');
 
     for (const project of Array.isArray(projects) ? projects : []) {
-      if (!project?.id) {
+      const projectId = readId(project);
+      if (!projectId) {
         continue;
       }
 
-      const nextCsrf = await client.request('/api/csrf-token');
-      const result = await client.request('/api/fleetgraph/on-demand', {
+      const result = await client.request<FleetGraphOnDemandResponse>('/api/fleetgraph/on-demand', {
         method: 'POST',
         headers: {
-          'X-CSRF-Token': nextCsrf.token,
+          'X-CSRF-Token': await fetchCsrfToken(client),
         },
-        json: buildProjectOnDemandRequest(project.id),
+        json: buildProjectOnDemandRequest(projectId),
       });
 
       const summary = summarizeRun(result);
 
       if (summary.terminalOutcome === 'quiet') {
         quietRun = summary;
-        await writeFile(
-          path.join(OUTPUT_DIR, 'quiet-run.json'),
-          `${JSON.stringify(result, null, 2)}\n`
-        );
+        await writeJsonSnapshot('quiet-run.json', result);
         break;
       }
     }
   }
 
-  let resumeRun = null;
-  if (CAPTURE_RESUME && hitlRun?.threadId) {
-    const nextCsrf = await client.request('/api/csrf-token');
-    const resumed = await client.request('/api/fleetgraph/on-demand/resume', {
+  let resumeRun: FleetGraphRunSummary | null = null;
+  if (CAPTURE_RESUME && typeof hitlRun?.threadId === 'string' && hitlRun.threadId.length > 0) {
+    const resumeRequest: FleetGraphOnDemandResumeRequest = {
+      thread_id: hitlRun.threadId,
+      decision: {
+        outcome: 'dismiss',
+        note: 'Phase 9 evidence capture dismiss',
+      },
+    };
+
+    const resumed = await client.request<FleetGraphOnDemandResponse>('/api/fleetgraph/on-demand/resume', {
       method: 'POST',
       headers: {
-        'X-CSRF-Token': nextCsrf.token,
+        'X-CSRF-Token': await fetchCsrfToken(client),
       },
-      json: {
-        thread_id: hitlRun.threadId,
-        decision: {
-          outcome: 'dismiss',
-          note: 'Phase 9 evidence capture dismiss',
-        },
-      },
+      json: resumeRequest,
     });
 
     resumeRun = summarizeRun(resumed);
-    await writeFile(
-      path.join(OUTPUT_DIR, 'resume-run.json'),
-      `${JSON.stringify(resumed, null, 2)}\n`
-    );
+    await writeJsonSnapshot('resume-run.json', resumed);
   }
 
-  let proactiveRun = null;
-  if (flaggedRun?.weekId) {
-    const nextCsrf = await client.request('/api/csrf-token');
-    const proactive = await client.request('/api/fleetgraph/proactive/run', {
-      method: 'POST',
-      headers: {
-        'X-CSRF-Token': nextCsrf.token,
-      },
-      json: {
-        week_id: flaggedRun.weekId,
-      },
-    });
+  let proactiveRun: FleetGraphProactiveRunSummary | null = null;
+  if (typeof flaggedRun?.weekId === 'string' && flaggedRun.weekId.length > 0) {
+    const proactive = await client.request<FleetGraphProactiveRunResponse>(
+      '/api/fleetgraph/proactive/run',
+      {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': await fetchCsrfToken(client),
+        },
+        json: {
+          week_id: flaggedRun.weekId,
+        },
+      }
+    );
 
     proactiveRun = {
       processedWeeks: proactive.processedWeeks ?? 0,
@@ -563,18 +673,17 @@ async function main() {
       newNotifications: proactive.newNotifications ?? 0,
     };
 
-    await writeFile(
-      path.join(OUTPUT_DIR, 'proactive-run.json'),
-      `${JSON.stringify(proactive, null, 2)}\n`
-    );
+    await writeJsonSnapshot('proactive-run.json', proactive);
   }
 
-  quietRun = await backfillLangSmithTraceLinks(quietRun);
-  flaggedRun = await backfillLangSmithTraceLinks(flaggedRun);
-  hitlRun = await backfillLangSmithTraceLinks(hitlRun);
-  resumeRun = await backfillLangSmithTraceLinks(resumeRun);
+  [quietRun, flaggedRun, hitlRun, resumeRun] = await Promise.all([
+    backfillLangSmithTraceLinks(quietRun),
+    backfillLangSmithTraceLinks(flaggedRun),
+    backfillLangSmithTraceLinks(hitlRun),
+    backfillLangSmithTraceLinks(resumeRun),
+  ]);
 
-  const report = {
+  const report: FleetGraphEvidenceReport = {
     generatedAt: new Date().toISOString(),
     apiUrl: API_URL,
     actorEmail: EMAIL,
@@ -588,7 +697,7 @@ async function main() {
       flaggedRun?.langsmithRunUrl,
       hitlRun?.langsmithRunUrl,
       resumeRun?.langsmithRunUrl,
-    ].some(Boolean),
+    ].some((value) => typeof value === 'string' && value.length > 0),
   };
 
   await writeFile(path.join(OUTPUT_DIR, 'summary.json'), `${JSON.stringify(report, null, 2)}\n`);
@@ -597,7 +706,7 @@ async function main() {
   console.log(`FleetGraph evidence written to ${OUTPUT_DIR}`);
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   console.error(error);
   process.exitCode = 1;
 });

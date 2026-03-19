@@ -23,7 +23,9 @@
     "build:fleetgraph": "pnpm run build:shared && pnpm --filter @ship/fleetgraph build",
     "build:api": "pnpm run build:fleetgraph && pnpm --filter @ship/api build",
     "build:web": "pnpm run build:shared && pnpm --filter @ship/web build",
-    "type-check": "pnpm --recursive run type-check",
+    "type-check": "pnpm run type-check:workspaces && pnpm run type-check:scripts",
+    "type-check:workspaces": "pnpm --recursive run type-check",
+    "type-check:scripts": "tsc --noEmit -p tsconfig.scripts.json",
     "lint": "pnpm --recursive run lint",
     "clean": "pnpm --recursive run clean && rm -rf node_modules",
     "test": "pnpm --filter @ship/api test",
@@ -33,14 +35,15 @@
     "db:seed": "pnpm --filter @ship/api db:seed",
     "db:migrate": "pnpm --filter @ship/api db:migrate",
     "db:orphan-check": "pnpm --filter @ship/api db:orphan-check",
-    "fleetgraph:evidence": "node ./scripts/collect-fleetgraph-evidence.mjs",
-    "fleetgraph:verify-requirements": "node ./scripts/verify-fleetgraph-requirements.mjs",
+    "fleetgraph:evidence": "tsx ./scripts/collect-fleetgraph-evidence.ts",
+    "fleetgraph:verify-requirements": "tsx ./scripts/verify-fleetgraph-requirements.ts",
     "fleetgraph:build-deck": "node ./scripts/build-fleetgraph-feature-deck.mjs",
     "prepare": "husky",
     "postinstall": "git config merge.ours.driver true && (command -v comply >/dev/null 2>&1 || echo '\\n⚠️  comply CLI not installed - pre-commit hooks require it\\n   Install with: pip install comply-cli\\n')"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",
+    "@types/node": "^22.19.5",
     "@playwright/test": "^1.57.0",
     "@testcontainers/postgresql": "^11.11.0",
     "@types/supertest": "^6.0.3",
@@ -50,6 +53,7 @@
     "prettier": "^3.4.2",
     "supertest": "^7.1.4",
     "testcontainers": "^11.11.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vitest": "^4.0.16"
   }
