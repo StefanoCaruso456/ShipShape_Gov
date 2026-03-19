@@ -330,6 +330,16 @@ export interface MeResponse {
   pendingAccountabilityItems?: AccountabilityItem[];
 }
 
+interface WorkspacesListResponse {
+  workspaces: Array<Workspace & { role: 'admin' | 'member' }>;
+  isSuperAdmin: boolean;
+}
+
+interface SwitchWorkspaceResponse {
+  workspaceId: string;
+  workspace: Workspace & { role: 'admin' | 'member' };
+}
+
 export const api = {
   auth: {
     login: (email: string, password: string) =>
@@ -349,13 +359,13 @@ export const api = {
   workspaces: {
     // User-facing workspace operations
     list: () =>
-      request<Array<Workspace & { role: 'admin' | 'member' }>>('/api/workspaces'),
+      request<WorkspacesListResponse>('/api/workspaces'),
 
     getCurrent: () =>
       request<Workspace>('/api/workspaces/current'),
 
     switch: (workspaceId: string) =>
-      request<{ workspace: Workspace }>(`/api/workspaces/${workspaceId}/switch`, {
+      request<SwitchWorkspaceResponse>(`/api/workspaces/${workspaceId}/switch`, {
         method: 'POST',
       }),
 
