@@ -2,8 +2,11 @@ import type {
   ApprovalTracking,
   BelongsTo,
   FleetGraphActiveViewContext,
+  FleetGraphPageContext as SharedFleetGraphPageContext,
   FleetGraphViewEntityType,
 } from '@ship/shared';
+
+export type FleetGraphPageContext = SharedFleetGraphPageContext;
 
 export type FleetGraphRunMode = 'proactive' | 'on_demand';
 
@@ -339,6 +342,7 @@ export interface FleetGraphTraceMetadata {
 
 export interface FleetGraphPromptInput {
   question: string | null;
+  pageContext?: FleetGraphPageContext | null;
 }
 
 export interface FleetGraphHandoff {

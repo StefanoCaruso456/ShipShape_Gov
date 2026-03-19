@@ -3,17 +3,26 @@ import type {
   FleetGraphActiveViewContext,
   FleetGraphDerivedSignal,
   FleetGraphDerivedSignals,
+  FleetGraphPageContext,
   FleetGraphOnDemandResponse,
 } from '@ship/shared';
 import { cn } from '@/lib/cn';
 import { invokeFleetGraphOnDemand, resumeFleetGraphOnDemand } from '@/lib/fleetgraph';
 import { useFleetGraphActiveView } from '@/hooks/useFleetGraphActiveView';
+import { useFleetGraphPageContext } from '@/hooks/useFleetGraphPageContext';
 
-const QUICK_PROMPTS = [
+const SPRINT_QUICK_PROMPTS = [
   'Why is this sprint at risk?',
   'What should happen next?',
   'Summarize the key risk signals.',
   'Should I follow up now or wait?',
+];
+
+const PAGE_QUICK_PROMPTS = [
+  'Summarize what matters on this page.',
+  'What should I look at next?',
+  'Who or what needs attention here?',
+  'What context am I seeing right now?',
 ];
 
 const DRAWER_STORAGE_KEY = 'ship:fleetgraphDrawerOpen';
@@ -56,6 +65,7 @@ interface FleetGraphChatTurn {
   id: string;
   question: string;
   status: 'running' | 'completed' | 'error';
+  pageContext: FleetGraphPageContext | null;
   result: FleetGraphOnDemandResponse | null;
   error: string | null;
 }
@@ -99,23 +109,28 @@ function getFallbackEntityLabel(activeView: FleetGraphActiveViewContext | null):
 
 function buildContextSummary(
   activeView: FleetGraphActiveViewContext | null,
+  pageContext: FleetGraphPageContext | null,
   result: FleetGraphOnDemandResponse | null
 ): string {
   const entityTitle =
     result?.fetched.entity?.title ??
     result?.fetched.supporting?.current?.title ??
+    pageContext?.title ??
     getFallbackEntityLabel(activeView);
   const projectName = result?.fetched.accountability?.project?.name ?? null;
   const programName =
     result?.fetched.accountability?.program?.name ??
     result?.fetched.supporting?.current?.program_name ??
     null;
-  const tabLabel = formatTabLabel(activeView?.tab ?? null);
+  const tabLabel = activeView ? formatTabLabel(activeView.tab ?? null) : null;
 
   return [entityTitle, projectName, programName, tabLabel].filter(Boolean).join('  •  ');
 }
 
-function buildSummary(result: FleetGraphOnDemandResponse | null): string | null {
+function buildSummary(
+  result: FleetGraphOnDemandResponse | null,
+  pageContext: FleetGraphPageContext | null
+): string | null {
   if (!result || result.error) {
     return null;
   }
@@ -124,11 +139,12 @@ function buildSummary(result: FleetGraphOnDemandResponse | null): string | null 
     result.reasoning?.summary ??
     result.finding?.summary ??
     result.derivedSignals.summary ??
+    pageContext?.summary ??
     "FleetGraph doesn't see a meaningful sprint-risk signal on this view right now."
   );
 }
 
-function isSupportedActiveView(activeView: FleetGraphActiveViewContext | null): boolean {
+function hasSprintAnalysisScope(activeView: FleetGraphActiveViewContext | null): boolean {
   if (!activeView) {
     return false;
   }
@@ -236,7 +252,9 @@ export function FleetGraphOnDemandPanel({
 }: FleetGraphOnDemandPanelProps) {
   const contextActiveView = useFleetGraphActiveView();
   const activeView = activeViewProp ?? contextActiveView;
-  const supportedActiveView = isSupportedActiveView(activeView);
+  const pageContext = useFleetGraphPageContext(activeView);
+  const supportedActiveView = hasSprintAnalysisScope(activeView);
+  const hasUsableContext = Boolean(activeView || pageContext);
   const [open, setOpen] = useState(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -251,19 +269,27 @@ export function FleetGraphOnDemandPanel({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const activeViewKey = useMemo(() => {
-    if (!activeView) {
+    if (activeView) {
+      return [
+        activeView.entity.id,
+        activeView.entity.type,
+        activeView.surface,
+        activeView.route,
+        activeView.tab ?? 'none',
+        activeView.projectId ?? 'no-project',
+      ].join(':');
+    }
+
+    if (pageContext) {
+      return [pageContext.kind, pageContext.route, pageContext.title].join(':');
+    }
+
+    if (!activeView && !pageContext) {
       return 'missing';
     }
 
-    return [
-      activeView.entity.id,
-      activeView.entity.type,
-      activeView.surface,
-      activeView.route,
-      activeView.tab ?? 'none',
-      activeView.projectId ?? 'no-project',
-    ].join(':');
-  }, [activeView]);
+    return 'missing';
+  }, [activeView, pageContext]);
 
   const latestCompletedTurn = useMemo(
     () => [...turns].reverse().find((turn) => turn.result)?.result ?? null,
@@ -271,13 +297,11 @@ export function FleetGraphOnDemandPanel({
   );
   const latestSeverity = latestCompletedTurn?.derivedSignals.severity ?? 'none';
   const latestSeverityStyle = SEVERITY_STYLES[latestSeverity];
-  const contextSummary = buildContextSummary(activeView, latestCompletedTurn);
-  const unavailableReason = !activeView
-    ? 'Open a sprint, project, or My Week view to use FleetGraph here.'
-    : supportedActiveView
-      ? null
-      : 'This surface is not wired into FleetGraph yet. Try a sprint, project, or My Week view.';
-  const quickPrompts = supportedActiveView ? QUICK_PROMPTS : [];
+  const contextSummary = buildContextSummary(activeView, pageContext, latestCompletedTurn);
+  const unavailableReason = hasUsableContext
+    ? null
+    : 'FleetGraph could not derive current page context here yet.';
+  const quickPrompts = supportedActiveView ? SPRINT_QUICK_PROMPTS : PAGE_QUICK_PROMPTS;
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -292,7 +316,7 @@ export function FleetGraphOnDemandPanel({
   }, [activeViewKey]);
 
   useEffect(() => {
-    if (!open || !supportedActiveView) {
+    if (!open || !hasUsableContext) {
       return;
     }
 
@@ -303,12 +327,12 @@ export function FleetGraphOnDemandPanel({
         behavior: 'smooth',
       });
     }, 0);
-  }, [open, turns]);
+  }, [hasUsableContext, open, turns]);
 
   const submitQuestion = useCallback(
     async (questionOverride?: string) => {
       const question = (questionOverride ?? draftQuestion).trim();
-      if (!activeView || !supportedActiveView || !question || activeTurnId) {
+      if ((!activeView && !pageContext) || !question || activeTurnId) {
         return;
       }
 
@@ -322,6 +346,7 @@ export function FleetGraphOnDemandPanel({
           id: turnId,
           question,
           status: 'running',
+          pageContext,
           result: null,
           error: null,
         },
@@ -329,7 +354,8 @@ export function FleetGraphOnDemandPanel({
 
       try {
         const response = await invokeFleetGraphOnDemand({
-          active_view: activeView,
+          active_view: activeView ?? null,
+          page_context: pageContext ?? null,
           question,
         });
 
@@ -366,7 +392,7 @@ export function FleetGraphOnDemandPanel({
         setActiveTurnId(null);
       }
     },
-    [activeTurnId, activeView, draftQuestion, supportedActiveView]
+    [activeTurnId, activeView, draftQuestion, pageContext]
   );
 
   const handleDecision = useCallback(
@@ -443,14 +469,14 @@ export function FleetGraphOnDemandPanel({
     [submitQuestion]
   );
 
-  const composer = supportedActiveView ? (
+  const composer = hasUsableContext ? (
     <div className="rounded-[28px] border border-white/10 bg-white/5 p-3 shadow-inner shadow-black/20">
       <textarea
         ref={textareaRef}
         value={draftQuestion}
         onChange={(event) => setDraftQuestion(event.target.value)}
         onKeyDown={handleComposerKeyDown}
-        placeholder="Ask about sprint risk, next steps, or what needs attention..."
+        placeholder="Ask about this page, next steps, or what needs attention..."
         disabled={!!activeTurnId}
         rows={3}
         className="max-h-40 min-h-[72px] w-full resize-none bg-transparent text-sm leading-6 text-foreground outline-none placeholder:text-muted disabled:cursor-not-allowed disabled:text-muted"
@@ -483,8 +509,8 @@ export function FleetGraphOnDemandPanel({
         {unavailableReason}
       </p>
       <p className="mt-3 text-xs leading-5 text-muted">
-        FleetGraph is currently wired into sprint, project, and My Week views. Open one of those
-        pages to ask a question.
+        FleetGraph should use the page you are on as context. If this still appears, the current
+        surface is missing page-context wiring and needs a follow-up fix.
       </p>
     </div>
   );
@@ -517,12 +543,14 @@ export function FleetGraphOnDemandPanel({
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-foreground">FleetGraph</div>
-                    <div className="text-xs text-muted">Context-aware sprint assistant</div>
+                    <div className="text-xs text-muted">Context-aware work assistant</div>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-muted">
-                    {activeView?.surface === 'my_week' ? 'My Week' : 'Current view'}
+                    {pageContext?.kind === 'my_week' || activeView?.surface === 'my_week'
+                      ? 'My Week'
+                      : 'Current view'}
                   </span>
                   {latestCompletedTurn && (
                     <span
@@ -536,7 +564,9 @@ export function FleetGraphOnDemandPanel({
                   )}
                 </div>
                 <p className="mt-3 text-sm leading-6 text-muted">
-                  {contextSummary || 'Ask about the work you are looking at without leaving this page.'}
+                  {contextSummary ||
+                    pageContext?.summary ||
+                    'Ask about the work you are looking at without leaving this page.'}
                 </p>
               </div>
 
@@ -571,6 +601,7 @@ export function FleetGraphOnDemandPanel({
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-muted">
                     {unavailableReason ??
+                      pageContext?.summary ??
                       'Type a question or use a prompt below to get a grounded answer from the current page context.'}
                   </p>
                 </div>
@@ -597,10 +628,22 @@ export function FleetGraphOnDemandPanel({
                 const result = turn.result;
                 const severity = result?.derivedSignals.severity ?? 'none';
                 const severityStyle = SEVERITY_STYLES[severity];
-                const summary = buildSummary(result);
+                const summary = buildSummary(result, turn.pageContext);
                 const responseError = result?.error?.message ?? turn.error;
                 const isBusy = activeTurnId === turn.id;
                 const pendingApproval = result?.pendingApproval ?? null;
+                const derivedMetrics = result?.derivedSignals.metrics ?? null;
+                const hasDerivedMetrics = Boolean(
+                  derivedMetrics &&
+                    (
+                      derivedMetrics.totalIssues > 0 ||
+                      derivedMetrics.completedIssues > 0 ||
+                      derivedMetrics.inProgressIssues > 0 ||
+                      derivedMetrics.standupCount > 0 ||
+                      derivedMetrics.recentActiveDays > 0
+                    )
+                );
+                const contextMetrics = turn.pageContext?.metrics ?? [];
 
                 return (
                   <div key={turn.id} className="space-y-3">
@@ -665,24 +708,36 @@ export function FleetGraphOnDemandPanel({
                               )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2">
-                              <Metric
-                                label="Completed"
-                                value={`${result?.derivedSignals.metrics.completedIssues ?? 0}/${result?.derivedSignals.metrics.totalIssues ?? 0}`}
-                              />
-                              <Metric
-                                label="In Progress"
-                                value={String(result?.derivedSignals.metrics.inProgressIssues ?? 0)}
-                              />
-                              <Metric
-                                label="Standups"
-                                value={String(result?.derivedSignals.metrics.standupCount ?? 0)}
-                              />
-                              <Metric
-                                label="Active Days"
-                                value={String(result?.derivedSignals.metrics.recentActiveDays ?? 0)}
-                              />
-                            </div>
+                            {hasDerivedMetrics ? (
+                              <div className="grid grid-cols-2 gap-2">
+                                <Metric
+                                  label="Completed"
+                                  value={`${result?.derivedSignals.metrics.completedIssues ?? 0}/${result?.derivedSignals.metrics.totalIssues ?? 0}`}
+                                />
+                                <Metric
+                                  label="In Progress"
+                                  value={String(result?.derivedSignals.metrics.inProgressIssues ?? 0)}
+                                />
+                                <Metric
+                                  label="Standups"
+                                  value={String(result?.derivedSignals.metrics.standupCount ?? 0)}
+                                />
+                                <Metric
+                                  label="Active Days"
+                                  value={String(result?.derivedSignals.metrics.recentActiveDays ?? 0)}
+                                />
+                              </div>
+                            ) : contextMetrics.length > 0 ? (
+                              <div className="grid grid-cols-2 gap-2">
+                                {contextMetrics.map((metric: FleetGraphPageContext['metrics'][number]) => (
+                                  <Metric
+                                    key={`${metric.label}-${metric.value}`}
+                                    label={metric.label}
+                                    value={metric.value}
+                                  />
+                                ))}
+                              </div>
+                            ) : null}
 
                             {result && result.derivedSignals.signals.length > 0 && (
                               <div className="space-y-2">

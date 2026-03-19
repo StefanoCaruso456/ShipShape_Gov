@@ -7,6 +7,7 @@ import { createHandoff } from '../supervision.js';
 type ResolveContextTargets =
   | 'fetchSprintContext'
   | 'resolveWeekScope'
+  | 'reasonAboutCurrentView'
   | 'completeRun'
   | 'fallback';
 
@@ -56,6 +57,8 @@ export async function resolveContextNode(
     ? 'fetchSprintContext'
     : expandedScope.projectId || expandedScope.personId
       ? 'resolveWeekScope'
+      : state.prompt?.pageContext
+        ? 'reasonAboutCurrentView'
       : 'completeRun';
 
   return createFleetGraphCommand(
@@ -71,6 +74,8 @@ export async function resolveContextNode(
           ? 'resolved sprint scope for phase-two fetch'
           : nextTarget === 'resolveWeekScope'
             ? 'resolved non-week scope that needs sprint lookup'
+            : nextTarget === 'reasonAboutCurrentView'
+              ? 'resolved a current-view snapshot without sprint scope'
             : 'resolved non-sprint scope without additional phase-two fetch'
       ),
     }

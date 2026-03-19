@@ -1,14 +1,23 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { FleetGraphActiveViewContext, FleetGraphOnDemandResponse } from '@ship/shared';
+import type {
+  FleetGraphActiveViewContext,
+  FleetGraphOnDemandResponse,
+  FleetGraphPageContext,
+} from '@ship/shared';
 import { FleetGraphOnDemandPanel } from './FleetGraphOnDemandPanel';
 
 const mockUseFleetGraphActiveView = vi.fn();
+const mockUseFleetGraphPageContext = vi.fn();
 const mockInvokeFleetGraphOnDemand = vi.fn();
 const mockResumeFleetGraphOnDemand = vi.fn();
 
 vi.mock('@/hooks/useFleetGraphActiveView', () => ({
   useFleetGraphActiveView: () => mockUseFleetGraphActiveView(),
+}));
+
+vi.mock('@/hooks/useFleetGraphPageContext', () => ({
+  useFleetGraphPageContext: () => mockUseFleetGraphPageContext(),
 }));
 
 vi.mock('@/lib/fleetgraph', () => ({
@@ -26,6 +35,25 @@ const activeView: FleetGraphActiveViewContext = {
   route: '/documents/11111111-1111-1111-1111-111111111111/issues',
   tab: 'issues',
   projectId: '22222222-2222-2222-2222-222222222222',
+};
+
+const programsPageContext: FleetGraphPageContext = {
+  kind: 'programs',
+  route: '/programs',
+  title: 'Programs',
+  summary: 'Programs shows 5 active programs in this workspace.',
+  emptyState: false,
+  metrics: [
+    { label: 'Active programs', value: '5' },
+    { label: 'Programs with owner', value: '5' },
+  ],
+  items: [
+    {
+      label: 'API Platform',
+      detail: 'Owner: stefano caruso • 11 issues',
+      route: '/documents/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    },
+  ],
 };
 
 const baseResponse: FleetGraphOnDemandResponse = {
@@ -173,6 +201,7 @@ const baseResponse: FleetGraphOnDemandResponse = {
 describe('FleetGraphOnDemandPanel', () => {
   beforeEach(() => {
     mockUseFleetGraphActiveView.mockReset();
+    mockUseFleetGraphPageContext.mockReset();
     mockInvokeFleetGraphOnDemand.mockReset();
     mockResumeFleetGraphOnDemand.mockReset();
     window.localStorage.clear();
@@ -180,6 +209,7 @@ describe('FleetGraphOnDemandPanel', () => {
 
   it('opens the drawer, sends a typed question, and renders the returned answer', async () => {
     mockUseFleetGraphActiveView.mockReturnValue(activeView);
+    mockUseFleetGraphPageContext.mockReturnValue(null);
     mockInvokeFleetGraphOnDemand.mockResolvedValue(baseResponse);
 
     render(<FleetGraphOnDemandPanel />);
@@ -193,6 +223,7 @@ describe('FleetGraphOnDemandPanel', () => {
     await waitFor(() => {
       expect(mockInvokeFleetGraphOnDemand).toHaveBeenCalledWith({
         active_view: activeView,
+        page_context: null,
         question: 'Why is this sprint at risk?',
       });
     });
@@ -204,23 +235,90 @@ describe('FleetGraphOnDemandPanel', () => {
     expect(screen.getByText(/API Platform - Core Features/)).toBeInTheDocument();
   });
 
-  it('shows an unsupported-surface state when page context is not available', () => {
+  it('uses page context on non-sprint pages instead of showing an unavailable state', async () => {
     mockUseFleetGraphActiveView.mockReturnValue(null);
+    mockUseFleetGraphPageContext.mockReturnValue(programsPageContext);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      activeView: null,
+      expandedScope: {
+        issueId: null,
+        weekId: null,
+        projectId: null,
+        programId: null,
+        personId: null,
+      },
+      fetched: {
+        entity: null,
+        supporting: null,
+        activity: null,
+        accountability: null,
+        people: null,
+      },
+      derivedSignals: {
+        ...baseResponse.derivedSignals,
+        severity: 'none',
+        reasons: [],
+        summary: null,
+        shouldSurface: false,
+        signals: [],
+        metrics: {
+          totalIssues: 0,
+          completedIssues: 0,
+          inProgressIssues: 0,
+          incompleteIssues: 0,
+          cancelledIssues: 0,
+          standupCount: 0,
+          recentActivityCount: 0,
+          recentActiveDays: 0,
+          completionRate: null,
+        },
+      },
+      finding: null,
+      reasoning: {
+        summary: 'Programs shows 5 active programs in this workspace.',
+        evidence: ['Active programs: 5', 'Programs with owner: 5'],
+        whyNow: 'This answer is grounded in the work visible on the page you are currently viewing.',
+        recommendedNextStep: 'Open the program that looks most active or least clear so you can inspect its projects, issues, and current sprint.',
+        confidence: 'high',
+      },
+      reasoningSource: 'deterministic',
+      terminalOutcome: 'quiet',
+    });
+
+    render(<FleetGraphOnDemandPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Summarize what matters on this page.' }));
+
+    await waitFor(() => {
+      expect(mockInvokeFleetGraphOnDemand).toHaveBeenCalledWith({
+        active_view: null,
+        page_context: programsPageContext,
+        question: 'Summarize what matters on this page.',
+      });
+    });
+
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(await screen.findByText('Programs shows 5 active programs in this workspace.')).toBeInTheDocument();
+    expect(screen.getByText('Active programs')).toBeInTheDocument();
+  });
+
+  it('still shows an unavailable state only when neither active view nor page context exists', () => {
+    mockUseFleetGraphActiveView.mockReturnValue(null);
+    mockUseFleetGraphPageContext.mockReturnValue(null);
 
     render(<FleetGraphOnDemandPanel />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
 
-    expect(
-      screen.getAllByText('Open a sprint, project, or My Week view to use FleetGraph here.')
-        .length
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/FleetGraph could not derive current page context/).length).toBeGreaterThan(0);
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    expect(screen.getByText('Unavailable here')).toBeInTheDocument();
   });
 
   it('supports HITL decisions from the drawer', async () => {
     mockUseFleetGraphActiveView.mockReturnValue(activeView);
+    mockUseFleetGraphPageContext.mockReturnValue(null);
     mockInvokeFleetGraphOnDemand.mockResolvedValue({
       ...baseResponse,
       status: 'waiting_on_human',
