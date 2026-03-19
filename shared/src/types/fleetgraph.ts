@@ -31,8 +31,43 @@ export interface FleetGraphActiveViewContext {
   projectId: string | null;
 }
 
+export type FleetGraphPageContextKind =
+  | 'dashboard'
+  | 'my_week'
+  | 'programs'
+  | 'projects'
+  | 'issues'
+  | 'documents'
+  | 'document'
+  | 'team_directory'
+  | 'person'
+  | 'settings'
+  | 'generic';
+
+export interface FleetGraphPageContextMetric {
+  label: string;
+  value: string;
+}
+
+export interface FleetGraphPageContextItem {
+  label: string;
+  detail?: string | null;
+  route?: string | null;
+}
+
+export interface FleetGraphPageContext {
+  kind: FleetGraphPageContextKind;
+  route: string;
+  title: string;
+  summary: string;
+  emptyState: boolean;
+  metrics: FleetGraphPageContextMetric[];
+  items: FleetGraphPageContextItem[];
+}
+
 export interface FleetGraphOnDemandRequest {
-  active_view: FleetGraphActiveViewContext;
+  active_view: FleetGraphActiveViewContext | null;
+  page_context?: FleetGraphPageContext | null;
   question?: string | null;
 }
 

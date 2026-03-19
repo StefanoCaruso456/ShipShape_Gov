@@ -9,7 +9,11 @@ import {
 import type { FleetGraphState } from '../state.js';
 import { createHandoff } from '../supervision.js';
 
-type ResolveWeekScopeTargets = 'fetchSprintContext' | 'completeRun' | 'fallback';
+type ResolveWeekScopeTargets =
+  | 'fetchSprintContext'
+  | 'reasonAboutCurrentView'
+  | 'completeRun'
+  | 'fallback';
 
 interface FleetGraphWeeksResponse {
   current_sprint_number: number;
@@ -79,6 +83,7 @@ export async function resolveWeekScopeNode(
     return started.command;
   }
   const activeView = state.activeView;
+  const pageContext = state.prompt?.pageContext ?? null;
   const projectIdFromScope = state.expandedScope.projectId ?? state.activeView?.projectId ?? null;
   const personId = state.expandedScope.personId;
 
@@ -125,6 +130,23 @@ export async function resolveWeekScopeNode(
         (myWeek.projects.length === 1 ? myWeek.projects[0]?.id ?? null : null);
 
       if (!resolvedProjectId) {
+        if (pageContext) {
+          return createFleetGraphCommand(
+            started.context,
+            'reasonAboutCurrentView',
+            {
+              stage: 'week_scope_resolved_to_page_context',
+              handoff: createHandoff(
+                'resolveWeekScope',
+                'reasonAboutCurrentView',
+                myWeek.projects.length === 0
+                  ? 'My Week had no project scope, so FleetGraph fell back to current-page reasoning'
+                  : 'My Week had multiple projects in scope, so FleetGraph fell back to current-page reasoning'
+              ),
+            }
+          );
+        }
+
         const message =
           myWeek.projects.length === 0
             ? 'My Week has no project assignments for the selected week.'
@@ -167,18 +189,35 @@ export async function resolveWeekScopeNode(
 
     return createFleetGraphCommand(
       started.context,
-      'completeRun',
+      pageContext ? 'reasonAboutCurrentView' : 'completeRun',
       {
         stage: 'week_scope_resolution_skipped',
         handoff: createHandoff(
           'resolveWeekScope',
-          'completeRun',
-          'no project or my-week scope available for sprint resolution'
+          pageContext ? 'reasonAboutCurrentView' : 'completeRun',
+          pageContext
+            ? 'no sprint scope was available, so FleetGraph fell back to current-page reasoning'
+            : 'no project or my-week scope available for sprint resolution'
         ),
       }
     );
   } catch (error) {
     if (isShipApiStatusError(error, 404)) {
+      if (pageContext) {
+        return createFleetGraphCommand(
+          started.context,
+          'reasonAboutCurrentView',
+          {
+            stage: 'week_scope_not_found_page_context_fallback',
+            handoff: createHandoff(
+              'resolveWeekScope',
+              'reasonAboutCurrentView',
+              'no active sprint was available, so FleetGraph answered from the current page snapshot'
+            ),
+          }
+        );
+      }
+
       const message = projectIdFromScope
         ? 'No active sprint was found for this project.'
         : 'No sprint was found for the selected My Week scope.';

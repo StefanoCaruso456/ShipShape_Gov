@@ -298,4 +298,61 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.stage).toBe('fallback');
     expect(result.error?.code).toBe('MY_WEEK_AMBIGUOUS_SCOPE');
   });
+
+  it('answers from page context when there is no sprint entity but the current page snapshot is available', async () => {
+    const graph = createFleetGraph();
+    const runtime = createFleetGraphRuntime({
+      now: () => new Date('2026-03-17T12:00:00.000Z'),
+    });
+
+    const result = await graph.invoke(
+      {
+        runId: 'page-context-only',
+        mode: 'on_demand',
+        triggerType: 'user_invoke',
+        workspaceId: 'workspace-1',
+        actor: {
+          id: 'user-1',
+          kind: 'user',
+          role: 'pm',
+        },
+        activeView: null,
+        contextEntity: null,
+        prompt: {
+          question: 'What should I look at next?',
+          pageContext: {
+            kind: 'programs',
+            route: '/programs',
+            title: 'Programs',
+            summary: 'Programs shows 5 active programs in this workspace.',
+            emptyState: false,
+            metrics: [
+              { label: 'Active programs', value: '5' },
+              { label: 'Programs with owner', value: '5' },
+            ],
+            items: [
+              {
+                label: 'API Platform',
+                detail: 'Owner: stefano caruso • 11 issues',
+                route: '/documents/program-1',
+              },
+            ],
+          },
+        },
+        trace: {
+          runName: 'fleetgraph-page-context-test',
+          tags: ['fleetgraph', 'test', 'page-context'],
+        },
+      } satisfies FleetGraphRunInput,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'page-context-only',
+      })
+    );
+
+    expect(result.status).toBe('completed');
+    expect(result.stage).toBe('current_view_reasoned');
+    expect(result.reasoningSource).toBe('deterministic');
+    expect(result.reasoning?.summary).toContain('Programs shows 5 active programs');
+    expect(result.reasoning?.evidence).toContain('Active programs: 5');
+  });
 });

@@ -47,9 +47,46 @@ const activeViewSchema = z.object({
   projectId: z.string().uuid().nullable(),
 });
 
+const pageContextSchema = z.object({
+  kind: z.enum([
+    'dashboard',
+    'my_week',
+    'programs',
+    'projects',
+    'issues',
+    'documents',
+    'document',
+    'team_directory',
+    'person',
+    'settings',
+    'generic',
+  ]),
+  route: z.string().min(1),
+  title: z.string().trim().min(1),
+  summary: z.string().trim().min(1),
+  emptyState: z.boolean(),
+  metrics: z.array(
+    z.object({
+      label: z.string().trim().min(1),
+      value: z.string().trim().min(1),
+    })
+  ).max(8),
+  items: z.array(
+    z.object({
+      label: z.string().trim().min(1),
+      detail: z.string().trim().max(500).nullable().optional(),
+      route: z.string().trim().min(1).nullable().optional(),
+    })
+  ).max(10),
+});
+
 const onDemandRequestSchema = z.object({
-  active_view: activeViewSchema,
+  active_view: activeViewSchema.nullable().optional(),
+  page_context: pageContextSchema.nullable().optional(),
   question: z.string().trim().min(1).nullable().optional(),
+}).refine((value) => Boolean(value.active_view || value.page_context), {
+  message: 'FleetGraph on-demand requests require either active_view or page_context',
+  path: ['active_view'],
 });
 
 const onDemandResumeRequestSchema = z.object({
@@ -144,21 +181,24 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
         kind: 'user',
         role: req.workspaceRole ?? null,
       },
-      activeView: parsed.data.active_view,
-      contextEntity: {
-        id: parsed.data.active_view.entity.id,
-        type: parsed.data.active_view.entity.type,
-      },
+      activeView: parsed.data.active_view ?? null,
+      contextEntity: parsed.data.active_view
+        ? {
+            id: parsed.data.active_view.entity.id,
+            type: parsed.data.active_view.entity.type,
+          }
+        : null,
       prompt: {
         question: parsed.data.question ?? null,
+        pageContext: parsed.data.page_context ?? null,
       },
       trace: {
         runName: 'fleetgraph-on-demand',
         tags: [
           'fleetgraph',
           'on-demand',
-          parsed.data.active_view.entity.type,
-          parsed.data.active_view.surface,
+          parsed.data.active_view?.entity.type ?? parsed.data.page_context?.kind ?? 'current-view',
+          parsed.data.active_view?.surface ?? 'current-view',
         ],
       },
     };

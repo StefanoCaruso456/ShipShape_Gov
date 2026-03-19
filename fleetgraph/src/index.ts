@@ -54,6 +54,7 @@ export type {
   FleetGraphInterventionEvent,
   FleetGraphNodeTraceEntry,
   FleetGraphNodeTraceStatus,
+  FleetGraphPageContext,
   FleetGraphPendingApproval,
   FleetGraphProposedAction,
   FleetGraphReasoning,
