@@ -9,7 +9,7 @@ Production now has one release path:
 - the workflow deploys the API to Elastic Beanstalk
 - the workflow deploys the frontend to S3
 - the workflow invalidates CloudFront
-- the workflow waits for health checks before reporting success
+- the workflow waits for the new API version to become live before reporting success
 
 ## Files
 
@@ -69,4 +69,4 @@ That builds the shared FleetGraph workspace artifacts first and then runs the mo
 
 ## Fail-fast note
 
-The deploy script now watches Elastic Beanstalk events during rollout and exits as soon as EB reports a deployment error. It also confirms that the requested version label becomes the active environment version before the workflow reports success.
+The deploy script now watches Elastic Beanstalk events during rollout and exits as soon as EB reports a deployment error. It reports success when the requested version label is active, the environment is back in `Ready`, and the API health endpoint responds, which avoids false stalls from transient Elastic Beanstalk health noise during rolling updates.
