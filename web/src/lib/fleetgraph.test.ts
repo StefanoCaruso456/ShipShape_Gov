@@ -27,6 +27,28 @@ describe('buildFleetGraphActiveViewContext', () => {
     });
   });
 
+  it('maps weekly plan documents back to the owning project scope when project context is present', () => {
+    const activeView = buildFleetGraphActiveViewContext({
+      currentDocumentId: '33333333-3333-3333-3333-333333333333',
+      currentDocumentType: 'weekly_plan',
+      currentDocumentProjectId: '22222222-2222-2222-2222-222222222222',
+      currentDocumentTab: null,
+      pathname: '/documents/33333333-3333-3333-3333-333333333333',
+    });
+
+    expect(activeView).toEqual({
+      entity: {
+        id: '22222222-2222-2222-2222-222222222222',
+        type: 'project',
+        sourceDocumentType: 'weekly_plan',
+      },
+      surface: 'document',
+      route: '/documents/33333333-3333-3333-3333-333333333333',
+      tab: null,
+      projectId: '22222222-2222-2222-2222-222222222222',
+    });
+  });
+
   it('returns null for document types that do not yet map into FleetGraph MVP context', () => {
     const activeView = buildFleetGraphActiveViewContext({
       currentDocumentId: '33333333-3333-3333-3333-333333333333',

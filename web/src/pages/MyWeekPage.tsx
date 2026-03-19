@@ -5,7 +5,6 @@ import { apiPost } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { useCurrentView } from '@/contexts/CurrentViewContext';
 import { buildFleetGraphMyWeekActiveViewContext } from '@/lib/fleetgraph';
-import { FleetGraphOnDemandPanel } from '@/components/fleetgraph/FleetGraphOnDemandPanel';
 
 function formatDateRange(startDate: string, endDate: string): string {
   const start = new Date(startDate + 'T00:00:00Z');
@@ -174,9 +173,6 @@ export function MyWeekPage() {
           </button>
         </div>
       </div>
-
-      {projects.length === 1 && <FleetGraphOnDemandPanel />}
-
       <div className="flex-1 overflow-y-auto">
       <div className="max-w-3xl mx-auto px-6 py-8">
 

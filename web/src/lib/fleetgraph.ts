@@ -37,6 +37,23 @@ export function buildFleetGraphActiveViewContext({
     return null;
   }
 
+  if (
+    (currentDocumentType === 'weekly_plan' || currentDocumentType === 'weekly_retro') &&
+    currentDocumentProjectId
+  ) {
+    return {
+      entity: {
+        id: currentDocumentProjectId,
+        type: 'project',
+        sourceDocumentType: currentDocumentType,
+      },
+      surface: 'document',
+      route: pathname,
+      tab: currentDocumentTab,
+      projectId: currentDocumentProjectId,
+    };
+  }
+
   const fleetGraphEntityType = DOCUMENT_TYPE_TO_FLEETGRAPH_ENTITY[currentDocumentType];
   if (!fleetGraphEntityType) {
     return null;
