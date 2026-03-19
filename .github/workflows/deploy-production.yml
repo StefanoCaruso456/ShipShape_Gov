@@ -1,0 +1,66 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-production:
+    name: Deploy production release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::958126465649:role/ship-github-actions-prod-deployer
+          aws-region: us-east-1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm type-check
+
+      - name: Deploy production
+        id: deploy
+        env:
+          AWS_REGION: us-east-1
+          EB_APP_NAME: ship-api
+          EB_ENV_NAME: ship-api-prod
+          EB_ARTIFACT_BUCKET: elasticbeanstalk-us-east-1-958126465649
+          FRONTEND_BUCKET: ship-frontend-dev-958126465649
+          CLOUDFRONT_DISTRIBUTION_ID: E37YBR10E6ZD0N
+        run: ./scripts/deploy-production.sh
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "API version: ${{ steps.deploy.outputs.api_version }}"
+          echo "CloudFront invalidation: ${{ steps.deploy.outputs.cloudfront_invalidation_id }}"
+          echo "Live asset: ${{ steps.deploy.outputs.live_asset }}"
