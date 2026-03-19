@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { shouldBackfillDemoWorkspace } from './demoWorkspaceBootstrap.js';
+import {
+  DEMO_WORKSPACE_OWNER_SELECTION_SQL,
+  shouldBackfillDemoWorkspace,
+} from './demoWorkspaceBootstrap.js';
 
 describe('shouldBackfillDemoWorkspace', () => {
   it('accepts setup-created personal workspaces even with more than one member', () => {
@@ -36,5 +39,10 @@ describe('shouldBackfillDemoWorkspace', () => {
         welcome_doc_count: '1',
       })
     ).toBe(false);
+  });
+
+  it('avoids MAX on UUID workspace member ids in the backfill query', () => {
+    expect(DEMO_WORKSPACE_OWNER_SELECTION_SQL).toContain('array_agg');
+    expect(DEMO_WORKSPACE_OWNER_SELECTION_SQL).not.toContain('MAX(');
   });
 });
