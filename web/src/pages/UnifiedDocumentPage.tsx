@@ -22,7 +22,7 @@ import {
   type DocumentResponse,
   type TabCounts,
 } from '@/lib/document-tabs';
-import { buildFleetGraphActiveViewContext } from '@/lib/fleetgraph';
+import { buildFleetGraphActiveViewContext, extractFleetGraphProjectIdFromDocument } from '@/lib/fleetgraph';
 
 /**
  * UnifiedDocumentPage - Renders any document type via /documents/:id route
@@ -80,10 +80,7 @@ export function UnifiedDocumentPage() {
   useEffect(() => {
     if (document && id) {
       const docType = document.document_type as 'wiki' | 'issue' | 'project' | 'program' | 'sprint' | 'person' | 'weekly_plan' | 'weekly_retro' | 'standup';
-      // Extract projectId for weekly documents
-      const projectId = (document.document_type === 'weekly_plan' || document.document_type === 'weekly_retro')
-        ? (document.properties?.project_id as string | undefined) ?? null
-        : null;
+      const projectId = extractFleetGraphProjectIdFromDocument(document);
       setCurrentDocument(id, docType, projectId, activeTab || null);
       setCurrentView(
         buildFleetGraphActiveViewContext({

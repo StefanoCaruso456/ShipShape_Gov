@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildFleetGraphActiveViewContext,
   buildFleetGraphMyWeekActiveViewContext,
+  extractFleetGraphProjectIdFromDocument,
   resolveFleetGraphActiveView,
 } from './fleetgraph';
 
@@ -99,6 +100,41 @@ describe('buildFleetGraphActiveViewContext', () => {
       tab: null,
       projectId: '55555555-5555-5555-5555-555555555555',
     });
+  });
+});
+
+describe('extractFleetGraphProjectIdFromDocument', () => {
+  it('prefers the real project association when a weekly plan has belongs_to context', () => {
+    expect(
+      extractFleetGraphProjectIdFromDocument({
+        document_type: 'weekly_plan',
+        properties: {},
+        belongs_to: [
+          { id: 'project-from-association', type: 'project' },
+          { id: 'program-1', type: 'program' },
+        ],
+      })
+    ).toBe('project-from-association');
+  });
+
+  it('falls back to the legacy weekly plan project_id when associations are missing', () => {
+    expect(
+      extractFleetGraphProjectIdFromDocument({
+        document_type: 'weekly_plan',
+        properties: { project_id: 'legacy-project-id' },
+        belongs_to: [],
+      })
+    ).toBe('legacy-project-id');
+  });
+
+  it('returns null when neither associations nor legacy project context exist', () => {
+    expect(
+      extractFleetGraphProjectIdFromDocument({
+        document_type: 'weekly_plan',
+        properties: {},
+        belongs_to: [],
+      })
+    ).toBeNull();
   });
 });
 

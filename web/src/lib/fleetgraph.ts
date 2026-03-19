@@ -7,6 +7,7 @@ import type {
   FleetGraphProactiveFinding,
 } from '@ship/shared';
 import { apiGet, apiPost } from '@/lib/api';
+import type { DocumentResponse } from '@/lib/document-tabs';
 
 interface BuildFleetGraphActiveViewContextArgs {
   currentDocumentId: string | null;
@@ -25,6 +26,26 @@ const DOCUMENT_TYPE_TO_FLEETGRAPH_ENTITY: Partial<
   program: 'program',
   person: 'person',
 };
+
+export function extractFleetGraphProjectIdFromDocument(
+  document: Pick<DocumentResponse, 'document_type' | 'properties' | 'belongs_to'>
+): string | null {
+  const belongsToProjectId =
+    document.belongs_to?.find((association) => association.type === 'project')?.id ?? null;
+
+  if (belongsToProjectId) {
+    return belongsToProjectId;
+  }
+
+  if (document.document_type === 'weekly_plan' || document.document_type === 'weekly_retro') {
+    const legacyProjectId = document.properties?.project_id;
+    return typeof legacyProjectId === 'string' && legacyProjectId.length > 0
+      ? legacyProjectId
+      : null;
+  }
+
+  return null;
+}
 
 export function buildFleetGraphActiveViewContext({
   currentDocumentId,

@@ -18,6 +18,12 @@ export interface DocumentResponse extends Record<string, unknown> {
   title: string;
   document_type: string;
   properties?: Record<string, unknown>;
+  belongs_to?: Array<{
+    id: string;
+    type: string;
+    title?: string;
+    color?: string;
+  }>;
   workspace_id?: string;
   created_at?: string;
   updated_at?: string;
