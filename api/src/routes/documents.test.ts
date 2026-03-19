@@ -407,6 +407,42 @@ describe('Documents API - Weekly Doc Resubmission', () => {
     expect(sprintAfter.rows[0].properties.review_approval.state).toBe('changed_since_approved')
     expect(sprintAfter.rows[0].properties.review_approval.feedback).toBe('Add evidence for delivered outcomes.')
   })
+
+  it('returns project belongs_to context for weekly plan documents', async () => {
+    const planResult = await pool.query(
+      `INSERT INTO documents (workspace_id, document_type, title, created_by, content, properties)
+       VALUES ($1, 'weekly_plan', 'Week 19 Plan', $2, $3, $4)
+       RETURNING id`,
+      [
+        testWorkspaceId,
+        testUserId,
+        JSON.stringify({ type: 'doc', content: [] }),
+        JSON.stringify({ person_id: testPersonId, week_number: 19 }),
+      ]
+    )
+    const planId = planResult.rows[0].id
+
+    await pool.query(
+      `INSERT INTO document_associations (document_id, related_id, relationship_type)
+       VALUES ($1, $2, 'project')`,
+      [planId, testProjectId]
+    )
+
+    const response = await request(app)
+      .get(`/api/documents/${planId}`)
+      .set('Cookie', sessionCookie)
+
+    expect(response.status).toBe(200)
+    expect(response.body.belongs_to).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: testProjectId,
+          type: 'project',
+          title: 'Weekly Resubmit Project',
+        }),
+      ])
+    )
+  })
 })
 
 describe('Documents API - Delete', () => {

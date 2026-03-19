@@ -306,9 +306,16 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
       }
     }
 
-    // Get belongs_to associations from junction table (for issues, wikis, sprints, and projects)
+    // Get belongs_to associations from junction table for context-aware clients like FleetGraph.
     let belongs_to: Array<{ id: string; type: string; title?: string; color?: string }> = [];
-    if (doc.document_type === 'issue' || doc.document_type === 'wiki' || doc.document_type === 'sprint' || doc.document_type === 'project') {
+    if (
+      doc.document_type === 'issue' ||
+      doc.document_type === 'wiki' ||
+      doc.document_type === 'sprint' ||
+      doc.document_type === 'project' ||
+      doc.document_type === 'weekly_plan' ||
+      doc.document_type === 'weekly_retro'
+    ) {
       const assocResult = await pool.query(
         `SELECT da.related_id as id, da.relationship_type as type,
                 d.title, (d.properties->>'color') as color
@@ -361,8 +368,17 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
       plan_approval: props.plan_approval,
       review_approval: props.review_approval,
       review_rating: props.review_rating,
-      // Include belongs_to for issue, wiki, sprint, and project documents
-      ...((doc.document_type === 'issue' || doc.document_type === 'wiki' || doc.document_type === 'sprint' || doc.document_type === 'project') && { belongs_to }),
+      // Include belongs_to for issue, wiki, sprint, project, and weekly documents
+      ...(
+        (
+          doc.document_type === 'issue' ||
+          doc.document_type === 'wiki' ||
+          doc.document_type === 'sprint' ||
+          doc.document_type === 'project' ||
+          doc.document_type === 'weekly_plan' ||
+          doc.document_type === 'weekly_retro'
+        ) && { belongs_to }
+      ),
     });
   } catch (err) {
     console.error('Get document error:', err);
