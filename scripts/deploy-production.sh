@@ -37,10 +37,43 @@ latest_deploy_errors() {
     --output text 2>/dev/null | awk -v start="$deploy_started_at" '$1 >= start { print }' | grep -v '^None$' || true
 }
 
+current_api_healthcheck_url() {
+  local endpoint
+
+  endpoint="$(aws elasticbeanstalk describe-environments \
+    --region "$AWS_REGION" \
+    --environment-names "$EB_ENV_NAME" \
+    --query 'Environments[0].CNAME' \
+    --output text 2>/dev/null || true)"
+
+  if [ -z "$endpoint" ] || [ "$endpoint" = "None" ]; then
+    endpoint="$(aws elasticbeanstalk describe-environments \
+      --region "$AWS_REGION" \
+      --environment-names "$EB_ENV_NAME" \
+      --query 'Environments[0].EndpointURL' \
+      --output text 2>/dev/null || true)"
+  fi
+
+  if [ -z "$endpoint" ] || [ "$endpoint" = "None" ]; then
+    return 1
+  fi
+
+  printf 'http://%s/health' "$endpoint"
+}
+
+api_healthcheck_ready() {
+  local healthcheck_url="$1"
+
+  curl -fsS --max-time 10 "$healthcheck_url" >/dev/null 2>&1
+}
+
 wait_for_api_health() {
   local target_version="$1"
   local deploy_started_at="$2"
+  local healthcheck_url
   local attempt=1
+
+  healthcheck_url="$(current_api_healthcheck_url || true)"
 
   while [ "$attempt" -le "$MAX_API_POLL_ATTEMPTS" ]; do
     local state
@@ -64,15 +97,22 @@ wait_for_api_health() {
     printf '   poll %s/%s -> version=%s health=%s health_status=%s status=%s\n' \
       "$attempt" "$MAX_API_POLL_ATTEMPTS" "$version_label" "$health" "$health_status" "$status"
 
-    if [ "$version_label" = "$target_version" ] && [ "$health" = "Green" ] && [ "$health_status" = "Ok" ] && [ "$status" = "Ready" ]; then
-      return 0
-    fi
-
     error_events="$(latest_deploy_errors "$deploy_started_at")"
     if [ -n "$error_events" ]; then
       echo "ERROR: Elastic Beanstalk reported deployment errors:"
       printf '%s\n' "$error_events"
       return 1
+    fi
+
+    if [ "$version_label" = "$target_version" ] && [ "$status" = "Ready" ]; then
+      if [ "$health" = "Green" ] && [ "$health_status" = "Ok" ]; then
+        return 0
+      fi
+
+      if [ -n "$healthcheck_url" ] && api_healthcheck_ready "$healthcheck_url"; then
+        printf '   accepted Ready state with live healthcheck: %s\n' "$healthcheck_url"
+        return 0
+      fi
     fi
 
     sleep "$POLL_INTERVAL_SECONDS"
