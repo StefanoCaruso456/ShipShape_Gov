@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildFleetGraphActiveViewContext,
   buildFleetGraphMyWeekActiveViewContext,
+  resolveFleetGraphActiveView,
 } from './fleetgraph';
 
 describe('buildFleetGraphActiveViewContext', () => {
@@ -97,6 +98,54 @@ describe('buildFleetGraphActiveViewContext', () => {
       route: '/my-week?week_number=14',
       tab: null,
       projectId: '55555555-5555-5555-5555-555555555555',
+    });
+  });
+});
+
+describe('resolveFleetGraphActiveView', () => {
+  it('keeps a dashboard current view when the route still matches', () => {
+    const currentView = buildFleetGraphMyWeekActiveViewContext({
+      personId: '44444444-4444-4444-4444-444444444444',
+      pathname: '/my-week?week_number=14',
+    });
+
+    const resolved = resolveFleetGraphActiveView({
+      currentView,
+      currentRoute: '/my-week?week_number=14',
+      currentDocumentId: '11111111-1111-1111-1111-111111111111',
+      currentDocumentType: 'project',
+      currentDocumentProjectId: '11111111-1111-1111-1111-111111111111',
+      currentDocumentTab: null,
+    });
+
+    expect(resolved).toEqual(currentView);
+  });
+
+  it('falls back to document context when a stale dashboard view no longer matches the route', () => {
+    const currentView = buildFleetGraphMyWeekActiveViewContext({
+      personId: '44444444-4444-4444-4444-444444444444',
+      pathname: '/my-week?week_number=14',
+    });
+
+    const resolved = resolveFleetGraphActiveView({
+      currentView,
+      currentRoute: '/documents/33333333-3333-3333-3333-333333333333',
+      currentDocumentId: '33333333-3333-3333-3333-333333333333',
+      currentDocumentType: 'project',
+      currentDocumentProjectId: '33333333-3333-3333-3333-333333333333',
+      currentDocumentTab: 'overview',
+    });
+
+    expect(resolved).toEqual({
+      entity: {
+        id: '33333333-3333-3333-3333-333333333333',
+        type: 'project',
+        sourceDocumentType: 'project',
+      },
+      surface: 'document',
+      route: '/documents/33333333-3333-3333-3333-333333333333',
+      tab: 'overview',
+      projectId: '33333333-3333-3333-3333-333333333333',
     });
   });
 });

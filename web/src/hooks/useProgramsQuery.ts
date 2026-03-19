@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 export interface ProgramOwner {
   id: string;
@@ -74,9 +75,12 @@ async function deleteProgramApi(id: string): Promise<void> {
 
 // Hook to get programs
 export function useProgramsQuery() {
+  const { currentWorkspace } = useWorkspace();
+
   return useQuery({
-    queryKey: programKeys.lists(),
+    queryKey: [...programKeys.lists(), currentWorkspace?.id ?? 'no-workspace'],
     queryFn: fetchPrograms,
+    enabled: !!currentWorkspace,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

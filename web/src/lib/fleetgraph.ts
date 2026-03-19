@@ -100,6 +100,36 @@ export function buildFleetGraphMyWeekActiveViewContext({
   };
 }
 
+interface ResolveFleetGraphActiveViewArgs extends Omit<BuildFleetGraphActiveViewContextArgs, 'pathname'> {
+  currentRoute: string;
+  currentView: FleetGraphActiveViewContext | null;
+}
+
+function normalizeRoute(route: string): string {
+  return route.trim();
+}
+
+export function resolveFleetGraphActiveView({
+  currentDocumentId,
+  currentDocumentProjectId,
+  currentDocumentTab,
+  currentDocumentType,
+  currentRoute,
+  currentView,
+}: ResolveFleetGraphActiveViewArgs): FleetGraphActiveViewContext | null {
+  if (currentView && normalizeRoute(currentView.route) === normalizeRoute(currentRoute)) {
+    return currentView;
+  }
+
+  return buildFleetGraphActiveViewContext({
+    currentDocumentId,
+    currentDocumentProjectId,
+    currentDocumentTab,
+    currentDocumentType,
+    pathname: currentRoute,
+  });
+}
+
 export async function invokeFleetGraphOnDemand(
   request: FleetGraphOnDemandRequest
 ): Promise<FleetGraphOnDemandResponse> {

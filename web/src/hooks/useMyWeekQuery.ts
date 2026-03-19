@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 export interface StandupSlot {
   date: string;
@@ -62,9 +63,12 @@ async function fetchMyWeek(weekNumber?: number): Promise<MyWeekResponse> {
 }
 
 export function useMyWeekQuery(weekNumber?: number) {
+  const { currentWorkspace } = useWorkspace();
+
   return useQuery({
-    queryKey: ['dashboard', 'my-week', weekNumber ?? 'current'],
+    queryKey: ['dashboard', 'my-week', currentWorkspace?.id ?? 'no-workspace', weekNumber ?? 'current'],
     queryFn: () => fetchMyWeek(weekNumber),
+    enabled: !!currentWorkspace,
     staleTime: 0, // Always refetch on mount — plan/retro content is saved via Yjs WebSocket so there's no client-side mutation to trigger invalidation
   });
 }

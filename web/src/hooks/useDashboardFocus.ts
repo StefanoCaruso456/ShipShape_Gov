@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 export interface PlanItem {
   text: string;
@@ -50,9 +51,12 @@ async function fetchFocus(): Promise<FocusResponse> {
 }
 
 export function useDashboardFocus() {
+  const { currentWorkspace } = useWorkspace();
+
   return useQuery({
-    queryKey: ['dashboard', 'my-focus'],
+    queryKey: ['dashboard', 'my-focus', currentWorkspace?.id ?? 'no-workspace'],
     queryFn: fetchFocus,
+    enabled: !!currentWorkspace,
     staleTime: 1000 * 60 * 5,
   });
 }
