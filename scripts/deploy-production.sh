@@ -25,30 +25,55 @@ require_command() {
   fi
 }
 
+latest_deploy_errors() {
+  local deploy_started_at="$1"
+
+  aws elasticbeanstalk describe-events \
+    --region "$AWS_REGION" \
+    --environment-name "$EB_ENV_NAME" \
+    --severity ERROR \
+    --start-time "$deploy_started_at" \
+    --max-items 5 \
+    --query 'Events[].[EventDate,Message]' \
+    --output text 2>/dev/null || true
+}
+
 wait_for_api_health() {
+  local target_version="$1"
+  local deploy_started_at="$2"
   local attempt=1
 
   while [ "$attempt" -le "$MAX_API_POLL_ATTEMPTS" ]; do
     local state
+    local version_label
     local health
     local health_status
     local status
+    local error_events
 
     state="$(aws elasticbeanstalk describe-environments \
       --region "$AWS_REGION" \
       --environment-names "$EB_ENV_NAME" \
-      --query 'Environments[0].[Health,HealthStatus,Status]' \
+      --query 'Environments[0].[VersionLabel,Health,HealthStatus,Status]' \
       --output text)"
 
-    health="$(printf '%s' "$state" | awk '{print $1}')"
-    health_status="$(printf '%s' "$state" | awk '{print $2}')"
-    status="$(printf '%s' "$state" | awk '{print $3}')"
+    version_label="$(printf '%s' "$state" | awk '{print $1}')"
+    health="$(printf '%s' "$state" | awk '{print $2}')"
+    health_status="$(printf '%s' "$state" | awk '{print $3}')"
+    status="$(printf '%s' "$state" | awk '{print $4}')"
 
-    printf '   poll %s/%s -> health=%s health_status=%s status=%s\n' \
-      "$attempt" "$MAX_API_POLL_ATTEMPTS" "$health" "$health_status" "$status"
+    printf '   poll %s/%s -> version=%s health=%s health_status=%s status=%s\n' \
+      "$attempt" "$MAX_API_POLL_ATTEMPTS" "$version_label" "$health" "$health_status" "$status"
 
-    if [ "$health" = "Green" ] && [ "$health_status" = "Ok" ] && [ "$status" = "Ready" ]; then
+    if [ "$version_label" = "$target_version" ] && [ "$health" = "Green" ] && [ "$health_status" = "Ok" ] && [ "$status" = "Ready" ]; then
       return 0
+    fi
+
+    error_events="$(latest_deploy_errors "$deploy_started_at")"
+    if [ -n "$error_events" ]; then
+      echo "ERROR: Elastic Beanstalk reported deployment errors:"
+      printf '%s\n' "$error_events"
+      return 1
     fi
 
     sleep "$POLL_INTERVAL_SECONDS"
@@ -157,13 +182,15 @@ aws elasticbeanstalk create-application-version \
   --source-bundle "S3Bucket=${EB_ARTIFACT_BUCKET},S3Key=${ARTIFACT_KEY}" \
   --no-cli-pager >/dev/null
 
+DEPLOY_STARTED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
 aws elasticbeanstalk update-environment \
   --region "$AWS_REGION" \
   --environment-name "$EB_ENV_NAME" \
   --version-label "$VERSION_LABEL" \
   --no-cli-pager >/dev/null
 
-wait_for_api_health
+wait_for_api_health "$VERSION_LABEL" "$DEPLOY_STARTED_AT"
 
 log_step "Deploying frontend assets"
 aws s3 sync web/dist/ "s3://${FRONTEND_BUCKET}" \

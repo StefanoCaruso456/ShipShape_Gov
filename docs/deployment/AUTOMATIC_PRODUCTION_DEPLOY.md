@@ -28,6 +28,12 @@ The role trust is limited to:
 - repo: `StefanoCaruso456/ShipShape_Gov`
 - branch: `main`
 
+The current role policy source of truth lives in:
+
+- `/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/deployment/github-actions-prod-role-policy.json`
+
+That policy includes the Elastic Beanstalk read actions and S3 bucket policy read access that EB needs during version activation.
+
 ## Manual fallback
 
 If you need to run the exact same release path from terminal:
@@ -60,3 +66,7 @@ pnpm verify:ci
 ```
 
 That builds the shared FleetGraph workspace artifacts first and then runs the monorepo type-check. This avoids false failures in GitHub Actions when the runner starts from an empty `dist/` state.
+
+## Fail-fast note
+
+The deploy script now watches Elastic Beanstalk events during rollout and exits as soon as EB reports a deployment error. It also confirms that the requested version label becomes the active environment version before the workflow reports success.
