@@ -24,6 +24,7 @@
     "build:api": "pnpm run build:fleetgraph && pnpm --filter @ship/api build",
     "build:web": "pnpm run build:shared && pnpm --filter @ship/web build",
     "type-check": "pnpm run type-check:workspaces && pnpm run type-check:scripts",
+    "verify:ci": "pnpm run build:fleetgraph && pnpm run type-check",
     "type-check:workspaces": "pnpm --recursive run type-check",
     "type-check:scripts": "tsc --noEmit -p tsconfig.scripts.json",
     "lint": "pnpm --recursive run lint",
