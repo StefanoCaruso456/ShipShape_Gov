@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import type { FleetGraphActiveViewContext } from '@ship/shared';
 import { useCurrentDocument } from '@/contexts/CurrentDocumentContext';
 import { useCurrentView } from '@/contexts/CurrentViewContext';
-import { buildFleetGraphActiveViewContext } from '@/lib/fleetgraph';
+import { resolveFleetGraphActiveView } from '@/lib/fleetgraph';
 
 export function useFleetGraphActiveView(): FleetGraphActiveViewContext | null {
   const location = useLocation();
@@ -17,16 +17,13 @@ export function useFleetGraphActiveView(): FleetGraphActiveViewContext | null {
 
   return useMemo(
     () => {
-      if (currentView) {
-        return currentView;
-      }
-
-      return buildFleetGraphActiveViewContext({
+      return resolveFleetGraphActiveView({
+        currentView,
         currentDocumentId,
         currentDocumentType,
         currentDocumentProjectId,
         currentDocumentTab,
-        pathname: location.pathname,
+        currentRoute: location.pathname + location.search,
       });
     },
     [

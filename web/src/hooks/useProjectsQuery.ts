@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
 import { computeICEScore } from '@ship/shared';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 // Inferred project status based on sprint relationships
 export type InferredProjectStatus = 'active' | 'planned' | 'completed' | 'backlog' | 'archived';
@@ -148,9 +149,12 @@ async function deleteProjectApi(id: string): Promise<void> {
 
 // Hook to get projects
 export function useProjectsQuery() {
+  const { currentWorkspace } = useWorkspace();
+
   return useQuery({
-    queryKey: projectKeys.lists(),
+    queryKey: [...projectKeys.lists(), currentWorkspace?.id ?? 'no-workspace'],
     queryFn: fetchProjects,
+    enabled: !!currentWorkspace,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
