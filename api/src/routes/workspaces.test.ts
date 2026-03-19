@@ -157,6 +157,11 @@ describe('Workspaces API', () => {
       expect(response.status).toBe(200)
       expect(response.body.success).toBe(true)
       expect(response.body.data.workspaceId).toBe(testWorkspaceId)
+      expect(response.body.data.workspace).toEqual({
+        id: testWorkspaceId,
+        name: testWorkspaceName,
+        role: 'member',
+      })
     })
 
     it('should return 403 when switching to workspace user is not member of', async () => {
