@@ -28,6 +28,17 @@
       "Resource": "*"
     },
     {
+      "Sid": "ElasticBeanstalkCloudFormationOperations",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:*"
+      ],
+      "Resource": [
+        "arn:aws:cloudformation:*:*:stack/awseb-*",
+        "arn:aws:cloudformation:*:*:stack/eb-*"
+      ]
+    },
+    {
       "Sid": "ElasticBeanstalkEnvironmentRead",
       "Effect": "Allow",
       "Action": [
@@ -35,9 +46,20 @@
         "ec2:Describe*",
         "elasticloadbalancing:Describe*",
         "cloudwatch:DescribeAlarms",
-        "cloudwatch:GetMetricStatistics"
+        "cloudwatch:GetMetricStatistics",
+        "logs:DescribeLogGroups"
       ],
       "Resource": "*"
+    },
+    {
+      "Sid": "ElasticBeanstalkCloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:DeleteLogGroup",
+        "logs:PutRetentionPolicy"
+      ],
+      "Resource": "arn:aws:logs:*:*:log-group:/aws/elasticbeanstalk/*"
     },
     {
       "Sid": "FrontendAndArtifactBuckets",
