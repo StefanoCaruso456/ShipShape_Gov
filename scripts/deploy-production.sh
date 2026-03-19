@@ -169,7 +169,7 @@ if [ -d "api/.platform" ]; then
   (cd api && zip -rq "$BUNDLE_PATH" .platform)
 fi
 
-ARTIFACT_KEY="ship-api/api-${VERSION_LABEL}.zip"
+ARTIFACT_KEY="deploy/api-${VERSION_LABEL}.zip"
 
 log_step "Deploying API bundle ${VERSION_LABEL}"
 aws s3 cp "$BUNDLE_PATH" "s3://${EB_ARTIFACT_BUCKET}/${ARTIFACT_KEY}" --region "$AWS_REGION"
