@@ -32,10 +32,9 @@ latest_deploy_errors() {
     --region "$AWS_REGION" \
     --environment-name "$EB_ENV_NAME" \
     --severity ERROR \
-    --start-time "$deploy_started_at" \
-    --max-items 5 \
+    --max-items 10 \
     --query 'Events[].[EventDate,Message]' \
-    --output text 2>/dev/null || true
+    --output text 2>/dev/null | awk -v start="$deploy_started_at" '$1 >= start { print }' | grep -v '^None$' || true
 }
 
 wait_for_api_health() {
@@ -182,7 +181,7 @@ aws elasticbeanstalk create-application-version \
   --source-bundle "S3Bucket=${EB_ARTIFACT_BUCKET},S3Key=${ARTIFACT_KEY}" \
   --no-cli-pager >/dev/null
 
-DEPLOY_STARTED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+DEPLOY_STARTED_AT="$(date -u +"%Y-%m-%dT%H:%M:%S+00:00")"
 
 aws elasticbeanstalk update-environment \
   --region "$AWS_REGION" \
