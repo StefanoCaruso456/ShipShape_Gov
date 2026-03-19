@@ -44,8 +44,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type-check
-        run: pnpm type-check
+      - name: Validate clean checkout
+        run: pnpm verify:ci
 
       - name: Deploy production
         id: deploy

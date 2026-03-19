@@ -5,6 +5,7 @@
 Production now has one release path:
 
 - merging to `main` triggers GitHub Actions
+- the workflow validates from a clean checkout before it deploys
 - the workflow deploys the API to Elastic Beanstalk
 - the workflow deploys the frontend to S3
 - the workflow invalidates CloudFront
@@ -49,3 +50,13 @@ AWS:
 - CloudFront invalidation completes for distribution `E37YBR10E6ZD0N`
 - the live app root returns `200`
 - `/health` returns `200`
+
+## Clean-checkout note
+
+The CI validation command is:
+
+```bash
+pnpm verify:ci
+```
+
+That builds the shared FleetGraph workspace artifacts first and then runs the monorepo type-check. This avoids false failures in GitHub Actions when the runner starts from an empty `dist/` state.
