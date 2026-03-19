@@ -6,6 +6,7 @@ import pg from 'pg';
 import bcrypt from 'bcryptjs';
 import { loadProductionSecrets } from '../config/ssm.js';
 import { WELCOME_DOCUMENT_TITLE, WELCOME_DOCUMENT_CONTENT } from './welcomeDocument.js';
+import { DEMO_PROGRAM_TEMPLATES, DEMO_PROJECT_TEMPLATES } from './demoWorkspaceTemplates.js';
 
 const { Pool } = pg;
 
@@ -240,18 +241,10 @@ async function seed() {
     const allUsers = allUsersResult.rows;
 
     // Programs to seed
-    const programsToSeed = [
-      { prefix: 'SHIP', name: 'Ship Core', color: '#3B82F6' },
-      { prefix: 'AUTH', name: 'Authentication', color: '#8B5CF6' },
-      { prefix: 'API', name: 'API Platform', color: '#10B981' },
-      { prefix: 'UI', name: 'Design System', color: '#F59E0B' },
-      { prefix: 'INFRA', name: 'Infrastructure', color: '#EF4444' },
-    ];
-
     const programs: Array<{ id: string; prefix: string; name: string; color: string }> = [];
     let programsCreated = 0;
 
-    for (const prog of programsToSeed) {
+    for (const prog of DEMO_PROGRAM_TEMPLATES) {
       const existingProgram = await pool.query(
         `SELECT id FROM documents WHERE workspace_id = $1 AND document_type = $2 AND properties->>'prefix' = $3`,
         [workspaceId, 'program', prog.prefix]
@@ -299,49 +292,11 @@ async function seed() {
 
     // Create projects for each program
     // Each project has ICE scores (Impact, Confidence, Ease) for prioritization (1-5 scale)
-    const projectTemplates = [
-      {
-        name: 'Core Features',
-        color: '#6366f1',
-        emoji: '🚀',
-        impact: 5,
-        confidence: 4,
-        ease: 3,
-        plan: 'Building core features will establish the product foundation and attract early adopters.',
-        monetary_impact_expected: 50000,
-        has_design_review: true,
-        design_review_notes: 'Design approved after review session on 2025-01-15. UI mockups finalized.',
-      },
-      {
-        name: 'Bug Fixes',
-        color: '#ef4444',
-        emoji: '🐛',
-        impact: 4,
-        confidence: 5,
-        ease: 4,
-        plan: 'Fixing bugs will improve user retention and reduce support costs.',
-        monetary_impact_expected: 15000,
-        has_design_review: false,
-        design_review_notes: null,
-      },
-      {
-        name: 'Performance',
-        color: '#22c55e',
-        emoji: '⚡',
-        impact: 4,
-        confidence: 3,
-        ease: 2,
-        plan: 'Performance improvements will increase user satisfaction and enable scale.',
-        monetary_impact_expected: 25000,
-        // No design review fields - will be null/undefined
-      },
-    ];
-
     const projects: Array<{ id: string; programId: string; title: string }> = [];
     let projectsCreated = 0;
 
     for (const program of programs) {
-      for (const template of projectTemplates) {
+      for (const template of DEMO_PROJECT_TEMPLATES) {
         const projectTitle = `${program.name} - ${template.name}`;
 
         // Check if project already exists (via junction table association to program)
@@ -361,12 +316,12 @@ async function seed() {
           });
         } else {
           // Assign owner rotating through team members
-          const ownerIdx = (programs.indexOf(program) * projectTemplates.length + projectTemplates.indexOf(template)) % allUsers.length;
+          const ownerIdx = (programs.indexOf(program) * DEMO_PROJECT_TEMPLATES.length + DEMO_PROJECT_TEMPLATES.indexOf(template)) % allUsers.length;
           const owner = allUsers[ownerIdx]!;
 
           // Calculate target date (2-4 weeks from now based on project type)
           const targetDate = new Date();
-          targetDate.setDate(targetDate.getDate() + (projectTemplates.indexOf(template) + 2) * 7);
+          targetDate.setDate(targetDate.getDate() + (DEMO_PROJECT_TEMPLATES.indexOf(template) + 2) * 7);
 
           const projectProperties: Record<string, unknown> = {
             color: template.color,
@@ -377,15 +332,15 @@ async function seed() {
             confidence: template.confidence,
             ease: template.ease,
             plan: template.plan,
-            monetary_impact_expected: template.monetary_impact_expected,
+            monetary_impact_expected: template.monetaryImpactExpected,
             target_date: targetDate.toISOString().split('T')[0],
           };
           // Add design review fields if present in template
-          if ('has_design_review' in template) {
-            projectProperties.has_design_review = template.has_design_review;
+          if (template.hasDesignReview !== undefined) {
+            projectProperties.has_design_review = template.hasDesignReview;
           }
-          if ('design_review_notes' in template) {
-            projectProperties.design_review_notes = template.design_review_notes;
+          if (template.designReviewNotes !== undefined) {
+            projectProperties.design_review_notes = template.designReviewNotes;
           }
           // Create project document without legacy program_id column
           const projectResult = await pool.query(

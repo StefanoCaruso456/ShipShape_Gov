@@ -11,6 +11,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { Pool } from 'pg';
 import { loadProductionSecrets } from '../config/ssm.js';
+import { backfillDemoWorkspaceDataForSetupWorkspaces } from './demoWorkspaceBootstrap.js';
 
 // Load .env.local for local development
 config({ path: join(dirname(fileURLToPath(import.meta.url)), '../../.env.local') });
@@ -113,6 +114,8 @@ async function migrate() {
     } else {
       console.log(`✅ ${migrationsRun} migration(s) applied successfully`);
     }
+
+    await backfillDemoWorkspaceDataForSetupWorkspaces(pool);
 
   } catch (error) {
     console.error('Database migration failed:', error);
