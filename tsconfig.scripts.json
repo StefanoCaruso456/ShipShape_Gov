@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": [
+    "scripts/collect-fleetgraph-evidence.ts",
+    "scripts/verify-fleetgraph-requirements.ts"
+  ]
+}

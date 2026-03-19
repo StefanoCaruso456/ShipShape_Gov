@@ -18,7 +18,90 @@ const EVIDENCE_SUMMARY_PATH = path.resolve(
   process.env.FLEETGRAPH_EVIDENCE_SUMMARY_PATH ?? 'audit-results/fleetgraph-evidence/summary.json'
 );
 
-function parsePublicUrls() {
+type FleetGraphRouteClassification =
+  | 'route_missing'
+  | 'spa_fallback'
+  | 'route_mounted'
+  | 'route_responded'
+  | 'unknown';
+
+type LangSmithSharedTraceStatus = 'captured' | 'ready_to_capture' | 'blocked_by_env';
+type PublicDeploymentStatus = 'verified' | 'not_verified';
+
+interface TracingReadiness {
+  tracingEnabled: boolean;
+  apiKeyPresent: boolean;
+  projectName: string | null;
+  readyForSharedTraces: boolean;
+}
+
+interface EvidenceSummaryRun {
+  langsmithShareUrl?: string | null;
+}
+
+interface EvidenceSummaryFile {
+  quietRun?: EvidenceSummaryRun | null;
+  flaggedRun?: EvidenceSummaryRun | null;
+  hitlRun?: EvidenceSummaryRun | null;
+  resumeRun?: EvidenceSummaryRun | null;
+}
+
+interface EvidenceSummaryReport {
+  path: string;
+  capturedShareLinks: string[];
+  sharedTraceCount: number;
+  hasEnoughSharedTraces: boolean;
+}
+
+interface FetchTextResult {
+  status: number;
+  ok: boolean;
+  headers: Record<string, string>;
+  body: string;
+}
+
+interface DeploymentCheck {
+  baseUrl: string;
+  app: {
+    status: number;
+    reachable: boolean;
+    contentType: string | null;
+  };
+  health: {
+    status: number;
+    ok: boolean;
+    body: string;
+  };
+  fleetgraphOnDemand: {
+    status: number;
+    classification: FleetGraphRouteClassification;
+    bodyPreview: string;
+  };
+  fleetgraphProactive: {
+    status: number;
+    classification: FleetGraphRouteClassification;
+    bodyPreview: string;
+  };
+}
+
+interface RequirementStatus {
+  langsmithSharedTraces: LangSmithSharedTraceStatus;
+  publicDeployment: PublicDeploymentStatus;
+}
+
+interface RequirementVerificationReport {
+  generatedAt: string;
+  langsmith: TracingReadiness;
+  evidence: EvidenceSummaryReport;
+  deployments: DeploymentCheck[];
+  requirements: RequirementStatus;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function parsePublicUrls(): string[] {
   const raw = process.env.FLEETGRAPH_PUBLIC_URLS;
   if (!raw) {
     const terraformUrl = getTerraformPublicUrl();
@@ -28,10 +111,10 @@ function parsePublicUrls() {
   return raw
     .split(',')
     .map((value) => value.trim())
-    .filter(Boolean);
+    .filter((value): value is string => value.length > 0);
 }
 
-function getTerraformPublicUrl() {
+function getTerraformPublicUrl(): string | null {
   try {
     const domain = execFileSync('terraform', ['output', '-raw', 'cloudfront_domain_name'], {
       cwd: path.resolve(process.cwd(), 'terraform'),
@@ -45,11 +128,11 @@ function getTerraformPublicUrl() {
   }
 }
 
-function normalizeBaseUrl(value) {
+function normalizeBaseUrl(value: string): string {
   return value.endsWith('/') ? value.slice(0, -1) : value;
 }
 
-function getTracingReadiness() {
+function getTracingReadiness(): TracingReadiness {
   const tracingEnabled =
     process.env.LANGCHAIN_TRACING_V2 === 'true' || process.env.LANGSMITH_TRACING === 'true';
   const apiKeyPresent = Boolean(process.env.LANGCHAIN_API_KEY ?? process.env.LANGSMITH_API_KEY);
@@ -63,17 +146,18 @@ function getTracingReadiness() {
   };
 }
 
-async function readEvidenceSummary() {
+async function readEvidenceSummary(): Promise<EvidenceSummaryReport> {
   try {
     const raw = await readFile(EVIDENCE_SUMMARY_PATH, 'utf8');
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw) as unknown;
+    const evidence = isRecord(parsed) ? (parsed as EvidenceSummaryFile) : {};
 
     const capturedShareLinks = [
-      parsed?.quietRun?.langsmithShareUrl,
-      parsed?.flaggedRun?.langsmithShareUrl,
-      parsed?.hitlRun?.langsmithShareUrl,
-      parsed?.resumeRun?.langsmithShareUrl,
-    ].filter((value) => typeof value === 'string' && value.length > 0);
+      evidence.quietRun?.langsmithShareUrl,
+      evidence.flaggedRun?.langsmithShareUrl,
+      evidence.hitlRun?.langsmithShareUrl,
+      evidence.resumeRun?.langsmithShareUrl,
+    ].filter((value): value is string => typeof value === 'string' && value.length > 0);
 
     return {
       path: EVIDENCE_SUMMARY_PATH,
@@ -91,7 +175,7 @@ async function readEvidenceSummary() {
   }
 }
 
-async function fetchText(url, options = {}) {
+async function fetchText(url: string, options: RequestInit = {}): Promise<FetchTextResult> {
   const response = await fetch(url, options);
   const text = await response.text();
 
@@ -103,9 +187,9 @@ async function fetchText(url, options = {}) {
   };
 }
 
-function classifyFleetGraphRoute(check) {
+function classifyFleetGraphRoute(check: FetchTextResult): FleetGraphRouteClassification {
   const contentType = check.headers['content-type'] ?? '';
-  const body = check.body ?? '';
+  const body = check.body;
 
   if (
     body.includes('Cannot POST /api/fleetgraph/on-demand') ||
@@ -129,15 +213,17 @@ function classifyFleetGraphRoute(check) {
   return 'unknown';
 }
 
-async function verifyPublicUrl(baseUrl) {
-  const appCheck = await fetchText(baseUrl);
-  const healthCheck = await fetchText(`${baseUrl}/health`);
-  const onDemandCheck = await fetchText(`${baseUrl}/api/fleetgraph/on-demand`, {
-    method: 'POST',
-  });
-  const proactiveCheck = await fetchText(`${baseUrl}/api/fleetgraph/proactive/run`, {
-    method: 'POST',
-  });
+async function verifyPublicUrl(baseUrl: string): Promise<DeploymentCheck> {
+  const [appCheck, healthCheck, onDemandCheck, proactiveCheck] = await Promise.all([
+    fetchText(baseUrl),
+    fetchText(`${baseUrl}/health`),
+    fetchText(`${baseUrl}/api/fleetgraph/on-demand`, {
+      method: 'POST',
+    }),
+    fetchText(`${baseUrl}/api/fleetgraph/proactive/run`, {
+      method: 'POST',
+    }),
+  ]);
 
   return {
     baseUrl,
@@ -164,7 +250,11 @@ async function verifyPublicUrl(baseUrl) {
   };
 }
 
-function summarizeRequirementStatus(tracing, evidence, deployments) {
+function summarizeRequirementStatus(
+  tracing: TracingReadiness,
+  evidence: EvidenceSummaryReport,
+  deployments: DeploymentCheck[]
+): RequirementStatus {
   const deploymentReady = deployments.some(
     (item) =>
       item.app.reachable &&
@@ -183,7 +273,7 @@ function summarizeRequirementStatus(tracing, evidence, deployments) {
   };
 }
 
-function buildMarkdownReport(report) {
+function buildMarkdownReport(report: RequirementVerificationReport): string {
   const lines = [
     '# FleetGraph Requirement Verification',
     '',
@@ -213,10 +303,7 @@ function buildMarkdownReport(report) {
     lines.push('');
   }
 
-  lines.push(
-    '## Public deployment verification',
-    '',
-  );
+  lines.push('## Public deployment verification', '');
 
   for (const item of report.deployments) {
     lines.push(`### ${item.baseUrl}`);
@@ -255,18 +342,14 @@ function buildMarkdownReport(report) {
   return `${lines.join('\n')}\n`;
 }
 
-async function main() {
+async function main(): Promise<void> {
   const publicUrls = parsePublicUrls().map(normalizeBaseUrl);
   const tracing = getTracingReadiness();
   const evidence = await readEvidenceSummary();
-  const deployments = [];
-
-  for (const publicUrl of publicUrls) {
-    deployments.push(await verifyPublicUrl(publicUrl));
-  }
+  const deployments = await Promise.all(publicUrls.map(verifyPublicUrl));
 
   const requirements = summarizeRequirementStatus(tracing, evidence, deployments);
-  const report = {
+  const report: RequirementVerificationReport = {
     generatedAt: new Date().toISOString(),
     langsmith: tracing,
     evidence,
@@ -285,7 +368,7 @@ async function main() {
   console.log(`FleetGraph requirement verification written to ${OUTPUT_DIR}`);
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   console.error(error);
   process.exitCode = 1;
 });
