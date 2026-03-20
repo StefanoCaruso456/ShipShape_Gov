@@ -506,6 +506,116 @@ describe('FleetGraphOnDemandPanel', () => {
     expect(screen.queryByText('Page guidance')).not.toBeInTheDocument();
   });
 
+  it('promotes a cut candidate route for cut questions on issue surfaces', async () => {
+    const cutContext: FleetGraphPageContext = {
+      ...issueSurfacePageContext,
+      items: [
+        {
+          label: '#15 Explore stretch improvements',
+          detail:
+            'Cut candidate • State: Backlog • Backlog • Business value: 24/100 • Not started and safer to move out than the active or higher-value work on this tab',
+          route: '/documents/issue-15',
+        },
+      ],
+      actions: [
+        {
+          label: 'Review cut candidate #15',
+          route: '/documents/issue-15',
+          intent: 'prioritize',
+          reason:
+            '#15 is not started yet. Business value 24/100. Safer to move out than the active or higher-value work on this tab. Keeps #14 protected.',
+        },
+        ...(issueSurfacePageContext.actions ?? []),
+      ],
+    };
+
+    mockUseFleetGraphActiveView.mockReturnValue({
+      ...activeView,
+      entity: {
+        id: 'program-1',
+        type: 'program',
+        sourceDocumentType: 'program',
+      },
+      route: '/documents/program-1/issues',
+      tab: 'issues',
+      projectId: null,
+    });
+    mockUseFleetGraphPageContext.mockReturnValue(cutContext);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      activeView: {
+        ...activeView,
+        entity: {
+          id: 'program-1',
+          type: 'program',
+          sourceDocumentType: 'program',
+        },
+        route: '/documents/program-1/issues',
+        tab: 'issues',
+        projectId: null,
+      },
+      fetched: {
+        entity: null,
+        supporting: null,
+        activity: null,
+        accountability: null,
+        people: null,
+      },
+      derivedSignals: {
+        ...baseResponse.derivedSignals,
+        severity: 'none',
+        reasons: [],
+        summary: null,
+        shouldSurface: false,
+        signals: [],
+        metrics: {
+          totalIssues: 0,
+          completedIssues: 0,
+          inProgressIssues: 0,
+          incompleteIssues: 0,
+          cancelledIssues: 0,
+          standupCount: 0,
+          recentActivityCount: 0,
+          recentActiveDays: 0,
+          completionRate: null,
+        },
+      },
+      finding: null,
+      reasoning: {
+        answerMode: 'execution',
+        summary:
+          'If you need to cut scope, start with #15 Explore stretch improvements. It is not started and lower value than #14, so it is safer to move out first.',
+        evidence: [
+          'Not started: 3',
+          'Highest impact issue: #14',
+          '#15 Explore stretch improvements: Cut candidate • State: Backlog • Backlog • Business value: 24/100',
+        ],
+        whyNow:
+          'I treated not-started, lower-value backlog work as safer to move out than blocked, active, or highest-impact work.',
+        recommendedNextStep:
+          'Review cut candidate #15. #15 is not started yet. Business value 24/100. Safer to move out than the active or higher-value work on this tab. Keeps #14 protected.',
+        confidence: 'high',
+      },
+      reasoningSource: 'deterministic',
+      terminalOutcome: 'quiet',
+    });
+
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'What can we cut and still protect delivery?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send FleetGraph message' }));
+
+    expect(await screen.findByRole('link', { name: 'Review cut candidate #15' })).toHaveAttribute(
+      'href',
+      '/documents/issue-15'
+    );
+    expect(screen.getAllByText(/Safer to move out than the active or higher-value work/).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Should this stay in sprint or move out?' })).toBeInTheDocument();
+  });
+
   it('records drawer-open evaluation events for the current surface', async () => {
     mockUseFleetGraphActiveView.mockReturnValue({
       ...activeView,

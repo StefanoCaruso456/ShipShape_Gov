@@ -12,6 +12,17 @@ import type { FleetGraphReasoning } from '../types.js';
 
 type ReasonAboutCurrentViewTargets = 'completeRun' | 'fallback';
 type FleetGraphCurrentViewAnswerMode = FleetGraphReasoning['answerMode'];
+type IssueSurfaceQuestionIntent =
+  | 'attention'
+  | 'stalled'
+  | 'cut'
+  | 'value_risk'
+  | 'impact'
+  | 'blockers'
+  | 'risk'
+  | 'next'
+  | 'summary'
+  | 'generic';
 
 function getAnswerMode(pageContext: FleetGraphPageContext): FleetGraphCurrentViewAnswerMode {
   switch (pageContext.kind) {
@@ -34,15 +45,6 @@ function getAnswerMode(pageContext: FleetGraphPageContext): FleetGraphCurrentVie
   }
 }
 
-function buildEvidence(pageContext: FleetGraphPageContext): string[] {
-  const metricEvidence = pageContext.metrics.map((metric) => `${metric.label}: ${metric.value}`);
-  const itemEvidence = pageContext.items
-    .map((item) => (item.detail ? `${item.label}: ${item.detail}` : item.label))
-    .slice(0, 4);
-
-  return [...metricEvidence, ...itemEvidence].slice(0, 6);
-}
-
 function getMetricValue(pageContext: FleetGraphPageContext, label: string): string | null {
   return pageContext.metrics.find((metric) => metric.label === label)?.value ?? null;
 }
@@ -57,15 +59,148 @@ function getMetricCount(pageContext: FleetGraphPageContext, label: string): numb
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function normalizeQuestion(question: string | null): string {
+  return question?.trim().toLowerCase() ?? '';
+}
+
+function questionIncludesAny(question: string, terms: string[]): boolean {
+  return terms.some((term) => question.includes(term));
+}
+
+function splitDetail(detail: string | null | undefined): string[] {
+  return detail
+    ?.split(' • ')
+    .map((part) => part.trim())
+    .filter(Boolean) ?? [];
+}
+
+function detailToSentences(detail: string | null | undefined): string | null {
+  const parts = splitDetail(detail);
+  if (parts.length === 0) {
+    return null;
+  }
+
+  return `${parts.join('. ')}.`;
+}
+
+function getItemDetailValue(
+  item: FleetGraphPageContext['items'][number] | null,
+  prefix: string
+): string | null {
+  if (!item?.detail) {
+    return null;
+  }
+
+  const part = splitDetail(item.detail).find((segment) => segment.startsWith(prefix));
+  return part ? part.slice(prefix.length).trim() : null;
+}
+
+function getIssueSurfaceQuestionIntent(question: string | null): IssueSurfaceQuestionIntent {
+  const normalizedQuestion = normalizeQuestion(question);
+
+  if (!normalizedQuestion) {
+    return 'generic';
+  }
+
+  if (questionIncludesAny(normalizedQuestion, ['block', 'blocked', 'dependency'])) {
+    return 'blockers';
+  }
+
+  if (
+    questionIncludesAny(normalizedQuestion, [
+      'cut',
+      'defer',
+      'move out',
+      'reduce scope',
+      'drop',
+      'protect delivery',
+    ])
+  ) {
+    return 'cut';
+  }
+
+  if (
+    questionIncludesAny(normalizedQuestion, [
+      'stalled',
+      'stuck',
+      'not moving',
+      '"in progress"',
+      'in progress',
+    ])
+  ) {
+    return 'stalled';
+  }
+
+  if (
+    questionIncludesAny(normalizedQuestion, ['impact', 'value', 'roi', 'retention', 'acquisition', 'growth']) &&
+    questionIncludesAny(normalizedQuestion, ['risk', 'delivery', 'at risk'])
+  ) {
+    return 'value_risk';
+  }
+
+  if (questionIncludesAny(normalizedQuestion, ['impact', 'value', 'roi', 'retention', 'acquisition', 'growth'])) {
+    return 'impact';
+  }
+
+  if (questionIncludesAny(normalizedQuestion, ['attention first', 'needs attention', 'attention', 'look at first'])) {
+    return 'attention';
+  }
+
+  if (questionIncludesAny(normalizedQuestion, ['next', 'what should happen', 'what do i do'])) {
+    return 'next';
+  }
+
+  if (questionIncludesAny(normalizedQuestion, ['summarize', 'what is on this page', 'what am i looking at'])) {
+    return 'summary';
+  }
+
+  if (questionIncludesAny(normalizedQuestion, ['risk', 'at risk'])) {
+    return 'risk';
+  }
+
+  return 'generic';
+}
+
 function getFirstAction(pageContext: FleetGraphPageContext, prefix: string): FleetGraphPageContextAction | null {
   return pageContext.actions?.find((action) => action.label.startsWith(prefix)) ?? null;
+}
+
+function getIssueItems(
+  pageContext: FleetGraphPageContext,
+  options?: {
+    includeMarker?: string;
+    excludeMarker?: string;
+  }
+): FleetGraphPageContext['items'] {
+  return pageContext.items.filter((item) => {
+    const normalizedLabel = item.label.toLowerCase();
+    const detail = item.detail ?? '';
+
+    if (!normalizedLabel.includes('#')) {
+      return false;
+    }
+
+    if (options?.includeMarker && !detail.includes(options.includeMarker)) {
+      return false;
+    }
+
+    if (options?.excludeMarker && detail.includes(options.excludeMarker)) {
+      return false;
+    }
+
+    return true;
+  });
 }
 
 function getPreferredActionIntents(
   pageContext: FleetGraphPageContext,
   question: string | null
 ): FleetGraphPageContextActionIntent[] {
-  const normalizedQuestion = question?.trim().toLowerCase() ?? '';
+  const normalizedQuestion = normalizeQuestion(question);
 
   if (
     normalizedQuestion.includes('impact') ||
@@ -82,6 +217,24 @@ function getPreferredActionIntents(
     normalizedQuestion.includes('block') ||
     normalizedQuestion.includes('blocked') ||
     normalizedQuestion.includes('dependency')
+  ) {
+    return ['follow_up', 'inspect', 'prioritize'];
+  }
+
+  if (
+    normalizedQuestion.includes('cut') ||
+    normalizedQuestion.includes('defer') ||
+    normalizedQuestion.includes('move out') ||
+    normalizedQuestion.includes('reduce scope')
+  ) {
+    return ['prioritize', 'follow_up', 'inspect'];
+  }
+
+  if (
+    normalizedQuestion.includes('stalled') ||
+    normalizedQuestion.includes('stuck') ||
+    normalizedQuestion.includes('not moving') ||
+    normalizedQuestion.includes('in progress')
   ) {
     return ['follow_up', 'inspect', 'prioritize'];
   }
@@ -127,7 +280,7 @@ function getQuestionMatchBoost(
   action: FleetGraphPageContextAction,
   question: string | null
 ): number {
-  const normalizedQuestion = question?.trim().toLowerCase() ?? '';
+  const normalizedQuestion = normalizeQuestion(question);
   const corpus = `${action.label} ${action.reason ?? ''}`.toLowerCase();
 
   if (
@@ -156,6 +309,24 @@ function getQuestionMatchBoost(
     normalizedQuestion.includes('dependency')
   ) {
     return corpus.includes('blocker') || corpus.includes('dependency') || action.intent === 'follow_up' ? 3 : 0;
+  }
+
+  if (
+    normalizedQuestion.includes('cut') ||
+    normalizedQuestion.includes('defer') ||
+    normalizedQuestion.includes('move out') ||
+    normalizedQuestion.includes('reduce scope')
+  ) {
+    return corpus.includes('cut candidate') || corpus.includes('move out') ? 3 : 0;
+  }
+
+  if (
+    normalizedQuestion.includes('stalled') ||
+    normalizedQuestion.includes('stuck') ||
+    normalizedQuestion.includes('not moving') ||
+    normalizedQuestion.includes('in progress')
+  ) {
+    return corpus.includes('stalled') || corpus.includes('blocked') ? 3 : 0;
   }
 
   if (
@@ -234,17 +405,13 @@ function buildRecommendedNextStep(
   pageContext: FleetGraphPageContext,
   question: string | null
 ): string | null {
-  const normalizedQuestion = question?.trim().toLowerCase() ?? '';
+  const normalizedQuestion = normalizeQuestion(question);
   const preferredAction = getPreferredAction(pageContext, question);
+  const issueSurfaceIntent = pageContext.kind === 'issue_surface'
+    ? getIssueSurfaceQuestionIntent(question)
+    : 'generic';
 
-  if (
-    pageContext.kind === 'issue_surface' &&
-    (
-      normalizedQuestion.includes('block') ||
-      normalizedQuestion.includes('blocked') ||
-      normalizedQuestion.includes('dependency')
-    )
-  ) {
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'blockers') {
     const blockerAction = getFirstAction(pageContext, 'Follow up on blocker');
     if (blockerAction) {
       return formatActionRecommendation(
@@ -255,16 +422,52 @@ function buildRecommendedNextStep(
     }
   }
 
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'stalled') {
+    const stalledAction = getFirstAction(pageContext, 'Follow up on stalled');
+    if (stalledAction) {
+      return formatActionRecommendation(
+        stalledAction,
+        'Then confirm whether it is a real blocker, stale ownership, or just a missing update on the current tab.',
+        'Then confirm whether it is a real blocker, stale ownership, or just a missing update on the current tab.'
+      );
+    }
+
+    const riskClusterAction = getFirstAction(pageContext, 'Open risk cluster');
+    return formatActionRecommendation(
+      riskClusterAction,
+      'No active issue looks clearly stalled from this tab, so the better move is to cut or re-triage untouched scope instead.',
+      'No active issue looks clearly stalled from this tab, so the better move is to cut or re-triage untouched scope instead.'
+    );
+  }
+
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'cut') {
+    const cutAction = getFirstAction(pageContext, 'Review cut candidate');
+    if (cutAction) {
+      return formatActionRecommendation(
+        cutAction,
+        'Then confirm that moving it out will protect the highest-value work already in view.',
+        'Then confirm that moving it out will protect the highest-value work already in view.'
+      );
+    }
+  }
+
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'attention') {
+    const attentionAction =
+      getFirstAction(pageContext, 'Follow up on blocker') ??
+      getFirstAction(pageContext, 'Follow up on stalled') ??
+      getFirstAction(pageContext, 'Open highest-impact');
+    if (attentionAction) {
+      return formatActionRecommendation(
+        attentionAction,
+        'Then decide whether the second and third-ranked issues need follow-up today or can wait until the next checkpoint.',
+        'Then decide whether the second and third-ranked issues need follow-up today or can wait until the next checkpoint.'
+      );
+    }
+  }
+
   if (
     pageContext.kind === 'issue_surface' &&
-    (
-      normalizedQuestion.includes('impact') ||
-      normalizedQuestion.includes('value') ||
-      normalizedQuestion.includes('roi') ||
-      normalizedQuestion.includes('retention') ||
-      normalizedQuestion.includes('acquisition') ||
-      normalizedQuestion.includes('growth')
-    )
+    (issueSurfaceIntent === 'impact' || issueSurfaceIntent === 'value_risk')
   ) {
     const highestImpactAction = getFirstAction(pageContext, 'Open highest-impact');
     if (highestImpactAction) {
@@ -323,9 +526,12 @@ function buildRecommendedNextStep(
 }
 
 function buildSummary(pageContext: FleetGraphPageContext, question: string | null): string {
-  const normalizedQuestion = question?.trim().toLowerCase() ?? '';
+  const normalizedQuestion = normalizeQuestion(question);
   const summary = pageContext.summary;
   const answerMode = getAnswerMode(pageContext);
+  const issueSurfaceIntent = pageContext.kind === 'issue_surface'
+    ? getIssueSurfaceQuestionIntent(question)
+    : 'generic';
 
   if (!normalizedQuestion) {
     if (answerMode === 'launcher' && !pageContext.emptyState) {
@@ -335,14 +541,7 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     return summary;
   }
 
-  if (
-    pageContext.kind === 'issue_surface' &&
-    (
-      normalizedQuestion.includes('block') ||
-      normalizedQuestion.includes('blocked') ||
-      normalizedQuestion.includes('dependency')
-    )
-  ) {
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'blockers') {
     const blockedIssues = getMetricCount(pageContext, 'Blocked issues');
     const staleBlockers = getMetricCount(pageContext, 'Stale blockers');
     const oldestBlocker = getMetricValue(pageContext, 'Oldest blocker');
@@ -357,17 +556,64 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     return `${summary} FleetGraph does not see an explicitly logged blocker on this tab right now, so the visible risk is coming more from stale or not-started work than from a named dependency.`;
   }
 
-  if (
-    pageContext.kind === 'issue_surface' &&
-    (
-      normalizedQuestion.includes('impact') ||
-      normalizedQuestion.includes('value') ||
-      normalizedQuestion.includes('roi') ||
-      normalizedQuestion.includes('retention') ||
-      normalizedQuestion.includes('acquisition') ||
-      normalizedQuestion.includes('growth')
-    )
-  ) {
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'attention') {
+    const rankedIssues = getIssueItems(pageContext, { excludeMarker: 'Cut candidate' }).slice(0, 3);
+    if (rankedIssues.length > 0) {
+      const leadReason = detailToSentences(rankedIssues[0]?.detail);
+      return `Start with ${rankedIssues.map((item) => item.label).join(', then ')}.${leadReason ? ` ${leadReason}` : ' That ordering balances blockers, freshness, and business value on this tab.'}`;
+    }
+
+    return `${summary} Start with the work that combines the strongest delivery risk and business importance on this tab.`;
+  }
+
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'stalled') {
+    const stalledActiveCount = getMetricCount(pageContext, 'Stalled active');
+    const inProgressCount = getMetricCount(pageContext, 'In progress') ?? 0;
+    const notStartedCount = getMetricCount(pageContext, 'Not started');
+    const stalledItem = getIssueItems(pageContext, { includeMarker: 'Stalled in progress' })[0] ?? null;
+
+    if (stalledItem) {
+      return `${stalledItem.label} is the clearest in-progress issue that looks stalled right now.${detailToSentences(stalledItem.detail) ? ` ${detailToSentences(stalledItem.detail)}` : ''}${stalledActiveCount && stalledActiveCount > 1 ? ` ${pluralize(stalledActiveCount, 'active issue')} look stalled on this tab.` : ''}`;
+    }
+
+    if (inProgressCount > 0) {
+      return `None of the ${pluralize(inProgressCount, 'in-progress issue')} looks clearly stalled from this tab. ${notStartedCount ? `The bigger risk is ${pluralize(notStartedCount, 'issue')} still not started.` : 'The bigger risk is the untouched scope around the active work.'}`;
+    }
+
+    return `There is no in-progress work on this tab right now. The main delivery risk is the work that still has not started.`;
+  }
+
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'cut') {
+    const cutCandidates = getIssueItems(pageContext, { includeMarker: 'Cut candidate' }).slice(0, 2);
+    const highestImpactIssue = getMetricValue(pageContext, 'Highest impact issue');
+
+    if (cutCandidates.length > 0) {
+      return `If you need to cut scope, start with ${cutCandidates.map((item) => item.label).join(', then ')}. They are not started and lower value than ${highestImpactIssue ?? 'the highest-impact work on this tab'}, so they are safer to move out first.`;
+    }
+
+    return `This tab does not show an obvious low-cost cut. Protect ${highestImpactIssue ?? 'the highest-impact work'} and trim risk somewhere other than the active or blocked issues first.`;
+  }
+
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'value_risk') {
+    const highestImpactItem =
+      pageContext.items.find((item) => item.detail?.includes('Highest impact')) ?? null;
+    const highestImpactIssue = highestImpactItem?.label ?? getMetricValue(pageContext, 'Highest impact issue');
+    const businessValue = getItemDetailValue(highestImpactItem, 'Business value: ');
+    const risk = getItemDetailValue(highestImpactItem, 'Risk: ');
+    const riskCluster = getMetricValue(pageContext, 'Risk cluster');
+
+    if (highestImpactIssue) {
+      if (risk === 'active and moving') {
+        return `${highestImpactIssue} is still the highest-value visible issue, but it is not the main delivery problem right now because it is already active and moving. ${riskCluster ? `${riskCluster} is where the untouched scope is building instead.` : 'The bigger drag is the untouched scope around it.'}`;
+      }
+
+      return `${highestImpactIssue} is where delivery risk is hitting the most valuable work right now.${businessValue ? ` Business value: ${businessValue}.` : ''}${risk ? ` It is currently ${risk}.` : ''}`;
+    }
+
+    return `${summary} FleetGraph can see the highest-value work here, but this tab does not yet show a single place where value and delivery risk are colliding the hardest.`;
+  }
+
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'impact') {
     const highestImpactIssue = getMetricValue(pageContext, 'Highest impact issue');
     const highestImpactProject = getMetricValue(pageContext, 'Highest impact project');
     const businessValue = getMetricValue(pageContext, 'Business value');
@@ -438,14 +684,30 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
 
 function buildWhyNow(
   pageContext: FleetGraphPageContext,
-  answerMode: FleetGraphCurrentViewAnswerMode
+  answerMode: FleetGraphCurrentViewAnswerMode,
+  question: string | null
 ): string {
   if (answerMode === 'launcher') {
     return 'This answer is grounded in the current page snapshot. FleetGraph is using this launcher surface to guide what to open next rather than score execution health from the list alone.';
   }
 
   if (pageContext.kind === 'issue_surface') {
-    return 'This answer is grounded in the visible issues on the current tab, including state mix, freshness, week grouping, and ownership in the worklist.';
+    switch (getIssueSurfaceQuestionIntent(question)) {
+      case 'attention':
+        return 'I ranked the visible issues using blockers, freshness, state, and business value on this tab so the first answer is an order of operations, not a generic summary.';
+      case 'stalled':
+        return 'I only treated active work as stalled when it is still in progress and either has a logged blocker or has gone stale on the current tab.';
+      case 'cut':
+        return 'I treated not-started, lower-value backlog work as safer to move out than blocked, active, or highest-impact work.';
+      case 'value_risk':
+        return 'I combined business value with execution attention to see whether the most valuable work is also where delivery risk is landing.';
+      case 'impact':
+        return 'I ranked visible work by business value first, then used execution attention to break ties on what matters most right now.';
+      case 'blockers':
+        return 'I used explicit blocker evidence, blocker age, and the latest issue ownership visible on this tab.';
+      default:
+        return 'This answer is grounded in the visible issues on the current tab, including state mix, freshness, week grouping, and ownership in the worklist.';
+    }
   }
 
   if (pageContext.kind === 'my_week') {
@@ -455,15 +717,73 @@ function buildWhyNow(
   return 'This answer is grounded in the work visible on the page you are currently viewing.';
 }
 
+function buildIssueSurfaceEvidence(
+  pageContext: FleetGraphPageContext,
+  intent: IssueSurfaceQuestionIntent
+): string[] {
+  const metricLabelsByIntent: Record<IssueSurfaceQuestionIntent, string[]> = {
+    attention: ['Blocked issues', 'Stalled active', 'Highest impact issue', 'Business value', 'Risk cluster'],
+    stalled: ['In progress', 'Stalled active', 'Blocked issues', 'Not started'],
+    cut: ['Not started', 'Risk cluster', 'Highest impact issue', 'Business value'],
+    value_risk: ['Highest impact issue', 'Highest impact project', 'Business value', 'Risk cluster', 'Not started'],
+    impact: ['Highest impact issue', 'Highest impact project', 'Business value', 'Risk cluster'],
+    blockers: ['Blocked issues', 'Stale blockers', 'Oldest blocker', 'Risk cluster'],
+    risk: ['Blocked issues', 'Stalled active', 'Stale open', 'Not started', 'Risk cluster'],
+    next: ['Blocked issues', 'Stalled active', 'Highest impact issue', 'Risk cluster'],
+    summary: ['Visible issues', 'In progress', 'Not started', 'Risk cluster'],
+    generic: ['Visible issues', 'In progress', 'Not started', 'Risk cluster'],
+  };
+  const metricEvidence = metricLabelsByIntent[intent]
+    .map((label) => {
+      const value = getMetricValue(pageContext, label);
+      return value ? `${label}: ${value}` : null;
+    })
+    .filter((value): value is string => Boolean(value));
+
+  const itemEvidence = (() => {
+    switch (intent) {
+      case 'blockers':
+        return getIssueItems(pageContext, { includeMarker: 'Blocker:' }).slice(0, 2);
+      case 'stalled':
+        return getIssueItems(pageContext, { includeMarker: 'Stalled in progress' }).slice(0, 2);
+      case 'cut':
+        return getIssueItems(pageContext, { includeMarker: 'Cut candidate' }).slice(0, 2);
+      case 'value_risk':
+      case 'impact':
+        return pageContext.items.filter((item) => item.detail?.includes('Highest impact')).slice(0, 1);
+      case 'attention':
+        return getIssueItems(pageContext, { excludeMarker: 'Cut candidate' }).slice(0, 3);
+      default:
+        return getIssueItems(pageContext).slice(0, 2);
+    }
+  })()
+    .map((item) => (item.detail ? `${item.label}: ${item.detail}` : item.label));
+
+  return [...metricEvidence, ...itemEvidence].slice(0, 6);
+}
+
+function buildEvidence(pageContext: FleetGraphPageContext, question: string | null): string[] {
+  if (pageContext.kind === 'issue_surface') {
+    return buildIssueSurfaceEvidence(pageContext, getIssueSurfaceQuestionIntent(question));
+  }
+
+  const metricEvidence = pageContext.metrics.map((metric) => `${metric.label}: ${metric.value}`);
+  const itemEvidence = pageContext.items
+    .map((item) => (item.detail ? `${item.label}: ${item.detail}` : item.label))
+    .slice(0, 4);
+
+  return [...metricEvidence, ...itemEvidence].slice(0, 6);
+}
+
 function buildReasoning(pageContext: FleetGraphPageContext, question: string | null): FleetGraphReasoning {
-  const evidence = buildEvidence(pageContext);
+  const evidence = buildEvidence(pageContext, question);
   const answerMode = getAnswerMode(pageContext);
 
   return {
     answerMode,
     summary: buildSummary(pageContext, question),
     evidence,
-    whyNow: buildWhyNow(pageContext, answerMode),
+    whyNow: buildWhyNow(pageContext, answerMode, question),
     recommendedNextStep: buildRecommendedNextStep(pageContext, question),
     confidence: evidence.length >= 3 ? 'high' : evidence.length > 0 ? 'medium' : 'low',
   };
