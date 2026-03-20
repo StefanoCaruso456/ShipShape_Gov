@@ -9,8 +9,24 @@ import {
 import type { FleetGraphState } from '../state.js';
 import { createHandoff, createIntervention, pauseForHumanApproval } from '../supervision.js';
 import type { FleetGraphHumanDecision } from '../types.js';
+import {
+  appendFleetGraphApprovalTrace,
+  createFleetGraphApprovalTrace,
+} from '../tool-runtime.js';
 
 type HumanApprovalGateTargets = 'executeProposedAction' | 'completeRun' | 'fallback';
+
+function inferApprovalRiskLevel(actionType: string): 'medium' | 'high' | null {
+  if (actionType === 'draft_escalation_comment') {
+    return 'high';
+  }
+
+  if (actionType === 'draft_follow_up_comment') {
+    return 'medium';
+  }
+
+  return null;
+}
 
 function normalizeDecision(input: unknown): FleetGraphHumanDecision {
   if (!input || typeof input !== 'object') {
@@ -95,6 +111,24 @@ export async function humanApprovalGateNode(
   }
 
   if (decision.outcome !== 'approve') {
+    const approvalTrace = createFleetGraphApprovalTrace(tracedContext, {
+      actionType: state.proposedAction.type,
+      riskLevel: inferApprovalRiskLevel(state.proposedAction.type),
+      fingerprint: state.proposedAction.fingerprint,
+      targetRoute: state.proposedAction.targetRoute,
+      decisionOutcome: decision.outcome,
+      note: typeof decision.note === 'string' ? decision.note : null,
+    });
+    runtime.telemetry?.recordApproval({
+      actionType: approvalTrace.actionType,
+      decisionOutcome: approvalTrace.decisionOutcome,
+      riskLevel: approvalTrace.riskLevel,
+      targetRoute: approvalTrace.targetRoute,
+      latencyMs: approvalTrace.latencyMs,
+      metadata: {
+        requires_human_approval: approvalTrace.requiresHumanApproval,
+      },
+    });
     const record =
       runtime.actionMemory &&
       state.workspaceId &&
@@ -123,6 +157,7 @@ export async function humanApprovalGateNode(
       {
         status: 'completed',
         stage: decision.outcome === 'snooze' ? 'action_snoozed' : 'action_dismissed',
+        ...appendFleetGraphApprovalTrace(tracedContext, approvalTrace),
         pendingApproval: null,
         attempts: {
           ...state.attempts,
@@ -161,12 +196,32 @@ export async function humanApprovalGateNode(
     );
   }
 
+  const approvalTrace = createFleetGraphApprovalTrace(tracedContext, {
+    actionType: state.proposedAction.type,
+    riskLevel: inferApprovalRiskLevel(state.proposedAction.type),
+    fingerprint: state.proposedAction.fingerprint,
+    targetRoute: state.proposedAction.targetRoute,
+    decisionOutcome: 'approve',
+    note: typeof decision.note === 'string' ? decision.note : null,
+  });
+  runtime.telemetry?.recordApproval({
+    actionType: approvalTrace.actionType,
+    decisionOutcome: approvalTrace.decisionOutcome,
+    riskLevel: approvalTrace.riskLevel,
+    targetRoute: approvalTrace.targetRoute,
+    latencyMs: approvalTrace.latencyMs,
+    metadata: {
+      requires_human_approval: approvalTrace.requiresHumanApproval,
+    },
+  });
+
   return createFleetGraphCommand(
     tracedContext,
     'executeProposedAction',
     {
       status: 'running',
       stage: 'human_approved_action',
+      ...appendFleetGraphApprovalTrace(tracedContext, approvalTrace),
       pendingApproval: null,
       attempts: {
         ...state.attempts,

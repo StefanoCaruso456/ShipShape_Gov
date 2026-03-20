@@ -2,12 +2,24 @@ import type {
   ApprovalTracking,
   BelongsTo,
   FleetGraphActiveViewContext,
+  FleetGraphApprovalTrace as SharedFleetGraphApprovalTrace,
   FleetGraphAnswerMode as SharedFleetGraphAnswerMode,
+  FleetGraphEvidenceToolName as SharedFleetGraphEvidenceToolName,
   FleetGraphPageContext as SharedFleetGraphPageContext,
+  FleetGraphQuestionTheme as SharedFleetGraphQuestionTheme,
+  FleetGraphScrumSurface as SharedFleetGraphScrumSurface,
+  FleetGraphScrumToolContext as SharedFleetGraphScrumToolContext,
+  FleetGraphToolCallTrace as SharedFleetGraphToolCallTrace,
   FleetGraphViewEntityType,
 } from '@ship/shared';
 
 export type FleetGraphPageContext = SharedFleetGraphPageContext;
+export type FleetGraphScrumSurface = SharedFleetGraphScrumSurface;
+export type FleetGraphQuestionTheme = SharedFleetGraphQuestionTheme;
+export type FleetGraphEvidenceToolName = SharedFleetGraphEvidenceToolName;
+export type FleetGraphScrumToolContext = SharedFleetGraphScrumToolContext;
+export type FleetGraphToolCallTrace = SharedFleetGraphToolCallTrace;
+export type FleetGraphApprovalTrace = SharedFleetGraphApprovalTrace;
 
 export type FleetGraphRunMode = 'proactive' | 'on_demand';
 
@@ -305,6 +317,8 @@ export interface FleetGraphGuardState {
   maxRetries: number;
   maxResumeCount: number;
   maxReasoningAttempts: number;
+  maxToolCalls: number;
+  toolCallCount: number;
   circuitBreakerOpen: boolean;
   lastTripReason: string | null;
 }
@@ -337,6 +351,13 @@ export interface FleetGraphTelemetryState {
   langsmithRunUrl: string | null;
   langsmithShareUrl: string | null;
   braintrustSpanId: string | null;
+  totalLatencyMs: number | null;
+  toolCallCount: number;
+  toolFailureCount: number;
+  totalToolLatencyMs: number;
+  approvalCount: number;
+  lastToolName: FleetGraphEvidenceToolName | null;
+  loopDetected: boolean;
 }
 
 export interface FleetGraphTraceMetadata {

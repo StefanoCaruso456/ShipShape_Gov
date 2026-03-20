@@ -99,6 +99,87 @@ export interface FleetGraphOnDemandResumeRequest {
   decision: FleetGraphResumeDecision;
 }
 
+export type FleetGraphScrumSurface =
+  | 'my_week'
+  | 'sprint'
+  | 'project_issues'
+  | 'program_issues'
+  | 'project'
+  | 'program'
+  | 'document';
+
+export type FleetGraphQuestionTheme =
+  | 'risk'
+  | 'blockers'
+  | 'scope'
+  | 'status'
+  | 'impact'
+  | 'follow_up'
+  | 'generic';
+
+export type FleetGraphEvidenceToolName =
+  | 'get_surface_context'
+  | 'get_visible_issue_worklist'
+  | 'get_sprint_snapshot'
+  | 'get_scrum_artifact_status'
+  | 'get_scope_change_signals'
+  | 'get_dependency_signals'
+  | 'get_team_ownership_and_capacity'
+  | 'get_business_value_context';
+
+export interface FleetGraphScrumToolContext {
+  schemaVersion: 'v1';
+  runId: string;
+  threadId: string;
+  turnId: string;
+  workspaceId: string | null;
+  actorId: string | null;
+  actorRole: string | null;
+  surface: FleetGraphScrumSurface;
+  route: string;
+  tab: string | null;
+  question: string | null;
+  questionTheme: FleetGraphQuestionTheme;
+  issueId: string | null;
+  weekId: string | null;
+  sprintId: string | null;
+  projectId: string | null;
+  programId: string | null;
+  visibleIssueIds: string[];
+  nowIso: string;
+}
+
+export interface FleetGraphToolCallTrace {
+  callId: string;
+  toolName: FleetGraphEvidenceToolName;
+  toolVersion: 'v1';
+  context: FleetGraphScrumToolContext;
+  inputSummary: string | null;
+  resultSummary: string | null;
+  success: boolean;
+  cacheHit: boolean;
+  resultCount: number | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  startedAt: string;
+  finishedAt: string;
+  latencyMs: number;
+}
+
+export interface FleetGraphApprovalTrace {
+  approvalId: string;
+  actionType: 'draft_follow_up_comment' | 'draft_escalation_comment';
+  riskLevel: 'medium' | 'high' | null;
+  fingerprint: string | null;
+  targetRoute: string | null;
+  requiresHumanApproval: boolean;
+  decisionOutcome: 'approve' | 'dismiss' | 'snooze';
+  note: string | null;
+  startedAt: string;
+  finishedAt: string;
+  latencyMs: number;
+}
+
 export type FleetGraphSignalSeverity = 'info' | 'warning' | 'action';
 
 export type FleetGraphDerivedSignalsSeverity = 'none' | FleetGraphSignalSeverity;
@@ -213,6 +294,8 @@ export interface FleetGraphGuardState {
   maxRetries: number;
   maxResumeCount: number;
   maxReasoningAttempts: number;
+  maxToolCalls: number;
+  toolCallCount: number;
   circuitBreakerOpen: boolean;
   lastTripReason: string | null;
 }
@@ -239,6 +322,13 @@ export interface FleetGraphTelemetryState {
   langsmithRunUrl: string | null;
   langsmithShareUrl: string | null;
   braintrustSpanId: string | null;
+  totalLatencyMs: number | null;
+  toolCallCount: number;
+  toolFailureCount: number;
+  totalToolLatencyMs: number;
+  approvalCount: number;
+  lastToolName: FleetGraphEvidenceToolName | null;
+  loopDetected: boolean;
 }
 
 export interface FleetGraphOnDemandFetchedEntity {
@@ -327,6 +417,8 @@ export interface FleetGraphOnDemandResponse {
   } | null;
   lastNode: string | null;
   nodeHistory: FleetGraphNodeTraceEntry[];
+  toolCalls: FleetGraphToolCallTrace[];
+  approvals: FleetGraphApprovalTrace[];
   telemetry: FleetGraphTelemetryState;
   trace: {
     runName: string | null;

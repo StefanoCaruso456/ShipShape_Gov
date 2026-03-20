@@ -14,6 +14,11 @@ import type {
   FleetGraphSprintReviewContextSnapshot,
 } from '../types.js';
 import { createHandoff } from '../supervision.js';
+import {
+  appendFleetGraphToolTraces,
+  FleetGraphEvidenceToolError,
+  runFleetGraphEvidenceTool,
+} from '../tool-runtime.js';
 
 type FetchSprintContextTargets = 'deriveSprintSignals' | 'completeRun' | 'fallback';
 
@@ -56,14 +61,34 @@ export async function fetchSprintContextNode(
   });
 
   try {
-    const [entity, supporting, activity, accountability] = await Promise.all([
-      runtime.shipApi.get<FleetGraphSprintEntitySnapshot>(`/api/documents/${sprintId}`),
-      runtime.shipApi.get<FleetGraphDocumentContextSnapshot>(`/api/documents/${sprintId}/context`),
-      runtime.shipApi.get<FleetGraphActivitySnapshot>(`/api/activity/sprint/${sprintId}`),
-      runtime.shipApi.get<FleetGraphSprintReviewContextSnapshot>(
-        `/api/claude/context?context_type=review&sprint_id=${sprintId}`
-      ),
-    ]);
+    const { result, trace } = await runFleetGraphEvidenceTool(started.context, {
+      toolName: 'get_sprint_snapshot',
+      inputSummary: `Fetch sprint execution snapshot for ${sprintId}.`,
+      call: async () => {
+        const [entity, supporting, activity, accountability] = await Promise.all([
+          runtime.shipApi.get<FleetGraphSprintEntitySnapshot>(`/api/documents/${sprintId}`),
+          runtime.shipApi.get<FleetGraphDocumentContextSnapshot>(
+            `/api/documents/${sprintId}/context`
+          ),
+          runtime.shipApi.get<FleetGraphActivitySnapshot>(`/api/activity/sprint/${sprintId}`),
+          runtime.shipApi.get<FleetGraphSprintReviewContextSnapshot>(
+            `/api/claude/context?context_type=review&sprint_id=${sprintId}`
+          ),
+        ]);
+
+        return {
+          entity,
+          supporting,
+          activity,
+          accountability,
+        };
+      },
+      resultSummary: (toolResult) =>
+        `Fetched sprint snapshot with ${toolResult.accountability.issues.stats.total} issues and ${toolResult.accountability.standups.length} standups.`,
+      resultCount: (toolResult) =>
+        toolResult.accountability.issues.stats.total + toolResult.accountability.standups.length,
+    });
+    const { entity, supporting, activity, accountability } = result;
 
     const people: FleetGraphPeopleSnapshot = {
       owner: entity.owner ?? null,
@@ -74,6 +99,7 @@ export async function fetchSprintContextNode(
       started.context,
       'deriveSprintSignals',
       {
+        ...appendFleetGraphToolTraces(started.context, [trace]),
         stage: 'sprint_context_fetched',
         expandedScope: {
           ...state.expandedScope,
@@ -104,6 +130,10 @@ export async function fetchSprintContextNode(
       }
     );
   } catch (error) {
+    const toolFailureUpdate =
+      error instanceof FleetGraphEvidenceToolError
+        ? appendFleetGraphToolTraces(started.context, [error.trace])
+        : {};
     const message = error instanceof Error ? error.message : 'Unknown FleetGraph sprint fetch failure';
 
     runtime.logger.error('FleetGraph sprint context fetch failed', {
@@ -114,6 +144,7 @@ export async function fetchSprintContextNode(
     return createFleetGraphFailureCommand(started.context, {
       goto: 'fallback',
       stage: 'fetch_sprint_context',
+      update: toolFailureUpdate,
       error: {
         code: 'SPRINT_CONTEXT_FETCH_FAILED',
         message,
