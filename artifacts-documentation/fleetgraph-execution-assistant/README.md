@@ -85,6 +85,19 @@ Not like:
 - Keep actions bounded, typed, and human-approved before mutation.
 - Add instrumentation so we can tell whether the assistant is helping work move faster.
 
+## Delivery Rule
+
+FleetGraph roadmap work follows an explicit delivery rule:
+
+1. commit the verified work
+2. push the branch
+3. open or update the pull request
+4. report whether the phase is only implemented, merged, or live
+
+See:
+
+- [delivery-rule.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/delivery-rule.md)
+
 ## Phases
 
 | Phase | Name | Why | Outcome |
@@ -103,11 +116,27 @@ If launcher pages still look like execution-health answers, every later improvem
 
 ## Active Phase
 
-Phase 1 is the active phase.
+Phase 1 implementation is complete.
+
+Phase 2 is the next active phase once the current PR is merged.
 
 See:
 
 - [phase-1-answer-modes-and-response-contract.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-1-answer-modes-and-response-contract.md)
+
+## Current Status
+
+As of 2026-03-19:
+
+- Phase 1 implementation status: complete
+- verification status: passed
+- commit status: complete
+- push status: complete
+- PR status: open
+- merge-to-main status: not complete
+- production status: not live
+
+Phase 1 is therefore implementation-complete, but not yet merged or live.
 
 ## Completion Standard
 
