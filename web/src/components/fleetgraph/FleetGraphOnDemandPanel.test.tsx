@@ -57,6 +57,32 @@ const programsPageContext: FleetGraphPageContext = {
   ],
 };
 
+const issueSurfacePageContext: FleetGraphPageContext = {
+  kind: 'issue_surface',
+  route: '/documents/program-1/issues',
+  title: 'API Platform Issues',
+  summary:
+    'API Platform does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet. 3 visible issues are still sitting in triage, backlog, or todo, led by Week 3.',
+  emptyState: false,
+  metrics: [
+    { label: 'Visible issues', value: '5' },
+    { label: 'Not started', value: '3' },
+    { label: 'In progress', value: '1' },
+    { label: 'Stale open', value: '1' },
+    { label: 'Risk cluster', value: 'Week 3' },
+  ],
+  items: [
+    {
+      label: 'Week 3',
+      detail: '3 open issues • 1 issue active • 2 issues not started',
+      route: '/documents/week-3/issues',
+    },
+  ],
+  actions: [
+    { label: 'Open Week 3', route: '/documents/week-3/issues' },
+  ],
+};
+
 function renderPanel() {
   return render(
     <MemoryRouter>
@@ -327,6 +353,97 @@ describe('FleetGraphOnDemandPanel', () => {
       'href',
       '/documents/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     );
+  });
+
+  it('renders scoped issue-surface answers as execution guidance instead of generic page guidance', async () => {
+    mockUseFleetGraphActiveView.mockReturnValue({
+      ...activeView,
+      entity: {
+        id: 'program-1',
+        type: 'program',
+        sourceDocumentType: 'program',
+      },
+      route: '/documents/program-1/issues',
+      tab: 'issues',
+      projectId: null,
+    });
+    mockUseFleetGraphPageContext.mockReturnValue(issueSurfacePageContext);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      activeView: {
+        ...activeView,
+        entity: {
+          id: 'program-1',
+          type: 'program',
+          sourceDocumentType: 'program',
+        },
+        route: '/documents/program-1/issues',
+        tab: 'issues',
+        projectId: null,
+      },
+      fetched: {
+        entity: null,
+        supporting: null,
+        activity: null,
+        accountability: null,
+        people: null,
+      },
+      derivedSignals: {
+        ...baseResponse.derivedSignals,
+        severity: 'none',
+        reasons: [],
+        summary: null,
+        shouldSurface: false,
+        signals: [],
+        metrics: {
+          totalIssues: 0,
+          completedIssues: 0,
+          inProgressIssues: 0,
+          incompleteIssues: 0,
+          cancelledIssues: 0,
+          standupCount: 0,
+          recentActivityCount: 0,
+          recentActiveDays: 0,
+          completionRate: null,
+        },
+      },
+      finding: null,
+      reasoning: {
+        answerMode: 'execution',
+        summary:
+          'API Platform does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet. 3 visible issues are still sitting in triage, backlog, or todo, led by Week 3.',
+        evidence: [
+          'Visible issues: 5',
+          'Not started: 3',
+          'Stale open: 1',
+          'Risk cluster: Week 3',
+        ],
+        whyNow:
+          'This answer is grounded in the visible issues on the current tab, including state mix, freshness, week grouping, and ownership in the worklist.',
+        recommendedNextStep:
+          'Open Week 3. Then either move one visible todo issue forward or cut scope from the busiest issue cluster on this tab.',
+        confidence: 'high',
+      },
+      reasoningSource: 'deterministic',
+      terminalOutcome: 'quiet',
+    });
+
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.click(screen.getByRole('button', { name: 'What is blocking delivery in this project?' }));
+
+    expect(await screen.findByText('Grounded execution guidance')).toBeInTheDocument();
+    expect(screen.getByText('Execution view')).toBeInTheDocument();
+    expect(
+      screen.getByText(/does not show a named blocker on this issues surface/)
+    ).toBeInTheDocument();
+    expect(screen.getByText('Recommended next step')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open Week 3' })).toHaveAttribute(
+      'href',
+      '/documents/week-3/issues'
+    );
+    expect(screen.queryByText('Page guidance')).not.toBeInTheDocument();
   });
 
   it('still shows an unavailable state only when neither active view nor page context exists', () => {

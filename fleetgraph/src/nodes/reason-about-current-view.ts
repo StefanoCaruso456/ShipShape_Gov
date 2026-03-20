@@ -11,6 +11,8 @@ type FleetGraphCurrentViewAnswerMode = FleetGraphReasoning['answerMode'];
 
 function getAnswerMode(pageContext: FleetGraphPageContext): FleetGraphCurrentViewAnswerMode {
   switch (pageContext.kind) {
+    case 'issue_surface':
+      return 'execution';
     case 'dashboard':
     case 'programs':
     case 'projects':
@@ -56,6 +58,10 @@ function buildRecommendedNextStep(pageContext: FleetGraphPageContext): string | 
   switch (pageContext.kind) {
     case 'my_week':
       return 'Use this My Week surface to decide the next follow-up, weekly doc, or project that needs attention right now.';
+    case 'issue_surface':
+      return pageContext.actions?.[0]?.label
+        ? `${pageContext.actions[0].label}. Then either move one visible todo issue forward or cut scope from the busiest issue cluster on this tab.`
+        : 'Use this issues surface to move one visible todo issue forward, or cut scope from the busiest week or work cluster.';
     case 'programs':
       return 'Open the program that looks most active or least clear so you can inspect its projects, issues, and current sprint.';
     case 'projects':
@@ -94,6 +100,10 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     normalizedQuestion.includes('what should happen') ||
     normalizedQuestion.includes('what do i do')
   ) {
+    if (pageContext.kind === 'issue_surface') {
+      return `${summary} Use this issue surface to decide what to move, triage, cut, or follow up on next.`;
+    }
+
     if (pageContext.kind === 'my_week') {
       return pageContext.emptyState
         ? `${summary} There is no active weekly work in view yet, so start by creating or opening the plan, retro, or project that should anchor this week.`
@@ -112,6 +122,10 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     normalizedQuestion.includes('at risk') ||
     normalizedQuestion.includes('blocked')
   ) {
+    if (pageContext.kind === 'issue_surface') {
+      return summary;
+    }
+
     if (pageContext.kind === 'my_week') {
       return `${summary} This My Week view already shows weekly execution signals, so use it to spot what is slipping before you drill into the underlying document or project.`;
     }
@@ -129,6 +143,10 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     return summary;
   }
 
+  if (pageContext.kind === 'issue_surface') {
+    return `${summary} FleetGraph is grounding this answer in the visible issues on the current tab, not just the document shell around them.`;
+  }
+
   return answerMode === 'launcher'
     ? `${summary} FleetGraph is grounding this answer in the current page snapshot so it can guide the next thing to open from this surface.`
     : `${summary} FleetGraph is grounding this answer in the current page snapshot rather than a sprint-only view.`;
@@ -140,6 +158,10 @@ function buildWhyNow(
 ): string {
   if (answerMode === 'launcher') {
     return 'This answer is grounded in the current page snapshot. FleetGraph is using this launcher surface to guide what to open next rather than score execution health from the list alone.';
+  }
+
+  if (pageContext.kind === 'issue_surface') {
+    return 'This answer is grounded in the visible issues on the current tab, including state mix, freshness, week grouping, and ownership in the worklist.';
   }
 
   if (pageContext.kind === 'my_week') {

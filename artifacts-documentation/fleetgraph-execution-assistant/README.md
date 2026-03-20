@@ -33,13 +33,14 @@ That creates two product problems:
 
 ## What
 
-This roadmap focuses on five product outcomes:
+This roadmap focuses on six product outcomes:
 
 1. FleetGraph answers in the right mode for the current surface
 2. FleetGraph uses richer My Week and workflow-stage context
-3. FleetGraph asks better PM and engineering questions
-4. FleetGraph proposes sharper, more targeted next actions
-5. FleetGraph becomes measurable as an execution assistant, not just a chat layer
+3. FleetGraph reasons over issue-list surfaces using real visible work, not just document metadata
+4. FleetGraph asks better PM and engineering questions
+5. FleetGraph proposes sharper, more targeted next actions
+6. FleetGraph becomes measurable as an execution assistant, not just a chat layer
 
 ## How
 
@@ -48,7 +49,8 @@ We will execute this in phases, each with a clear product contract and exit crit
 The phases are ordered so that:
 
 - the assistant first stops saying the wrong thing
-- then gets richer execution context
+- then gets richer weekly execution context
+- then gets deeper issue-surface execution evidence
 - then gets stronger conversation flow
 - then gets better action quality
 - then gets stronger evaluation and iteration loops
@@ -104,9 +106,10 @@ See:
 |---|---|---|---|
 | 1 | Answer Modes and Response Contract | FleetGraph still sounds generic on launcher surfaces and sometimes presents misleading execution-health framing | FleetGraph distinguishes execution guidance from launcher guidance and uses the right response shape in chat |
 | 2 | My Week Execution Depth | My Week still lacks enough workflow-stage and weekly-artifact context to drive strong answers | FleetGraph can reason over plan status, retro status, standups, project scope, freshness, and workflow stage |
-| 3 | Conversational Questioning | Even good answers stall if the next prompt is generic | FleetGraph opens with PM-style starter prompts and evolves into sharper follow-up questions based on the answer theme |
-| 4 | Action Quality and In-App Routing | Good advice is weaker if the follow-up target, owner, or route is vague | FleetGraph proposes tighter follow-up actions, route buttons, and document-opening paths tied to the exact work surface |
-| 5 | Evaluation and Iteration Loop | We need to know whether FleetGraph is actually driving execution outcomes | FleetGraph has measurable usage, action, and follow-up metrics so the assistant can be improved against real product signals |
+| 3 | Issues Surface Execution Reasoning | Program/project issue tabs still fall back to generic document guidance instead of reasoning over the visible worklist | FleetGraph can answer issue-surface questions from state mix, freshness, week grouping, assignee signals, and visible issue rows |
+| 4 | Conversational Questioning | Even good answers stall if the next prompt is generic | FleetGraph opens with PM-style starter prompts and evolves into sharper follow-up questions based on the answer theme |
+| 5 | Action Quality and In-App Routing | Good advice is weaker if the follow-up target, owner, or route is vague | FleetGraph proposes tighter follow-up actions, route buttons, and document-opening paths tied to the exact work surface |
+| 6 | Evaluation and Iteration Loop | We need to know whether FleetGraph is actually driving execution outcomes | FleetGraph has measurable usage, action, and follow-up metrics so the assistant can be improved against real product signals |
 
 ## Phase Order Rationale
 
@@ -114,16 +117,21 @@ Phase 1 comes first because FleetGraph must stop saying the wrong thing before i
 
 If launcher pages still look like execution-health answers, every later improvement inherits the wrong framing.
 
+Phase 3 now comes before conversational work because better phrasing will not fix issue-tab answers if FleetGraph is still reasoning from thin document metadata instead of the actual visible worklist.
+
 ## Active Phase
 
 Phase 1 is complete and live.
 
 Phase 2 implementation is complete and awaiting merge.
 
+Phase 3 implementation is complete and stacked behind Phase 2.
+
 See:
 
 - [phase-1-answer-modes-and-response-contract.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-1-answer-modes-and-response-contract.md)
 - [phase-2-my-week-execution-depth.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-2-my-week-execution-depth.md)
+- [phase-3-issues-surface-execution-reasoning.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-3-issues-surface-execution-reasoning.md)
 
 ## Current Status
 
@@ -137,6 +145,13 @@ As of 2026-03-20:
 Phase 1 is therefore complete as both an implementation phase and a merged/live product phase.
 
 Phase 2 status:
+
+- implementation status: complete
+- verification status: passed
+- merge-to-main status: pending
+- production status: not live yet
+
+Phase 3 status:
 
 - implementation status: complete
 - verification status: passed

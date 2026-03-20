@@ -112,3 +112,11 @@ As of 2026-03-20:
 - [useMyWeekQuery.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/web/src/hooks/useMyWeekQuery.ts)
 - [useFleetGraphPageContext.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/web/src/hooks/useFleetGraphPageContext.ts)
 - [useFleetGraphPageContext.test.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/web/src/hooks/useFleetGraphPageContext.test.ts)
+
+## Next Phase Unlocked
+
+Phase 2 unlocks Phase 3:
+
+- [phase-3-issues-surface-execution-reasoning.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-3-issues-surface-execution-reasoning.md)
+
+That order is intentional. `My Week` needed better execution depth first, but issue-tab answers still need a dedicated reasoning phase before FleetGraph's conversational layer becomes meaningfully better.
