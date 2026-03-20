@@ -127,13 +127,11 @@ Once this phase is in place, Phase 2 can safely deepen My Week and current-view 
 
 ## Status
 
-As of 2026-03-19:
+As of 2026-03-20:
 
 - implementation: complete
 - targeted verification: complete
-- committed and pushed: complete
-- PR opened: complete
-- merged to `main`: not yet
-- live on production: not yet
+- merged to `main`: complete
+- live on production: complete
 
-So yes: Phase 1 is complete as an implementation phase, but it is not complete as a merged/live product phase yet.
+So yes: Phase 1 is complete and done.

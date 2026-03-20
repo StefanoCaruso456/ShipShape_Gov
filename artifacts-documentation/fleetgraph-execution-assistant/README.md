@@ -116,9 +116,9 @@ If launcher pages still look like execution-health answers, every later improvem
 
 ## Active Phase
 
-Phase 1 implementation is complete.
+Phase 1 is complete.
 
-Phase 2 is the next active phase once the current PR is merged.
+Phase 2 is the next phase to execute.
 
 See:
 
@@ -126,17 +126,14 @@ See:
 
 ## Current Status
 
-As of 2026-03-19:
+As of 2026-03-20:
 
 - Phase 1 implementation status: complete
 - verification status: passed
-- commit status: complete
-- push status: complete
-- PR status: open
-- merge-to-main status: not complete
-- production status: not live
+- merge-to-main status: complete
+- production status: live
 
-Phase 1 is therefore implementation-complete, but not yet merged or live.
+Phase 1 is therefore complete as both an implementation phase and a merged/live product phase.
 
 ## Completion Standard
 
