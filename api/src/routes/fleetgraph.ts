@@ -71,7 +71,7 @@ const pageContextSchema = z.object({
       label: z.string().trim().min(1),
       value: z.string().trim().min(1),
     })
-  ).max(8),
+  ).max(12),
   items: z.array(
     z.object({
       label: z.string().trim().min(1),
