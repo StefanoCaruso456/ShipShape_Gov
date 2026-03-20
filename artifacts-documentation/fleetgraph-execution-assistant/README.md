@@ -33,7 +33,7 @@ That creates two product problems:
 
 ## What
 
-This roadmap focuses on seven product outcomes:
+This roadmap focuses on eight product outcomes:
 
 1. FleetGraph answers in the right mode for the current surface
 2. FleetGraph uses richer My Week and workflow-stage context
@@ -41,7 +41,8 @@ This roadmap focuses on seven product outcomes:
 4. FleetGraph asks better PM and engineering questions
 5. FleetGraph uses business value signals alongside execution risk
 6. FleetGraph proposes sharper, more targeted next actions
-7. FleetGraph becomes measurable as an execution assistant, not just a chat layer
+7. FleetGraph has a typed scrum evidence-tool registry with downstream telemetry
+8. FleetGraph becomes measurable as an execution assistant, not just a chat layer
 
 ## How
 
@@ -55,6 +56,7 @@ The phases are ordered so that:
 - then gets stronger conversation flow
 - then learns what matters most to the business
 - then gets better action quality
+- then gets a typed evidence-tool and telemetry layer
 - then gets stronger evaluation and iteration loops
 
 ## Purpose
@@ -112,7 +114,8 @@ See:
 | 4 | Conversational Questioning | Even good answers stall if the next prompt is generic | FleetGraph opens with PM-style starter prompts and evolves into sharper follow-up questions based on the answer theme |
 | 5 | Business Value and Impact Scoring | FleetGraph still knows what is risky before it knows what matters most to the business | FleetGraph can rank visible work using both execution attention and project business value from ROI, retention, acquisition, and growth |
 | 6 | Action Quality and In-App Routing | Good advice is weaker if the follow-up target, owner, or route is vague | FleetGraph proposes tighter follow-up actions, route buttons, and document-opening paths tied to the exact work surface |
-| 7 | Evaluation and Iteration Loop | We need to know whether FleetGraph is actually driving execution outcomes | FleetGraph has measurable usage, action, and follow-up metrics so the assistant can be improved against real product signals |
+| 7 | Scrum Evidence Tooling and Telemetry Registry | FleetGraph needs a typed, inspectable evidence layer before we can trust deeper tool use, telemetry, and evaluation | FleetGraph has a bounded read-only evidence-tool catalog, shared scrum tool context, per-tool traces, and downstream telemetry contracts |
+| 8 | Evaluation and Iteration Loop | We need to know whether FleetGraph is actually driving execution outcomes | FleetGraph has measurable usage, action, tool, and follow-up metrics so the assistant can be improved against real product signals |
 
 ## Phase Order Rationale
 
@@ -123,6 +126,8 @@ If launcher pages still look like execution-health answers, every later improvem
 Phase 3 now comes before conversational work because better phrasing will not fix issue-tab answers if FleetGraph is still reasoning from thin document metadata instead of the actual visible worklist.
 
 Phase 5 comes before action quality because FleetGraph should understand not just what is slipping, but what is commercially important, before it recommends follow-ups, cuts, or escalations.
+
+Phase 7 now comes before evaluation because trustworthy measurement depends on a stable evidence-tool contract, shared telemetry fields, and bounded tool execution metadata.
 
 ## Active Phase
 
@@ -138,6 +143,8 @@ See:
 - [phase-4-conversational-questioning.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-4-conversational-questioning.md)
 - [phase-5-business-value-scoring.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-5-business-value-scoring.md)
 - [phase-6-action-quality-and-in-app-routing.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-6-action-quality-and-in-app-routing.md)
+- [phase-7-scrum-evidence-tooling-and-telemetry.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-7-scrum-evidence-tooling-and-telemetry.md)
+- [tooling-registry.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/tooling-registry.md)
 
 ## Current Status
 
@@ -183,6 +190,13 @@ Phase 6 status:
 - implementation status: complete
 - verification status: passed
 - merge-to-main status: pending
+- production status: not live yet
+
+Phase 7 status:
+
+- implementation status: planned
+- verification status: not started
+- merge-to-main status: not started
 - production status: not live yet
 
 ## Completion Standard
