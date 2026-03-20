@@ -70,6 +70,17 @@ interface FleetGraphChatTurn {
   error: string | null;
 }
 
+interface FleetGraphErrorGuidance {
+  issueDetected: string;
+  rootCause: string;
+  impact: string;
+  immediateFix: string;
+  shortTermFix: string;
+  longTermFix: string;
+  pmInsight: string;
+  automation: string | null;
+}
+
 function createTurnId() {
   return `fleetgraph-turn-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -142,6 +153,79 @@ function buildSummary(
     pageContext?.summary ??
     "FleetGraph doesn't see a meaningful sprint-risk signal on this view right now."
   );
+}
+
+function describeCurrentWorkSurface(
+  activeView: FleetGraphActiveViewContext | null,
+  pageContext: FleetGraphPageContext | null,
+  result: FleetGraphOnDemandResponse | null
+): string {
+  return (
+    result?.fetched.entity?.title ??
+    result?.fetched.accountability?.project?.name ??
+    pageContext?.title ??
+    getFallbackEntityLabel(activeView) ??
+    'this work surface'
+  );
+}
+
+function buildErrorGuidance(
+  result: FleetGraphOnDemandResponse | null,
+  turn: FleetGraphChatTurn,
+  activeView: FleetGraphActiveViewContext | null
+): FleetGraphErrorGuidance | null {
+  const errorCode = result?.error?.code ?? null;
+  const errorMessage = result?.error?.message ?? turn.error ?? null;
+
+  if (!errorMessage) {
+    return null;
+  }
+
+  const workSurface = describeCurrentWorkSurface(activeView, turn.pageContext, result);
+  const isCommentWriteFailure =
+    errorCode === 'PROPOSED_ACTION_EXECUTION_FAILED' &&
+    errorMessage.includes('/comments');
+  const isForbidden = errorMessage.includes('status 403');
+
+  if (isCommentWriteFailure && isForbidden) {
+    return {
+      issueDetected:
+        `FleetGraph could analyze ${workSurface}, but Ship rejected the approved follow-up comment before it could be posted.`,
+      rootCause:
+        'Most likely cause: the writeback request reached a protected Ship endpoint without the session protection data it needs, so Ship treated the mutation as forbidden.',
+      impact:
+        `The current page stays unchanged, so the team does not get the follow-up comment or escalation FleetGraph tried to add for ${workSurface}.`,
+      immediateFix:
+        'Retry the approved action after the writeback request includes the same authenticated session protections as the original browser action.',
+      shortTermFix:
+        'Translate writeback failures into a product-level explanation so users see what failed and what to do next instead of a raw API path.',
+      longTermFix:
+        'Keep FleetGraph mutations on the same trusted write path as the main app and add integration coverage for approval-to-comment flows.',
+      pmInsight:
+        'This reveals a product gap between “analyze work” and “mutate work.” The assistant can reason correctly, but the writeback path is not yet using the same safety contract as the rest of Ship.',
+      automation:
+        'FleetGraph could automatically save the drafted comment, log the failed mutation, and offer a one-click retry instead of dropping the action on the floor.',
+    };
+  }
+
+  return {
+    issueDetected: `FleetGraph hit a product error while analyzing ${workSurface}.`,
+    rootCause:
+      errorCode === 'PROPOSED_ACTION_EXECUTION_FAILED'
+        ? 'Most likely cause: the analysis succeeded, but the follow-up action failed during writeback.'
+        : 'Most likely cause: FleetGraph hit a backend or permissions failure while trying to finish this request.',
+    impact:
+      `You can still inspect ${workSurface}, but FleetGraph could not finish this answer or action cleanly on the current page.`,
+    immediateFix: 'Retry the question once. If it fails again, avoid mutating actions on this page until the backend path is verified.',
+    shortTermFix:
+      'Map FleetGraph failures to user-facing execution guidance with page-aware recovery steps instead of exposing raw backend messages.',
+    longTermFix:
+      'Add end-to-end coverage for page-context analysis, approval flows, and writeback failures so these errors are caught before deploy.',
+    pmInsight:
+      'This shows the assistant needs a stronger failure contract. A work assistant should explain execution blockers in plain English, not expose transport details.',
+    automation:
+      'FleetGraph could capture the failed run, create an internal bug record, and attach the current page context for the engineer who debugs it.',
+  };
 }
 
 function hasSprintAnalysisScope(activeView: FleetGraphActiveViewContext | null): boolean {
@@ -630,6 +714,7 @@ export function FleetGraphOnDemandPanel({
                 const severityStyle = SEVERITY_STYLES[severity];
                 const summary = buildSummary(result, turn.pageContext);
                 const responseError = result?.error?.message ?? turn.error;
+                const errorGuidance = buildErrorGuidance(result, turn, activeView);
                 const isBusy = activeTurnId === turn.id;
                 const pendingApproval = result?.pendingApproval ?? null;
                 const derivedMetrics = result?.derivedSignals.metrics ?? null;
@@ -684,8 +769,68 @@ export function FleetGraphOnDemandPanel({
                         )}
 
                         {responseError && (
-                          <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-200">
-                            {responseError}
+                          <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-4">
+                            {errorGuidance ? (
+                              <div className="space-y-4">
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.18em] text-red-200/75">
+                                    Issue detected
+                                  </div>
+                                  <p className="mt-2 text-sm leading-6 text-red-100">
+                                    {errorGuidance.issueDetected}
+                                  </p>
+                                </div>
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.18em] text-red-200/75">
+                                    Root cause
+                                  </div>
+                                  <p className="mt-2 text-sm leading-6 text-red-100">
+                                    {errorGuidance.rootCause}
+                                  </p>
+                                </div>
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.18em] text-red-200/75">
+                                    Impact on workflow
+                                  </div>
+                                  <p className="mt-2 text-sm leading-6 text-red-100">
+                                    {errorGuidance.impact}
+                                  </p>
+                                </div>
+                                <div className="rounded-2xl border border-red-400/20 bg-black/15 px-3 py-3">
+                                  <div className="text-[11px] uppercase tracking-[0.18em] text-red-200/75">
+                                    Recommended actions
+                                  </div>
+                                  <ul className="mt-2 space-y-2 text-sm leading-6 text-red-100">
+                                    <li><span className="font-medium">Immediate:</span> {errorGuidance.immediateFix}</li>
+                                    <li><span className="font-medium">Short term:</span> {errorGuidance.shortTermFix}</li>
+                                    <li><span className="font-medium">Long term:</span> {errorGuidance.longTermFix}</li>
+                                  </ul>
+                                </div>
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.18em] text-red-200/75">
+                                    PM insight
+                                  </div>
+                                  <p className="mt-2 text-sm leading-6 text-red-100">
+                                    {errorGuidance.pmInsight}
+                                  </p>
+                                </div>
+                                {errorGuidance.automation && (
+                                  <div>
+                                    <div className="text-[11px] uppercase tracking-[0.18em] text-red-200/75">
+                                      Optional automation
+                                    </div>
+                                    <p className="mt-2 text-sm leading-6 text-red-100">
+                                      {errorGuidance.automation}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-sm leading-6 text-red-200">{responseError}</p>
+                            )}
+                            <p className="mt-3 text-xs leading-5 text-red-200/70">
+                              Technical detail: {responseError}
+                            </p>
                           </div>
                         )}
 

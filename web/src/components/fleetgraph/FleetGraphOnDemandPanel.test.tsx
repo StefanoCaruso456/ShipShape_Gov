@@ -396,4 +396,45 @@ describe('FleetGraphOnDemandPanel', () => {
       await screen.findByText('FleetGraph dismissed this draft action for the current sprint pattern.')
     ).toBeInTheDocument();
   });
+
+  it('translates writeback failures into structured execution guidance', async () => {
+    mockUseFleetGraphActiveView.mockReturnValue(activeView);
+    mockUseFleetGraphPageContext.mockReturnValue(null);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      status: 'failed',
+      stage: 'fallback',
+      reasoning: null,
+      finding: null,
+      proposedAction: null,
+      pendingApproval: null,
+      actionResult: null,
+      error: {
+        code: 'PROPOSED_ACTION_EXECUTION_FAILED',
+        message:
+          'Ship API POST /api/documents/11111111-1111-1111-1111-111111111111/comments failed with status 403',
+        retryable: true,
+        source: 'executeProposedAction',
+      },
+      terminalOutcome: 'failed_retryable',
+    });
+
+    render(<FleetGraphOnDemandPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Summarize the key risk signals.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send FleetGraph message' }));
+
+    expect(await screen.findByText('Issue detected')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Ship rejected the approved follow-up comment before it could be posted/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText('Root cause')).toBeInTheDocument();
+    expect(screen.getByText('Impact on workflow')).toBeInTheDocument();
+    expect(screen.getByText('Recommended actions')).toBeInTheDocument();
+    expect(screen.getByText('PM insight')).toBeInTheDocument();
+    expect(screen.getByText(/Technical detail:/i)).toBeInTheDocument();
+  });
 });

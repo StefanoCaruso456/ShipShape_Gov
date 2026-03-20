@@ -51,6 +51,7 @@ function buildInternalApiUrl(path: string): string {
 function createHeaderScopedShipApiClient(headers: {
   cookieHeader?: string;
   authHeader?: string;
+  csrfHeader?: string;
 }): FleetGraphShipApiClient {
   const baseHeaders: Record<string, string> = {
     Accept: 'application/json',
@@ -62,6 +63,10 @@ function createHeaderScopedShipApiClient(headers: {
 
   if (headers.authHeader) {
     baseHeaders.authorization = headers.authHeader;
+  }
+
+  if (headers.csrfHeader) {
+    baseHeaders['x-csrf-token'] = headers.csrfHeader;
   }
 
   return {
@@ -105,6 +110,8 @@ export function createRequestScopedShipApiClient(req: Request): FleetGraphShipAp
     cookieHeader: req.headers.cookie,
     authHeader:
       typeof req.headers.authorization === 'string' ? req.headers.authorization : undefined,
+    csrfHeader:
+      typeof req.headers['x-csrf-token'] === 'string' ? req.headers['x-csrf-token'] : undefined,
   });
 }
 
