@@ -17,6 +17,21 @@ export interface WeekProject {
   id: string;
   title: string;
   program_name: string | null;
+  sprint_id: string | null;
+  sprint_title: string | null;
+  issue_counts: {
+    total: number;
+    completed: number;
+    in_progress: number;
+    in_review: number;
+    not_started: number;
+    cancelled: number;
+  };
+  activity: {
+    updated_issue_count: number;
+    active_days: number;
+    last_issue_update_at: string | null;
+  };
 }
 
 export interface MyWeekResponse {

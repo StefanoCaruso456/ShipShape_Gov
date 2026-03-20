@@ -191,6 +191,21 @@ export const WeekProjectSchema = z.object({
   id: UuidSchema,
   title: z.string(),
   program_name: z.string().nullable(),
+  sprint_id: UuidSchema.nullable(),
+  sprint_title: z.string().nullable(),
+  issue_counts: z.object({
+    total: z.number().int(),
+    completed: z.number().int(),
+    in_progress: z.number().int(),
+    in_review: z.number().int(),
+    not_started: z.number().int(),
+    cancelled: z.number().int(),
+  }),
+  activity: z.object({
+    updated_issue_count: z.number().int(),
+    active_days: z.number().int(),
+    last_issue_update_at: DateTimeSchema.nullable(),
+  }),
 }).openapi('WeekProject');
 
 registry.register('WeekProject', WeekProjectSchema);

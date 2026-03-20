@@ -107,6 +107,117 @@ function getStandupActionRoute(route: string, slot: StandupSlot | null): string 
   });
 }
 
+type MyWeekProjectInsight = {
+  project: MyWeekResponse['projects'][number];
+  needsAttention: boolean;
+  hasFreshActivity: boolean;
+  score: number;
+  summary: string;
+  detail: string;
+  route: string;
+  actionLabel: string;
+};
+
+function formatShortUtcDate(value: string): string {
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+function getMyWeekProjectRoute(project: MyWeekResponse['projects'][number]): string {
+  return project.sprint_id ? `/documents/${project.sprint_id}/issues` : `/documents/${project.id}`;
+}
+
+function buildMyWeekProjectInsight(
+  project: MyWeekResponse['projects'][number],
+  week: MyWeekResponse['week']
+): MyWeekProjectInsight {
+  const route = getMyWeekProjectRoute(project);
+  const trackedIssues = Math.max(project.issue_counts.total - project.issue_counts.cancelled, 0);
+  const completedIssues = Math.min(project.issue_counts.completed, trackedIssues);
+  const activeIssues = project.issue_counts.in_progress + project.issue_counts.in_review;
+  const hasFreshActivity = project.activity.active_days > 0 || project.activity.updated_issue_count > 0;
+  const lastUpdateDetail = project.activity.last_issue_update_at
+    ? `Last issue update ${formatShortUtcDate(project.activity.last_issue_update_at)}`
+    : null;
+
+  let needsAttention = false;
+  let statusLabel = 'Watching';
+  let score = 25;
+  let summary = `${project.title} has scoped work, but it still needs a clearer next move.`;
+
+  if (trackedIssues === 0) {
+    statusLabel = week.week_number > week.current_week_number ? 'Planning' : 'Unscoped';
+    score = week.is_current ? 45 : 20;
+    summary =
+      week.week_number > week.current_week_number
+        ? `${project.title} is assigned for Week ${week.week_number}, but no sprint issues are linked yet.`
+        : `${project.title} is assigned this week, but no sprint issues are linked yet.`;
+  } else if (week.week_number < week.current_week_number && completedIssues < trackedIssues) {
+    needsAttention = true;
+    statusLabel = 'Needs attention';
+    score = 100 + (trackedIssues - completedIssues);
+    summary = `${project.title} still has ${pluralize(trackedIssues - completedIssues, 'incomplete issue')} from Week ${week.week_number}.`;
+  } else if (week.is_current && completedIssues === 0 && activeIssues === 0) {
+    needsAttention = true;
+    statusLabel = 'Needs attention';
+    score = 95 + trackedIssues;
+    summary = `${project.title} has ${pluralize(trackedIssues, 'tracked issue')} and none are started yet.`;
+  } else if (week.is_current && !hasFreshActivity) {
+    needsAttention = true;
+    statusLabel = 'Needs attention';
+    score = 85 + Math.max(trackedIssues - completedIssues, 0);
+    summary = `${project.title} has no visible issue movement this week.`;
+  } else if (week.is_current && activeIssues === 0 && completedIssues < trackedIssues) {
+    needsAttention = true;
+    statusLabel = 'Needs attention';
+    score = 75 + Math.max(trackedIssues - completedIssues, 0);
+    summary = `${project.title} still has open work, but nothing is currently in progress or review.`;
+  } else if (trackedIssues > 0 && completedIssues >= trackedIssues) {
+    statusLabel = 'On track';
+    score = 10;
+    summary = `${project.title} already has all scoped issues completed for this week.`;
+  } else if (activeIssues > 0 || hasFreshActivity) {
+    statusLabel = week.week_number > week.current_week_number ? 'Planning' : 'In flight';
+    score = 30 + activeIssues + completedIssues;
+    summary = `${project.title} has visible movement in the scoped week and is already in flight.`;
+  }
+
+  const detail = [
+    statusLabel,
+    trackedIssues > 0 ? `${completedIssues}/${trackedIssues} complete` : null,
+    trackedIssues > completedIssues
+      ? activeIssues > 0
+        ? `${pluralize(activeIssues, 'issue')} active`
+        : 'No active issues'
+      : null,
+    project.activity.active_days > 0
+      ? `${pluralize(project.activity.active_days, 'active day')} in scope`
+      : trackedIssues > 0
+        ? week.is_current
+          ? 'No issue movement this week'
+          : `No issue movement in Week ${week.week_number}`
+        : null,
+    lastUpdateDetail,
+    project.program_name ? `Program: ${project.program_name}` : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' • ');
+
+  return {
+    project,
+    needsAttention,
+    hasFreshActivity,
+    score,
+    summary,
+    detail,
+    route,
+    actionLabel: project.sprint_title ? `Open ${project.title} sprint` : `Open ${project.title}`,
+  };
+}
+
 function buildGenericPageContext(route: string, title: string, summary: string): FleetGraphPageContext {
   return {
     kind: 'generic',
@@ -400,7 +511,7 @@ function buildPersonPageContext(
   };
 }
 
-function buildMyWeekPageContext(
+export function buildMyWeekPageContext(
   route: string,
   activeView: FleetGraphActiveViewContext | null,
   myWeek: MyWeekResponse | undefined
@@ -426,6 +537,9 @@ function buildMyWeekPageContext(
   const scopedProject =
     projects.find((project) => project.id === activeView?.projectId) ??
     (projects.length === 1 ? projects[0] : null);
+  const projectInsights = (isScopedToSingleProject && scopedProject ? [scopedProject] : projects)
+    .map((project) => buildMyWeekProjectInsight(project, week))
+    .sort((left, right) => right.score - left.score || left.project.title.localeCompare(right.project.title));
   const relevantStandupSlots = standups.filter((slot) => !(!isDateInPast(slot.date) && !isDateToday(slot.date)));
   const loggedStandupCount = relevantStandupSlots.filter((slot) => Boolean(slot.standup)).length;
   const missingPastStandups = standups.filter((slot) => !slot.standup && isDateInPast(slot.date)).length;
@@ -627,6 +741,9 @@ function buildMyWeekPageContext(
       : null,
     retroStatus.needsAttention ? retroStatus.detail : null,
   ].filter((signal): signal is string => Boolean(signal));
+  const attentionProjectInsights = projectInsights.filter((project) => project.needsAttention);
+  const freshProjectCount = projectInsights.filter((project) => project.hasFreshActivity).length;
+  const topProjectInsight = attentionProjectInsights[0] ?? projectInsights[0] ?? null;
 
   const projectSummary =
     projects.length === 0
@@ -636,19 +753,32 @@ function buildMyWeekPageContext(
         : `My Week covers ${pluralize(projects.length, 'assigned project')}.`;
   const steadyStateSummary =
     `${planStatus.detail} ${retroStatus.detail} ${standupStatus.detail}`;
+  const topProjectSummary = topProjectInsight?.summary ?? null;
+  const projectSignalMetricValue =
+    projectInsights.length === 0
+      ? 'No project scope'
+      : isScopedToSingleProject && projectInsights[0]
+        ? projectInsights[0].needsAttention
+          ? 'Needs attention'
+          : projectInsights[0].hasFreshActivity
+            ? 'Fresh activity'
+            : 'In scope'
+        : attentionProjectInsights.length > 0
+          ? `${attentionProjectInsights.length}/${projectInsights.length} flagged`
+          : `${freshProjectCount}/${projectInsights.length} fresh`;
 
   return {
     kind: 'my_week',
     route,
     title: 'My Week',
     summary:
-      attentionSignals.length > 0
-        ? `${projectSummary} Right now, ${attentionSignals.slice(0, 3).join(' ')}`
+      attentionSignals.length > 0 || topProjectSummary
+        ? `${projectSummary} ${topProjectSummary ? `${topProjectSummary} ` : ''}${attentionSignals.length > 0 ? `Right now, ${attentionSignals.slice(0, 3).join(' ')}` : ''}`.trim()
         : `${projectSummary} ${steadyStateSummary}`,
     emptyState: false,
     metrics: buildMetrics([
       { label: 'Workflow stage', value: workflowStage },
-      { label: 'Assigned projects', value: String(projects.length) },
+      { label: 'Project signals', value: projectSignalMetricValue },
       { label: 'Weekly plan', value: planStatus.metric },
       { label: 'Weekly retro', value: retroStatus.metric },
       { label: 'Daily updates', value: standupMetricValue },
@@ -670,13 +800,19 @@ function buildMyWeekPageContext(
             route: retroStatus.route,
           },
       { label: 'Daily updates', detail: standupStatus.detail, route: standupStatus.route },
-      ...projects.slice(0, isScopedToSingleProject ? 1 : 2).map((project) => ({
-        label: project.title,
-        detail: project.program_name ? `Assigned project • ${project.program_name}` : 'Assigned project',
-        route: `/documents/${project.id}`,
+      ...projectInsights.slice(0, isScopedToSingleProject ? 1 : 2).map((projectInsight) => ({
+        label: projectInsight.project.title,
+        detail: projectInsight.detail,
+        route: projectInsight.route,
       })),
-    ]),
+    ], isScopedToSingleProject ? 4 : 5),
     actions: buildActions([
+      ...attentionProjectInsights
+        .slice(0, isScopedToSingleProject ? 1 : 2)
+        .map((projectInsight) => ({
+          label: projectInsight.actionLabel,
+          route: projectInsight.route,
+        })),
       standupStatus.route && standupStatus.actionLabel
         ? { label: standupStatus.actionLabel, route: standupStatus.route }
         : null,
@@ -692,9 +828,9 @@ function buildMyWeekPageContext(
       retroStatus.route && retroStatus.actionLabel
         ? { label: retroStatus.actionLabel, route: retroStatus.route }
         : null,
-      ...projects.slice(0, isScopedToSingleProject ? 1 : 2).map((project) => ({
-        label: `Open ${project.title}`,
-        route: `/documents/${project.id}`,
+      ...projectInsights.slice(0, isScopedToSingleProject ? 1 : 2).map((projectInsight) => ({
+        label: projectInsight.actionLabel,
+        route: projectInsight.route,
       })),
     ]),
   };

@@ -689,9 +689,14 @@ router.get('/my-week', authMiddleware, async (req: Request, res: Response) => {
         : { date, day: dayOfWeek, standup: null };
     });
 
+    const weekWindowEndExclusive = new Date(weekEnd);
+    weekWindowEndExclusive.setUTCDate(weekWindowEndExclusive.getUTCDate() + 1);
+
     // 7. Fetch project allocations for the target week
     const allocationsResult = await pool.query(
       `SELECT DISTINCT
+         s.id as sprint_id,
+         s.title as sprint_title,
          proj.id as project_id,
          proj.title as project_title,
          prog.title as program_name
@@ -708,10 +713,101 @@ router.get('/my-week', authMiddleware, async (req: Request, res: Response) => {
       [workspaceId, personId, targetWeekNumber]
     );
 
+    const sprintIds = allocationsResult.rows
+      .map((row) => row.sprint_id as string | null)
+      .filter((sprintId): sprintId is string => Boolean(sprintId));
+
+    let issueStatsResult = {
+      rows: [] as Array<{
+        sprint_id: string;
+        total_issues: number;
+        completed_issues: number;
+        in_progress_issues: number;
+        in_review_issues: number;
+        not_started_issues: number;
+        cancelled_issues: number;
+        updated_issue_count: number;
+        active_days: number;
+        last_issue_update_at: string | null;
+      }>,
+    };
+
+    if (sprintIds.length > 0) {
+      issueStatsResult = await pool.query(
+        `SELECT
+           da.related_id as sprint_id,
+           (COUNT(*) FILTER (WHERE d.deleted_at IS NULL))::int as total_issues,
+           (COUNT(*) FILTER (WHERE COALESCE(d.properties->>'state', 'backlog') = 'done' AND d.deleted_at IS NULL))::int as completed_issues,
+           (COUNT(*) FILTER (WHERE COALESCE(d.properties->>'state', 'backlog') = 'in_progress' AND d.deleted_at IS NULL))::int as in_progress_issues,
+           (COUNT(*) FILTER (WHERE COALESCE(d.properties->>'state', 'backlog') = 'in_review' AND d.deleted_at IS NULL))::int as in_review_issues,
+           (COUNT(*) FILTER (
+             WHERE COALESCE(d.properties->>'state', 'backlog') IN ('triage', 'backlog', 'todo')
+               AND d.deleted_at IS NULL
+           ))::int as not_started_issues,
+           (COUNT(*) FILTER (WHERE COALESCE(d.properties->>'state', 'backlog') = 'cancelled' AND d.deleted_at IS NULL))::int as cancelled_issues,
+           (COUNT(*) FILTER (
+             WHERE d.deleted_at IS NULL
+               AND d.updated_at >= $3
+               AND d.updated_at < $4
+           ))::int as updated_issue_count,
+           (COUNT(DISTINCT ((d.updated_at AT TIME ZONE 'UTC')::date)) FILTER (
+             WHERE d.deleted_at IS NULL
+               AND d.updated_at >= $3
+               AND d.updated_at < $4
+           ))::int as active_days,
+           MAX(d.updated_at) FILTER (WHERE d.deleted_at IS NULL) as last_issue_update_at
+         FROM documents d
+         JOIN document_associations da ON da.document_id = d.id AND da.relationship_type = 'sprint'
+         WHERE d.workspace_id = $1
+           AND d.document_type = 'issue'
+           AND da.related_id = ANY($2)
+         GROUP BY da.related_id`,
+        [workspaceId, sprintIds, weekStart.toISOString(), weekWindowEndExclusive.toISOString()]
+      );
+    }
+
+    const issueStatsBySprint = new Map(
+      issueStatsResult.rows.map((row) => [
+        row.sprint_id,
+        {
+          issue_counts: {
+            total: Number(row.total_issues ?? 0),
+            completed: Number(row.completed_issues ?? 0),
+            in_progress: Number(row.in_progress_issues ?? 0),
+            in_review: Number(row.in_review_issues ?? 0),
+            not_started: Number(row.not_started_issues ?? 0),
+            cancelled: Number(row.cancelled_issues ?? 0),
+          },
+          activity: {
+            updated_issue_count: Number(row.updated_issue_count ?? 0),
+            active_days: Number(row.active_days ?? 0),
+            last_issue_update_at: row.last_issue_update_at
+              ? new Date(row.last_issue_update_at).toISOString()
+              : null,
+          },
+        },
+      ])
+    );
+
     const projects = allocationsResult.rows.map(row => ({
       id: row.project_id,
       title: row.project_title,
       program_name: row.program_name || null,
+      sprint_id: row.sprint_id || null,
+      sprint_title: row.sprint_title || null,
+      issue_counts: issueStatsBySprint.get(row.sprint_id)?.issue_counts ?? {
+        total: 0,
+        completed: 0,
+        in_progress: 0,
+        in_review: 0,
+        not_started: 0,
+        cancelled: 0,
+      },
+      activity: issueStatsBySprint.get(row.sprint_id)?.activity ?? {
+        updated_issue_count: 0,
+        active_days: 0,
+        last_issue_update_at: null,
+      },
     }));
 
     // 8. Assemble response

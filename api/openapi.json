@@ -4589,12 +4589,81 @@
           "program_name": {
             "type": "string",
             "nullable": true
+          },
+          "sprint_id": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "UUID identifier",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "sprint_title": {
+            "type": "string",
+            "nullable": true
+          },
+          "issue_counts": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "completed": {
+                "type": "integer"
+              },
+              "in_progress": {
+                "type": "integer"
+              },
+              "in_review": {
+                "type": "integer"
+              },
+              "not_started": {
+                "type": "integer"
+              },
+              "cancelled": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "total",
+              "completed",
+              "in_progress",
+              "in_review",
+              "not_started",
+              "cancelled"
+            ]
+          },
+          "activity": {
+            "type": "object",
+            "properties": {
+              "updated_issue_count": {
+                "type": "integer"
+              },
+              "active_days": {
+                "type": "integer"
+              },
+              "last_issue_update_at": {
+                "type": "string",
+                "nullable": true,
+                "format": "date-time",
+                "description": "ISO 8601 datetime string",
+                "example": "2025-01-30T14:30:00.000Z"
+              }
+            },
+            "required": [
+              "updated_issue_count",
+              "active_days",
+              "last_issue_update_at"
+            ]
           }
         },
         "required": [
           "id",
           "title",
-          "program_name"
+          "program_name",
+          "sprint_id",
+          "sprint_title",
+          "issue_counts",
+          "activity"
         ]
       },
       "MyWeekResponse": {
