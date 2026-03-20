@@ -33,6 +33,7 @@ export type {
   FleetGraphActivitySnapshot,
   FleetGraphActionMemoryRecord,
   FleetGraphActionResult,
+  FleetGraphAnswerMode,
   FleetGraphAttempts,
   FleetGraphActionType,
   FleetGraphDocumentContextSnapshot,

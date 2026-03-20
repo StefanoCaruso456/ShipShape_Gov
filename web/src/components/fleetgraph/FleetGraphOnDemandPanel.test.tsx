@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import type {
   FleetGraphActiveViewContext,
   FleetGraphOnDemandResponse,
@@ -55,6 +56,14 @@ const programsPageContext: FleetGraphPageContext = {
     },
   ],
 };
+
+function renderPanel() {
+  return render(
+    <MemoryRouter>
+      <FleetGraphOnDemandPanel />
+    </MemoryRouter>
+  );
+}
 
 const baseResponse: FleetGraphOnDemandResponse = {
   threadId: 'thread-1',
@@ -149,6 +158,7 @@ const baseResponse: FleetGraphOnDemandResponse = {
     severity: 'action',
   },
   reasoning: {
+    answerMode: 'execution',
     summary:
       'FleetGraph sees clear execution drift because all work is still untouched and no standup has been logged.',
     evidence: ['Completed issues: 0 of 6.', 'Standups logged: 0.'],
@@ -212,7 +222,7 @@ describe('FleetGraphOnDemandPanel', () => {
     mockUseFleetGraphPageContext.mockReturnValue(null);
     mockInvokeFleetGraphOnDemand.mockResolvedValue(baseResponse);
 
-    render(<FleetGraphOnDemandPanel />);
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
     fireEvent.change(screen.getByRole('textbox'), {
@@ -228,11 +238,16 @@ describe('FleetGraphOnDemandPanel', () => {
       });
     });
 
-    expect(await screen.findByText('Grounded answer')).toBeInTheDocument();
+    expect(await screen.findByText('Grounded execution guidance')).toBeInTheDocument();
+    expect(screen.getAllByText('Needs action').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/FleetGraph sees clear execution drift/).length).toBeGreaterThan(0);
     expect(screen.getByText('Recommended next step')).toBeInTheDocument();
     expect(screen.getByText('What FleetGraph saw')).toBeInTheDocument();
     expect(screen.getByText(/API Platform - Core Features/)).toBeInTheDocument();
+    expect(screen.getByText('Suggested follow-up questions')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Is the risk coming from scope, blockers, or capacity?' })
+    ).toBeInTheDocument();
   });
 
   it('uses page context on non-sprint pages instead of showing an unavailable state', async () => {
@@ -276,9 +291,11 @@ describe('FleetGraphOnDemandPanel', () => {
       },
       finding: null,
       reasoning: {
+        answerMode: 'launcher',
         summary: 'Programs shows 5 active programs in this workspace.',
         evidence: ['Active programs: 5', 'Programs with owner: 5'],
-        whyNow: 'This answer is grounded in the work visible on the page you are currently viewing.',
+        whyNow:
+          'This answer is grounded in the current page snapshot. FleetGraph is using this launcher surface to guide what to open next rather than score execution health from the list alone.',
         recommendedNextStep: 'Open the program that looks most active or least clear so you can inspect its projects, issues, and current sprint.',
         confidence: 'high',
       },
@@ -286,29 +303,37 @@ describe('FleetGraphOnDemandPanel', () => {
       terminalOutcome: 'quiet',
     });
 
-    render(<FleetGraphOnDemandPanel />);
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Summarize what matters on this page.' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Which project needs attention first?' }));
 
     await waitFor(() => {
       expect(mockInvokeFleetGraphOnDemand).toHaveBeenCalledWith({
         active_view: null,
         page_context: programsPageContext,
-        question: 'Summarize what matters on this page.',
+        question: 'Which project needs attention first?',
       });
     });
 
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(await screen.findByText('Programs shows 5 active programs in this workspace.')).toBeInTheDocument();
+    expect(screen.getAllByText('Launcher guidance').length).toBeGreaterThan(0);
+    expect(screen.getByText('Best next surface')).toBeInTheDocument();
     expect(screen.getByText('Active programs')).toBeInTheDocument();
+    expect(screen.getByText('Open in Ship')).toBeInTheDocument();
+    expect(screen.queryByText('Stable')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open API Platform' })).toHaveAttribute(
+      'href',
+      '/documents/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    );
   });
 
   it('still shows an unavailable state only when neither active view nor page context exists', () => {
     mockUseFleetGraphActiveView.mockReturnValue(null);
     mockUseFleetGraphPageContext.mockReturnValue(null);
 
-    render(<FleetGraphOnDemandPanel />);
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
 
@@ -370,7 +395,7 @@ describe('FleetGraphOnDemandPanel', () => {
       terminalOutcome: 'suppressed',
     });
 
-    render(<FleetGraphOnDemandPanel />);
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
     fireEvent.change(screen.getByRole('textbox'), {
@@ -419,7 +444,7 @@ describe('FleetGraphOnDemandPanel', () => {
       terminalOutcome: 'failed_retryable',
     });
 
-    render(<FleetGraphOnDemandPanel />);
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
     fireEvent.change(screen.getByRole('textbox'), {
