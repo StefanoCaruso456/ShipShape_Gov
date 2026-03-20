@@ -568,6 +568,17 @@ function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
   if (question.includes('block') || question.includes('dependency')) {
     return 'blockers';
   }
+  if (
+    question.includes('cut') ||
+    question.includes('defer') ||
+    question.includes('move out') ||
+    question.includes('reduce scope')
+  ) {
+    return 'scope';
+  }
+  if (question.includes('stalled') || question.includes('stuck') || question.includes('not moving')) {
+    return 'status';
+  }
   if (question.includes('capacity') || question.includes('overloaded')) {
     return 'capacity';
   }
@@ -943,6 +954,24 @@ function getRouteActionQuestionBoost(
     normalizedQuestion.includes('standup')
   ) {
     return action.intent === 'write' ? 3 : 0;
+  }
+
+  if (
+    normalizedQuestion.includes('cut') ||
+    normalizedQuestion.includes('defer') ||
+    normalizedQuestion.includes('move out') ||
+    normalizedQuestion.includes('reduce scope')
+  ) {
+    return corpus.includes('cut candidate') || corpus.includes('move out') ? 3 : 0;
+  }
+
+  if (
+    normalizedQuestion.includes('stalled') ||
+    normalizedQuestion.includes('stuck') ||
+    normalizedQuestion.includes('not moving') ||
+    normalizedQuestion.includes('in progress')
+  ) {
+    return corpus.includes('stalled') || corpus.includes('blocked') ? 3 : 0;
   }
 
   if (

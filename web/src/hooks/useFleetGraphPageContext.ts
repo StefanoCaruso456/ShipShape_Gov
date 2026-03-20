@@ -481,6 +481,10 @@ type ScoredIssueSurfaceIssue = {
   combinedAttentionScore: number;
 };
 
+type DecoratedIssueSurfaceIssue = ScoredIssueSurfaceIssue & {
+  dependencySignal: FleetGraphIssueDependencySignal | null;
+};
+
 type BlockedIssueSurfaceIssue = ScoredIssueSurfaceIssue & {
   dependencySignal: FleetGraphIssueDependencySignal;
 };
@@ -535,6 +539,14 @@ function formatRelativeIssueUpdate(updatedAt: string | undefined): string | null
   return `Updated ${diffDays}d ago`;
 }
 
+function formatIssueStateLabel(state: string): string {
+  return state
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 function formatBlockerAgeDays(days: number | null): string | null {
   if (days === null) {
     return null;
@@ -564,6 +576,14 @@ function buildBlockedIssueDetail(
     .join(' • ');
 }
 
+function isIssueActive(issue: Issue): boolean {
+  return issue.state === 'in_progress' || issue.state === 'in_review';
+}
+
+function isIssueNotStarted(issue: Issue): boolean {
+  return issue.state === 'triage' || issue.state === 'backlog' || issue.state === 'todo';
+}
+
 function isIssueStale(issue: Issue): boolean {
   if (!issue.updated_at || issue.state === 'done' || issue.state === 'cancelled') {
     return false;
@@ -587,6 +607,115 @@ function getProjectBusinessValueScore(project: IssueSurfaceProject | null): numb
   }
 
   return null;
+}
+
+function formatIssueWeekDetail(issue: Issue): string {
+  return getSprintTitle(issue) ? `Week: ${getSprintTitle(issue)}` : 'Backlog';
+}
+
+function formatIssueBusinessValueDetail(scoredIssue: ScoredIssueSurfaceIssue): string | null {
+  if (scoredIssue.businessValueScore !== null) {
+    return `Business value: ${scoredIssue.businessValueScore}/100`;
+  }
+
+  if (typeof scoredIssue.project?.ice_score === 'number') {
+    return `ICE fallback: ${scoredIssue.project.ice_score}/125`;
+  }
+
+  return null;
+}
+
+function issueMatchesBucket(issue: Issue, focusBucket: IssueSurfaceBucket | null): boolean {
+  if (!focusBucket) {
+    return false;
+  }
+
+  return (
+    (focusBucket.id !== null && focusBucket.id === getSprintId(issue)) ||
+    focusBucket.title === (getSprintTitle(issue) ?? 'Backlog')
+  );
+}
+
+function buildIssueRiskDescriptor(
+  scoredIssue: ScoredIssueSurfaceIssue,
+  dependencySignal: FleetGraphIssueDependencySignal | null,
+  focusBucket: IssueSurfaceBucket | null
+): string {
+  if (dependencySignal?.hasUnresolvedBlocker) {
+    return dependencySignal.blockerAgeDays !== null
+      ? `blocked for ${pluralize(dependencySignal.blockerAgeDays, 'day')}`
+      : 'blocked by a logged dependency';
+  }
+
+  if (isIssueActive(scoredIssue.issue) && isIssueStale(scoredIssue.issue)) {
+    return 'stalled in progress';
+  }
+
+  if (isIssueNotStarted(scoredIssue.issue) && issueMatchesBucket(scoredIssue.issue, focusBucket)) {
+    return `not started inside ${focusBucket?.title ?? 'the main risk cluster'}`;
+  }
+
+  if (isIssueNotStarted(scoredIssue.issue)) {
+    return 'not started yet';
+  }
+
+  if (isIssueStale(scoredIssue.issue)) {
+    return 'stale open work';
+  }
+
+  if (isIssueActive(scoredIssue.issue)) {
+    return 'active and moving';
+  }
+
+  return 'open but not yet at the top of the risk stack';
+}
+
+function buildHighestImpactIssueDetail(
+  scoredIssue: ScoredIssueSurfaceIssue,
+  dependencySignal: FleetGraphIssueDependencySignal | null,
+  focusBucket: IssueSurfaceBucket | null
+): string {
+  return [
+    'Highest impact',
+    `State: ${formatIssueStateLabel(scoredIssue.issue.state)}`,
+    formatIssueWeekDetail(scoredIssue.issue),
+    formatIssueBusinessValueDetail(scoredIssue),
+    scoredIssue.businessDrivers ? `Drivers: ${scoredIssue.businessDrivers}` : null,
+    `Risk: ${buildIssueRiskDescriptor(scoredIssue, dependencySignal, focusBucket)}`,
+  ]
+    .filter(Boolean)
+    .join(' • ');
+}
+
+function buildStalledIssueDetail(stalledIssue: DecoratedIssueSurfaceIssue): string {
+  const blockerAgeDays = stalledIssue.dependencySignal?.blockerAgeDays ?? null;
+
+  return [
+    'Stalled in progress',
+    `State: ${formatIssueStateLabel(stalledIssue.issue.state)}`,
+    formatIssueWeekDetail(stalledIssue.issue),
+    stalledIssue.issue.assignee_name ? `Owner: ${stalledIssue.issue.assignee_name}` : 'Owner unclear',
+    blockerAgeDays !== null
+      ? `Blocked ${pluralize(blockerAgeDays, 'day')}`
+      : formatRelativeIssueUpdate(stalledIssue.issue.updated_at),
+    stalledIssue.dependencySignal?.blockerSummary
+      ? `Blocker: ${stalledIssue.dependencySignal.blockerSummary}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' • ');
+}
+
+function buildCutCandidateDetail(cutCandidate: DecoratedIssueSurfaceIssue): string {
+  return [
+    'Cut candidate',
+    `State: ${formatIssueStateLabel(cutCandidate.issue.state)}`,
+    formatIssueWeekDetail(cutCandidate.issue),
+    formatIssueBusinessValueDetail(cutCandidate),
+    'Not started and safer to move out than the active or higher-value work on this tab',
+  ]
+    .filter(Boolean)
+    .join(' • ');
 }
 
 function describeProjectBusinessDrivers(project: IssueSurfaceProject | null): string | null {
@@ -771,6 +900,10 @@ export function buildIssueSurfacePageContext(
   const dependencySignalsByIssueId = new Map(
     (dependencySignals?.issues ?? []).map((signal) => [signal.issueId, signal] as const)
   );
+  const decoratedOpenIssues: DecoratedIssueSurfaceIssue[] = scoredOpenIssues.map((scoredIssue) => ({
+    ...scoredIssue,
+    dependencySignal: dependencySignalsByIssueId.get(scoredIssue.issue.id) ?? null,
+  }));
   const blockedIssues = scoredOpenIssues
     .map((scoredIssue) => {
       const dependencySignal = dependencySignalsByIssueId.get(scoredIssue.issue.id);
@@ -798,6 +931,66 @@ export function buildIssueSurfacePageContext(
   const staleBlockedIssues = blockedIssues.filter((issue) => issue.dependencySignal.isStale);
   const topBlockedIssue = blockedIssues[0] ?? null;
   const oldestBlockedAgeDays = dependencySignals?.summary.oldestUnresolvedBlockerDays ?? null;
+  const stalledActiveIssues = decoratedOpenIssues
+    .filter((scoredIssue) =>
+      isIssueActive(scoredIssue.issue) &&
+      (Boolean(scoredIssue.dependencySignal?.hasUnresolvedBlocker) || isIssueStale(scoredIssue.issue))
+    )
+    .sort((left, right) => {
+      if (Number(Boolean(right.dependencySignal?.hasUnresolvedBlocker)) !== Number(Boolean(left.dependencySignal?.hasUnresolvedBlocker))) {
+        return Number(Boolean(right.dependencySignal?.hasUnresolvedBlocker))
+          - Number(Boolean(left.dependencySignal?.hasUnresolvedBlocker));
+      }
+
+      if ((right.dependencySignal?.blockerAgeDays ?? -1) !== (left.dependencySignal?.blockerAgeDays ?? -1)) {
+        return (right.dependencySignal?.blockerAgeDays ?? -1) - (left.dependencySignal?.blockerAgeDays ?? -1);
+      }
+
+      if (Number(isIssueStale(right.issue)) !== Number(isIssueStale(left.issue))) {
+        return Number(isIssueStale(right.issue)) - Number(isIssueStale(left.issue));
+      }
+
+      if (right.combinedAttentionScore !== left.combinedAttentionScore) {
+        return right.combinedAttentionScore - left.combinedAttentionScore;
+      }
+
+      return right.issue.ticket_number - left.issue.ticket_number;
+    });
+  const topStalledIssue =
+    stalledActiveIssues.find((issue) => issue.issue.id !== topBlockedIssue?.issue.id) ?? null;
+  const cutCandidateIssues = decoratedOpenIssues
+    .filter((scoredIssue) => isIssueNotStarted(scoredIssue.issue) && !scoredIssue.dependencySignal?.hasUnresolvedBlocker)
+    .sort((left, right) => {
+      const leftBacklog = Number(getSprintId(left.issue) === null);
+      const rightBacklog = Number(getSprintId(right.issue) === null);
+      if (rightBacklog !== leftBacklog) {
+        return rightBacklog - leftBacklog;
+      }
+
+      const leftBusinessValue = left.businessValueScore ?? 50;
+      const rightBusinessValue = right.businessValueScore ?? 50;
+      if (leftBusinessValue !== rightBusinessValue) {
+        return leftBusinessValue - rightBusinessValue;
+      }
+
+      const priorityDelta = getPriorityRank(right.issue.priority) - getPriorityRank(left.issue.priority);
+      if (priorityDelta !== 0) {
+        return priorityDelta;
+      }
+
+      if (Number(isIssueStale(right.issue)) !== Number(isIssueStale(left.issue))) {
+        return Number(isIssueStale(right.issue)) - Number(isIssueStale(left.issue));
+      }
+
+      return left.issue.ticket_number - right.issue.ticket_number;
+    });
+  const topCutCandidate =
+    cutCandidateIssues.find(
+      (issue) =>
+        issue.issue.id !== topBlockedIssue?.issue.id &&
+        issue.issue.id !== topStalledIssue?.issue.id &&
+        issue.issue.id !== topImpactIssue?.issue.id
+    ) ?? cutCandidateIssues[0] ?? null;
 
   const summary = (() => {
     if (visibleIssues.length === 0) {
@@ -816,6 +1009,11 @@ export function buildIssueSurfacePageContext(
           : null;
 
       return `${scope.title} has explicit blocker evidence on this issues surface. ${displayId} is currently blocked${blockerAge ? ` and has been sitting for ${blockerAge}` : ''}${topBlockedIssue.issue.assignee_name ? ` under ${topBlockedIssue.issue.assignee_name}` : ''}.${staleBlockedIssues.length > 1 ? ` ${pluralize(staleBlockedIssues.length, 'blocked issue')} have been stuck for at least 3 days.` : ''}`;
+    }
+
+    if (topStalledIssue) {
+      const displayId = topStalledIssue.issue.display_id ?? `#${topStalledIssue.issue.ticket_number}`;
+      return `${scope.title} has active work that looks stalled on this issues surface. ${displayId} is still ${formatIssueStateLabel(topStalledIssue.issue.state).toLowerCase()}${topStalledIssue.issue.assignee_name ? ` under ${topStalledIssue.issue.assignee_name}` : ''}${isIssueStale(topStalledIssue.issue) ? ' and has gone stale' : ''}.${notStartedIssues.length > 0 ? ` ${pluralize(notStartedIssues.length, 'visible issue')} are still not started behind it.` : ''}`;
     }
 
     if (staleOpenIssues.length > 0) {
@@ -839,6 +1037,11 @@ export function buildIssueSurfacePageContext(
           ? `Business value ${topImpactIssue.businessValueScore}/100.`
           : null,
         topImpactIssue.businessDrivers ? `${topImpactIssue.businessDrivers}.` : null,
+        `Current risk: ${buildIssueRiskDescriptor(
+          topImpactIssue,
+          dependencySignalsByIssueId.get(topImpactIssue.issue.id) ?? null,
+          focusBucket
+        )}.`,
       ]
         .filter(Boolean)
         .join(' ')
@@ -859,6 +1062,37 @@ export function buildIssueSurfacePageContext(
         .filter(Boolean)
         .join(' ')
     : null;
+  const stalledActionReason = topStalledIssue
+    ? [
+        `${topStalledIssue.issue.display_id ?? `#${topStalledIssue.issue.ticket_number}`} looks stalled while still ${formatIssueStateLabel(topStalledIssue.issue.state).toLowerCase()}.`,
+        topStalledIssue.issue.assignee_name ? `Owner: ${topStalledIssue.issue.assignee_name}.` : 'Owner is still unclear.',
+        formatRelativeIssueUpdate(topStalledIssue.issue.updated_at)
+          ? `${formatRelativeIssueUpdate(topStalledIssue.issue.updated_at)}.`
+          : null,
+        topStalledIssue.dependencySignal?.blockerSummary
+          ? `Blocker: ${topStalledIssue.dependencySignal.blockerSummary}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : null;
+  const cutCandidateActionReason = topCutCandidate
+    ? [
+        `${topCutCandidate.issue.display_id ?? `#${topCutCandidate.issue.ticket_number}`} is not started yet.`,
+        formatIssueBusinessValueDetail(topCutCandidate)?.replace(':', '') ?? null,
+        'Safer to move out than the active or higher-value work on this tab.',
+        topImpactIssue?.issue.display_id ? `Keeps ${topImpactIssue.issue.display_id} protected.` : null,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : null;
+  const topAdditionalAttentionIssues = topAttentionIssues.filter(
+    (issue) =>
+      issue.id !== topImpactIssue?.issue.id &&
+      issue.id !== topBlockedIssue?.issue.id &&
+      issue.id !== topStalledIssue?.issue.id &&
+      issue.id !== topCutCandidate?.issue.id
+  );
 
   return {
     kind: 'issue_surface',
@@ -871,6 +1105,7 @@ export function buildIssueSurfacePageContext(
       blockedIssues.length > 0 ? { label: 'Blocked issues', value: String(blockedIssues.length) } : null,
       staleBlockedIssues.length > 0 ? { label: 'Stale blockers', value: String(staleBlockedIssues.length) } : null,
       oldestBlockedAgeDays !== null ? { label: 'Oldest blocker', value: `${pluralize(oldestBlockedAgeDays, 'day')}` } : null,
+      stalledActiveIssues.length > 0 ? { label: 'Stalled active', value: String(stalledActiveIssues.length) } : null,
       { label: 'Not started', value: String(notStartedIssues.length) },
       { label: 'In progress', value: String(inProgressCount) },
       staleOpenIssues.length > 0 ? { label: 'Stale open', value: String(staleOpenIssues.length) } : null,
@@ -884,9 +1119,6 @@ export function buildIssueSurfacePageContext(
       topImpactIssue?.businessValueScore !== null && topImpactIssue?.businessValueScore !== undefined
         ? { label: 'Business value', value: `${topImpactIssue.businessValueScore}/100` }
         : null,
-      topAttentionIssue?.issue.display_id
-        ? { label: 'Top attention issue', value: topAttentionIssue.issue.display_id }
-        : null,
     ]),
     items: buildItems([
       topBlockedIssue
@@ -898,23 +1130,37 @@ export function buildIssueSurfacePageContext(
             route: `/documents/${topBlockedIssue.issue.id}`,
           }
         : null,
+      topStalledIssue
+        ? {
+            label: topStalledIssue.issue.display_id
+              ? `${topStalledIssue.issue.display_id} ${topStalledIssue.issue.title}`
+              : topStalledIssue.issue.title,
+            detail: buildStalledIssueDetail(topStalledIssue),
+            route: `/documents/${topStalledIssue.issue.id}`,
+          }
+        : null,
       topImpactIssue
         && topImpactIssue.issue.id !== topBlockedIssue?.issue.id
+        && topImpactIssue.issue.id !== topStalledIssue?.issue.id
         ? {
             label: topImpactIssue.issue.display_id
               ? `${topImpactIssue.issue.display_id} ${topImpactIssue.issue.title}`
               : topImpactIssue.issue.title,
-            detail: [
-              'Highest impact',
-              topImpactIssue.project?.title ? `Project: ${topImpactIssue.project.title}` : null,
-              topImpactIssue.businessValueScore !== null
-                ? `Business value: ${topImpactIssue.businessValueScore}/100`
-                : null,
-              topImpactIssue.businessDrivers ? `Drivers: ${topImpactIssue.businessDrivers}` : null,
-            ]
-              .filter(Boolean)
-              .join(' • '),
+            detail: buildHighestImpactIssueDetail(
+              topImpactIssue,
+              dependencySignalsByIssueId.get(topImpactIssue.issue.id) ?? null,
+              focusBucket
+            ),
             route: `/documents/${topImpactIssue.issue.id}`,
+          }
+        : null,
+      topCutCandidate
+        ? {
+            label: topCutCandidate.issue.display_id
+              ? `${topCutCandidate.issue.display_id} ${topCutCandidate.issue.title}`
+              : topCutCandidate.issue.title,
+            detail: buildCutCandidateDetail(topCutCandidate),
+            route: `/documents/${topCutCandidate.issue.id}`,
           }
         : null,
       focusBucket
@@ -924,8 +1170,7 @@ export function buildIssueSurfacePageContext(
             route: focusBucket.route,
           }
         : null,
-      ...topAttentionIssues
-        .filter((issue) => issue.id !== topImpactIssue?.issue.id && issue.id !== topBlockedIssue?.issue.id)
+      ...topAdditionalAttentionIssues
         .slice(0, 2)
         .map((issue) => ({
         label: issue.display_id ? `${issue.display_id} ${issue.title}` : issue.title,
@@ -939,7 +1184,7 @@ export function buildIssueSurfacePageContext(
           .join(' • '),
         route: `/documents/${issue.id}`,
         })),
-    ]),
+    ], 6),
     actions: buildActions([
       topBlockedIssue
         ? createPageAction(
@@ -949,6 +1194,28 @@ export function buildIssueSurfacePageContext(
               intent: 'follow_up',
               reason: blockerActionReason,
               owner: topBlockedIssue.issue.assignee_name,
+            }
+          )
+        : null,
+      topStalledIssue
+        ? createPageAction(
+            `Follow up on stalled ${topStalledIssue.issue.display_id ?? `#${topStalledIssue.issue.ticket_number}`}`,
+            `/documents/${topStalledIssue.issue.id}`,
+            {
+              intent: 'follow_up',
+              reason: stalledActionReason,
+              owner: topStalledIssue.issue.assignee_name,
+            }
+          )
+        : null,
+      topCutCandidate
+        ? createPageAction(
+            `Review cut candidate ${topCutCandidate.issue.display_id ?? `#${topCutCandidate.issue.ticket_number}`}`,
+            `/documents/${topCutCandidate.issue.id}`,
+            {
+              intent: 'prioritize',
+              reason: cutCandidateActionReason,
+              owner: topCutCandidate.issue.assignee_name,
             }
           )
         : null,
@@ -969,8 +1236,7 @@ export function buildIssueSurfacePageContext(
             reason: focusBucketActionReason,
           })
         : null,
-      ...topAttentionIssues
-        .filter((issue) => issue.id !== topImpactIssue?.issue.id)
+      ...topAdditionalAttentionIssues
         .slice(0, 2)
         .map((issue) =>
           createPageAction(`Open ${issue.display_id ?? `#${issue.ticket_number}`}`, `/documents/${issue.id}`, {
@@ -991,7 +1257,7 @@ export function buildIssueSurfacePageContext(
             owner: issue.assignee_name,
           })
         ),
-    ]),
+    ], 6),
   };
 }
 
