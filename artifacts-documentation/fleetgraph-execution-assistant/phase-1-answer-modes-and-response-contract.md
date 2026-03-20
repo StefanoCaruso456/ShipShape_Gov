@@ -124,3 +124,14 @@ Phase 1 is complete when:
 ## What Phase 1 Unlocks
 
 Once this phase is in place, Phase 2 can safely deepen My Week and current-view context without piling richer reasoning onto the wrong UI contract.
+
+## Status
+
+As of 2026-03-20:
+
+- implementation: complete
+- targeted verification: complete
+- merged to `main`: complete
+- live on production: complete
+
+So yes: Phase 1 is complete and done.
