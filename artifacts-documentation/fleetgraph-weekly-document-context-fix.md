@@ -19,6 +19,25 @@ The fix has two parts:
 1. The document API now returns `belongs_to` associations for `weekly_plan` and `weekly_retro` documents.
 2. FleetGraph now derives the weekly document's `projectId` from the real `belongs_to` project association first, then falls back to the legacy `properties.project_id` only if needed.
 
+```mermaid
+flowchart LR
+  A["User opens Weekly Plan or Weekly Retro page"] --> B["UnifiedDocumentPage loads current document"]
+  B --> C["GET /api/documents/:id"]
+  C --> D["Document response includes weekly document data"]
+  D --> E["belongs_to contains project association"]
+  D --> F["legacy properties.project_id fallback"]
+  E --> G["extractFleetGraphProjectIdFromDocument()"]
+  F --> G
+  G --> H["setCurrentDocument(id, type, projectId, tab)"]
+  H --> I["buildFleetGraphActiveViewContext()"]
+  I --> J["FleetGraph active_view is project-scoped"]
+  B --> K["useFleetGraphPageContext() builds page snapshot"]
+  J --> L["FleetGraph drawer sends active_view + page_context"]
+  K --> L
+  L --> M["Backend on-demand graph uses correct project-linked context"]
+  M --> N["FleetGraph answers for the Weekly Plan or Weekly Retro page"]
+```
+
 Key files:
 
 - `api/src/routes/documents.ts`
