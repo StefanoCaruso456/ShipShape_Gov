@@ -118,9 +118,9 @@ As of 2026-03-20:
 
 Phase 4 unlocks Phase 5:
 
-- sharper actions and in-app routing tied to the stronger conversational flow
+- [phase-5-business-value-scoring.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-5-business-value-scoring.md)
 
-That order is intentional. Better conversational prompts help users ask the right question first, but the next step still needs tighter actions, owner targeting, and route precision.
+That order is intentional. Better conversational prompts help users ask the right question first, but FleetGraph still needs a clearer notion of business value before it can decide which risky work matters most.
 
 ## Delivery Status
 

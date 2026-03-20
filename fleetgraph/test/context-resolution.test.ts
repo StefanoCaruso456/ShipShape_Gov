@@ -429,4 +429,77 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.reasoning?.whyNow).toContain('visible issues on the current tab');
     expect(result.reasoning?.recommendedNextStep).toContain('Open Week 3');
   });
+
+  it('answers highest-impact issue questions from issue-surface business value signals', async () => {
+    const graph = createFleetGraph();
+    const runtime = createFleetGraphRuntime({
+      now: () => new Date('2026-03-20T12:00:00.000Z'),
+    });
+
+    const result = await graph.invoke(
+      {
+        runId: 'issue-surface-impact-context',
+        mode: 'on_demand',
+        triggerType: 'user_invoke',
+        workspaceId: 'workspace-1',
+        actor: {
+          id: 'user-1',
+          kind: 'user',
+          role: 'pm',
+        },
+        activeView: null,
+        contextEntity: null,
+        prompt: {
+          question: 'What issue is high impact?',
+          pageContext: {
+            kind: 'issue_surface',
+            route: '/documents/program-1/issues',
+            title: 'API Platform Issues',
+            summary:
+              'API Platform has visible delivery risk from stale work. 1 open issue has not moved in at least 3 days, and Week 3 is carrying the heaviest open cluster.',
+            emptyState: false,
+            metrics: [
+              { label: 'Visible issues', value: '5' },
+              { label: 'Stale open', value: '1' },
+              { label: 'Risk cluster', value: 'Week 3' },
+              { label: 'Highest impact issue', value: '#14' },
+              { label: 'Highest impact project', value: 'Performance' },
+              { label: 'Business value', value: '87/100' },
+            ],
+            items: [
+              {
+                label: '#14 Expand test coverage',
+                detail: 'Highest impact • Project: Performance • Business value: 87/100 • Drivers: ROI 5/5 + Growth 5/5',
+                route: '/documents/issue-3',
+              },
+            ],
+            actions: [
+              {
+                label: 'Open highest-impact #14',
+                route: '/documents/issue-3',
+              },
+              {
+                label: 'Open Week 3',
+                route: '/documents/week-3/issues',
+              },
+            ],
+          },
+        },
+        trace: {
+          runName: 'fleetgraph-issue-surface-impact-context-test',
+          tags: ['fleetgraph', 'test', 'issue-surface', 'business-value'],
+        },
+      } satisfies FleetGraphRunInput,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'issue-surface-impact-context',
+      })
+    );
+
+    expect(result.status).toBe('completed');
+    expect(result.stage).toBe('current_view_reasoned');
+    expect(result.reasoning?.answerMode).toBe('execution');
+    expect(result.reasoning?.summary).toContain('#14 is the highest-impact visible issue');
+    expect(result.reasoning?.summary).toContain('87/100');
+    expect(result.reasoning?.recommendedNextStep).toContain('Open highest-impact #14');
+  });
 });

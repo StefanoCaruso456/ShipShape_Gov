@@ -5,7 +5,7 @@ import { MultiPersonCombobox } from '@/components/MultiPersonCombobox';
 import { ProgramCombobox } from '@/components/ProgramCombobox';
 import { PropertyRow } from '@/components/ui/PropertyRow';
 import { ApprovalButton } from '@/components/ApprovalButton';
-import { computeICEScore, type ApprovalTracking } from '@ship/shared';
+import { computeBusinessValueScore, computeICEScore, type ApprovalTracking } from '@ship/shared';
 
 const PROJECT_COLORS = [
   '#6366f1', // Indigo
@@ -30,6 +30,11 @@ interface Project {
   confidence: number | null;
   ease: number | null;
   ice_score?: number | null;
+  roi: number | null;
+  retention: number | null;
+  acquisition: number | null;
+  growth: number | null;
+  business_value_score?: number | null;
   color: string;
   emoji: string | null;
   program_id: string | null;
@@ -96,6 +101,12 @@ export function ProjectSidebar({
   const isHighlighted = (field: string) => highlightedFields.includes(field);
   // Compute ICE score from current values (null if any value is unset)
   const iceScore = computeICEScore(project.impact, project.confidence, project.ease);
+  const businessValueScore = computeBusinessValueScore(
+    project.roi,
+    project.retention,
+    project.acquisition,
+    project.growth
+  );
 
   return (
     <div className="space-y-4 p-4">
@@ -137,6 +148,16 @@ export function ProjectSidebar({
         </div>
         <div className="text-xs text-muted">
           {project.impact ?? '—'} × {project.confidence ?? '—'} × {project.ease ?? '—'} = {iceScore ?? '—'}
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border bg-emerald-500/10 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-muted uppercase tracking-wide">Business Value</span>
+          <span className="text-2xl font-bold text-emerald-300 tabular-nums">{businessValueScore ?? '—'}</span>
+        </div>
+        <div className="text-xs text-muted">
+          Weighted from ROI, retention, acquisition, and growth on a 0-100 scale.
         </div>
       </div>
 
@@ -182,6 +203,62 @@ export function ProjectSidebar({
           onChange={(value) => onUpdate({ ease: value })}
           aria-label="Ease"
           highlighted={isHighlighted('ease')}
+        />
+      </PropertyRow>
+
+      <PropertyRow
+        label="ROI"
+        tooltip={`Expected return on investment:\n5 - Clear outsized return\n4 - Strong return\n3 - Solid return\n2 - Limited return\n1 - Marginal return`}
+        highlighted={isHighlighted('roi')}
+      >
+        <p className="text-xs text-muted mb-2">How strongly does this pay back the investment?</p>
+        <ICESlider
+          value={project.roi}
+          onChange={(value) => onUpdate({ roi: value })}
+          aria-label="ROI"
+          highlighted={isHighlighted('roi')}
+        />
+      </PropertyRow>
+
+      <PropertyRow
+        label="Retention"
+        tooltip={`Expected retention impact:\n5 - Directly protects core retention\n4 - Meaningful retention lift\n3 - Moderate retention help\n2 - Small retention effect\n1 - Little retention change`}
+        highlighted={isHighlighted('retention')}
+      >
+        <p className="text-xs text-muted mb-2">How much does this protect or improve retention?</p>
+        <ICESlider
+          value={project.retention}
+          onChange={(value) => onUpdate({ retention: value })}
+          aria-label="Retention"
+          highlighted={isHighlighted('retention')}
+        />
+      </PropertyRow>
+
+      <PropertyRow
+        label="Acquisition"
+        tooltip={`Expected acquisition impact:\n5 - Direct acquisition driver\n4 - Strong acquisition support\n3 - Moderate acquisition help\n2 - Small acquisition effect\n1 - Little acquisition change`}
+        highlighted={isHighlighted('acquisition')}
+      >
+        <p className="text-xs text-muted mb-2">How much does this help acquire new users or customers?</p>
+        <ICESlider
+          value={project.acquisition}
+          onChange={(value) => onUpdate({ acquisition: value })}
+          aria-label="Acquisition"
+          highlighted={isHighlighted('acquisition')}
+        />
+      </PropertyRow>
+
+      <PropertyRow
+        label="Growth"
+        tooltip={`Expected growth leverage:\n5 - Multiplicative growth lever\n4 - Strong growth unlock\n3 - Moderate growth support\n2 - Limited growth effect\n1 - Little growth change`}
+        highlighted={isHighlighted('growth')}
+      >
+        <p className="text-xs text-muted mb-2">How much does this unlock growth over time?</p>
+        <ICESlider
+          value={project.growth}
+          onChange={(value) => onUpdate({ growth: value })}
+          aria-label="Growth"
+          highlighted={isHighlighted('growth')}
         />
       </PropertyRow>
 

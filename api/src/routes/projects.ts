@@ -3,7 +3,7 @@ import { pool } from '../db/client.js';
 import { z } from 'zod';
 import { getVisibilityContext, VISIBILITY_FILTER_SQL } from '../middleware/visibility.js';
 import { authMiddleware, getAuthContext } from '../middleware/auth.js';
-import { DEFAULT_PROJECT_PROPERTIES, computeICEScore } from '@ship/shared';
+import { DEFAULT_PROJECT_PROPERTIES, computeBusinessValueScore, computeICEScore } from '@ship/shared';
 import { checkDocumentCompleteness } from '../utils/extractHypothesis.js';
 import { logDocumentChange, getLatestDocumentFieldHistory } from '../utils/document-crud.js';
 import { broadcastToUser } from '../collaboration/index.js';
@@ -21,6 +21,10 @@ function extractProjectFromRow(row: any) {
   const impact = props.impact !== undefined ? props.impact : null;
   const confidence = props.confidence !== undefined ? props.confidence : null;
   const ease = props.ease !== undefined ? props.ease : null;
+  const roi = props.roi !== undefined ? props.roi : null;
+  const retention = props.retention !== undefined ? props.retention : null;
+  const acquisition = props.acquisition !== undefined ? props.acquisition : null;
+  const growth = props.growth !== undefined ? props.growth : null;
 
   return {
     id: row.id,
@@ -30,6 +34,12 @@ function extractProjectFromRow(row: any) {
     confidence,
     ease,
     ice_score: computeICEScore(impact, confidence, ease),
+    // Business value properties
+    roi,
+    retention,
+    acquisition,
+    growth,
+    business_value_score: computeBusinessValueScore(roi, retention, acquisition, growth),
     // Visual properties
     color: props.color || DEFAULT_PROJECT_PROPERTIES.color,
     emoji: props.emoji || null,
@@ -80,6 +90,10 @@ const createProjectSchema = z.object({
   impact: iceScoreSchema.optional().nullable().default(null),
   confidence: iceScoreSchema.optional().nullable().default(null),
   ease: iceScoreSchema.optional().nullable().default(null),
+  roi: iceScoreSchema.optional().nullable().default(null),
+  retention: iceScoreSchema.optional().nullable().default(null),
+  acquisition: iceScoreSchema.optional().nullable().default(null),
+  growth: iceScoreSchema.optional().nullable().default(null),
   owner_id: z.string().uuid().optional().nullable().default(null), // R - Responsible (does the work)
   accountable_id: z.string().uuid().optional().nullable().default(null), // A - Accountable (approver)
   consulted_ids: z.array(z.string().uuid()).optional().default([]), // C - Consulted (provide input)
@@ -96,6 +110,10 @@ const updateProjectSchema = z.object({
   impact: iceScoreSchema.optional().nullable(),
   confidence: iceScoreSchema.optional().nullable(),
   ease: iceScoreSchema.optional().nullable(),
+  roi: iceScoreSchema.optional().nullable(),
+  retention: iceScoreSchema.optional().nullable(),
+  acquisition: iceScoreSchema.optional().nullable(),
+  growth: iceScoreSchema.optional().nullable(),
   owner_id: z.string().uuid().optional().nullable(), // R - Responsible (can be cleared)
   accountable_id: z.string().uuid().optional().nullable(), // A - Accountable (can be cleared)
   consulted_ids: z.array(z.string().uuid()).optional(), // C - Consulted
@@ -307,7 +325,20 @@ async function generatePrefilledRetroContent(projectData: any, sprints: any[], i
 }
 
 // Valid sort fields for projects
-const VALID_SORT_FIELDS = ['ice_score', 'impact', 'confidence', 'ease', 'title', 'updated_at', 'created_at'];
+const VALID_SORT_FIELDS = [
+  'ice_score',
+  'business_value_score',
+  'impact',
+  'confidence',
+  'ease',
+  'roi',
+  'retention',
+  'acquisition',
+  'growth',
+  'title',
+  'updated_at',
+  'created_at',
+];
 
 function getProjectOrderByClause(
   sortField: string,
@@ -318,7 +349,36 @@ function getProjectOrderByClause(
     return `((COALESCE((${tableAlias}.properties->>'impact')::int, 3) * COALESCE((${tableAlias}.properties->>'confidence')::int, 3) * COALESCE((${tableAlias}.properties->>'ease')::int, 3))) ${sortDir}`;
   }
 
-  if (['impact', 'confidence', 'ease'].includes(sortField)) {
+  if (sortField === 'business_value_score') {
+    return `(
+      CASE
+        WHEN (${tableAlias}.properties->>'roi') IS NULL
+         AND (${tableAlias}.properties->>'retention') IS NULL
+         AND (${tableAlias}.properties->>'acquisition') IS NULL
+         AND (${tableAlias}.properties->>'growth') IS NULL
+        THEN NULL
+        ELSE ROUND(
+          (
+            (
+              COALESCE((${tableAlias}.properties->>'roi')::numeric * 0.35, 0) +
+              COALESCE((${tableAlias}.properties->>'retention')::numeric * 0.25, 0) +
+              COALESCE((${tableAlias}.properties->>'acquisition')::numeric * 0.20, 0) +
+              COALESCE((${tableAlias}.properties->>'growth')::numeric * 0.20, 0)
+            ) /
+            NULLIF(
+              (CASE WHEN (${tableAlias}.properties->>'roi') IS NOT NULL THEN 0.35 ELSE 0 END) +
+              (CASE WHEN (${tableAlias}.properties->>'retention') IS NOT NULL THEN 0.25 ELSE 0 END) +
+              (CASE WHEN (${tableAlias}.properties->>'acquisition') IS NOT NULL THEN 0.20 ELSE 0 END) +
+              (CASE WHEN (${tableAlias}.properties->>'growth') IS NOT NULL THEN 0.20 ELSE 0 END),
+              0
+            )
+          ) / 5 * 100
+        )
+      END
+    ) ${sortDir}`;
+  }
+
+  if (['impact', 'confidence', 'ease', 'roi', 'retention', 'acquisition', 'growth'].includes(sortField)) {
     return `COALESCE((${tableAlias}.properties->>'${sortField}')::int, 3) ${sortDir}`;
   }
 
@@ -545,13 +605,35 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       return;
     }
 
-    const { title, impact, confidence, ease, owner_id, accountable_id, consulted_ids, informed_ids, color, emoji, program_id, plan, target_date } = parsed.data;
+    const {
+      title,
+      impact,
+      confidence,
+      ease,
+      roi,
+      retention,
+      acquisition,
+      growth,
+      owner_id,
+      accountable_id,
+      consulted_ids,
+      informed_ids,
+      color,
+      emoji,
+      program_id,
+      plan,
+      target_date,
+    } = parsed.data;
 
     // Build properties JSONB with RACI fields
     const properties: Record<string, unknown> = {
       impact,
       confidence,
       ease,
+      roi,
+      retention,
+      acquisition,
+      growth,
       owner_id, // R - Responsible
       accountable_id, // A - Accountable
       consulted_ids, // C - Consulted
@@ -682,6 +764,26 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
     if (data.ease !== undefined) {
       newProps.ease = data.ease;
+      propsChanged = true;
+    }
+
+    if (data.roi !== undefined) {
+      newProps.roi = data.roi;
+      propsChanged = true;
+    }
+
+    if (data.retention !== undefined) {
+      newProps.retention = data.retention;
+      propsChanged = true;
+    }
+
+    if (data.acquisition !== undefined) {
+      newProps.acquisition = data.acquisition;
+      propsChanged = true;
+    }
+
+    if (data.growth !== undefined) {
+      newProps.growth = data.growth;
       propsChanged = true;
     }
 

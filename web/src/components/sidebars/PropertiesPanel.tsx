@@ -66,6 +66,11 @@ interface ProjectDocument extends BaseDocument {
   confidence: number | null;
   ease: number | null;
   ice_score?: number | null;
+  roi: number | null;
+  retention: number | null;
+  acquisition: number | null;
+  growth: number | null;
+  business_value_score?: number | null;
   color: string;
   emoji: string | null;
   program_id: string | null;
