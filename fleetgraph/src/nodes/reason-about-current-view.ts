@@ -7,6 +7,26 @@ import { createHandoff } from '../supervision.js';
 import type { FleetGraphReasoning } from '../types.js';
 
 type ReasonAboutCurrentViewTargets = 'completeRun' | 'fallback';
+type FleetGraphCurrentViewAnswerMode = FleetGraphReasoning['answerMode'];
+
+function getAnswerMode(pageContext: FleetGraphPageContext): FleetGraphCurrentViewAnswerMode {
+  switch (pageContext.kind) {
+    case 'dashboard':
+    case 'programs':
+    case 'projects':
+    case 'issues':
+    case 'documents':
+    case 'team_directory':
+    case 'settings':
+      return 'launcher';
+    case 'my_week':
+    case 'document':
+    case 'person':
+    case 'generic':
+    default:
+      return 'context';
+  }
+}
 
 function buildEvidence(pageContext: FleetGraphPageContext): string[] {
   const metricEvidence = pageContext.metrics.map((metric) => `${metric.label}: ${metric.value}`);
@@ -34,6 +54,8 @@ function buildRecommendedNextStep(pageContext: FleetGraphPageContext): string | 
   }
 
   switch (pageContext.kind) {
+    case 'my_week':
+      return 'Use this My Week surface to decide the next follow-up, weekly doc, or project that needs attention right now.';
     case 'programs':
       return 'Open the program that looks most active or least clear so you can inspect its projects, issues, and current sprint.';
     case 'projects':
@@ -57,8 +79,13 @@ function buildRecommendedNextStep(pageContext: FleetGraphPageContext): string | 
 function buildSummary(pageContext: FleetGraphPageContext, question: string | null): string {
   const normalizedQuestion = question?.trim().toLowerCase() ?? '';
   const summary = pageContext.summary;
+  const answerMode = getAnswerMode(pageContext);
 
   if (!normalizedQuestion) {
+    if (answerMode === 'launcher' && !pageContext.emptyState) {
+      return `${summary} Use this surface to choose the next document, project, program, or person to open instead of treating the list itself as an execution-health verdict.`;
+    }
+
     return summary;
   }
 
@@ -67,9 +94,17 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     normalizedQuestion.includes('what should happen') ||
     normalizedQuestion.includes('what do i do')
   ) {
+    if (pageContext.kind === 'my_week') {
+      return pageContext.emptyState
+        ? `${summary} There is no active weekly work in view yet, so start by creating or opening the plan, retro, or project that should anchor this week.`
+        : `${summary} This My Week view is best used to decide the next follow-up, weekly artifact, or project action that should move today.`;
+    }
+
     return pageContext.emptyState
       ? `${summary} There is no active work on this page yet, so the next move is to create or open the right work surface first.`
-      : `${summary} This page is best used to decide what to open or follow up on next.`;
+      : answerMode === 'launcher'
+        ? `${summary} This page is best used to decide what to open next, who to inspect next, or where to follow up from here.`
+        : `${summary} This page is best used to decide what to open or follow up on next.`;
   }
 
   if (
@@ -77,7 +112,13 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     normalizedQuestion.includes('at risk') ||
     normalizedQuestion.includes('blocked')
   ) {
-    return `${summary} This page gives portfolio and navigation context rather than full sprint-risk evidence, so use it to identify the right work to inspect next.`;
+    if (pageContext.kind === 'my_week') {
+      return `${summary} This My Week view already shows weekly execution signals, so use it to spot what is slipping before you drill into the underlying document or project.`;
+    }
+
+    return answerMode === 'launcher'
+      ? `${summary} This is a launcher surface, so FleetGraph is using the visible page context to point you toward the right work to inspect next rather than claiming this list alone proves execution risk.`
+      : `${summary} This page gives portfolio and navigation context rather than full sprint-risk evidence, so use it to identify the right work to inspect next.`;
   }
 
   if (
@@ -88,16 +129,35 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     return summary;
   }
 
-  return `${summary} FleetGraph is grounding this answer in the current page snapshot rather than a sprint-only view.`;
+  return answerMode === 'launcher'
+    ? `${summary} FleetGraph is grounding this answer in the current page snapshot so it can guide the next thing to open from this surface.`
+    : `${summary} FleetGraph is grounding this answer in the current page snapshot rather than a sprint-only view.`;
+}
+
+function buildWhyNow(
+  pageContext: FleetGraphPageContext,
+  answerMode: FleetGraphCurrentViewAnswerMode
+): string {
+  if (answerMode === 'launcher') {
+    return 'This answer is grounded in the current page snapshot. FleetGraph is using this launcher surface to guide what to open next rather than score execution health from the list alone.';
+  }
+
+  if (pageContext.kind === 'my_week') {
+    return 'This answer is grounded in the work visible on your current My Week view, which can help you decide what to follow up on or open next without leaving the weekly workflow.';
+  }
+
+  return 'This answer is grounded in the work visible on the page you are currently viewing.';
 }
 
 function buildReasoning(pageContext: FleetGraphPageContext, question: string | null): FleetGraphReasoning {
   const evidence = buildEvidence(pageContext);
+  const answerMode = getAnswerMode(pageContext);
 
   return {
+    answerMode,
     summary: buildSummary(pageContext, question),
     evidence,
-    whyNow: 'This answer is grounded in the work visible on the page you are currently viewing.',
+    whyNow: buildWhyNow(pageContext, answerMode),
     recommendedNextStep: buildRecommendedNextStep(pageContext),
     confidence: evidence.length >= 3 ? 'high' : evidence.length > 0 ? 'medium' : 'low',
   };

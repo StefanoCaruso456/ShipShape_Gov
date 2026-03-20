@@ -78,6 +78,12 @@ const pageContextSchema = z.object({
       route: z.string().trim().min(1).nullable().optional(),
     })
   ).max(10),
+  actions: z.array(
+    z.object({
+      label: z.string().trim().min(1),
+      route: z.string().trim().min(1),
+    })
+  ).max(6).optional(),
 });
 
 const onDemandRequestSchema = z.object({
