@@ -83,6 +83,9 @@ const pageContextSchema = z.object({
     z.object({
       label: z.string().trim().min(1),
       route: z.string().trim().min(1),
+      intent: z.enum(['inspect', 'prioritize', 'follow_up', 'write', 'complete']).optional(),
+      reason: z.string().trim().max(500).nullable().optional(),
+      owner: z.string().trim().max(200).nullable().optional(),
     })
   ).max(6).optional(),
 });

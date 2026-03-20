@@ -56,9 +56,19 @@ export interface FleetGraphPageContextItem {
   route?: string | null;
 }
 
+export type FleetGraphPageContextActionIntent =
+  | 'inspect'
+  | 'prioritize'
+  | 'follow_up'
+  | 'write'
+  | 'complete';
+
 export interface FleetGraphPageContextAction {
   label: string;
   route: string;
+  intent?: FleetGraphPageContextActionIntent;
+  reason?: string | null;
+  owner?: string | null;
 }
 
 export interface FleetGraphPageContext {

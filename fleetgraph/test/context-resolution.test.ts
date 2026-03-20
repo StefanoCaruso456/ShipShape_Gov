@@ -405,8 +405,10 @@ describe('FleetGraph non-week context resolution', () => {
             ],
             actions: [
               {
-                label: 'Open Week 3',
+                label: 'Open risk cluster Week 3',
                 route: '/documents/week-3/issues',
+                intent: 'prioritize',
+                reason: 'Week 3 holds 3 open issues with 2 issues still not started.',
               },
             ],
           },
@@ -427,7 +429,7 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.reasoning?.answerMode).toBe('execution');
     expect(result.reasoning?.summary).toContain('does not show a named blocker');
     expect(result.reasoning?.whyNow).toContain('visible issues on the current tab');
-    expect(result.reasoning?.recommendedNextStep).toContain('Open Week 3');
+    expect(result.reasoning?.recommendedNextStep).toContain('Open risk cluster Week 3');
   });
 
   it('answers highest-impact issue questions from issue-surface business value signals', async () => {
@@ -477,10 +479,15 @@ describe('FleetGraph non-week context resolution', () => {
               {
                 label: 'Open highest-impact #14',
                 route: '/documents/issue-3',
+                intent: 'prioritize',
+                reason: '#14 carries the strongest business value signal on this tab. Business value 87/100.',
+                owner: 'stefano caruso',
               },
               {
-                label: 'Open Week 3',
+                label: 'Open risk cluster Week 3',
                 route: '/documents/week-3/issues',
+                intent: 'prioritize',
+                reason: 'Week 3 holds 3 open issues with 2 issues still not started.',
               },
             ],
           },

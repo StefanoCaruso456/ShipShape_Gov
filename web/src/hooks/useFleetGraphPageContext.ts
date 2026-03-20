@@ -1,7 +1,12 @@
 import { useMemo } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import type { FleetGraphActiveViewContext, FleetGraphPageContext } from '@ship/shared';
+import type {
+  FleetGraphActiveViewContext,
+  FleetGraphPageContext,
+  FleetGraphPageContextAction,
+  FleetGraphPageContextActionIntent,
+} from '@ship/shared';
 import { useCurrentDocument } from '@/contexts/CurrentDocumentContext';
 import { useDocuments } from '@/contexts/DocumentsContext';
 import { useIssues } from '@/contexts/IssuesContext';
@@ -24,10 +29,7 @@ import { useTeamMembersQuery } from '@/hooks/useTeamMembersQuery';
 import { useActiveWeeksQuery } from '@/hooks/useWeeksQuery';
 
 type FleetGraphPageContextWithActions = FleetGraphPageContext & {
-  actions?: Array<{
-    label: string;
-    route: string;
-  }>;
+  actions?: FleetGraphPageContextAction[];
 };
 
 function pluralize(count: number, singular: string, plural = `${singular}s`): string {
@@ -61,6 +63,44 @@ function buildActions(
     seenRoutes.add(action.route);
     return true;
   }).slice(0, limit);
+}
+
+function inferActionIntentFromLabel(label: string): FleetGraphPageContextActionIntent {
+  if (/^Write\b/i.test(label)) {
+    return 'write';
+  }
+
+  if (/^(Complete|Create)\b/i.test(label)) {
+    return 'complete';
+  }
+
+  if (/^(Open highest-impact|Open top attention|Open risk cluster)\b/i.test(label)) {
+    return 'prioritize';
+  }
+
+  if (/follow-up|follow up/i.test(label)) {
+    return 'follow_up';
+  }
+
+  return 'inspect';
+}
+
+function createPageAction(
+  label: string,
+  route: string,
+  options?: {
+    intent?: FleetGraphPageContextActionIntent;
+    reason?: string | null;
+    owner?: string | null;
+  }
+): FleetGraphPageContextAction {
+  return {
+    label,
+    route,
+    intent: options?.intent ?? inferActionIntentFromLabel(label),
+    reason: options?.reason ?? null,
+    owner: options?.owner ?? null,
+  };
 }
 
 function appendRouteSearch(
@@ -722,6 +762,20 @@ export function buildIssueSurfacePageContext(
 
     return `${scope.title} shows active movement on this issues surface. ${pluralize(inProgressCount + inReviewCount, 'issue')} are already in progress or review, so the main question is scope balance rather than a visible blocker.${topImpactIssue?.issue.display_id ? ` The highest-value visible issue is ${topImpactIssue.issue.display_id}.` : ''}`;
   })();
+  const topImpactActionReason = topImpactIssue
+    ? [
+        `${topImpactIssue.issue.display_id ?? `#${topImpactIssue.issue.ticket_number}`} carries the strongest business value signal on this tab.`,
+        topImpactIssue.businessValueScore !== null
+          ? `Business value ${topImpactIssue.businessValueScore}/100.`
+          : null,
+        topImpactIssue.businessDrivers ? `${topImpactIssue.businessDrivers}.` : null,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : null;
+  const focusBucketActionReason = focusBucket
+    ? `${focusBucket.title} holds ${pluralize(focusBucket.open, 'open issue')} with ${pluralize(focusBucket.notStarted, 'issue')} still not started.`
+    : null;
 
   return {
     kind: 'issue_surface',
@@ -797,24 +851,44 @@ export function buildIssueSurfacePageContext(
     ]),
     actions: buildActions([
       topImpactIssue
-        ? {
-            label: `Open highest-impact ${topImpactIssue.issue.display_id ?? `#${topImpactIssue.issue.ticket_number}`}`,
-            route: `/documents/${topImpactIssue.issue.id}`,
-          }
+        ? createPageAction(
+            `Open highest-impact ${topImpactIssue.issue.display_id ?? `#${topImpactIssue.issue.ticket_number}`}`,
+            `/documents/${topImpactIssue.issue.id}`,
+            {
+              intent: 'prioritize',
+              reason: topImpactActionReason,
+              owner: topImpactIssue.issue.assignee_name,
+            }
+          )
         : null,
       focusBucket?.route
-        ? {
-            label: `Open ${focusBucket.title}`,
-            route: focusBucket.route,
-          }
+        ? createPageAction(`Open risk cluster ${focusBucket.title}`, focusBucket.route, {
+            intent: 'prioritize',
+            reason: focusBucketActionReason,
+          })
         : null,
       ...topAttentionIssues
         .filter((issue) => issue.id !== topImpactIssue?.issue.id)
         .slice(0, 2)
-        .map((issue) => ({
-        label: `Open ${issue.display_id ?? `#${issue.ticket_number}`}`,
-        route: `/documents/${issue.id}`,
-        })),
+        .map((issue) =>
+          createPageAction(`Open ${issue.display_id ?? `#${issue.ticket_number}`}`, `/documents/${issue.id}`, {
+            intent:
+              isIssueStale(issue) || !issue.assignee_id
+                ? 'follow_up'
+                : 'inspect',
+            reason: [
+              `State: ${issue.state}.`,
+              getSprintTitle(issue) ? `${getSprintTitle(issue)}.` : null,
+              issue.assignee_name ? `Owner: ${issue.assignee_name}.` : 'Owner is still unclear.',
+              formatRelativeIssueUpdate(issue.updated_at)
+                ? `${formatRelativeIssueUpdate(issue.updated_at)}.`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' '),
+            owner: issue.assignee_name,
+          })
+        ),
     ]),
   };
 }
@@ -1221,29 +1295,48 @@ export function buildMyWeekPageContext(
     actions: buildActions([
       ...attentionProjectInsights
         .slice(0, isScopedToSingleProject ? 1 : 2)
-        .map((projectInsight) => ({
-          label: projectInsight.actionLabel,
-          route: projectInsight.route,
-        })),
+        .map((projectInsight) =>
+          createPageAction(projectInsight.actionLabel, projectInsight.route, {
+            intent: projectInsight.needsAttention ? 'follow_up' : 'inspect',
+            reason: projectInsight.detail,
+          })
+        ),
       standupStatus.route && standupStatus.actionLabel
-        ? { label: standupStatus.actionLabel, route: standupStatus.route }
+        ? createPageAction(standupStatus.actionLabel, standupStatus.route, {
+            intent: standupStatus.actionLabel.startsWith('Write') ? 'write' : 'inspect',
+            reason: standupStatus.detail,
+          })
         : null,
       planStatus.route && planStatus.actionLabel
-        ? { label: planStatus.actionLabel, route: planStatus.route }
+        ? createPageAction(planStatus.actionLabel, planStatus.route, {
+            intent: planStatus.actionLabel.startsWith('Complete') ? 'complete' : 'inspect',
+            reason: planStatus.detail,
+          })
         : null,
       previousRetroRoute && showPreviousRetroNudge
-        ? {
-            label: previous_retro?.id ? 'Complete last retro' : 'Create last retro',
-            route: previousRetroRoute,
-          }
+        ? createPageAction(
+            previous_retro?.id ? 'Complete last retro' : 'Create last retro',
+            previousRetroRoute,
+            {
+              intent: 'complete',
+              reason: previous_retro?.id
+                ? `Week ${previous_retro.week_number} retro is still open and needs to be closed out.`
+                : `Week ${previous_retro?.week_number} retro still needs to be created.`,
+            }
+          )
         : null,
       retroStatus.route && retroStatus.actionLabel
-        ? { label: retroStatus.actionLabel, route: retroStatus.route }
+        ? createPageAction(retroStatus.actionLabel, retroStatus.route, {
+            intent: retroStatus.actionLabel.startsWith('Complete') ? 'complete' : 'inspect',
+            reason: retroStatus.detail,
+          })
         : null,
-      ...projectInsights.slice(0, isScopedToSingleProject ? 1 : 2).map((projectInsight) => ({
-        label: projectInsight.actionLabel,
-        route: projectInsight.route,
-      })),
+      ...projectInsights.slice(0, isScopedToSingleProject ? 1 : 2).map((projectInsight) =>
+        createPageAction(projectInsight.actionLabel, projectInsight.route, {
+          intent: projectInsight.needsAttention ? 'follow_up' : 'inspect',
+          reason: projectInsight.detail,
+        })
+      ),
     ]),
   };
 }

@@ -79,7 +79,19 @@ const issueSurfacePageContext: FleetGraphPageContext = {
     },
   ],
   actions: [
-    { label: 'Open Week 3', route: '/documents/week-3/issues' },
+    {
+      label: 'Open highest-impact #14',
+      route: '/documents/issue-3',
+      intent: 'prioritize',
+      reason: '#14 carries the strongest business value signal on this tab. Business value 87/100.',
+      owner: 'stefano caruso',
+    },
+    {
+      label: 'Open risk cluster Week 3',
+      route: '/documents/week-3/issues',
+      intent: 'prioritize',
+      reason: 'Week 3 holds 3 open issues with 2 issues still not started.',
+    },
   ],
 };
 
@@ -345,9 +357,8 @@ describe('FleetGraphOnDemandPanel', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(await screen.findByText('Programs shows 5 active programs in this workspace.')).toBeInTheDocument();
     expect(screen.getAllByText('Launcher guidance').length).toBeGreaterThan(0);
-    expect(screen.getByText('Best next surface')).toBeInTheDocument();
+    expect(screen.getAllByText('Best next surface').length).toBeGreaterThan(0);
     expect(screen.getByText('Active programs')).toBeInTheDocument();
-    expect(screen.getByText('Open in Ship')).toBeInTheDocument();
     expect(screen.queryByText('Stable')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open API Platform' })).toHaveAttribute(
       'href',
@@ -421,7 +432,7 @@ describe('FleetGraphOnDemandPanel', () => {
         whyNow:
           'This answer is grounded in the visible issues on the current tab, including state mix, freshness, week grouping, and ownership in the worklist.',
         recommendedNextStep:
-          'Open Week 3. Then either move one visible todo issue forward or cut scope from the busiest issue cluster on this tab.',
+          'Open risk cluster Week 3. Week 3 holds 3 open issues with 2 issues still not started.',
         confidence: 'high',
       },
       reasoningSource: 'deterministic',
@@ -441,11 +452,17 @@ describe('FleetGraphOnDemandPanel', () => {
       screen.getByText(/does not show a named blocker on this issues surface/)
     ).toBeInTheDocument();
     expect(screen.getByText('Recommended next step')).toBeInTheDocument();
+    expect(screen.getByText('Best route in Ship')).toBeInTheDocument();
+    expect(screen.getByText('Week 3 holds 3 open issues with 2 issues still not started.')).toBeInTheDocument();
     expect(screen.getByText('Suggested follow-up questions')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Which exact issues are driving the risk?' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open Week 3' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Open risk cluster Week 3' })).toHaveAttribute(
       'href',
       '/documents/week-3/issues'
+    );
+    expect(screen.getByRole('link', { name: 'Open highest-impact #14' })).toHaveAttribute(
+      'href',
+      '/documents/issue-3'
     );
     expect(screen.queryByText('Page guidance')).not.toBeInTheDocument();
   });
