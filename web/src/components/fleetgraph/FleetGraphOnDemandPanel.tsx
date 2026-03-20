@@ -1,31 +1,47 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { Link } from 'react-router-dom';
 import type {
   FleetGraphActiveViewContext,
+  FleetGraphAnswerMode,
   FleetGraphDerivedSignal,
   FleetGraphDerivedSignals,
-  FleetGraphPageContext,
   FleetGraphOnDemandResponse,
+  FleetGraphPageContext,
 } from '@ship/shared';
 import { cn } from '@/lib/cn';
 import { invokeFleetGraphOnDemand, resumeFleetGraphOnDemand } from '@/lib/fleetgraph';
 import { useFleetGraphActiveView } from '@/hooks/useFleetGraphActiveView';
 import { useFleetGraphPageContext } from '@/hooks/useFleetGraphPageContext';
 
-const SPRINT_QUICK_PROMPTS = [
-  'Why is this sprint at risk?',
-  'What should happen next?',
-  'Summarize the key risk signals.',
-  'Should I follow up now or wait?',
-];
-
-const PAGE_QUICK_PROMPTS = [
-  'Summarize what matters on this page.',
-  'What should I look at next?',
-  'Who or what needs attention here?',
-  'What context am I seeing right now?',
-];
+type FleetGraphPageContextWithActions = FleetGraphPageContext & {
+  actions?: Array<{
+    label: string;
+    route: string;
+  }>;
+};
 
 const DRAWER_STORAGE_KEY = 'ship:fleetgraphDrawerOpen';
+
+type FleetGraphPromptSurface =
+  | 'my_week'
+  | 'sprint'
+  | 'project_issues'
+  | 'project'
+  | 'program'
+  | 'team'
+  | 'document'
+  | 'generic';
+
+type FleetGraphPromptTheme =
+  | 'risk'
+  | 'blockers'
+  | 'capacity'
+  | 'scope'
+  | 'status'
+  | 'coordination'
+  | 'review'
+  | 'execution_failure'
+  | 'generic';
 
 const SEVERITY_STYLES: Record<
   FleetGraphDerivedSignals['severity'],
@@ -54,6 +70,32 @@ const SEVERITY_STYLES: Record<
     label: 'Needs action',
     badgeClassName: 'border-red-500/30 bg-red-500/10 text-red-200',
     accentClassName: 'from-red-500/20 to-orange-500/10',
+  },
+};
+
+const ANSWER_MODE_STYLES: Record<
+  Exclude<FleetGraphAnswerMode, 'execution'>,
+  {
+    label: string;
+    badgeClassName: string;
+    headerLabel: string;
+    assistantLabel: string;
+    nextStepLabel: string;
+  }
+> = {
+  context: {
+    label: 'Page guidance',
+    badgeClassName: 'border-white/10 bg-white/5 text-muted',
+    headerLabel: 'Page guidance',
+    assistantLabel: 'Grounded page guidance',
+    nextStepLabel: 'Recommended next step',
+  },
+  launcher: {
+    label: 'Launcher guidance',
+    badgeClassName: 'border-cyan-500/20 bg-cyan-500/10 text-cyan-100',
+    headerLabel: 'Launcher guidance',
+    assistantLabel: 'Launcher guidance',
+    nextStepLabel: 'Best next surface',
   },
 };
 
@@ -155,6 +197,60 @@ function buildSummary(
   );
 }
 
+function inferAnswerModeFromContext(
+  activeView: FleetGraphActiveViewContext | null,
+  pageContext: FleetGraphPageContext | null
+): FleetGraphAnswerMode {
+  if (
+    activeView?.entity.type === 'week' ||
+    activeView?.entity.sourceDocumentType === 'weekly_plan' ||
+    activeView?.entity.sourceDocumentType === 'weekly_retro'
+  ) {
+    return 'execution';
+  }
+
+  switch (pageContext?.kind) {
+    case 'dashboard':
+    case 'programs':
+    case 'projects':
+    case 'issues':
+    case 'documents':
+    case 'team_directory':
+    case 'settings':
+      return 'launcher';
+    case 'my_week':
+    case 'document':
+    case 'person':
+    case 'generic':
+    default:
+      return 'context';
+  }
+}
+
+function getAnswerMode(
+  result: FleetGraphOnDemandResponse | null,
+  activeView: FleetGraphActiveViewContext | null,
+  pageContext: FleetGraphPageContext | null
+): FleetGraphAnswerMode {
+  return result?.reasoning?.answerMode ?? inferAnswerModeFromContext(activeView, pageContext);
+}
+
+function getAssistantLabel(answerMode: FleetGraphAnswerMode): string {
+  if (answerMode === 'execution') {
+    return 'Grounded execution guidance';
+  }
+
+  return ANSWER_MODE_STYLES[answerMode].assistantLabel;
+}
+
+function getNextStepLabel(answerMode: FleetGraphAnswerMode): string {
+  if (answerMode === 'execution') {
+    return 'Recommended next step';
+  }
+
+  return ANSWER_MODE_STYLES[answerMode].nextStepLabel;
+}
+
 function describeCurrentWorkSurface(
   activeView: FleetGraphActiveViewContext | null,
   pageContext: FleetGraphPageContext | null,
@@ -228,16 +324,321 @@ function buildErrorGuidance(
   };
 }
 
-function hasSprintAnalysisScope(activeView: FleetGraphActiveViewContext | null): boolean {
-  if (!activeView) {
-    return false;
+function getPromptSurface(
+  activeView: FleetGraphActiveViewContext | null,
+  pageContext: FleetGraphPageContext | null
+): FleetGraphPromptSurface {
+  if (pageContext?.kind === 'my_week' || activeView?.surface === 'my_week') {
+    return 'my_week';
   }
 
-  return (
-    activeView.entity.type === 'week' ||
-    activeView.entity.type === 'project' ||
-    activeView.surface === 'my_week'
-  );
+  if (
+    activeView?.entity.type === 'week' ||
+    activeView?.entity.sourceDocumentType === 'weekly_plan' ||
+    activeView?.entity.sourceDocumentType === 'weekly_retro'
+  ) {
+    return 'sprint';
+  }
+
+  if (pageContext?.kind === 'issues' || activeView?.tab === 'issues') {
+    return 'project_issues';
+  }
+
+  if (pageContext?.kind === 'projects' || activeView?.entity.type === 'project') {
+    return 'project';
+  }
+
+  if (
+    pageContext?.kind === 'programs' ||
+    pageContext?.kind === 'dashboard' ||
+    activeView?.entity.type === 'program'
+  ) {
+    return 'program';
+  }
+
+  if (pageContext?.kind === 'team_directory' || pageContext?.kind === 'person') {
+    return 'team';
+  }
+
+  if (pageContext?.kind === 'document' || pageContext?.kind === 'documents') {
+    return 'document';
+  }
+
+  return 'generic';
+}
+
+function getStarterPrompts(
+  activeView: FleetGraphActiveViewContext | null,
+  pageContext: FleetGraphPageContext | null
+): string[] {
+  switch (getPromptSurface(activeView, pageContext)) {
+    case 'my_week':
+      return [
+        'What needs my attention today?',
+        'What am I at risk of missing this week?',
+        'What follow-up should I send now?',
+        'Which planned work is not moving?',
+      ];
+    case 'sprint':
+      return [
+        'Are we on track to hit the sprint goal?',
+        'What is most at risk this week?',
+        'What changed since this sprint started?',
+        'Which work is blocked or not moving?',
+      ];
+    case 'project_issues':
+      return [
+        'Which issues need attention first?',
+        'What is blocking delivery in this project?',
+        'Which issues are stale or stuck?',
+        'What should be triaged, moved, or cut?',
+      ];
+    case 'project':
+      return [
+        'Is this project healthy right now?',
+        'What is the biggest delivery risk in this project?',
+        'What should the PM follow up on next?',
+        'What changed recently that matters?',
+      ];
+    case 'program':
+      return [
+        'Which project needs attention first?',
+        'Where are the biggest dependency risks?',
+        'Which work is drifting across projects?',
+        'What should leadership know right now?',
+      ];
+    case 'team':
+      return [
+        'Who is overloaded right now?',
+        'Which important work has no clear owner?',
+        'Where are the likely bottlenecks on the team?',
+        'Which follow-up conversation should happen today?',
+      ];
+    case 'document':
+      return [
+        'What matters in this document?',
+        'What decision or follow-up does this document imply?',
+        'What is still unclear or missing here?',
+        'Which related work should I open next?',
+      ];
+    default:
+      return [
+        'What needs attention first on this page?',
+        'What should happen next from this view?',
+        'What changed recently that matters here?',
+        'Which related work should I open next?',
+      ];
+  }
+}
+
+function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
+  if (turn.result?.error || turn.error) {
+    return 'execution_failure';
+  }
+
+  const question = turn.question.trim().toLowerCase();
+  if (question.includes('risk') || question.includes('at risk')) {
+    return 'risk';
+  }
+  if (question.includes('block') || question.includes('dependency')) {
+    return 'blockers';
+  }
+  if (question.includes('capacity') || question.includes('overloaded')) {
+    return 'capacity';
+  }
+  if (question.includes('scope') || question.includes('changed')) {
+    return 'scope';
+  }
+  if (question.includes('follow-up') || question.includes('follow up') || question.includes('who')) {
+    return 'coordination';
+  }
+  if (question.includes('status') || question.includes('moving') || question.includes('attention')) {
+    return 'status';
+  }
+
+  const corpus = [
+    turn.question,
+    turn.result?.reasoning?.summary,
+    turn.result?.reasoning?.recommendedNextStep,
+    turn.result?.finding?.summary,
+    turn.result?.derivedSignals.summary,
+    ...(turn.result?.derivedSignals.reasons ?? []),
+    turn.result?.proposedAction?.summary,
+    turn.result?.proposedAction?.rationale,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (
+    corpus.includes('capacity') ||
+    corpus.includes('overloaded') ||
+    corpus.includes('overcommitted') ||
+    corpus.includes('too much')
+  ) {
+    return 'capacity';
+  }
+
+  if (
+    corpus.includes('scope') ||
+    corpus.includes('changed') ||
+    corpus.includes('added') ||
+    corpus.includes('cut') ||
+    corpus.includes('drift')
+  ) {
+    return 'scope';
+  }
+
+  if (
+    corpus.includes('blocked') ||
+    corpus.includes('blocker') ||
+    corpus.includes('dependency') ||
+    corpus.includes('review') ||
+    corpus.includes('approval') ||
+    corpus.includes('waiting')
+  ) {
+    return corpus.includes('review') && !corpus.includes('blocked') ? 'review' : 'blockers';
+  }
+
+  if (
+    corpus.includes('follow-up') ||
+    corpus.includes('follow up') ||
+    corpus.includes('owner') ||
+    corpus.includes('handoff') ||
+    corpus.includes('escalat') ||
+    corpus.includes('who should')
+  ) {
+    return 'coordination';
+  }
+
+  if (
+    corpus.includes('status') ||
+    corpus.includes('progress') ||
+    corpus.includes('stale') ||
+    corpus.includes('attention') ||
+    corpus.includes('milestone') ||
+    corpus.includes('moving')
+  ) {
+    return 'status';
+  }
+
+  if (corpus.includes('risk') || corpus.includes('slip')) {
+    return 'risk';
+  }
+
+  return 'generic';
+}
+
+function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
+  const prompts: string[] = (() => {
+    switch (inferPromptTheme(turn)) {
+      case 'risk':
+        return [
+          'Is the risk coming from scope, blockers, or capacity?',
+          'Which exact issues are driving the risk?',
+          'What changed after sprint planning?',
+          'What can we cut and still hit the goal?',
+        ];
+      case 'blockers':
+        return [
+          'What is blocked, by whom, and for how long?',
+          'Which dependency has the highest impact on delivery?',
+          'What can move forward without waiting?',
+          'Should this be escalated now or watched for another day?',
+        ];
+      case 'capacity':
+        return [
+          'Are we overcommitted compared to recent velocity?',
+          'Who is carrying too much active work?',
+          'Are we starting too much and finishing too little?',
+          'Should we reduce scope this sprint?',
+        ];
+      case 'scope':
+        return [
+          'What was added after sprint start?',
+          'Which planned work got displaced?',
+          'Is this change worth the delivery risk it adds?',
+          'Should this stay in sprint or move out?',
+        ];
+      case 'status':
+        return [
+          'What has not moved recently?',
+          'Which "in progress" issues are actually stalled?',
+          'Where are we waiting on review or approval?',
+          'What is the next milestone that matters?',
+        ];
+      case 'coordination':
+        return [
+          'Who owns the next action?',
+          'Which handoff is unclear?',
+          'Which person needs help or relief?',
+          'Which follow-up conversation should happen today?',
+        ];
+      case 'review':
+        return [
+          'What evidence says the goal is actually met?',
+          'Which completed work still lacks proof or review?',
+          'What should be called out in the sprint review?',
+          'What should change next sprint?',
+        ];
+      case 'execution_failure':
+        return [
+          'What workflow is blocked right now?',
+          'Should I retry this now or use a fallback?',
+          'What should the PM or engineer do next?',
+          'Is this likely a permissions or session issue?',
+        ];
+      default:
+        return [
+          'What should happen next?',
+          'Which item needs attention first?',
+          'What changed recently that matters?',
+          'Which related work should I open next?',
+        ];
+    }
+  })();
+
+  const normalizedQuestion = turn.question.trim().toLowerCase();
+  return prompts.filter((prompt) => prompt.trim().toLowerCase() !== normalizedQuestion).slice(0, 4);
+}
+
+function toRouteActionLabel(label: string): string {
+  return /^(Open|Create|Write|Complete)\b/.test(label) ? label : `Open ${label}`;
+}
+
+function getRouteActions(
+  pageContext: FleetGraphPageContext | null,
+  result: FleetGraphOnDemandResponse | null
+): Array<NonNullable<FleetGraphPageContextWithActions['actions']>[number]> {
+  const pageContextWithActions = pageContext as FleetGraphPageContextWithActions | null;
+  const candidates: Array<NonNullable<FleetGraphPageContextWithActions['actions']>[number] | null> = [
+    result?.proposedAction?.targetRoute
+      ? {
+          label: 'Open target doc',
+          route: result.proposedAction.targetRoute,
+        }
+      : null,
+    ...((pageContextWithActions?.actions ?? []).map((action) => ({
+      label: action.label,
+      route: action.route,
+    }))),
+    ...((pageContext?.items ?? [])
+      .filter((item) => Boolean(item.route))
+      .map((item) => ({
+        label: toRouteActionLabel(item.label),
+        route: item.route as string,
+      }))),
+  ];
+  const seenRoutes = new Set<string>();
+
+  return candidates.filter((candidate): candidate is NonNullable<FleetGraphPageContextWithActions['actions']>[number] => {
+    if (!candidate || seenRoutes.has(candidate.route)) {
+      return false;
+    }
+
+    seenRoutes.add(candidate.route);
+    return true;
+  }).slice(0, 4);
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -273,6 +674,21 @@ function SignalItem({ signal }: { signal: FleetGraphDerivedSignal }) {
         </ul>
       )}
     </div>
+  );
+}
+
+function RouteActionLink({
+  action,
+}: {
+  action: NonNullable<FleetGraphPageContextWithActions['actions']>[number];
+}) {
+  return (
+    <Link
+      to={action.route}
+      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-white/10"
+    >
+      {action.label}
+    </Link>
   );
 }
 
@@ -337,7 +753,6 @@ export function FleetGraphOnDemandPanel({
   const contextActiveView = useFleetGraphActiveView();
   const activeView = activeViewProp ?? contextActiveView;
   const pageContext = useFleetGraphPageContext(activeView);
-  const supportedActiveView = hasSprintAnalysisScope(activeView);
   const hasUsableContext = Boolean(activeView || pageContext);
   const [open, setOpen] = useState(() => {
     if (typeof window === 'undefined') {
@@ -379,13 +794,31 @@ export function FleetGraphOnDemandPanel({
     () => [...turns].reverse().find((turn) => turn.result)?.result ?? null,
     [turns]
   );
+  const latestCompletedTurnRecord = useMemo(
+    () => [...turns].reverse().find((turn) => turn.status === 'completed' || turn.status === 'error') ?? null,
+    [turns]
+  );
+  const latestAnswerMode = useMemo(
+    () =>
+      latestCompletedTurnRecord
+        ? getAnswerMode(
+            latestCompletedTurnRecord.result,
+            activeView,
+            latestCompletedTurnRecord.pageContext
+          )
+        : inferAnswerModeFromContext(activeView, pageContext),
+    [activeView, latestCompletedTurnRecord, pageContext]
+  );
   const latestSeverity = latestCompletedTurn?.derivedSignals.severity ?? 'none';
   const latestSeverityStyle = SEVERITY_STYLES[latestSeverity];
   const contextSummary = buildContextSummary(activeView, pageContext, latestCompletedTurn);
   const unavailableReason = hasUsableContext
     ? null
     : 'FleetGraph could not derive current page context here yet.';
-  const quickPrompts = supportedActiveView ? SPRINT_QUICK_PROMPTS : PAGE_QUICK_PROMPTS;
+  const starterPrompts = getStarterPrompts(activeView, pageContext);
+  const latestFollowUpPrompts = latestCompletedTurnRecord
+    ? getFollowUpPrompts(latestCompletedTurnRecord)
+    : [];
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -636,16 +1069,26 @@ export function FleetGraphOnDemandPanel({
                       ? 'My Week'
                       : 'Current view'}
                   </span>
-                  {latestCompletedTurn && (
-                    <span
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-[11px] font-medium',
-                        latestSeverityStyle.badgeClassName
-                      )}
-                    >
-                      {latestSeverityStyle.label}
-                    </span>
-                  )}
+                  {latestCompletedTurn &&
+                    (latestAnswerMode === 'execution' ? (
+                      <span
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 text-[11px] font-medium',
+                          latestSeverityStyle.badgeClassName
+                        )}
+                      >
+                        {latestSeverityStyle.label}
+                      </span>
+                    ) : (
+                      <span
+                        className={cn(
+                          'rounded-full border px-2.5 py-1 text-[11px] font-medium',
+                          ANSWER_MODE_STYLES[latestAnswerMode].badgeClassName
+                        )}
+                      >
+                        {ANSWER_MODE_STYLES[latestAnswerMode].headerLabel}
+                      </span>
+                    ))}
                 </div>
                 <p className="mt-3 text-sm leading-6 text-muted">
                   {contextSummary ||
@@ -690,9 +1133,9 @@ export function FleetGraphOnDemandPanel({
                   </p>
                 </div>
 
-                {quickPrompts.length > 0 && (
+                {starterPrompts.length > 0 && (
                   <div className="mt-5 grid gap-3">
-                    {quickPrompts.map((prompt) => (
+                    {starterPrompts.map((prompt) => (
                       <button
                         key={prompt}
                         type="button"
@@ -710,6 +1153,7 @@ export function FleetGraphOnDemandPanel({
             ) : (
               turns.map((turn) => {
                 const result = turn.result;
+                const answerMode = getAnswerMode(result, activeView, turn.pageContext);
                 const severity = result?.derivedSignals.severity ?? 'none';
                 const severityStyle = SEVERITY_STYLES[severity];
                 const summary = buildSummary(result, turn.pageContext);
@@ -717,6 +1161,7 @@ export function FleetGraphOnDemandPanel({
                 const errorGuidance = buildErrorGuidance(result, turn, activeView);
                 const isBusy = activeTurnId === turn.id;
                 const pendingApproval = result?.pendingApproval ?? null;
+                const routeActions = getRouteActions(turn.pageContext, result);
                 const derivedMetrics = result?.derivedSignals.metrics ?? null;
                 const hasDerivedMetrics = Boolean(
                   derivedMetrics &&
@@ -747,19 +1192,29 @@ export function FleetGraphOnDemandPanel({
                             </div>
                             <div>
                               <div className="text-sm font-medium text-foreground">FleetGraph</div>
-                              <div className="text-xs text-muted">Grounded answer</div>
+                              <div className="text-xs text-muted">{getAssistantLabel(answerMode)}</div>
                             </div>
                           </div>
-                          {result && (
-                            <span
-                              className={cn(
-                                'rounded-full border px-2.5 py-1 text-[11px] font-medium',
-                                severityStyle.badgeClassName
-                              )}
-                            >
-                              {severityStyle.label}
-                            </span>
-                          )}
+                          {result &&
+                            (answerMode === 'execution' ? (
+                              <span
+                                className={cn(
+                                  'rounded-full border px-2.5 py-1 text-[11px] font-medium',
+                                  severityStyle.badgeClassName
+                                )}
+                              >
+                                {severityStyle.label}
+                              </span>
+                            ) : (
+                              <span
+                                className={cn(
+                                  'rounded-full border px-2.5 py-1 text-[11px] font-medium',
+                                  ANSWER_MODE_STYLES[answerMode].badgeClassName
+                                )}
+                              >
+                                {ANSWER_MODE_STYLES[answerMode].label}
+                              </span>
+                            ))}
                         </div>
 
                         {turn.status === 'running' && (
@@ -834,6 +1289,22 @@ export function FleetGraphOnDemandPanel({
                           </div>
                         )}
 
+                        {!summary && routeActions.length > 0 && (
+                          <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-muted">
+                              Open in Ship
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {routeActions.map((action) => (
+                                <RouteActionLink
+                                  key={`${action.label}-${action.route}`}
+                                  action={action}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         {summary && (
                           <div className="mt-4 space-y-4">
                             <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
@@ -844,7 +1315,7 @@ export function FleetGraphOnDemandPanel({
                               {result?.reasoning?.recommendedNextStep && (
                                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
                                   <div className="text-[11px] uppercase tracking-[0.18em] text-muted">
-                                    Recommended next step
+                                    {getNextStepLabel(answerMode)}
                                   </div>
                                   <p className="mt-2 text-sm leading-6 text-foreground">
                                     {result.reasoning.recommendedNextStep}
@@ -907,6 +1378,22 @@ export function FleetGraphOnDemandPanel({
                                     <li key={item}>{item}</li>
                                   ))}
                                 </ul>
+                              </div>
+                            )}
+
+                            {routeActions.length > 0 && (
+                              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
+                                <div className="text-[11px] uppercase tracking-[0.18em] text-muted">
+                                  Open in Ship
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {routeActions.map((action) => (
+                                    <RouteActionLink
+                                      key={`${action.label}-${action.route}`}
+                                      action={action}
+                                    />
+                                  ))}
+                                </div>
                               </div>
                             )}
 
@@ -992,6 +1479,36 @@ export function FleetGraphOnDemandPanel({
                                 </p>
                               </div>
                             )}
+
+                            {turn.id === latestCompletedTurnRecord?.id &&
+                              latestFollowUpPrompts.length > 0 &&
+                              !pendingApproval && (
+                                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
+                                  <div className="text-[11px] uppercase tracking-[0.18em] text-muted">
+                                    Suggested follow-up questions
+                                  </div>
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {latestFollowUpPrompts.map((prompt) => (
+                                      <button
+                                        key={prompt}
+                                        type="button"
+                                        onClick={() => {
+                                          void submitQuestion(prompt);
+                                        }}
+                                        disabled={!!activeTurnId}
+                                        className={cn(
+                                          'rounded-xl border px-3 py-2 text-left text-sm transition-colors',
+                                          activeTurnId
+                                            ? 'cursor-not-allowed border-white/10 bg-white/5 text-muted'
+                                            : 'border-white/10 bg-white/5 text-foreground hover:bg-white/10'
+                                        )}
+                                      >
+                                        {prompt}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                           </div>
                         )}
                       </div>

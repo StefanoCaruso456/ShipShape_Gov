@@ -15,8 +15,16 @@ import {
   getSprintTitle,
 } from '@/hooks/useIssuesQuery';
 import { useDashboardActionItems } from '@/hooks/useDashboardActionItems';
+import { useMyWeekQuery, type MyWeekResponse, type StandupSlot } from '@/hooks/useMyWeekQuery';
 import { useTeamMembersQuery } from '@/hooks/useTeamMembersQuery';
 import { useActiveWeeksQuery } from '@/hooks/useWeeksQuery';
+
+type FleetGraphPageContextWithActions = FleetGraphPageContext & {
+  actions?: Array<{
+    label: string;
+    route: string;
+  }>;
+};
 
 function pluralize(count: number, singular: string, plural = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`;
@@ -33,6 +41,70 @@ function buildItems(
   limit = 4
 ): FleetGraphPageContext['items'] {
   return items.filter((item): item is FleetGraphPageContext['items'][number] => Boolean(item)).slice(0, limit);
+}
+
+function buildActions(
+  actions: Array<NonNullable<FleetGraphPageContextWithActions['actions']>[number] | null | undefined>,
+  limit = 4
+): NonNullable<FleetGraphPageContextWithActions['actions']> {
+  const seenRoutes = new Set<string>();
+
+  return actions.filter((action): action is NonNullable<FleetGraphPageContextWithActions['actions']>[number] => {
+    if (!action || seenRoutes.has(action.route)) {
+      return false;
+    }
+
+    seenRoutes.add(action.route);
+    return true;
+  }).slice(0, limit);
+}
+
+function appendRouteSearch(
+  route: string,
+  params: Record<string, string | number | null | undefined>
+): string {
+  const [pathname, search = ''] = route.split('?');
+  const searchParams = new URLSearchParams(search);
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === null || value === undefined || value === '') {
+      searchParams.delete(key);
+      return;
+    }
+
+    searchParams.set(key, String(value));
+  });
+
+  const nextSearch = searchParams.toString();
+  return nextSearch ? `${pathname}?${nextSearch}` : pathname;
+}
+
+function isDateToday(date: string): boolean {
+  return date === new Date().toISOString().split('T')[0];
+}
+
+function isDateInPast(date: string): boolean {
+  return date < new Date().toISOString().split('T')[0];
+}
+
+function isFridayOrLater(): boolean {
+  const todayDay = new Date().getDay();
+  return todayDay === 0 || todayDay >= 5;
+}
+
+function getStandupActionRoute(route: string, slot: StandupSlot | null): string | null {
+  if (!slot) {
+    return null;
+  }
+
+  if (slot.standup) {
+    return `/documents/${slot.standup.id}`;
+  }
+
+  return appendRouteSearch(route, {
+    action: 'create-standup',
+    action_date: slot.date,
+  });
 }
 
 function buildGenericPageContext(route: string, title: string, summary: string): FleetGraphPageContext {
@@ -330,20 +402,301 @@ function buildPersonPageContext(
 
 function buildMyWeekPageContext(
   route: string,
-  activeView: FleetGraphActiveViewContext | null
-): FleetGraphPageContext {
+  activeView: FleetGraphActiveViewContext | null,
+  myWeek: MyWeekResponse | undefined
+): FleetGraphPageContextWithActions {
+  if (!myWeek) {
+    return {
+      kind: 'my_week',
+      route,
+      title: 'My Week',
+      summary: activeView?.projectId
+        ? 'My Week is currently narrowed to a single project, so FleetGraph can reason about both this page and the linked weekly work.'
+        : 'My Week is the current weekly planning and execution surface for your work.',
+      emptyState: false,
+      metrics: buildMetrics([
+        activeView?.projectId ? { label: 'Single project scope', value: 'Yes' } : null,
+      ]),
+      items: [],
+    };
+  }
+
+  const { week, plan, retro, previous_retro, standups, projects } = myWeek;
+  const isScopedToSingleProject = Boolean(activeView?.projectId);
+  const scopedProject =
+    projects.find((project) => project.id === activeView?.projectId) ??
+    (projects.length === 1 ? projects[0] : null);
+  const relevantStandupSlots = standups.filter((slot) => !(!isDateInPast(slot.date) && !isDateToday(slot.date)));
+  const loggedStandupCount = relevantStandupSlots.filter((slot) => Boolean(slot.standup)).length;
+  const missingPastStandups = standups.filter((slot) => !slot.standup && isDateInPast(slot.date)).length;
+  const todayStandupSlot = standups.find((slot) => isDateToday(slot.date)) ?? null;
+  const lastLoggedStandup =
+    [...standups]
+      .filter((slot) => Boolean(slot.standup))
+      .sort((left, right) => right.date.localeCompare(left.date))[0] ?? null;
+  const hasProjects = projects.length > 0;
+  const planIsDue = hasProjects && week.week_number <= week.current_week_number;
+  const retroIsDue =
+    hasProjects &&
+    (week.week_number < week.current_week_number ||
+      (week.week_number === week.current_week_number && isFridayOrLater()));
+  const showPreviousRetroNudge =
+    week.is_current &&
+    previous_retro &&
+    (previous_retro.id ? !previous_retro.submitted_at : true);
+  const previousRetroRoute = previous_retro
+    ? previous_retro.id
+      ? `/documents/${previous_retro.id}`
+      : appendRouteSearch(route, {
+          action: 'create-retro',
+          action_week_number: previous_retro.week_number,
+        })
+    : null;
+  const planItemCount = plan?.items?.length ?? 0;
+  const retroItemCount = retro?.items?.length ?? 0;
+  const standupMetricValue =
+    relevantStandupSlots.length > 0 ? `${loggedStandupCount}/${relevantStandupSlots.length}` : '0';
+
+  const planStatus = (() => {
+    if (!plan) {
+      return {
+        metric: planIsDue ? 'Missing' : 'Not started',
+        detail: planIsDue
+          ? `No weekly plan exists for Week ${week.week_number}, and it should be in flight now.`
+          : `No weekly plan exists for Week ${week.week_number} yet.`,
+        route: appendRouteSearch(route, { action: 'create-plan', action_week_number: null }),
+        actionLabel: 'Create plan',
+        needsAttention: planIsDue,
+      };
+    }
+
+    if (plan.submitted_at) {
+      return {
+        metric: 'Submitted',
+        detail: `Weekly plan is submitted with ${pluralize(planItemCount, 'item')}.`,
+        route: `/documents/${plan.id}`,
+        actionLabel: 'Open plan',
+        needsAttention: false,
+      };
+    }
+
+    if (planItemCount > 0) {
+      return {
+        metric: 'Unsubmitted',
+        detail: planIsDue
+          ? `Weekly plan has ${pluralize(planItemCount, 'item')} but is still unsubmitted.`
+          : `Weekly plan has ${pluralize(planItemCount, 'item')} and is still in draft.`,
+        route: `/documents/${plan.id}`,
+        actionLabel: 'Open plan',
+        needsAttention: planIsDue,
+      };
+    }
+
+    return {
+      metric: planIsDue ? 'Due today' : 'Blank',
+      detail: planIsDue
+        ? 'Weekly plan exists, but it is still blank and unsubmitted.'
+        : 'Weekly plan exists, but it is still blank.',
+      route: `/documents/${plan.id}`,
+      actionLabel: 'Open plan',
+      needsAttention: planIsDue,
+    };
+  })();
+
+  const retroStatus = (() => {
+    if (!retro) {
+      return {
+        metric: retroIsDue ? 'Missing' : 'Not started',
+        detail: retroIsDue
+          ? `No weekly retro exists for Week ${week.week_number}, and review follow-up is due.`
+          : `No weekly retro exists for Week ${week.week_number} yet.`,
+        route: appendRouteSearch(route, { action: 'create-retro', action_week_number: null }),
+        actionLabel: 'Create retro',
+        needsAttention: retroIsDue,
+      };
+    }
+
+    if (retro.submitted_at) {
+      return {
+        metric: 'Submitted',
+        detail: `Weekly retro is submitted with ${pluralize(retroItemCount, 'item')}.`,
+        route: `/documents/${retro.id}`,
+        actionLabel: 'Open retro',
+        needsAttention: false,
+      };
+    }
+
+    if (retroItemCount > 0) {
+      return {
+        metric: 'Unsubmitted',
+        detail: retroIsDue
+          ? `Weekly retro has ${pluralize(retroItemCount, 'item')} but is still unsubmitted.`
+          : `Weekly retro has ${pluralize(retroItemCount, 'item')} and is still in draft.`,
+        route: `/documents/${retro.id}`,
+        actionLabel: 'Open retro',
+        needsAttention: retroIsDue,
+      };
+    }
+
+    return {
+      metric: retroIsDue ? 'Due today' : 'Blank',
+      detail: retroIsDue
+        ? 'Weekly retro exists, but it is still blank and unsubmitted.'
+        : 'Weekly retro exists, but it is still blank.',
+      route: `/documents/${retro.id}`,
+      actionLabel: 'Open retro',
+      needsAttention: retroIsDue,
+    };
+  })();
+
+  const standupStatus = (() => {
+    if (todayStandupSlot?.standup) {
+      return {
+        metric: 'Up to date',
+        detail: `Today’s update is logged. ${loggedStandupCount}/${Math.max(relevantStandupSlots.length, 1)} in-scope updates are posted.`,
+        route: `/documents/${todayStandupSlot.standup.id}`,
+        actionLabel: 'Open today update',
+        needsAttention: false,
+      };
+    }
+
+    if (todayStandupSlot && !todayStandupSlot.standup) {
+      return {
+        metric: 'Missing today',
+        detail:
+          missingPastStandups > 0
+            ? `Today’s update is still missing, and ${pluralize(missingPastStandups, 'earlier update')} are also missing.`
+            : 'Today’s update is still missing.',
+        route: getStandupActionRoute(route, todayStandupSlot),
+        actionLabel: 'Write today update',
+        needsAttention: true,
+      };
+    }
+
+    if (missingPastStandups > 0) {
+      const oldestMissingSlot = standups.find((slot) => !slot.standup && isDateInPast(slot.date)) ?? null;
+
+      return {
+        metric: 'Missing updates',
+        detail: `${pluralize(missingPastStandups, 'daily update')} are still missing for this week.`,
+        route: getStandupActionRoute(route, oldestMissingSlot),
+        actionLabel: 'Write update',
+        needsAttention: true,
+      };
+    }
+
+    if (lastLoggedStandup?.standup) {
+      return {
+        metric: 'Logged',
+        detail: `Latest daily update was posted on ${lastLoggedStandup.day}.`,
+        route: `/documents/${lastLoggedStandup.standup.id}`,
+        actionLabel: 'Open latest update',
+        needsAttention: false,
+      };
+    }
+
+    const firstAvailableStandupSlot = relevantStandupSlots[0] ?? standups[0] ?? null;
+
+    return {
+      metric: 'Not started',
+      detail: 'No daily updates have been logged for this week yet.',
+      route: getStandupActionRoute(route, firstAvailableStandupSlot),
+      actionLabel: firstAvailableStandupSlot ? 'Write first update' : null,
+      needsAttention: relevantStandupSlots.length > 0,
+    };
+  })();
+
+  const workflowStage =
+    week.week_number > week.current_week_number
+      ? 'Planning'
+      : showPreviousRetroNudge || retroStatus.needsAttention
+        ? 'Review'
+        : planStatus.needsAttention
+          ? 'Planning'
+          : week.is_current
+            ? 'Execution'
+            : 'Review';
+
+  const attentionSignals = [
+    planStatus.needsAttention ? planStatus.detail : null,
+    standupStatus.needsAttention ? standupStatus.detail : null,
+    showPreviousRetroNudge
+      ? previous_retro?.id
+        ? `Week ${previous_retro.week_number} retro still needs your input.`
+        : `Week ${previous_retro?.week_number} retro still needs to be created.`
+      : null,
+    retroStatus.needsAttention ? retroStatus.detail : null,
+  ].filter((signal): signal is string => Boolean(signal));
+
+  const projectSummary =
+    projects.length === 0
+      ? 'My Week has no assigned projects in scope right now.'
+      : isScopedToSingleProject && scopedProject
+        ? `My Week is narrowed to ${scopedProject.title}.`
+        : `My Week covers ${pluralize(projects.length, 'assigned project')}.`;
+  const steadyStateSummary =
+    `${planStatus.detail} ${retroStatus.detail} ${standupStatus.detail}`;
+
   return {
     kind: 'my_week',
     route,
     title: 'My Week',
-    summary: activeView?.projectId
-      ? 'My Week is currently narrowed to a single project, so FleetGraph can reason about both this page and the linked sprint work.'
-      : 'My Week is the current weekly planning surface for your work.',
+    summary:
+      attentionSignals.length > 0
+        ? `${projectSummary} Right now, ${attentionSignals.slice(0, 3).join(' ')}`
+        : `${projectSummary} ${steadyStateSummary}`,
     emptyState: false,
     metrics: buildMetrics([
+      { label: 'Workflow stage', value: workflowStage },
+      { label: 'Assigned projects', value: String(projects.length) },
+      { label: 'Weekly plan', value: planStatus.metric },
+      { label: 'Weekly retro', value: retroStatus.metric },
+      { label: 'Daily updates', value: standupMetricValue },
       activeView?.projectId ? { label: 'Single project scope', value: 'Yes' } : null,
     ]),
-    items: [],
+    items: buildItems([
+      { label: 'Weekly plan', detail: planStatus.detail, route: planStatus.route },
+      showPreviousRetroNudge && previous_retro
+        ? {
+            label: `Week ${previous_retro.week_number} retro`,
+            detail: previous_retro.id
+              ? 'Last week’s retro is still open and needs input.'
+              : 'Last week’s retro has not been created yet.',
+            route: previousRetroRoute,
+          }
+        : {
+            label: 'Weekly retro',
+            detail: retroStatus.detail,
+            route: retroStatus.route,
+          },
+      { label: 'Daily updates', detail: standupStatus.detail, route: standupStatus.route },
+      ...projects.slice(0, isScopedToSingleProject ? 1 : 2).map((project) => ({
+        label: project.title,
+        detail: project.program_name ? `Assigned project • ${project.program_name}` : 'Assigned project',
+        route: `/documents/${project.id}`,
+      })),
+    ]),
+    actions: buildActions([
+      standupStatus.route && standupStatus.actionLabel
+        ? { label: standupStatus.actionLabel, route: standupStatus.route }
+        : null,
+      planStatus.route && planStatus.actionLabel
+        ? { label: planStatus.actionLabel, route: planStatus.route }
+        : null,
+      previousRetroRoute && showPreviousRetroNudge
+        ? {
+            label: previous_retro?.id ? 'Complete last retro' : 'Create last retro',
+            route: previousRetroRoute,
+          }
+        : null,
+      retroStatus.route && retroStatus.actionLabel
+        ? { label: retroStatus.actionLabel, route: retroStatus.route }
+        : null,
+      ...projects.slice(0, isScopedToSingleProject ? 1 : 2).map((project) => ({
+        label: `Open ${project.title}`,
+        route: `/documents/${project.id}`,
+      })),
+    ]),
   };
 }
 
@@ -468,7 +821,7 @@ function getFallbackTitle(pathname: string): string {
 
 export function useFleetGraphPageContext(
   activeView: FleetGraphActiveViewContext | null
-): FleetGraphPageContext | null {
+): FleetGraphPageContextWithActions | null {
   const location = useLocation();
   const { currentDocumentId } = useCurrentDocument();
   const { documents } = useDocuments();
@@ -478,6 +831,22 @@ export function useFleetGraphPageContext(
   const teamMembersQuery = useTeamMembersQuery();
   const activeWeeksQuery = useActiveWeeksQuery();
   const dashboardActionItemsQuery = useDashboardActionItems();
+  const myWeekNumber = useMemo(() => {
+    if (location.pathname !== '/my-week') {
+      return undefined;
+    }
+
+    const value = new URLSearchParams(location.search).get('week_number');
+    if (!value) {
+      return undefined;
+    }
+
+    const parsed = Number.parseInt(value, 10);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }, [location.pathname, location.search]);
+  const myWeekQuery = useMyWeekQuery(myWeekNumber, {
+    enabled: location.pathname === '/my-week',
+  });
 
   const route = `${location.pathname}${location.search}`;
   const routeDocumentMatch = matchPath('/documents/:id/*', location.pathname)
@@ -536,7 +905,7 @@ export function useFleetGraphPageContext(
     }
 
     if (location.pathname === '/my-week') {
-      return buildMyWeekPageContext(route, activeView);
+      return buildMyWeekPageContext(route, activeView, myWeekQuery.data);
     }
 
     if (
@@ -594,5 +963,6 @@ export function useFleetGraphPageContext(
     teamMembersQuery.data,
     teamPersonMatch,
     activeWeeksQuery.data,
+    myWeekQuery.data,
   ]);
 }

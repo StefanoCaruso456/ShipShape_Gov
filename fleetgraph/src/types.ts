@@ -2,6 +2,7 @@ import type {
   ApprovalTracking,
   BelongsTo,
   FleetGraphActiveViewContext,
+  FleetGraphAnswerMode as SharedFleetGraphAnswerMode,
   FleetGraphPageContext as SharedFleetGraphPageContext,
   FleetGraphViewEntityType,
 } from '@ship/shared';
@@ -214,9 +215,12 @@ export interface FleetGraphFinding {
   severity: FleetGraphDerivedSignals['severity'];
 }
 
+export type FleetGraphAnswerMode = SharedFleetGraphAnswerMode;
+
 export type FleetGraphReasoningConfidence = 'low' | 'medium' | 'high';
 
 export interface FleetGraphReasoning {
+  answerMode: FleetGraphAnswerMode;
   summary: string;
   evidence: string[];
   whyNow: string | null;

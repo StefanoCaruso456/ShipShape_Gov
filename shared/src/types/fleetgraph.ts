@@ -55,6 +55,11 @@ export interface FleetGraphPageContextItem {
   route?: string | null;
 }
 
+export interface FleetGraphPageContextAction {
+  label: string;
+  route: string;
+}
+
 export interface FleetGraphPageContext {
   kind: FleetGraphPageContextKind;
   route: string;
@@ -63,6 +68,7 @@ export interface FleetGraphPageContext {
   emptyState: boolean;
   metrics: FleetGraphPageContextMetric[];
   items: FleetGraphPageContextItem[];
+  actions?: FleetGraphPageContextAction[];
 }
 
 export interface FleetGraphOnDemandRequest {
@@ -129,7 +135,10 @@ export interface FleetGraphOnDemandFinding {
   severity: FleetGraphDerivedSignalsSeverity;
 }
 
+export type FleetGraphAnswerMode = 'execution' | 'context' | 'launcher';
+
 export interface FleetGraphOnDemandReasoning {
+  answerMode: FleetGraphAnswerMode;
   summary: string;
   evidence: string[];
   whyNow: string | null;

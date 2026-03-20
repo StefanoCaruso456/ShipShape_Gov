@@ -81,6 +81,7 @@ function buildReasoningFallback(args: ReasonAboutSprintArgs): FleetGraphReasonin
   }
 
   return {
+    answerMode: 'execution',
     summary,
     evidence,
     whyNow,

@@ -51,6 +51,10 @@ export interface MyWeekResponse {
   projects: WeekProject[];
 }
 
+interface UseMyWeekQueryOptions {
+  enabled?: boolean;
+}
+
 async function fetchMyWeek(weekNumber?: number): Promise<MyWeekResponse> {
   const params = weekNumber ? `?week_number=${weekNumber}` : '';
   const res = await apiGet(`/api/dashboard/my-week${params}`);
@@ -62,13 +66,13 @@ async function fetchMyWeek(weekNumber?: number): Promise<MyWeekResponse> {
   return res.json();
 }
 
-export function useMyWeekQuery(weekNumber?: number) {
+export function useMyWeekQuery(weekNumber?: number, options?: UseMyWeekQueryOptions) {
   const { currentWorkspace } = useWorkspace();
 
   return useQuery({
     queryKey: ['dashboard', 'my-week', currentWorkspace?.id ?? 'no-workspace', weekNumber ?? 'current'],
     queryFn: () => fetchMyWeek(weekNumber),
-    enabled: !!currentWorkspace,
+    enabled: (options?.enabled ?? true) && !!currentWorkspace,
     staleTime: 0, // Always refetch on mount — plan/retro content is saved via Yjs WebSocket so there's no client-side mutation to trigger invalidation
   });
 }
