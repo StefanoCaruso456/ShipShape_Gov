@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FleetGraphActiveViewContext } from '@ship/shared';
 import type { MyWeekResponse } from '@/hooks/useMyWeekQuery';
 import type { Issue } from '@/hooks/useIssuesQuery';
+import type { Project } from '@/hooks/useProjectsQuery';
 import { buildIssueSurfacePageContext, buildMyWeekPageContext } from './useFleetGraphPageContext';
 
 const activeView: FleetGraphActiveViewContext = {
@@ -239,6 +240,81 @@ const issueSurfaceIssues: Issue[] = [
   },
 ];
 
+const issueSurfaceProjects: Project[] = [
+  {
+    id: 'project-1',
+    title: 'Core Features',
+    impact: 4,
+    confidence: 4,
+    ease: 3,
+    ice_score: 48,
+    roi: 3,
+    retention: 3,
+    acquisition: 2,
+    growth: 3,
+    business_value_score: 56,
+    color: '#6366f1',
+    emoji: null,
+    program_id: 'program-1',
+    owner: {
+      id: 'user-1',
+      name: 'stefano caruso',
+      email: 'stefano@example.com',
+    },
+    owner_id: 'user-1',
+    accountable_id: null,
+    consulted_ids: [],
+    informed_ids: [],
+    sprint_count: 2,
+    issue_count: 3,
+    inferred_status: 'active',
+    archived_at: null,
+    created_at: '2026-03-01T00:00:00.000Z',
+    updated_at: '2026-03-20T00:00:00.000Z',
+    is_complete: true,
+    missing_fields: [],
+    has_design_review: null,
+    design_review_notes: null,
+    converted_from_id: null,
+  },
+  {
+    id: 'project-2',
+    title: 'Performance',
+    impact: 5,
+    confidence: 4,
+    ease: 3,
+    ice_score: 60,
+    roi: 5,
+    retention: 4,
+    acquisition: 3,
+    growth: 5,
+    business_value_score: 87,
+    color: '#0ea5e9',
+    emoji: null,
+    program_id: 'program-1',
+    owner: {
+      id: 'user-1',
+      name: 'stefano caruso',
+      email: 'stefano@example.com',
+    },
+    owner_id: 'user-1',
+    accountable_id: null,
+    consulted_ids: [],
+    informed_ids: [],
+    sprint_count: 1,
+    issue_count: 2,
+    inferred_status: 'active',
+    archived_at: null,
+    created_at: '2026-03-01T00:00:00.000Z',
+    updated_at: '2026-03-20T00:00:00.000Z',
+    is_complete: true,
+    missing_fields: [],
+    has_design_review: null,
+    design_review_notes: null,
+    converted_from_id: null,
+  },
+];
+
 describe('buildMyWeekPageContext', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -349,7 +425,8 @@ describe('buildIssueSurfacePageContext', () => {
         id: 'program-1',
         title: 'API Platform',
       },
-      issueSurfaceIssues
+      issueSurfaceIssues,
+      issueSurfaceProjects
     );
 
     expect(context.kind).toBe('issue_surface');
@@ -360,22 +437,29 @@ describe('buildIssueSurfacePageContext', () => {
         { label: 'Not started', value: '3' },
         { label: 'Stale open', value: '1' },
         { label: 'Risk cluster', value: 'Week 3' },
+        { label: 'Highest impact issue', value: '#14' },
+        { label: 'Highest impact project', value: 'Performance' },
+        { label: 'Business value', value: '87/100' },
       ])
     );
     expect(context.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          label: 'Week 3',
-          route: '/documents/week-3/issues',
-        }),
-        expect.objectContaining({
           label: '#14 Expand test coverage',
           route: '/documents/issue-3',
+        }),
+        expect.objectContaining({
+          label: 'Week 3',
+          route: '/documents/week-3/issues',
         }),
       ])
     );
     expect(context.actions).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Open highest-impact #14',
+          route: '/documents/issue-3',
+        }),
         expect.objectContaining({
           label: 'Open Week 3',
           route: '/documents/week-3/issues',

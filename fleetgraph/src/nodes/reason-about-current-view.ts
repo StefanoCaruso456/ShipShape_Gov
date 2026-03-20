@@ -39,7 +39,37 @@ function buildEvidence(pageContext: FleetGraphPageContext): string[] {
   return [...metricEvidence, ...itemEvidence].slice(0, 6);
 }
 
-function buildRecommendedNextStep(pageContext: FleetGraphPageContext): string | null {
+function getMetricValue(pageContext: FleetGraphPageContext, label: string): string | null {
+  return pageContext.metrics.find((metric) => metric.label === label)?.value ?? null;
+}
+
+function getFirstAction(pageContext: FleetGraphPageContext, prefix: string): string | null {
+  return pageContext.actions?.find((action) => action.label.startsWith(prefix))?.label ?? null;
+}
+
+function buildRecommendedNextStep(
+  pageContext: FleetGraphPageContext,
+  question: string | null
+): string | null {
+  const normalizedQuestion = question?.trim().toLowerCase() ?? '';
+
+  if (
+    pageContext.kind === 'issue_surface' &&
+    (
+      normalizedQuestion.includes('impact') ||
+      normalizedQuestion.includes('value') ||
+      normalizedQuestion.includes('roi') ||
+      normalizedQuestion.includes('retention') ||
+      normalizedQuestion.includes('acquisition') ||
+      normalizedQuestion.includes('growth')
+    )
+  ) {
+    const highestImpactAction = getFirstAction(pageContext, 'Open highest-impact');
+    if (highestImpactAction) {
+      return `${highestImpactAction}. Then confirm whether its business case and delivery timing still justify keeping it at the top of the queue.`;
+    }
+  }
+
   if (pageContext.emptyState) {
     switch (pageContext.kind) {
       case 'programs':
@@ -93,6 +123,28 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     }
 
     return summary;
+  }
+
+  if (
+    pageContext.kind === 'issue_surface' &&
+    (
+      normalizedQuestion.includes('impact') ||
+      normalizedQuestion.includes('value') ||
+      normalizedQuestion.includes('roi') ||
+      normalizedQuestion.includes('retention') ||
+      normalizedQuestion.includes('acquisition') ||
+      normalizedQuestion.includes('growth')
+    )
+  ) {
+    const highestImpactIssue = getMetricValue(pageContext, 'Highest impact issue');
+    const highestImpactProject = getMetricValue(pageContext, 'Highest impact project');
+    const businessValue = getMetricValue(pageContext, 'Business value');
+
+    if (highestImpactIssue) {
+      return `${highestImpactIssue} is the highest-impact visible issue on this tab.${highestImpactProject ? ` It belongs to ${highestImpactProject},` : ''}${businessValue ? ` which carries the strongest business value signal here at ${businessValue}.` : ' It carries the strongest business value signal here.'}`;
+    }
+
+    return `${summary} FleetGraph can rank visible issues here by business value and execution attention, but this surface does not yet show a single standout item.`;
   }
 
   if (
@@ -180,7 +232,7 @@ function buildReasoning(pageContext: FleetGraphPageContext, question: string | n
     summary: buildSummary(pageContext, question),
     evidence,
     whyNow: buildWhyNow(pageContext, answerMode),
-    recommendedNextStep: buildRecommendedNextStep(pageContext),
+    recommendedNextStep: buildRecommendedNextStep(pageContext, question),
     confidence: evidence.length >= 3 ? 'high' : evidence.length > 0 ? 'medium' : 'low',
   };
 }

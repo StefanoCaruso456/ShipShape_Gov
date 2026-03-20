@@ -427,6 +427,17 @@ type IssueSurfaceBucket = {
   active: number;
 };
 
+type IssueSurfaceProject = ReturnType<typeof useProjects>['projects'][number];
+
+type ScoredIssueSurfaceIssue = {
+  issue: Issue;
+  project: IssueSurfaceProject | null;
+  businessValueScore: number | null;
+  businessDrivers: string | null;
+  executionAttentionScore: number;
+  combinedAttentionScore: number;
+};
+
 function getPriorityRank(priority: string | null | undefined): number {
   switch (priority) {
     case 'urgent':
@@ -437,6 +448,21 @@ function getPriorityRank(priority: string | null | undefined): number {
       return 2;
     case 'low':
       return 3;
+    default:
+      return 4;
+  }
+}
+
+function getIssuePriorityAttentionWeight(priority: string | null | undefined): number {
+  switch (priority) {
+    case 'urgent':
+      return 28;
+    case 'high':
+      return 22;
+    case 'medium':
+      return 14;
+    case 'low':
+      return 8;
     default:
       return 4;
   }
@@ -471,6 +497,74 @@ function isIssueStale(issue: Issue): boolean {
   return diffMs >= 1000 * 60 * 60 * 24 * 3;
 }
 
+function getProjectBusinessValueScore(project: IssueSurfaceProject | null): number | null {
+  if (!project) {
+    return null;
+  }
+
+  if (typeof project.business_value_score === 'number') {
+    return project.business_value_score;
+  }
+
+  if (typeof project.ice_score === 'number') {
+    return Math.round((project.ice_score / 125) * 100);
+  }
+
+  return null;
+}
+
+function describeProjectBusinessDrivers(project: IssueSurfaceProject | null): string | null {
+  if (!project) {
+    return null;
+  }
+
+  const scoredDrivers = [
+    { label: 'ROI', value: project.roi },
+    { label: 'Retention', value: project.retention },
+    { label: 'Acquisition', value: project.acquisition },
+    { label: 'Growth', value: project.growth },
+  ]
+    .filter((driver): driver is { label: string; value: number } => typeof driver.value === 'number')
+    .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label));
+
+  if (scoredDrivers.length === 0) {
+    return typeof project.ice_score === 'number' ? `ICE fallback ${project.ice_score}/125` : null;
+  }
+
+  return scoredDrivers
+    .slice(0, 2)
+    .map((driver) => `${driver.label} ${driver.value}/5`)
+    .join(' + ');
+}
+
+function computeIssueExecutionAttentionScore(issue: Issue, focusBucket: IssueSurfaceBucket | null): number {
+  let score = getIssuePriorityAttentionWeight(issue.priority);
+
+  if (issue.state === 'triage' || issue.state === 'backlog' || issue.state === 'todo') {
+    score += 16;
+  }
+
+  if (issue.state === 'in_progress' || issue.state === 'in_review') {
+    score += 8;
+  }
+
+  if (isIssueStale(issue)) {
+    score += 20;
+  }
+
+  if (!issue.assignee_id) {
+    score += 10;
+  }
+
+  const sprintId = getSprintId(issue);
+  const sprintTitle = getSprintTitle(issue);
+  if (focusBucket && ((focusBucket.id && focusBucket.id === sprintId) || focusBucket.title === sprintTitle)) {
+    score += 10;
+  }
+
+  return Math.min(score, 100);
+}
+
 function getIssueSurfaceScopeIssueFilter(scope: IssueSurfaceScope) {
   return (issue: Issue) =>
     scope.type === 'program' ? getProgramId(issue) === scope.id : getProjectId(issue) === scope.id;
@@ -479,7 +573,8 @@ function getIssueSurfaceScopeIssueFilter(scope: IssueSurfaceScope) {
 export function buildIssueSurfacePageContext(
   route: string,
   scope: IssueSurfaceScope,
-  scopedIssues: Issue[]
+  scopedIssues: Issue[],
+  projects: IssueSurfaceProject[]
 ): FleetGraphPageContextWithActions {
   const visibleIssues = [...scopedIssues].sort((left, right) => {
     const priorityDelta = getPriorityRank(left.priority) - getPriorityRank(right.priority);
@@ -558,6 +653,52 @@ export function buildIssueSurfacePageContext(
     return right.ticket_number - left.ticket_number;
   });
 
+  const projectById = new Map(projects.map((project) => [project.id, project] as const));
+  const scoredOpenIssues = openIssues
+    .map((issue): ScoredIssueSurfaceIssue => {
+      const project = projectById.get(getProjectId(issue) ?? '') ?? null;
+      const businessValueScore = getProjectBusinessValueScore(project);
+      const executionAttentionScore = computeIssueExecutionAttentionScore(issue, focusBucket);
+
+      return {
+        issue,
+        project,
+        businessValueScore,
+        businessDrivers: describeProjectBusinessDrivers(project),
+        executionAttentionScore,
+        combinedAttentionScore:
+          businessValueScore === null
+            ? executionAttentionScore
+            : Math.round(executionAttentionScore * 0.6 + businessValueScore * 0.4),
+      };
+    })
+    .sort((left, right) => {
+      if (right.combinedAttentionScore !== left.combinedAttentionScore) {
+        return right.combinedAttentionScore - left.combinedAttentionScore;
+      }
+
+      if ((right.businessValueScore ?? -1) !== (left.businessValueScore ?? -1)) {
+        return (right.businessValueScore ?? -1) - (left.businessValueScore ?? -1);
+      }
+
+      return right.issue.ticket_number - left.issue.ticket_number;
+    });
+
+  const topImpactIssue =
+    [...scoredOpenIssues].sort((left, right) => {
+      if ((right.businessValueScore ?? -1) !== (left.businessValueScore ?? -1)) {
+        return (right.businessValueScore ?? -1) - (left.businessValueScore ?? -1);
+      }
+
+      if (right.executionAttentionScore !== left.executionAttentionScore) {
+        return right.executionAttentionScore - left.executionAttentionScore;
+      }
+
+      return right.issue.ticket_number - left.issue.ticket_number;
+    })[0] ?? null;
+
+  const topAttentionIssue = scoredOpenIssues[0] ?? null;
+
   const summary = (() => {
     if (visibleIssues.length === 0) {
       return `${scope.title} has no visible issues on this tab yet.`;
@@ -576,10 +717,10 @@ export function buildIssueSurfacePageContext(
     }
 
     if (focusBucket && focusBucket.notStarted > 0) {
-      return `${scope.title} has active delivery work, but ${focusBucket.title} carries the biggest risk cluster with ${pluralize(focusBucket.open, 'open issue')} and ${pluralize(focusBucket.notStarted, 'issue')} still not started.`;
+      return `${scope.title} has active delivery work, but ${focusBucket.title} carries the biggest risk cluster with ${pluralize(focusBucket.open, 'open issue')} and ${pluralize(focusBucket.notStarted, 'issue')} still not started.${topImpactIssue?.issue.display_id ? ` The highest-value visible issue is ${topImpactIssue.issue.display_id}.` : ''}`;
     }
 
-    return `${scope.title} shows active movement on this issues surface. ${pluralize(inProgressCount + inReviewCount, 'issue')} are already in progress or review, so the main question is scope balance rather than a visible blocker.`;
+    return `${scope.title} shows active movement on this issues surface. ${pluralize(inProgressCount + inReviewCount, 'issue')} are already in progress or review, so the main question is scope balance rather than a visible blocker.${topImpactIssue?.issue.display_id ? ` The highest-value visible issue is ${topImpactIssue.issue.display_id}.` : ''}`;
   })();
 
   return {
@@ -595,12 +736,42 @@ export function buildIssueSurfacePageContext(
       { label: 'In review', value: String(inReviewCount) },
       { label: 'Stale open', value: String(staleOpenIssues.length) },
       focusBucket ? { label: 'Risk cluster', value: focusBucket.title } : null,
+      topImpactIssue?.issue.display_id
+        ? { label: 'Highest impact issue', value: topImpactIssue.issue.display_id }
+        : null,
+      topImpactIssue?.project?.title
+        ? { label: 'Highest impact project', value: topImpactIssue.project.title }
+        : null,
+      topImpactIssue?.businessValueScore !== null && topImpactIssue?.businessValueScore !== undefined
+        ? { label: 'Business value', value: `${topImpactIssue.businessValueScore}/100` }
+        : null,
+      topAttentionIssue?.issue.display_id
+        ? { label: 'Top attention issue', value: topAttentionIssue.issue.display_id }
+        : null,
       assigneeCount > 0 ? { label: 'Assignees', value: String(assigneeCount) } : null,
       doneCount > 0 || cancelledCount > 0
         ? { label: 'Closed', value: String(doneCount + cancelledCount) }
         : null,
     ]),
     items: buildItems([
+      topImpactIssue
+        ? {
+            label: topImpactIssue.issue.display_id
+              ? `${topImpactIssue.issue.display_id} ${topImpactIssue.issue.title}`
+              : topImpactIssue.issue.title,
+            detail: [
+              'Highest impact',
+              topImpactIssue.project?.title ? `Project: ${topImpactIssue.project.title}` : null,
+              topImpactIssue.businessValueScore !== null
+                ? `Business value: ${topImpactIssue.businessValueScore}/100`
+                : null,
+              topImpactIssue.businessDrivers ? `Drivers: ${topImpactIssue.businessDrivers}` : null,
+            ]
+              .filter(Boolean)
+              .join(' • '),
+            route: `/documents/${topImpactIssue.issue.id}`,
+          }
+        : null,
       focusBucket
         ? {
             label: focusBucket.title,
@@ -608,7 +779,10 @@ export function buildIssueSurfacePageContext(
             route: focusBucket.route,
           }
         : null,
-      ...topAttentionIssues.slice(0, 3).map((issue) => ({
+      ...topAttentionIssues
+        .filter((issue) => issue.id !== topImpactIssue?.issue.id)
+        .slice(0, 2)
+        .map((issue) => ({
         label: issue.display_id ? `${issue.display_id} ${issue.title}` : issue.title,
         detail: [
           `State: ${issue.state}`,
@@ -619,19 +793,28 @@ export function buildIssueSurfacePageContext(
           .filter(Boolean)
           .join(' • '),
         route: `/documents/${issue.id}`,
-      })),
+        })),
     ]),
     actions: buildActions([
+      topImpactIssue
+        ? {
+            label: `Open highest-impact ${topImpactIssue.issue.display_id ?? `#${topImpactIssue.issue.ticket_number}`}`,
+            route: `/documents/${topImpactIssue.issue.id}`,
+          }
+        : null,
       focusBucket?.route
         ? {
             label: `Open ${focusBucket.title}`,
             route: focusBucket.route,
           }
         : null,
-      ...topAttentionIssues.slice(0, 2).map((issue) => ({
+      ...topAttentionIssues
+        .filter((issue) => issue.id !== topImpactIssue?.issue.id)
+        .slice(0, 2)
+        .map((issue) => ({
         label: `Open ${issue.display_id ?? `#${issue.ticket_number}`}`,
         route: `/documents/${issue.id}`,
-      })),
+        })),
     ]),
   };
 }
@@ -1092,7 +1275,8 @@ function buildDocumentPageContext(
         type: 'program',
         id: document.id,
         title: document.title,
-      }))
+      })),
+      projects
     );
   }
 
@@ -1108,7 +1292,8 @@ function buildDocumentPageContext(
         type: 'project',
         id: document.id,
         title: document.title,
-      }))
+      })),
+      projects
     );
   }
 

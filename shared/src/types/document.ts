@@ -107,6 +107,11 @@ export interface ProjectProperties {
   impact: ICEScore | null;      // How much will this move the needle?
   confidence: ICEScore | null;  // How certain are we this will achieve the impact?
   ease: ICEScore | null;        // How easy is this to implement? (inverse of effort)
+  // Business value inputs (1-5 scale, null = not yet set)
+  roi: ICEScore | null;         // Expected return on investment
+  retention: ICEScore | null;   // Expected customer retention impact
+  acquisition: ICEScore | null; // Expected acquisition impact
+  growth: ICEScore | null;      // Expected growth leverage
   // RACI accountability fields
   owner_id?: string | null;        // R - Responsible (does the work)
   accountable_id?: string | null;  // A - Accountable (approver for hypotheses/reviews)
@@ -321,6 +326,10 @@ export const DEFAULT_PROJECT_PROPERTIES: Partial<ProjectProperties> = {
   impact: null,
   confidence: null,
   ease: null,
+  roi: null,
+  retention: null,
+  acquisition: null,
+  growth: null,
   owner_id: null,
   color: '#6366f1',
 };
@@ -341,4 +350,45 @@ export function computeICEScore(impact: number | null, confidence: number | null
     return null;
   }
   return impact * confidence * ease;
+}
+
+const BUSINESS_VALUE_WEIGHTS = {
+  roi: 0.35,
+  retention: 0.25,
+  acquisition: 0.2,
+  growth: 0.2,
+} as const;
+
+/**
+ * Compute project business value as a weighted 0-100 score.
+ * The score is normalized over whichever fields are filled in so partially
+ * scored projects can still surface useful value signals.
+ */
+export function computeBusinessValueScore(
+  roi: number | null,
+  retention: number | null,
+  acquisition: number | null,
+  growth: number | null
+): number | null {
+  const entries = [
+    ['roi', roi],
+    ['retention', retention],
+    ['acquisition', acquisition],
+    ['growth', growth],
+  ] as const;
+
+  const weightedEntries = entries.filter((entry): entry is readonly [keyof typeof BUSINESS_VALUE_WEIGHTS, number] => {
+    const value = entry[1];
+    return value !== null;
+  });
+
+  if (weightedEntries.length === 0) {
+    return null;
+  }
+
+  const totalWeight = weightedEntries.reduce((sum, [key]) => sum + BUSINESS_VALUE_WEIGHTS[key], 0);
+  const weightedAverage =
+    weightedEntries.reduce((sum, [key, value]) => sum + (value * BUSINESS_VALUE_WEIGHTS[key]), 0) / totalWeight;
+
+  return Math.round((weightedAverage / 5) * 100);
 }
