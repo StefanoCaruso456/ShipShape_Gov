@@ -431,7 +431,9 @@ describe('FleetGraphOnDemandPanel', () => {
     renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
-    fireEvent.click(screen.getByRole('button', { name: 'What is blocking delivery in this project?' }));
+    expect(screen.getByRole('button', { name: 'What is the risk inside Week 3?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Which issues are stale or stuck?' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'What is the risk inside Week 3?' }));
 
     expect(await screen.findByText('Grounded execution guidance')).toBeInTheDocument();
     expect(screen.getByText('Execution view')).toBeInTheDocument();
@@ -439,6 +441,8 @@ describe('FleetGraphOnDemandPanel', () => {
       screen.getByText(/does not show a named blocker on this issues surface/)
     ).toBeInTheDocument();
     expect(screen.getByText('Recommended next step')).toBeInTheDocument();
+    expect(screen.getByText('Suggested follow-up questions')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Which exact issues are driving the risk?' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open Week 3' })).toHaveAttribute(
       'href',
       '/documents/week-3/issues'

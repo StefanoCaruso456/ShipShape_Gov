@@ -135,6 +135,14 @@ As of 2026-03-20:
 - [reason-about-current-view.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/fleetgraph/src/nodes/reason-about-current-view.ts)
 - [FleetGraphOnDemandPanel.tsx](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/web/src/components/fleetgraph/FleetGraphOnDemandPanel.tsx)
 
+## Next Phase Unlocked
+
+Phase 3 unlocks Phase 4:
+
+- [phase-4-conversational-questioning.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-4-conversational-questioning.md)
+
+That order is intentional. Issue-list surfaces needed stronger evidence before conversational prompt work could become genuinely more useful instead of just sounding nicer.
+
 ## Delivery Status
 
 Phase 3 is implemented on a stacked branch after Phase 2.
