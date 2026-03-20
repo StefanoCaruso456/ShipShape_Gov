@@ -12,6 +12,12 @@ FleetGraph should use:
 
 The model should never see a raw backend toolbox.
 
+For the next FleetGraph architecture phase, that also means:
+
+- evidence tools should be explicit and bounded
+- every evidence tool should use a shared scrum context envelope
+- every evidence tool should emit downstream telemetry
+
 ## Why
 
 This keeps FleetGraph:
@@ -89,6 +95,15 @@ Examples:
 - fetch activity
 - fetch issue stats
 - post a sprint comment
+
+For FleetGraph, tools should now be split into two classes:
+
+- read-only evidence tools
+- mutation actions from the bounded action catalog
+
+See the tooling registry:
+
+- [tooling-registry.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/tooling-registry.md)
 
 ## Skill format in this repo
 
@@ -168,3 +183,9 @@ If it changes how FleetGraph interprets evidence, it belongs in:
 - reasoning skills
 - deterministic signals
 - grounded prompts
+
+If it fetches normalized scrum evidence, it belongs in:
+
+- the evidence-tool registry
+- strict TypeScript and Zod schemas
+- downstream tool-call telemetry
