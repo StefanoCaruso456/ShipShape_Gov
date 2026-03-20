@@ -12,6 +12,7 @@ import {
   type BelongsToEntry,
 } from '../utils/document-crud.js';
 import { broadcastToUser } from '../collaboration/index.js';
+import { listIssueDependencySignals } from '../services/issue-dependency-signals.js';
 
 type RouterType = ReturnType<typeof Router>;
 const router: RouterType = Router();
@@ -76,6 +77,18 @@ const updateIssueSchema = z.object({
 
 const rejectIssueSchema = z.object({
   reason: z.string().min(1).max(1000),
+});
+
+const dependencySignalsQuerySchema = z.object({
+  issue_ids: z
+    .string()
+    .transform((value) =>
+      value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+    .pipe(z.array(z.string().uuid()).min(1).max(25)),
 });
 
 // Helper to extract issue properties from row (without belongs_to - added separately)
@@ -429,6 +442,50 @@ router.get('/by-ticket/:number', authMiddleware, async (req: Request, res: Respo
     });
   } catch (err) {
     console.error('Get issue by ticket error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get aggregated blocker and dependency signals for a visible issue set
+router.get('/dependency-signals', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+    const { userId, workspaceId } = authContext;
+
+    const parsed = dependencySignalsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Invalid dependency signal query', details: parsed.error.errors });
+      return;
+    }
+
+    const requestedIssueIds = parsed.data.issue_ids;
+    const { isAdmin } = await getVisibilityContext(userId, workspaceId);
+
+    const accessibleResult = await pool.query<{ id: string }>(
+      `SELECT d.id
+       FROM documents d
+       WHERE d.workspace_id = $1
+         AND d.document_type = 'issue'
+         AND d.id = ANY($2::uuid[])
+         AND d.archived_at IS NULL
+         AND d.deleted_at IS NULL
+         AND ${VISIBILITY_FILTER_SQL('d', '$3', '$4')}`,
+      [workspaceId, requestedIssueIds, userId, isAdmin]
+    );
+
+    const accessibleIssueIds = accessibleResult.rows.map((row) => row.id);
+    const dependencySignals = await listIssueDependencySignals({
+      workspaceId,
+      issueIds: accessibleIssueIds,
+      requestedIssueCount: requestedIssueIds.length,
+    });
+
+    res.json(dependencySignals);
+  } catch (err) {
+    console.error('Get dependency signals error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

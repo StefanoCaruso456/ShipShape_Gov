@@ -91,6 +91,34 @@ export interface FleetGraphOnDemandRequest {
   question_source?: FleetGraphQuestionSource | null;
 }
 
+export type FleetGraphIssueDependencyStatus = 'pass' | 'fail' | 'in_progress';
+
+export interface FleetGraphIssueDependencySignal {
+  issueId: string;
+  latestStatus: FleetGraphIssueDependencyStatus | null;
+  hasUnresolvedBlocker: boolean;
+  hasRecentBlockerMention: boolean;
+  blockerSummary: string | null;
+  blockerLoggedAt: string | null;
+  blockerAgeDays: number | null;
+  blockerLoggedBy: string | null;
+  isStale: boolean;
+}
+
+export interface FleetGraphIssueDependencySignalsSummary {
+  requestedIssueCount: number;
+  accessibleIssueCount: number;
+  unresolvedBlockerCount: number;
+  staleBlockedIssueCount: number;
+  recentBlockerMentionCount: number;
+  oldestUnresolvedBlockerDays: number | null;
+}
+
+export interface FleetGraphIssueDependencySignalsResponse {
+  summary: FleetGraphIssueDependencySignalsSummary;
+  issues: FleetGraphIssueDependencySignal[];
+}
+
 export interface FleetGraphResumeDecision {
   outcome: 'approve' | 'dismiss' | 'snooze';
   note?: string | null;

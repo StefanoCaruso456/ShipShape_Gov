@@ -3,6 +3,8 @@ import { matchPath, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type {
   FleetGraphActiveViewContext,
+  FleetGraphIssueDependencySignal,
+  FleetGraphIssueDependencySignalsResponse,
   FleetGraphPageContext,
   FleetGraphPageContextAction,
   FleetGraphPageContextActionIntent,
@@ -24,6 +26,7 @@ import {
   type Issue,
 } from '@/hooks/useIssuesQuery';
 import { useDashboardActionItems } from '@/hooks/useDashboardActionItems';
+import { useIssueDependencySignalsQuery } from '@/hooks/useIssueDependencySignalsQuery';
 import { useMyWeekQuery, type MyWeekResponse, type StandupSlot } from '@/hooks/useMyWeekQuery';
 import { useTeamMembersQuery } from '@/hooks/useTeamMembersQuery';
 import { useActiveWeeksQuery } from '@/hooks/useWeeksQuery';
@@ -478,6 +481,10 @@ type ScoredIssueSurfaceIssue = {
   combinedAttentionScore: number;
 };
 
+type BlockedIssueSurfaceIssue = ScoredIssueSurfaceIssue & {
+  dependencySignal: FleetGraphIssueDependencySignal;
+};
+
 function getPriorityRank(priority: string | null | undefined): number {
   switch (priority) {
     case 'urgent':
@@ -526,6 +533,35 @@ function formatRelativeIssueUpdate(updatedAt: string | undefined): string | null
 
   const diffDays = Math.max(1, Math.round(diffHours / 24));
   return `Updated ${diffDays}d ago`;
+}
+
+function formatBlockerAgeDays(days: number | null): string | null {
+  if (days === null) {
+    return null;
+  }
+
+  if (days <= 0) {
+    return 'Blocked today';
+  }
+
+  return `Blocked ${pluralize(days, 'day')}`;
+}
+
+function buildBlockedIssueDetail(
+  blockedIssue: BlockedIssueSurfaceIssue
+): string {
+  return [
+    formatBlockerAgeDays(blockedIssue.dependencySignal.blockerAgeDays),
+    blockedIssue.issue.assignee_name ? `Owner: ${blockedIssue.issue.assignee_name}` : null,
+    blockedIssue.dependencySignal.blockerLoggedBy
+      ? `Logged by: ${blockedIssue.dependencySignal.blockerLoggedBy}`
+      : null,
+    blockedIssue.dependencySignal.blockerSummary
+      ? `Blocker: ${blockedIssue.dependencySignal.blockerSummary}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' • ');
 }
 
 function isIssueStale(issue: Issue): boolean {
@@ -614,7 +650,8 @@ export function buildIssueSurfacePageContext(
   route: string,
   scope: IssueSurfaceScope,
   scopedIssues: Issue[],
-  projects: IssueSurfaceProject[]
+  projects: IssueSurfaceProject[],
+  dependencySignals: FleetGraphIssueDependencySignalsResponse | null = null
 ): FleetGraphPageContextWithActions {
   const visibleIssues = [...scopedIssues].sort((left, right) => {
     const priorityDelta = getPriorityRank(left.priority) - getPriorityRank(right.priority);
@@ -627,19 +664,12 @@ export function buildIssueSurfacePageContext(
   const openIssues = visibleIssues.filter(
     (issue) => issue.state !== 'done' && issue.state !== 'cancelled'
   );
-  const doneCount = visibleIssues.filter((issue) => issue.state === 'done').length;
-  const cancelledCount = visibleIssues.filter((issue) => issue.state === 'cancelled').length;
   const inProgressCount = visibleIssues.filter((issue) => issue.state === 'in_progress').length;
   const inReviewCount = visibleIssues.filter((issue) => issue.state === 'in_review').length;
   const notStartedIssues = visibleIssues.filter((issue) =>
     issue.state === 'triage' || issue.state === 'backlog' || issue.state === 'todo'
   );
   const staleOpenIssues = openIssues.filter(isIssueStale);
-  const assigneeCount = new Set(
-    openIssues
-      .map((issue) => issue.assignee_name?.trim().toLowerCase() ?? null)
-      .filter((value): value is string => Boolean(value))
-  ).size;
 
   const sprintBuckets = new Map<string, IssueSurfaceBucket>();
   for (const issue of openIssues) {
@@ -738,6 +768,36 @@ export function buildIssueSurfacePageContext(
     })[0] ?? null;
 
   const topAttentionIssue = scoredOpenIssues[0] ?? null;
+  const dependencySignalsByIssueId = new Map(
+    (dependencySignals?.issues ?? []).map((signal) => [signal.issueId, signal] as const)
+  );
+  const blockedIssues = scoredOpenIssues
+    .map((scoredIssue) => {
+      const dependencySignal = dependencySignalsByIssueId.get(scoredIssue.issue.id);
+      if (!dependencySignal?.hasUnresolvedBlocker) {
+        return null;
+      }
+
+      return {
+        ...scoredIssue,
+        dependencySignal,
+      };
+    })
+    .filter((issue): issue is BlockedIssueSurfaceIssue => Boolean(issue))
+    .sort((left, right) => {
+      if ((right.dependencySignal.blockerAgeDays ?? -1) !== (left.dependencySignal.blockerAgeDays ?? -1)) {
+        return (right.dependencySignal.blockerAgeDays ?? -1) - (left.dependencySignal.blockerAgeDays ?? -1);
+      }
+
+      if (right.executionAttentionScore !== left.executionAttentionScore) {
+        return right.executionAttentionScore - left.executionAttentionScore;
+      }
+
+      return right.issue.ticket_number - left.issue.ticket_number;
+    });
+  const staleBlockedIssues = blockedIssues.filter((issue) => issue.dependencySignal.isStale);
+  const topBlockedIssue = blockedIssues[0] ?? null;
+  const oldestBlockedAgeDays = dependencySignals?.summary.oldestUnresolvedBlockerDays ?? null;
 
   const summary = (() => {
     if (visibleIssues.length === 0) {
@@ -746,6 +806,16 @@ export function buildIssueSurfacePageContext(
 
     if (openIssues.length === 0) {
       return `${scope.title} does not show an active delivery blocker on this issues surface right now. All visible issues are already done or cancelled.`;
+    }
+
+    if (topBlockedIssue) {
+      const displayId = topBlockedIssue.issue.display_id ?? `#${topBlockedIssue.issue.ticket_number}`;
+      const blockerAge =
+        topBlockedIssue.dependencySignal.blockerAgeDays !== null
+          ? `${pluralize(topBlockedIssue.dependencySignal.blockerAgeDays, 'day')}`
+          : null;
+
+      return `${scope.title} has explicit blocker evidence on this issues surface. ${displayId} is currently blocked${blockerAge ? ` and has been sitting for ${blockerAge}` : ''}${topBlockedIssue.issue.assignee_name ? ` under ${topBlockedIssue.issue.assignee_name}` : ''}.${staleBlockedIssues.length > 1 ? ` ${pluralize(staleBlockedIssues.length, 'blocked issue')} have been stuck for at least 3 days.` : ''}`;
     }
 
     if (staleOpenIssues.length > 0) {
@@ -776,6 +846,19 @@ export function buildIssueSurfacePageContext(
   const focusBucketActionReason = focusBucket
     ? `${focusBucket.title} holds ${pluralize(focusBucket.open, 'open issue')} with ${pluralize(focusBucket.notStarted, 'issue')} still not started.`
     : null;
+  const blockerActionReason = topBlockedIssue
+    ? [
+        topBlockedIssue.dependencySignal.blockerAgeDays !== null
+          ? `${topBlockedIssue.issue.display_id ?? `#${topBlockedIssue.issue.ticket_number}`} has been blocked for ${pluralize(topBlockedIssue.dependencySignal.blockerAgeDays, 'day')}.`
+          : `${topBlockedIssue.issue.display_id ?? `#${topBlockedIssue.issue.ticket_number}`} has an active blocker logged in its latest iteration.`,
+        topBlockedIssue.issue.assignee_name ? `Owner: ${topBlockedIssue.issue.assignee_name}.` : null,
+        topBlockedIssue.dependencySignal.blockerSummary
+          ? `Blocker: ${topBlockedIssue.dependencySignal.blockerSummary}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : null;
 
   return {
     kind: 'issue_surface',
@@ -785,10 +868,12 @@ export function buildIssueSurfacePageContext(
     emptyState: visibleIssues.length === 0,
     metrics: buildMetrics([
       { label: 'Visible issues', value: String(visibleIssues.length) },
+      blockedIssues.length > 0 ? { label: 'Blocked issues', value: String(blockedIssues.length) } : null,
+      staleBlockedIssues.length > 0 ? { label: 'Stale blockers', value: String(staleBlockedIssues.length) } : null,
+      oldestBlockedAgeDays !== null ? { label: 'Oldest blocker', value: `${pluralize(oldestBlockedAgeDays, 'day')}` } : null,
       { label: 'Not started', value: String(notStartedIssues.length) },
       { label: 'In progress', value: String(inProgressCount) },
-      { label: 'In review', value: String(inReviewCount) },
-      { label: 'Stale open', value: String(staleOpenIssues.length) },
+      staleOpenIssues.length > 0 ? { label: 'Stale open', value: String(staleOpenIssues.length) } : null,
       focusBucket ? { label: 'Risk cluster', value: focusBucket.title } : null,
       topImpactIssue?.issue.display_id
         ? { label: 'Highest impact issue', value: topImpactIssue.issue.display_id }
@@ -802,13 +887,19 @@ export function buildIssueSurfacePageContext(
       topAttentionIssue?.issue.display_id
         ? { label: 'Top attention issue', value: topAttentionIssue.issue.display_id }
         : null,
-      assigneeCount > 0 ? { label: 'Assignees', value: String(assigneeCount) } : null,
-      doneCount > 0 || cancelledCount > 0
-        ? { label: 'Closed', value: String(doneCount + cancelledCount) }
-        : null,
     ]),
     items: buildItems([
+      topBlockedIssue
+        ? {
+            label: topBlockedIssue.issue.display_id
+              ? `${topBlockedIssue.issue.display_id} ${topBlockedIssue.issue.title}`
+              : topBlockedIssue.issue.title,
+            detail: buildBlockedIssueDetail(topBlockedIssue),
+            route: `/documents/${topBlockedIssue.issue.id}`,
+          }
+        : null,
       topImpactIssue
+        && topImpactIssue.issue.id !== topBlockedIssue?.issue.id
         ? {
             label: topImpactIssue.issue.display_id
               ? `${topImpactIssue.issue.display_id} ${topImpactIssue.issue.title}`
@@ -834,7 +925,7 @@ export function buildIssueSurfacePageContext(
           }
         : null,
       ...topAttentionIssues
-        .filter((issue) => issue.id !== topImpactIssue?.issue.id)
+        .filter((issue) => issue.id !== topImpactIssue?.issue.id && issue.id !== topBlockedIssue?.issue.id)
         .slice(0, 2)
         .map((issue) => ({
         label: issue.display_id ? `${issue.display_id} ${issue.title}` : issue.title,
@@ -850,6 +941,17 @@ export function buildIssueSurfacePageContext(
         })),
     ]),
     actions: buildActions([
+      topBlockedIssue
+        ? createPageAction(
+            `Follow up on blocker ${topBlockedIssue.issue.display_id ?? `#${topBlockedIssue.issue.ticket_number}`}`,
+            `/documents/${topBlockedIssue.issue.id}`,
+            {
+              intent: 'follow_up',
+              reason: blockerActionReason,
+              owner: topBlockedIssue.issue.assignee_name,
+            }
+          )
+        : null,
       topImpactIssue
         ? createPageAction(
             `Open highest-impact ${topImpactIssue.issue.display_id ?? `#${topImpactIssue.issue.ticket_number}`}`,
@@ -1348,7 +1450,8 @@ function buildDocumentPageContext(
   programs: ReturnType<typeof usePrograms>['programs'],
   projects: ReturnType<typeof useProjects>['projects'],
   issues: ReturnType<typeof useIssues>['issues'],
-  people: NonNullable<ReturnType<typeof useTeamMembersQuery>['data']>
+  people: NonNullable<ReturnType<typeof useTeamMembersQuery>['data']>,
+  dependencySignals: FleetGraphIssueDependencySignalsResponse | null
 ): FleetGraphPageContext {
   const program = programs.find((candidate) => candidate.id === document.id);
   const project = projects.find((candidate) => candidate.id === document.id);
@@ -1369,7 +1472,8 @@ function buildDocumentPageContext(
         id: document.id,
         title: document.title,
       })),
-      projects
+      projects,
+      dependencySignals
     );
   }
 
@@ -1386,7 +1490,8 @@ function buildDocumentPageContext(
         id: document.id,
         title: document.title,
       })),
-      projects
+      projects,
+      dependencySignals
     );
   }
 
@@ -1546,6 +1651,35 @@ export function useFleetGraphPageContext(
     enabled: shouldLoadRouteDocument,
     staleTime: 1000 * 60 * 5,
   });
+  const issueSurfaceDependencyTarget = useMemo(() => {
+    if (activeView?.tab !== 'issues' || !currentDocumentQuery.data) {
+      return null;
+    }
+
+    if (currentDocumentQuery.data.document_type !== 'program' && currentDocumentQuery.data.document_type !== 'project') {
+      return null;
+    }
+
+    const scope: IssueSurfaceScope = {
+      type: currentDocumentQuery.data.document_type,
+      id: currentDocumentQuery.data.id,
+      title: currentDocumentQuery.data.title,
+    };
+    const issueIds = issues
+      .filter(getIssueSurfaceScopeIssueFilter(scope))
+      .map((issue) => issue.id);
+
+    return issueIds.length > 0
+      ? {
+          scope,
+          issueIds,
+        }
+      : null;
+  }, [activeView?.tab, currentDocumentQuery.data, issues]);
+  const issueDependencySignalsQuery = useIssueDependencySignalsQuery(
+    issueSurfaceDependencyTarget?.issueIds ?? [],
+    Boolean(issueSurfaceDependencyTarget)
+  );
 
   return useMemo(() => {
     if (location.pathname === '/programs') {
@@ -1614,7 +1748,8 @@ export function useFleetGraphPageContext(
         programs,
         projects,
         issues,
-        teamMembersQuery.data ?? []
+        teamMembersQuery.data ?? [],
+        issueDependencySignalsQuery.data ?? null
       );
     }
 

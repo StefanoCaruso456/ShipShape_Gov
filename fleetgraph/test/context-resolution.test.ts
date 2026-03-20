@@ -526,4 +526,77 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.reasoning?.summary).toContain('87/100');
     expect(result.reasoning?.recommendedNextStep).toContain('Open highest-impact #14');
   });
+
+  it('answers blocker questions from explicit issue-surface blocker evidence', async () => {
+    const graph = createFleetGraph();
+    const runtime = createFleetGraphRuntime({
+      now: () => new Date('2026-03-20T12:00:00.000Z'),
+    });
+
+    const result = await graph.invoke(
+      {
+        runId: 'issue-surface-blocker-context',
+        mode: 'on_demand',
+        triggerType: 'user_invoke',
+        workspaceId: 'workspace-1',
+        actor: {
+          id: 'user-1',
+          kind: 'user',
+          role: 'pm',
+        },
+        activeView: null,
+        contextEntity: null,
+        prompt: {
+          question: 'What is blocked, by whom, and for how long?',
+          pageContext: {
+            kind: 'issue_surface',
+            route: '/documents/program-1/issues',
+            title: 'API Platform Issues',
+            summary:
+              'API Platform has explicit blocker evidence on this issues surface. #12 is currently blocked and has been sitting for 4 days under stefano caruso.',
+            emptyState: false,
+            metrics: [
+              { label: 'Visible issues', value: '5' },
+              { label: 'Blocked issues', value: '1' },
+              { label: 'Stale blockers', value: '1' },
+              { label: 'Oldest blocker', value: '4 days' },
+              { label: 'Risk cluster', value: 'Week 3' },
+            ],
+            items: [
+              {
+                label: '#12 Implement core workflow',
+                detail:
+                  'Blocked 4 days • Owner: stefano caruso • Logged by: stefano caruso • Blocker: Waiting on API review from platform team',
+                route: '/documents/issue-1',
+              },
+            ],
+            actions: [
+              {
+                label: 'Follow up on blocker #12',
+                route: '/documents/issue-1',
+                intent: 'follow_up',
+                reason:
+                  '#12 has been blocked for 4 days. Owner: stefano caruso. Blocker: Waiting on API review from platform team',
+                owner: 'stefano caruso',
+              },
+            ],
+          },
+        },
+        trace: {
+          runName: 'fleetgraph-issue-surface-blocker-context-test',
+          tags: ['fleetgraph', 'test', 'issue-surface', 'blockers'],
+        },
+      } satisfies FleetGraphRunInput,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'issue-surface-blocker-context',
+      })
+    );
+
+    expect(result.status).toBe('completed');
+    expect(result.stage).toBe('current_view_reasoned');
+    expect(result.reasoning?.answerMode).toBe('execution');
+    expect(result.reasoning?.summary).toContain('#12 Implement core workflow is the clearest visible blocker right now');
+    expect(result.reasoning?.summary).toContain('Oldest blocker: 4 days');
+    expect(result.reasoning?.recommendedNextStep).toContain('Follow up on blocker #12');
+  });
 });
