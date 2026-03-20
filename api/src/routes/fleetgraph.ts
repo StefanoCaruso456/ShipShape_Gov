@@ -54,6 +54,7 @@ const pageContextSchema = z.object({
     'programs',
     'projects',
     'issues',
+    'issue_surface',
     'documents',
     'document',
     'team_directory',

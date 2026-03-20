@@ -37,6 +37,7 @@ export type FleetGraphPageContextKind =
   | 'programs'
   | 'projects'
   | 'issues'
+  | 'issue_surface'
   | 'documents'
   | 'document'
   | 'team_directory'

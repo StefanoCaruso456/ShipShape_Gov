@@ -99,6 +99,11 @@ const ANSWER_MODE_STYLES: Record<
   },
 };
 
+const EXECUTION_CONTEXT_BADGE = {
+  label: 'Execution view',
+  badgeClassName: 'border-white/10 bg-white/5 text-muted',
+};
+
 interface FleetGraphOnDemandPanelProps {
   activeView?: FleetGraphActiveViewContext | null;
 }
@@ -201,6 +206,10 @@ function inferAnswerModeFromContext(
   activeView: FleetGraphActiveViewContext | null,
   pageContext: FleetGraphPageContext | null
 ): FleetGraphAnswerMode {
+  if (pageContext?.kind === 'issue_surface') {
+    return 'execution';
+  }
+
   if (
     activeView?.entity.type === 'week' ||
     activeView?.entity.sourceDocumentType === 'weekly_plan' ||
@@ -340,7 +349,7 @@ function getPromptSurface(
     return 'sprint';
   }
 
-  if (pageContext?.kind === 'issues' || activeView?.tab === 'issues') {
+  if (pageContext?.kind === 'issues' || pageContext?.kind === 'issue_surface' || activeView?.tab === 'issues') {
     return 'project_issues';
   }
 
@@ -1174,6 +1183,7 @@ export function FleetGraphOnDemandPanel({
                     )
                 );
                 const contextMetrics = turn.pageContext?.metrics ?? [];
+                const showExecutionSeverityBadge = answerMode === 'execution' && hasDerivedMetrics;
 
                 return (
                   <div key={turn.id} className="space-y-3">
@@ -1196,7 +1206,7 @@ export function FleetGraphOnDemandPanel({
                             </div>
                           </div>
                           {result &&
-                            (answerMode === 'execution' ? (
+                            (showExecutionSeverityBadge ? (
                               <span
                                 className={cn(
                                   'rounded-full border px-2.5 py-1 text-[11px] font-medium',
@@ -1209,10 +1219,14 @@ export function FleetGraphOnDemandPanel({
                               <span
                                 className={cn(
                                   'rounded-full border px-2.5 py-1 text-[11px] font-medium',
-                                  ANSWER_MODE_STYLES[answerMode].badgeClassName
+                                  answerMode === 'execution'
+                                    ? EXECUTION_CONTEXT_BADGE.badgeClassName
+                                    : ANSWER_MODE_STYLES[answerMode].badgeClassName
                                 )}
                               >
-                                {ANSWER_MODE_STYLES[answerMode].label}
+                                {answerMode === 'execution'
+                                  ? EXECUTION_CONTEXT_BADGE.label
+                                  : ANSWER_MODE_STYLES[answerMode].label}
                               </span>
                             ))}
                         </div>

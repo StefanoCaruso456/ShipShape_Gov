@@ -125,7 +125,7 @@ Phase 1 is complete and live.
 
 Phase 2 implementation is complete and awaiting merge.
 
-Phase 3 is the next phase to execute after Phase 2 lands.
+Phase 3 implementation is complete and stacked behind Phase 2.
 
 See:
 
@@ -153,8 +153,8 @@ Phase 2 status:
 
 Phase 3 status:
 
-- implementation status: not started
-- verification status: not started
+- implementation status: complete
+- verification status: passed
 - merge-to-main status: pending
 - production status: not live yet
 

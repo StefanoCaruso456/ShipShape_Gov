@@ -122,8 +122,8 @@ Phase 3 is complete when:
 
 As of 2026-03-20:
 
-- implementation status: not started
-- verification status: not started
+- implementation status: complete
+- verification status: passed
 - merge-to-main status: pending
 - production status: not live yet
 
@@ -134,3 +134,13 @@ As of 2026-03-20:
 - [resolve-context.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/fleetgraph/src/nodes/resolve-context.ts)
 - [reason-about-current-view.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/fleetgraph/src/nodes/reason-about-current-view.ts)
 - [FleetGraphOnDemandPanel.tsx](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/web/src/components/fleetgraph/FleetGraphOnDemandPanel.tsx)
+
+## Delivery Status
+
+Phase 3 is implemented on a stacked branch after Phase 2.
+
+That means:
+
+- the code is complete
+- verification passed
+- merge order still depends on Phase 2 landing first

@@ -355,4 +355,78 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.reasoning?.summary).toContain('Programs shows 5 active programs');
     expect(result.reasoning?.evidence).toContain('Active programs: 5');
   });
+
+  it('treats a scoped issue surface as execution guidance instead of generic page guidance', async () => {
+    const graph = createFleetGraph();
+    const runtime = createFleetGraphRuntime({
+      now: () => new Date('2026-03-20T12:00:00.000Z'),
+    });
+
+    const result = await graph.invoke(
+      {
+        runId: 'issue-surface-context',
+        mode: 'on_demand',
+        triggerType: 'user_invoke',
+        workspaceId: 'workspace-1',
+        actor: {
+          id: 'user-1',
+          kind: 'user',
+          role: 'pm',
+        },
+        activeView: null,
+        contextEntity: null,
+        prompt: {
+          question: 'What is blocking delivery in this project?',
+          pageContext: {
+            kind: 'issue_surface',
+            route: '/documents/program-1/issues',
+            title: 'API Platform Issues',
+            summary:
+              'API Platform does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet. 3 visible issues are still sitting in triage, backlog, or todo, led by Week 3.',
+            emptyState: false,
+            metrics: [
+              { label: 'Visible issues', value: '5' },
+              { label: 'Not started', value: '3' },
+              { label: 'In progress', value: '1' },
+              { label: 'Stale open', value: '1' },
+              { label: 'Risk cluster', value: 'Week 3' },
+            ],
+            items: [
+              {
+                label: 'Week 3',
+                detail: '3 open issues • 1 issue active • 2 issues not started',
+                route: '/documents/week-3/issues',
+              },
+              {
+                label: '#14 Expand test coverage',
+                detail: 'State: todo • Week: Week 3 • Owner: stefano caruso • Updated 4d ago',
+                route: '/documents/issue-3',
+              },
+            ],
+            actions: [
+              {
+                label: 'Open Week 3',
+                route: '/documents/week-3/issues',
+              },
+            ],
+          },
+        },
+        trace: {
+          runName: 'fleetgraph-issue-surface-context-test',
+          tags: ['fleetgraph', 'test', 'issue-surface'],
+        },
+      } satisfies FleetGraphRunInput,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'issue-surface-context',
+      })
+    );
+
+    expect(result.status).toBe('completed');
+    expect(result.stage).toBe('current_view_reasoned');
+    expect(result.reasoningSource).toBe('deterministic');
+    expect(result.reasoning?.answerMode).toBe('execution');
+    expect(result.reasoning?.summary).toContain('does not show a named blocker');
+    expect(result.reasoning?.whyNow).toContain('visible issues on the current tab');
+    expect(result.reasoning?.recommendedNextStep).toContain('Open Week 3');
+  });
 });
