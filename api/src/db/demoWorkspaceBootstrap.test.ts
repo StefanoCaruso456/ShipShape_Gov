@@ -12,6 +12,8 @@ describe('shouldBackfillDemoWorkspace', () => {
         owner_user_id: 'user-123',
         program_count: '0',
         project_count: '0',
+        issue_count: '0',
+        sprint_count: '0',
         welcome_doc_count: '1',
       })
     ).toBe(true);
@@ -24,18 +26,36 @@ describe('shouldBackfillDemoWorkspace', () => {
         owner_user_id: 'user-123',
         program_count: '0',
         project_count: '0',
+        issue_count: '0',
+        sprint_count: '0',
         welcome_doc_count: '1',
       })
     ).toBe(false);
   });
 
-  it('rejects workspaces that already have demo data', () => {
+  it('accepts workspaces that only have the old structure backfill', () => {
     expect(
       shouldBackfillDemoWorkspace({
         workspace_name: "stefano caruso's Workspace",
         owner_user_id: 'user-123',
         program_count: '5',
-        project_count: '0',
+        project_count: '15',
+        issue_count: '0',
+        sprint_count: '0',
+        welcome_doc_count: '1',
+      })
+    ).toBe(true);
+  });
+
+  it('rejects workspaces that already have full demo data', () => {
+    expect(
+      shouldBackfillDemoWorkspace({
+        workspace_name: "stefano caruso's Workspace",
+        owner_user_id: 'user-123',
+        program_count: '5',
+        project_count: '15',
+        issue_count: '42',
+        sprint_count: '15',
         welcome_doc_count: '1',
       })
     ).toBe(false);
