@@ -22,6 +22,8 @@ interface BraintrustNodeSpanHandle extends FleetGraphTelemetrySpanHandle {
   span: Span | null;
 }
 
+type BraintrustSpanHandle = BraintrustNodeSpanHandle;
+
 let fleetGraphLogger: Logger<true> | null | undefined;
 let loggedInitFailure = false;
 
@@ -157,6 +159,42 @@ class FleetGraphBraintrustTelemetryService implements FleetGraphTelemetryService
     return handle;
   }
 
+  startToolSpan(input: {
+    toolName: string;
+    toolVersion: string;
+    mode: string | null;
+    surface: string | null;
+    route: string | null;
+    questionTheme: string | null;
+  }): FleetGraphTelemetrySpanHandle | null {
+    const span = startChildSpan(this.rootSpan, {
+      name: `fleetgraph.tool.${input.toolName}`,
+      type: 'task',
+      spanAttributes: {
+        mode: input.mode ?? 'unknown',
+        tool_name: input.toolName,
+        tool_version: input.toolVersion,
+      },
+      event: {
+        metadata: {
+          tool_name: input.toolName,
+          tool_version: input.toolVersion,
+          mode: input.mode,
+          surface: input.surface,
+          route: input.route,
+          question_theme: input.questionTheme,
+        },
+      },
+    });
+
+    const handle: BraintrustSpanHandle = {
+      id: extractSpanId(span),
+      span,
+    };
+
+    return handle;
+  }
+
   finishNodeSpan(
     handle: FleetGraphTelemetrySpanHandle | null,
     input: {
@@ -195,6 +233,100 @@ class FleetGraphBraintrustTelemetryService implements FleetGraphTelemetryService
         typedHandle.span.close();
       } catch (error) {
         console.error('Failed to close FleetGraph child span:', error);
+      }
+    }
+  }
+
+  finishToolSpan(
+    handle: FleetGraphTelemetrySpanHandle | null,
+    input: {
+      status: 'ok' | 'error';
+      latencyMs: number;
+      cacheHit: boolean;
+      resultCount: number | null;
+      errorCode: string | null;
+      metadata?: Record<string, unknown>;
+    }
+  ): void {
+    const typedHandle = handle as BraintrustSpanHandle | null;
+    if (!typedHandle?.span) {
+      return;
+    }
+
+    try {
+      typedHandle.span.log({
+        metadata: {
+          status: input.status,
+          cache_hit: input.cacheHit,
+          result_count: input.resultCount,
+          error_code: input.errorCode,
+          ...(input.metadata ?? {}),
+        },
+        metrics: {
+          latency_ms: input.latencyMs,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to record FleetGraph tool span data:', error);
+    } finally {
+      try {
+        typedHandle.span.close();
+      } catch (error) {
+        console.error('Failed to close FleetGraph tool span:', error);
+      }
+    }
+  }
+
+  recordApproval(input: {
+    actionType: string;
+    decisionOutcome: string;
+    riskLevel: string | null;
+    targetRoute: string | null;
+    latencyMs: number;
+    metadata?: Record<string, unknown>;
+  }): void {
+    const span = startChildSpan(this.rootSpan, {
+      name: 'fleetgraph.approval',
+      type: 'task',
+      spanAttributes: {
+        action_type: input.actionType,
+        decision_outcome: input.decisionOutcome,
+      },
+      event: {
+        metadata: {
+          action_type: input.actionType,
+          decision_outcome: input.decisionOutcome,
+          risk_level: input.riskLevel,
+          target_route: input.targetRoute,
+          ...(input.metadata ?? {}),
+        },
+      },
+    });
+
+    if (!span) {
+      return;
+    }
+
+    try {
+      span.log({
+        metadata: {
+          action_type: input.actionType,
+          decision_outcome: input.decisionOutcome,
+          risk_level: input.riskLevel,
+          target_route: input.targetRoute,
+          ...(input.metadata ?? {}),
+        },
+        metrics: {
+          latency_ms: input.latencyMs,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to record FleetGraph approval telemetry:', error);
+    } finally {
+      try {
+        span.close();
+      } catch (error) {
+        console.error('Failed to close FleetGraph approval span:', error);
       }
     }
   }
@@ -288,6 +420,10 @@ export function createFleetGraphTelemetryRun(
             reasoning_attempts: result?.attempts.reasoning ?? 0,
             resume_attempts: result?.attempts.resume ?? 0,
             action_execution_attempts: result?.attempts.actionExecution ?? 0,
+            tool_call_count: result?.telemetry.toolCallCount ?? 0,
+            tool_failure_count: result?.telemetry.toolFailureCount ?? 0,
+            total_tool_latency_ms: result?.telemetry.totalToolLatencyMs ?? 0,
+            approval_count: result?.telemetry.approvalCount ?? 0,
           },
         });
       } catch (spanError) {

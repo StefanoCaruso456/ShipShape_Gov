@@ -27,6 +27,8 @@ import type {
   FleetGraphTraceMetadata,
   FleetGraphTriggerType,
   FleetGraphActionResult,
+  FleetGraphApprovalTrace,
+  FleetGraphToolCallTrace,
 } from './types.js';
 
 function replaceValue<T>(left: T, right: T | undefined): T {
@@ -147,6 +149,8 @@ export const FleetGraphStateAnnotation = Annotation.Root({
       maxRetries: 0,
       maxResumeCount: 0,
       maxReasoningAttempts: 0,
+      maxToolCalls: 0,
+      toolCallCount: 0,
       circuitBreakerOpen: false,
       lastTripReason: null,
     }),
@@ -175,6 +179,14 @@ export const FleetGraphStateAnnotation = Annotation.Root({
     reducer: replaceValue,
     default: () => null,
   }),
+  toolCalls: Annotation<FleetGraphToolCallTrace[]>({
+    reducer: (left, right) => left.concat(right ?? []),
+    default: () => [],
+  }),
+  approvals: Annotation<FleetGraphApprovalTrace[]>({
+    reducer: (left, right) => left.concat(right ?? []),
+    default: () => [],
+  }),
   handoff: Annotation<FleetGraphHandoff | null>({
     reducer: replaceValue,
     default: () => null,
@@ -202,6 +214,13 @@ export const FleetGraphStateAnnotation = Annotation.Root({
       langsmithRunUrl: null,
       langsmithShareUrl: null,
       braintrustSpanId: null,
+      totalLatencyMs: null,
+      toolCallCount: 0,
+      toolFailureCount: 0,
+      totalToolLatencyMs: 0,
+      approvalCount: 0,
+      lastToolName: null,
+      loopDetected: false,
     }),
   }),
   trace: Annotation<FleetGraphTraceMetadata>({

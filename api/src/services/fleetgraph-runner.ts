@@ -43,6 +43,28 @@ async function enrichFleetGraphResultWithLangSmithTrace(
   };
 }
 
+function inferLoopDetected(result: FleetGraphInvokeResult): boolean {
+  return (
+    result.telemetry.loopDetected ||
+    result.guard.lastTripReason === 'MAX_TRANSITIONS_EXCEEDED' ||
+    result.guard.lastTripReason === 'MAX_RESUMES_EXCEEDED'
+  );
+}
+
+function enrichFleetGraphResultTelemetry(
+  result: FleetGraphInvokeResult,
+  latencyMs: number
+): FleetGraphInvokeResult {
+  return {
+    ...result,
+    telemetry: {
+      ...result.telemetry,
+      totalLatencyMs: latencyMs,
+      loopDetected: inferLoopDetected(result),
+    },
+  };
+}
+
 function buildInternalApiUrl(path: string): string {
   const baseUrl = `http://127.0.0.1:${process.env.PORT ?? '3000'}`;
   return new URL(path, baseUrl).toString();
@@ -175,14 +197,14 @@ export async function invokeFleetGraph(
       })
     )) as FleetGraphInvokeResult;
 
-    const enrichedResult = await enrichFleetGraphResultWithLangSmithTrace(
-      result,
-      langSmithSession
+    const enrichedResult = enrichFleetGraphResultTelemetry(
+      await enrichFleetGraphResultWithLangSmithTrace(result, langSmithSession),
+      Date.now() - startedAt
     );
 
     telemetryRun.finish({
       result: enrichedResult,
-      latencyMs: Date.now() - startedAt,
+      latencyMs: enrichedResult.telemetry.totalLatencyMs ?? Date.now() - startedAt,
     });
 
     return enrichedResult;
@@ -240,14 +262,14 @@ export async function resumeFleetGraph(
       })
     )) as FleetGraphInvokeResult;
 
-    const enrichedResult = await enrichFleetGraphResultWithLangSmithTrace(
-      result,
-      langSmithSession
+    const enrichedResult = enrichFleetGraphResultTelemetry(
+      await enrichFleetGraphResultWithLangSmithTrace(result, langSmithSession),
+      Date.now() - startedAt
     );
 
     telemetryRun.finish({
       result: enrichedResult,
-      latencyMs: Date.now() - startedAt,
+      latencyMs: enrichedResult.telemetry.totalLatencyMs ?? Date.now() - startedAt,
     });
 
     return enrichedResult;

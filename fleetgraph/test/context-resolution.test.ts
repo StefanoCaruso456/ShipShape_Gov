@@ -173,6 +173,13 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.expandedScope.projectId).toBe(projectId);
     expect(result.activeView?.entity.type).toBe('project');
     expect(result.fetched.entity?.id).toBe(weekId);
+    expect(result.toolCalls).toHaveLength(2);
+    expect(result.toolCalls.map((trace) => trace.toolName)).toEqual([
+      'get_surface_context',
+      'get_sprint_snapshot',
+    ]);
+    expect(result.telemetry.toolCallCount).toBe(2);
+    expect(result.telemetry.toolFailureCount).toBe(0);
   });
 
   it('resolves a single-project My Week view into that project sprint', async () => {
@@ -239,6 +246,13 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.expandedScope.projectId).toBe(projectId);
     expect(result.activeView?.projectId).toBe(projectId);
     expect(result.fetched.entity?.id).toBe(weekId);
+    expect(result.toolCalls).toHaveLength(2);
+    expect(result.toolCalls.map((trace) => trace.toolName)).toEqual([
+      'get_surface_context',
+      'get_sprint_snapshot',
+    ]);
+    expect(result.telemetry.toolCallCount).toBe(2);
+    expect(result.telemetry.toolFailureCount).toBe(0);
   });
 
   it('fails clearly when My Week covers multiple projects and no narrower project is in scope', async () => {
@@ -297,6 +311,9 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.status).toBe('failed');
     expect(result.stage).toBe('fallback');
     expect(result.error?.code).toBe('MY_WEEK_AMBIGUOUS_SCOPE');
+    expect(result.toolCalls).toHaveLength(1);
+    expect(result.toolCalls[0]?.toolName).toBe('get_surface_context');
+    expect(result.telemetry.toolCallCount).toBe(1);
   });
 
   it('answers from page context when there is no sprint entity but the current page snapshot is available', async () => {

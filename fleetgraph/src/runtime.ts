@@ -3,6 +3,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import type {
   FleetGraphActionMemoryRecord,
+  FleetGraphEvidenceToolName,
   FleetGraphHumanDecision,
   FleetGraphProposedAction,
   FleetGraphReasoning,
@@ -75,6 +76,7 @@ export interface FleetGraphGuardrailConfig {
   maxRetries: number;
   maxResumeCount: number;
   maxReasoningAttempts: number;
+  maxToolCalls: number;
   deadlineMs: number;
   maxNodeHistoryEntries: number;
 }
@@ -110,6 +112,33 @@ export interface FleetGraphTelemetryService {
       metadata?: Record<string, unknown>;
     }
   ): void;
+  startToolSpan(input: {
+    toolName: FleetGraphEvidenceToolName;
+    toolVersion: string;
+    mode: string | null;
+    surface: string | null;
+    route: string | null;
+    questionTheme: string | null;
+  }): FleetGraphTelemetrySpanHandle | null;
+  finishToolSpan(
+    span: FleetGraphTelemetrySpanHandle | null,
+    input: {
+      status: 'ok' | 'error';
+      latencyMs: number;
+      cacheHit: boolean;
+      resultCount: number | null;
+      errorCode: string | null;
+      metadata?: Record<string, unknown>;
+    }
+  ): void;
+  recordApproval(input: {
+    actionType: string;
+    decisionOutcome: string;
+    riskLevel: string | null;
+    targetRoute: string | null;
+    latencyMs: number;
+    metadata?: Record<string, unknown>;
+  }): void;
 }
 
 export interface FleetGraphRuntimeContext {
@@ -160,6 +189,7 @@ const DEFAULT_GUARDRAILS: FleetGraphGuardrailConfig = {
   maxRetries: 2,
   maxResumeCount: 2,
   maxReasoningAttempts: 2,
+  maxToolCalls: 12,
   deadlineMs: 2 * 60 * 1000,
   maxNodeHistoryEntries: 40,
 };

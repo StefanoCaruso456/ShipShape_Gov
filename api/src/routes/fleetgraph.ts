@@ -160,6 +160,8 @@ function buildOnDemandResponse(result: FleetGraphInvokeResult, threadId: string 
     error: result.error,
     lastNode: result.lastNode,
     nodeHistory: result.nodeHistory,
+    toolCalls: result.toolCalls,
+    approvals: result.approvals,
     telemetry: result.telemetry,
     trace: result.trace,
   };

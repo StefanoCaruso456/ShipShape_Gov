@@ -71,6 +71,11 @@ function resolveGuardState(context: FleetGraphState, runtime: FleetGraphNodeCont
       context.guard.maxReasoningAttempts > 0
         ? context.guard.maxReasoningAttempts
         : runtime.guardrails.maxReasoningAttempts,
+    maxToolCalls:
+      context.guard.maxToolCalls > 0
+        ? context.guard.maxToolCalls
+        : runtime.guardrails.maxToolCalls,
+    toolCallCount: context.guard.toolCallCount,
     circuitBreakerOpen: context.guard.circuitBreakerOpen,
     lastTripReason: context.guard.lastTripReason,
   };
@@ -102,6 +107,13 @@ function resolveTelemetryState(
     langsmithRunUrl: state.telemetry.langsmithRunUrl,
     langsmithShareUrl: state.telemetry.langsmithShareUrl,
     braintrustSpanId: runtime.telemetry?.getTopLevelSpanId() ?? state.telemetry.braintrustSpanId,
+    totalLatencyMs: state.telemetry.totalLatencyMs,
+    toolCallCount: state.telemetry.toolCallCount,
+    toolFailureCount: state.telemetry.toolFailureCount,
+    totalToolLatencyMs: state.telemetry.totalToolLatencyMs,
+    approvalCount: state.telemetry.approvalCount,
+    lastToolName: state.telemetry.lastToolName,
+    loopDetected: state.telemetry.loopDetected,
   };
 }
 
