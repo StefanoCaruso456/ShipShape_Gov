@@ -33,7 +33,7 @@ That creates two product problems:
 
 ## What
 
-This roadmap focuses on eight product outcomes:
+This roadmap focuses on nine product outcomes:
 
 1. FleetGraph answers in the right mode for the current surface
 2. FleetGraph uses richer My Week and workflow-stage context
@@ -43,6 +43,7 @@ This roadmap focuses on eight product outcomes:
 6. FleetGraph proposes sharper, more targeted next actions
 7. FleetGraph has a typed scrum evidence-tool registry with downstream telemetry
 8. FleetGraph becomes measurable as an execution assistant, not just a chat layer
+9. FleetGraph can point to explicit blockers and dependency drag, not just infer risk from stale work
 
 ## How
 
@@ -58,6 +59,7 @@ The phases are ordered so that:
 - then gets better action quality
 - then gets a typed evidence-tool and telemetry layer
 - then gets stronger evaluation and iteration loops
+- then gets direct blocker and dependency evidence for the work that needs follow-up
 
 ## Purpose
 
@@ -116,6 +118,7 @@ See:
 | 6 | Action Quality and In-App Routing | Good advice is weaker if the follow-up target, owner, or route is vague | FleetGraph proposes tighter follow-up actions, route buttons, and document-opening paths tied to the exact work surface |
 | 7 | Scrum Evidence Tooling and Telemetry Registry | FleetGraph needs a typed, inspectable evidence layer before we can trust deeper tool use, telemetry, and evaluation | FleetGraph has a bounded read-only evidence-tool catalog, shared scrum tool context, per-tool traces, and downstream telemetry contracts |
 | 8 | Evaluation and Iteration Loop | We need to know whether FleetGraph is actually driving execution outcomes | FleetGraph has measurable usage, action, tool, and follow-up metrics so the assistant can be improved against real product signals |
+| 9 | Blocker and Dependency Evidence | FleetGraph still often infers delivery drag without naming the actual blocker, blocker owner, or blocker age | FleetGraph can surface explicit blocker evidence from issue updates, rank blocked work higher, and recommend the right follow-up path |
 
 ## Phase Order Rationale
 
@@ -129,11 +132,13 @@ Phase 5 comes before action quality because FleetGraph should understand not jus
 
 Phase 7 now comes before evaluation because trustworthy measurement depends on a stable evidence-tool contract, shared telemetry fields, and bounded tool execution metadata.
 
+Phase 9 comes after evaluation because the measurement layer is already in place and can now tell us whether explicit blocker evidence improves answer quality, route follow-through, and issue-tab usefulness.
+
 ## Active Phase
 
-Phase 1 through Phase 7 are merged to `main`.
+Phase 1 through Phase 8 are merged to `main`.
 
-Phase 8 implementation is complete on a branch and awaiting merge.
+Phase 9 implementation is complete on a branch and awaiting merge.
 
 See:
 
@@ -145,6 +150,7 @@ See:
 - [phase-6-action-quality-and-in-app-routing.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-6-action-quality-and-in-app-routing.md)
 - [phase-7-scrum-evidence-tooling-and-telemetry.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-7-scrum-evidence-tooling-and-telemetry.md)
 - [phase-8-evaluation-and-iteration-loop.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-8-evaluation-and-iteration-loop.md)
+- [phase-9-blocker-and-dependency-evidence.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-9-blocker-and-dependency-evidence.md)
 - [tooling-registry.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/tooling-registry.md)
 
 ## Current Status
@@ -201,6 +207,13 @@ Phase 7 status:
 - production status: pending deploy verification in this roadmap doc
 
 Phase 8 status:
+
+- implementation status: complete
+- verification status: passed
+- merge-to-main status: complete
+- production status: pending deploy verification in this roadmap doc
+
+Phase 9 status:
 
 - implementation status: complete
 - verification status: passed

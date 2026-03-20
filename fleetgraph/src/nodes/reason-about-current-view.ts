@@ -47,6 +47,16 @@ function getMetricValue(pageContext: FleetGraphPageContext, label: string): stri
   return pageContext.metrics.find((metric) => metric.label === label)?.value ?? null;
 }
 
+function getMetricCount(pageContext: FleetGraphPageContext, label: string): number | null {
+  const value = getMetricValue(pageContext, label);
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 function getFirstAction(pageContext: FleetGraphPageContext, prefix: string): FleetGraphPageContextAction | null {
   return pageContext.actions?.find((action) => action.label.startsWith(prefix)) ?? null;
 }
@@ -66,6 +76,14 @@ function getPreferredActionIntents(
     normalizedQuestion.includes('growth')
   ) {
     return ['prioritize', 'inspect', 'follow_up'];
+  }
+
+  if (
+    normalizedQuestion.includes('block') ||
+    normalizedQuestion.includes('blocked') ||
+    normalizedQuestion.includes('dependency')
+  ) {
+    return ['follow_up', 'inspect', 'prioritize'];
   }
 
   if (
@@ -130,6 +148,14 @@ function getQuestionMatchBoost(
     normalizedQuestion.includes('owner')
   ) {
     return (action.intent === 'follow_up' ? 2 : 0) + (corpus.includes('owner') ? 1 : 0);
+  }
+
+  if (
+    normalizedQuestion.includes('block') ||
+    normalizedQuestion.includes('blocked') ||
+    normalizedQuestion.includes('dependency')
+  ) {
+    return corpus.includes('blocker') || corpus.includes('dependency') || action.intent === 'follow_up' ? 3 : 0;
   }
 
   if (
@@ -214,6 +240,24 @@ function buildRecommendedNextStep(
   if (
     pageContext.kind === 'issue_surface' &&
     (
+      normalizedQuestion.includes('block') ||
+      normalizedQuestion.includes('blocked') ||
+      normalizedQuestion.includes('dependency')
+    )
+  ) {
+    const blockerAction = getFirstAction(pageContext, 'Follow up on blocker');
+    if (blockerAction) {
+      return formatActionRecommendation(
+        blockerAction,
+        'Then confirm the unblocker owner, the next checkpoint, and whether any scope should move out of the current week.',
+        'Then confirm the unblocker owner, the next checkpoint, and whether any scope should move out of the current week.'
+      );
+    }
+  }
+
+  if (
+    pageContext.kind === 'issue_surface' &&
+    (
       normalizedQuestion.includes('impact') ||
       normalizedQuestion.includes('value') ||
       normalizedQuestion.includes('roi') ||
@@ -289,6 +333,28 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     }
 
     return summary;
+  }
+
+  if (
+    pageContext.kind === 'issue_surface' &&
+    (
+      normalizedQuestion.includes('block') ||
+      normalizedQuestion.includes('blocked') ||
+      normalizedQuestion.includes('dependency')
+    )
+  ) {
+    const blockedIssues = getMetricCount(pageContext, 'Blocked issues');
+    const staleBlockers = getMetricCount(pageContext, 'Stale blockers');
+    const oldestBlocker = getMetricValue(pageContext, 'Oldest blocker');
+    const blockerItem =
+      pageContext.items.find((item) => item.detail?.includes('Blocker:') || item.detail?.includes('Blocked')) ?? null;
+
+    if (blockedIssues && blockerItem) {
+      const detail = blockerItem.detail?.replaceAll(' • ', '. ') ?? null;
+      return `${blockerItem.label} is the clearest visible blocker right now.${detail ? ` ${detail}.` : ''}${staleBlockers ? ` ${staleBlockers} visible blocker${staleBlockers === 1 ? '' : 's'} have been sitting for multiple days.` : ''}${oldestBlocker ? ` Oldest blocker: ${oldestBlocker}.` : ''}`;
+    }
+
+    return `${summary} FleetGraph does not see an explicitly logged blocker on this tab right now, so the visible risk is coming more from stale or not-started work than from a named dependency.`;
   }
 
   if (
