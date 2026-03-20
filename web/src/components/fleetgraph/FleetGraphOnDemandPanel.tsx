@@ -376,67 +376,148 @@ function getPromptSurface(
   return 'generic';
 }
 
+function dedupePrompts(
+  prompts: Array<string | null | undefined>,
+  limit = 4
+): string[] {
+  const seen = new Set<string>();
+
+  return prompts.filter((prompt): prompt is string => {
+    if (!prompt) {
+      return false;
+    }
+
+    const normalized = prompt.trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) {
+      return false;
+    }
+
+    seen.add(normalized);
+    return true;
+  }).slice(0, limit);
+}
+
+function getPageContextMetricValue(
+  pageContext: FleetGraphPageContext | null,
+  label: string
+): string | null {
+  return pageContext?.metrics.find((metric) => metric.label === label)?.value ?? null;
+}
+
+function getPageContextMetricNumber(
+  pageContext: FleetGraphPageContext | null,
+  label: string
+): number | null {
+  const rawValue = getPageContextMetricValue(pageContext, label);
+  if (!rawValue) {
+    return null;
+  }
+
+  const match = rawValue.match(/\d+/);
+  if (!match) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(match[0] ?? '', 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function buildMyWeekStarterPrompts(pageContext: FleetGraphPageContext | null): string[] {
+  const projectSignals = getPageContextMetricValue(pageContext, 'Project signals');
+  const weeklyPlan = getPageContextMetricValue(pageContext, 'Weekly plan');
+  const dailyUpdates = getPageContextMetricValue(pageContext, 'Daily updates');
+
+  return dedupePrompts([
+    projectSignals && projectSignals !== 'No project scope'
+      ? 'Which project needs attention first?'
+      : null,
+    weeklyPlan && weeklyPlan !== 'Submitted'
+      ? 'What am I at risk of missing this week?'
+      : null,
+    dailyUpdates && !dailyUpdates.startsWith('5/') && !dailyUpdates.startsWith('4/')
+      ? 'What follow-up should I send now?'
+      : null,
+    'What needs my attention today?',
+    'Which planned work is not moving?',
+    'What should I finish before I start new work?',
+  ]);
+}
+
+function buildIssueSurfaceStarterPrompts(pageContext: FleetGraphPageContext | null): string[] {
+  const staleOpen = getPageContextMetricNumber(pageContext, 'Stale open');
+  const notStarted = getPageContextMetricNumber(pageContext, 'Not started');
+  const inProgress = getPageContextMetricNumber(pageContext, 'In progress');
+  const riskCluster = getPageContextMetricValue(pageContext, 'Risk cluster');
+
+  return dedupePrompts([
+    staleOpen && staleOpen > 0 ? 'Which issues are stale or stuck?' : null,
+    notStarted !== null && inProgress !== null && notStarted > inProgress
+      ? 'What should be triaged, moved, or cut?'
+      : null,
+    riskCluster ? `What is the risk inside ${riskCluster}?` : null,
+    'Which issues need attention first?',
+    'What is blocking delivery in this project?',
+    'Are there dependency risks in this issue set?',
+    'Which issue needs an owner follow-up today?',
+  ]);
+}
+
 function getStarterPrompts(
   activeView: FleetGraphActiveViewContext | null,
   pageContext: FleetGraphPageContext | null
 ): string[] {
   switch (getPromptSurface(activeView, pageContext)) {
     case 'my_week':
-      return [
-        'What needs my attention today?',
-        'What am I at risk of missing this week?',
-        'What follow-up should I send now?',
-        'Which planned work is not moving?',
-      ];
+      return buildMyWeekStarterPrompts(pageContext);
     case 'sprint':
-      return [
+      return dedupePrompts([
         'Are we on track to hit the sprint goal?',
         'What is most at risk this week?',
         'What changed since this sprint started?',
         'Which work is blocked or not moving?',
-      ];
+        'Are we carrying too much for this sprint?',
+      ]);
     case 'project_issues':
-      return [
-        'Which issues need attention first?',
-        'What is blocking delivery in this project?',
-        'Which issues are stale or stuck?',
-        'What should be triaged, moved, or cut?',
-      ];
+      return buildIssueSurfaceStarterPrompts(pageContext);
     case 'project':
-      return [
+      return dedupePrompts([
         'Is this project healthy right now?',
         'What is the biggest delivery risk in this project?',
         'What should the PM follow up on next?',
         'What changed recently that matters?',
-      ];
+        'Is this project under-scoped, over-scoped, or drifting?',
+      ]);
     case 'program':
-      return [
+      return dedupePrompts([
         'Which project needs attention first?',
         'Where are the biggest dependency risks?',
         'Which work is drifting across projects?',
         'What should leadership know right now?',
-      ];
+        'Which teams are overloaded?',
+      ]);
     case 'team':
-      return [
+      return dedupePrompts([
         'Who is overloaded right now?',
         'Which important work has no clear owner?',
         'Where are the likely bottlenecks on the team?',
         'Which follow-up conversation should happen today?',
-      ];
+        'Which projects are under-staffed this week?',
+      ]);
     case 'document':
-      return [
+      return dedupePrompts([
         'What matters in this document?',
         'What decision or follow-up does this document imply?',
         'What is still unclear or missing here?',
         'Which related work should I open next?',
-      ];
+        'Is this document still aligned with the current project or sprint state?',
+      ]);
     default:
-      return [
+      return dedupePrompts([
         'What needs attention first on this page?',
         'What should happen next from this view?',
         'What changed recently that matters here?',
         'Which related work should I open next?',
-      ];
+      ]);
   }
 }
 
@@ -538,10 +619,34 @@ function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
   return 'generic';
 }
 
+function getPromptSurfaceForTurn(turn: FleetGraphChatTurn): FleetGraphPromptSurface {
+  return getPromptSurface(turn.result?.activeView ?? null, turn.pageContext);
+}
+
 function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
+  const theme = inferPromptTheme(turn);
+  const surface = getPromptSurfaceForTurn(turn);
   const prompts: string[] = (() => {
-    switch (inferPromptTheme(turn)) {
+    switch (theme) {
       case 'risk':
+        if (surface === 'project_issues') {
+          return [
+            'Which exact issues are driving the risk?',
+            'Is this mostly scope, blockers, or not-started work?',
+            'Which week or issue cluster is least likely to finish?',
+            'What can we cut and still protect delivery?',
+          ];
+        }
+
+        if (surface === 'my_week') {
+          return [
+            'Which project needs attention first?',
+            'Is this risk coming from plan, updates, or project movement?',
+            'What follow-up should I send now?',
+            'What can I defer and still protect this week?',
+          ];
+        }
+
         return [
           'Is the risk coming from scope, blockers, or capacity?',
           'Which exact issues are driving the risk?',
@@ -549,6 +654,24 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
           'What can we cut and still hit the goal?',
         ];
       case 'blockers':
+        if (surface === 'project_issues') {
+          return [
+            'What is blocked, by whom, and for how long?',
+            'Which issue needs an unblocker today?',
+            'What can move forward without waiting?',
+            'Should this be escalated now or watched for another day?',
+          ];
+        }
+
+        if (surface === 'my_week') {
+          return [
+            'Which project is blocked right now?',
+            'What can I move without waiting?',
+            'Who needs a follow-up today?',
+            'Should I escalate this now or check again tomorrow?',
+          ];
+        }
+
         return [
           'What is blocked, by whom, and for how long?',
           'Which dependency has the highest impact on delivery?',
@@ -563,6 +686,15 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
           'Should we reduce scope this sprint?',
         ];
       case 'scope':
+        if (surface === 'project_issues') {
+          return [
+            'Which work should move out first if we need to de-risk delivery?',
+            'Which planned work got displaced?',
+            'Is this change worth the delivery risk it adds?',
+            'Should this stay in sprint or move out?',
+          ];
+        }
+
         return [
           'What was added after sprint start?',
           'Which planned work got displaced?',
@@ -570,6 +702,24 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
           'Should this stay in sprint or move out?',
         ];
       case 'status':
+        if (surface === 'project_issues') {
+          return [
+            'What has not moved recently?',
+            'Which "in progress" issues are actually stalled?',
+            'Which week is carrying the most unfinished work?',
+            'What is the next milestone that matters?',
+          ];
+        }
+
+        if (surface === 'my_week') {
+          return [
+            'Which planned work is not moving?',
+            'What should I finish before I start new work?',
+            'Which project should I open next?',
+            'What follow-up is most likely to unblock the week?',
+          ];
+        }
+
         return [
           'What has not moved recently?',
           'Which "in progress" issues are actually stalled?',
@@ -577,6 +727,15 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
           'What is the next milestone that matters?',
         ];
       case 'coordination':
+        if (surface === 'project_issues') {
+          return [
+            'Who owns the next action on the risky issues?',
+            'Which handoff is unclear?',
+            'Which issue needs a same-day follow-up?',
+            'Who needs help or relief right now?',
+          ];
+        }
+
         return [
           'Who owns the next action?',
           'Which handoff is unclear?',
@@ -598,6 +757,24 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
           'Is this likely a permissions or session issue?',
         ];
       default:
+        if (surface === 'project_issues') {
+          return [
+            'Which issues need attention first?',
+            'What should be triaged, moved, or cut?',
+            'Are there dependency risks in this issue set?',
+            'Which issue needs an owner follow-up today?',
+          ];
+        }
+
+        if (surface === 'my_week') {
+          return [
+            'What needs my attention today?',
+            'What follow-up should I send now?',
+            'Which planned work is not moving?',
+            'Which project should I open next?',
+          ];
+        }
+
         return [
           'What should happen next?',
           'Which item needs attention first?',
@@ -608,7 +785,9 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
   })();
 
   const normalizedQuestion = turn.question.trim().toLowerCase();
-  return prompts.filter((prompt) => prompt.trim().toLowerCase() !== normalizedQuestion).slice(0, 4);
+  return dedupePrompts(
+    prompts.filter((prompt) => prompt.trim().toLowerCase() !== normalizedQuestion)
+  );
 }
 
 function toRouteActionLabel(label: string): string {
