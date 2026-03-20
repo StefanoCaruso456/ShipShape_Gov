@@ -82,10 +82,13 @@ export interface FleetGraphPageContext {
   actions?: FleetGraphPageContextAction[];
 }
 
+export type FleetGraphQuestionSource = 'typed' | 'starter_prompt' | 'follow_up_prompt';
+
 export interface FleetGraphOnDemandRequest {
   active_view: FleetGraphActiveViewContext | null;
   page_context?: FleetGraphPageContext | null;
   question?: string | null;
+  question_source?: FleetGraphQuestionSource | null;
 }
 
 export interface FleetGraphResumeDecision {
@@ -228,6 +231,36 @@ export interface FleetGraphOnDemandFinding {
 }
 
 export type FleetGraphAnswerMode = 'execution' | 'context' | 'launcher';
+
+export type FleetGraphFeedbackEventName = 'drawer_opened' | 'route_clicked';
+
+export interface FleetGraphFeedbackSurfaceContext {
+  route: string;
+  activeViewSurface: FleetGraphViewSurface | null;
+  entityType: FleetGraphViewEntityType | null;
+  pageContextKind: FleetGraphPageContextKind | null;
+  tab: string | null;
+  projectId: string | null;
+}
+
+export interface FleetGraphFeedbackRouteAction {
+  label: string;
+  route: string;
+  featured: boolean;
+  intent?: FleetGraphPageContextActionIntent;
+}
+
+export interface FleetGraphFeedbackEventRequest {
+  event_name: FleetGraphFeedbackEventName;
+  thread_id?: string | null;
+  turn_id?: string | null;
+  question_source?: FleetGraphQuestionSource | null;
+  question_theme?: FleetGraphQuestionTheme | null;
+  answer_mode?: FleetGraphAnswerMode | null;
+  latency_ms?: number | null;
+  surface: FleetGraphFeedbackSurfaceContext;
+  route_action?: FleetGraphFeedbackRouteAction | null;
+}
 
 export interface FleetGraphOnDemandReasoning {
   answerMode: FleetGraphAnswerMode;

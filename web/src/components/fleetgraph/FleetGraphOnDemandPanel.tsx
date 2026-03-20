@@ -5,13 +5,20 @@ import type {
   FleetGraphAnswerMode,
   FleetGraphDerivedSignal,
   FleetGraphDerivedSignals,
+  FleetGraphFeedbackEventRequest,
+  FleetGraphFeedbackSurfaceContext,
   FleetGraphOnDemandResponse,
   FleetGraphPageContext,
   FleetGraphPageContextAction,
   FleetGraphPageContextActionIntent,
+  FleetGraphQuestionSource,
 } from '@ship/shared';
 import { cn } from '@/lib/cn';
-import { invokeFleetGraphOnDemand, resumeFleetGraphOnDemand } from '@/lib/fleetgraph';
+import {
+  invokeFleetGraphOnDemand,
+  reportFleetGraphFeedback,
+  resumeFleetGraphOnDemand,
+} from '@/lib/fleetgraph';
 import { useFleetGraphActiveView } from '@/hooks/useFleetGraphActiveView';
 import { useFleetGraphPageContext } from '@/hooks/useFleetGraphPageContext';
 
@@ -32,6 +39,7 @@ type FleetGraphPromptSurface =
   | 'generic';
 
 type FleetGraphPromptTheme =
+  | 'impact'
   | 'risk'
   | 'blockers'
   | 'capacity'
@@ -110,6 +118,7 @@ interface FleetGraphOnDemandPanelProps {
 interface FleetGraphChatTurn {
   id: string;
   question: string;
+  questionSource: FleetGraphQuestionSource;
   status: 'running' | 'completed' | 'error';
   pageContext: FleetGraphPageContext | null;
   result: FleetGraphOnDemandResponse | null;
@@ -162,6 +171,23 @@ function getFallbackEntityLabel(activeView: FleetGraphActiveViewContext | null):
     default:
       return 'Current view';
   }
+}
+
+function buildFeedbackSurfaceContext(
+  activeView: FleetGraphActiveViewContext | null,
+  pageContext: FleetGraphPageContext | null
+): FleetGraphFeedbackSurfaceContext {
+  return {
+    route:
+      activeView?.route ??
+      pageContext?.route ??
+      (typeof window === 'undefined' ? '/' : window.location.pathname),
+    activeViewSurface: activeView?.surface ?? null,
+    entityType: activeView?.entity.type ?? null,
+    pageContextKind: pageContext?.kind ?? null,
+    tab: activeView?.tab ?? null,
+    projectId: activeView?.projectId ?? null,
+  };
 }
 
 function buildContextSummary(
@@ -526,6 +552,16 @@ function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
   }
 
   const question = turn.question.trim().toLowerCase();
+  if (
+    question.includes('impact') ||
+    question.includes('value') ||
+    question.includes('roi') ||
+    question.includes('retention') ||
+    question.includes('acquisition') ||
+    question.includes('growth')
+  ) {
+    return 'impact';
+  }
   if (question.includes('risk') || question.includes('at risk')) {
     return 'risk';
   }
@@ -558,6 +594,17 @@ function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
     .filter(Boolean)
     .join(' ')
     .toLowerCase();
+
+  if (
+    corpus.includes('impact') ||
+    corpus.includes('business value') ||
+    corpus.includes('roi') ||
+    corpus.includes('retention') ||
+    corpus.includes('acquisition') ||
+    corpus.includes('growth')
+  ) {
+    return 'impact';
+  }
 
   if (
     corpus.includes('capacity') ||
@@ -618,6 +665,29 @@ function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
   return 'generic';
 }
 
+function mapPromptThemeToQuestionTheme(theme: FleetGraphPromptTheme) {
+  switch (theme) {
+    case 'impact':
+      return 'impact';
+    case 'risk':
+      return 'risk';
+    case 'blockers':
+      return 'blockers';
+    case 'scope':
+      return 'scope';
+    case 'status':
+    case 'capacity':
+    case 'review':
+      return 'status';
+    case 'coordination':
+      return 'follow_up';
+    case 'execution_failure':
+    case 'generic':
+    default:
+      return 'generic';
+  }
+}
+
 function getPromptSurfaceForTurn(turn: FleetGraphChatTurn): FleetGraphPromptSurface {
   return getPromptSurface(turn.result?.activeView ?? null, turn.pageContext);
 }
@@ -627,6 +697,13 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
   const surface = getPromptSurfaceForTurn(turn);
   const prompts: string[] = (() => {
     switch (theme) {
+      case 'impact':
+        return [
+          'Which issue is high business value but not moving?',
+          'Where is delivery risk hitting the most valuable work?',
+          'What can protect the highest-impact issue this week?',
+          'Should lower-value work move out first?',
+        ];
       case 'risk':
         if (surface === 'project_issues') {
           return [
@@ -1020,13 +1097,21 @@ function getRouteActionSupportingText(
 function RouteActionLink({
   action,
   featured = false,
+  onInteract,
 }: {
   action: NonNullable<FleetGraphPageContextWithActions['actions']>[number];
   featured?: boolean;
+  onInteract?: () => void;
 }) {
   return (
     <Link
       to={action.route}
+      onMouseDownCapture={onInteract}
+      onKeyDownCapture={(event) => {
+        if ((event.key === 'Enter' || event.key === ' ') && onInteract) {
+          onInteract();
+        }
+      }}
       className={cn(
         'rounded-xl border px-3 py-2 text-sm font-medium transition-colors',
         featured
@@ -1113,6 +1198,7 @@ export function FleetGraphOnDemandPanel({
   const [activeTurnId, setActiveTurnId] = useState<string | null>(null);
   const historyRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const previousOpenRef = useRef(open);
 
   const activeViewKey = useMemo(() => {
     if (activeView) {
@@ -1167,11 +1253,26 @@ export function FleetGraphOnDemandPanel({
     ? getFollowUpPrompts(latestCompletedTurnRecord)
     : [];
 
+  const reportFeedback = useCallback((event: FleetGraphFeedbackEventRequest) => {
+    void reportFleetGraphFeedback(event).catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(DRAWER_STORAGE_KEY, open ? 'true' : 'false');
     }
   }, [open]);
+
+  useEffect(() => {
+    if (open && !previousOpenRef.current && hasUsableContext) {
+      reportFeedback({
+        event_name: 'drawer_opened',
+        surface: buildFeedbackSurfaceContext(activeView, pageContext),
+      });
+    }
+
+    previousOpenRef.current = open;
+  }, [activeView, hasUsableContext, open, pageContext, reportFeedback]);
 
   useEffect(() => {
     setTurns([]);
@@ -1194,7 +1295,10 @@ export function FleetGraphOnDemandPanel({
   }, [hasUsableContext, open, turns]);
 
   const submitQuestion = useCallback(
-    async (questionOverride?: string) => {
+    async (
+      questionOverride?: string,
+      questionSource: FleetGraphQuestionSource = 'typed'
+    ) => {
       const question = (questionOverride ?? draftQuestion).trim();
       if ((!activeView && !pageContext) || !question || activeTurnId) {
         return;
@@ -1209,6 +1313,7 @@ export function FleetGraphOnDemandPanel({
         {
           id: turnId,
           question,
+          questionSource,
           status: 'running',
           pageContext,
           result: null,
@@ -1221,6 +1326,7 @@ export function FleetGraphOnDemandPanel({
           active_view: activeView ?? null,
           page_context: pageContext ?? null,
           question,
+          question_source: questionSource,
         });
 
         setTurns((previous) =>
@@ -1321,6 +1427,32 @@ export function FleetGraphOnDemandPanel({
       }
     },
     [activeTurnId, turns]
+  );
+
+  const handleRouteActionClick = useCallback(
+    (
+      turn: FleetGraphChatTurn,
+      action: NonNullable<FleetGraphPageContextWithActions['actions']>[number],
+      featured: boolean
+    ) => {
+      reportFeedback({
+        event_name: 'route_clicked',
+        thread_id: turn.result?.threadId ?? null,
+        turn_id: turn.id,
+        question_source: turn.questionSource,
+        question_theme: mapPromptThemeToQuestionTheme(inferPromptTheme(turn)),
+        answer_mode: getAnswerMode(turn.result, turn.result?.activeView ?? activeView, turn.pageContext),
+        latency_ms: turn.result?.telemetry.totalLatencyMs ?? null,
+        surface: buildFeedbackSurfaceContext(turn.result?.activeView ?? activeView, turn.pageContext),
+        route_action: {
+          label: action.label,
+          route: action.route,
+          featured,
+          intent: action.intent,
+        },
+      });
+    },
+    [activeView, reportFeedback]
   );
 
   const handleComposerKeyDown = useCallback(
@@ -1487,7 +1619,7 @@ export function FleetGraphOnDemandPanel({
                         key={prompt}
                         type="button"
                         onClick={() => {
-                          void submitQuestion(prompt);
+                          void submitQuestion(prompt, 'starter_prompt');
                         }}
                         className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-left text-sm text-foreground transition-colors hover:bg-black/30"
                       >
@@ -1650,7 +1782,13 @@ export function FleetGraphOnDemandPanel({
                             </div>
                             {primaryRouteAction && (
                               <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
-                                <RouteActionLink action={primaryRouteAction} featured />
+                                <RouteActionLink
+                                  action={primaryRouteAction}
+                                  featured
+                                  onInteract={() => {
+                                    handleRouteActionClick(turn, primaryRouteAction, true);
+                                  }}
+                                />
                                 {getRouteActionSupportingText(primaryRouteAction) && (
                                   <p className="mt-3 text-xs leading-6 text-muted">
                                     {getRouteActionSupportingText(primaryRouteAction)}
@@ -1668,6 +1806,9 @@ export function FleetGraphOnDemandPanel({
                                     <RouteActionLink
                                       key={`${action.label}-${action.route}`}
                                       action={action}
+                                      onInteract={() => {
+                                        handleRouteActionClick(turn, action, false);
+                                      }}
                                     />
                                   ))}
                                 </div>
@@ -1759,7 +1900,13 @@ export function FleetGraphOnDemandPanel({
                                 </div>
                                 {primaryRouteAction && (
                                   <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
-                                    <RouteActionLink action={primaryRouteAction} featured />
+                                    <RouteActionLink
+                                      action={primaryRouteAction}
+                                      featured
+                                      onInteract={() => {
+                                        handleRouteActionClick(turn, primaryRouteAction, true);
+                                      }}
+                                    />
                                     {getRouteActionSupportingText(primaryRouteAction) && (
                                       <p className="mt-3 text-xs leading-6 text-muted">
                                         {getRouteActionSupportingText(primaryRouteAction)}
@@ -1777,6 +1924,9 @@ export function FleetGraphOnDemandPanel({
                                         <RouteActionLink
                                           key={`${action.label}-${action.route}`}
                                           action={action}
+                                          onInteract={() => {
+                                            handleRouteActionClick(turn, action, false);
+                                          }}
                                         />
                                       ))}
                                     </div>
@@ -1881,7 +2031,7 @@ export function FleetGraphOnDemandPanel({
                                         key={prompt}
                                         type="button"
                                         onClick={() => {
-                                          void submitQuestion(prompt);
+                                          void submitQuestion(prompt, 'follow_up_prompt');
                                         }}
                                         disabled={!!activeTurnId}
                                         className={cn(

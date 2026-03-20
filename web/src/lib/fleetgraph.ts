@@ -1,6 +1,7 @@
 import type {
   DocumentType,
   FleetGraphActiveViewContext,
+  FleetGraphFeedbackEventRequest,
   FleetGraphOnDemandRequest,
   FleetGraphOnDemandResumeRequest,
   FleetGraphOnDemandResponse,
@@ -170,6 +171,15 @@ export async function resumeFleetGraphOnDemand(
   }
 
   return response.json();
+}
+
+export async function reportFleetGraphFeedback(
+  request: FleetGraphFeedbackEventRequest
+): Promise<void> {
+  const response = await apiPost('/api/fleetgraph/feedback', request);
+  if (!response.ok) {
+    throw new Error('FleetGraph feedback request failed');
+  }
 }
 
 export async function listFleetGraphProactiveFindings(limit = 1): Promise<FleetGraphProactiveFinding[]> {

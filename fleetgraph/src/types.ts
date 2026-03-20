@@ -5,6 +5,7 @@ import type {
   FleetGraphApprovalTrace as SharedFleetGraphApprovalTrace,
   FleetGraphAnswerMode as SharedFleetGraphAnswerMode,
   FleetGraphEvidenceToolName as SharedFleetGraphEvidenceToolName,
+  FleetGraphQuestionSource as SharedFleetGraphQuestionSource,
   FleetGraphPageContext as SharedFleetGraphPageContext,
   FleetGraphQuestionTheme as SharedFleetGraphQuestionTheme,
   FleetGraphScrumSurface as SharedFleetGraphScrumSurface,
@@ -16,6 +17,7 @@ import type {
 export type FleetGraphPageContext = SharedFleetGraphPageContext;
 export type FleetGraphScrumSurface = SharedFleetGraphScrumSurface;
 export type FleetGraphQuestionTheme = SharedFleetGraphQuestionTheme;
+export type FleetGraphQuestionSource = SharedFleetGraphQuestionSource;
 export type FleetGraphEvidenceToolName = SharedFleetGraphEvidenceToolName;
 export type FleetGraphScrumToolContext = SharedFleetGraphScrumToolContext;
 export type FleetGraphToolCallTrace = SharedFleetGraphToolCallTrace;
@@ -368,6 +370,7 @@ export interface FleetGraphTraceMetadata {
 export interface FleetGraphPromptInput {
   question: string | null;
   pageContext?: FleetGraphPageContext | null;
+  questionSource?: FleetGraphQuestionSource | null;
 }
 
 export interface FleetGraphHandoff {
