@@ -131,9 +131,9 @@ Phase 7 now comes before evaluation because trustworthy measurement depends on a
 
 ## Active Phase
 
-Phase 1 through Phase 4 are merged to `main`.
+Phase 1 through Phase 7 are merged to `main`.
 
-Phase 5 and Phase 6 implementations are complete and awaiting merge.
+Phase 8 implementation is complete on a branch and awaiting merge.
 
 See:
 
@@ -144,6 +144,7 @@ See:
 - [phase-5-business-value-scoring.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-5-business-value-scoring.md)
 - [phase-6-action-quality-and-in-app-routing.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-6-action-quality-and-in-app-routing.md)
 - [phase-7-scrum-evidence-tooling-and-telemetry.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-7-scrum-evidence-tooling-and-telemetry.md)
+- [phase-8-evaluation-and-iteration-loop.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-8-evaluation-and-iteration-loop.md)
 - [tooling-registry.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/tooling-registry.md)
 
 ## Current Status
@@ -182,21 +183,28 @@ Phase 5 status:
 
 - implementation status: complete
 - verification status: passed
-- merge-to-main status: pending
-- production status: not live yet
+- merge-to-main status: complete
+- production status: pending deploy verification in this roadmap doc
 
 Phase 6 status:
 
 - implementation status: complete
 - verification status: passed
-- merge-to-main status: pending
-- production status: not live yet
+- merge-to-main status: complete
+- production status: pending deploy verification in this roadmap doc
 
 Phase 7 status:
 
-- implementation status: planned
-- verification status: not started
-- merge-to-main status: not started
+- implementation status: complete
+- verification status: passed
+- merge-to-main status: complete
+- production status: pending deploy verification in this roadmap doc
+
+Phase 8 status:
+
+- implementation status: complete
+- verification status: passed
+- merge-to-main status: pending
 - production status: not live yet
 
 ## Completion Standard

@@ -6,6 +6,7 @@ import type {
   FleetGraphTelemetryService,
   FleetGraphTelemetrySpanHandle,
 } from '@ship/fleetgraph';
+import type { FleetGraphFeedbackEventRequest } from '@ship/shared';
 
 const DEFAULT_BRAINTRUST_PROJECT = 'Shipshape';
 
@@ -19,6 +20,7 @@ interface FleetGraphTelemetryRun {
 }
 
 interface BraintrustNodeSpanHandle extends FleetGraphTelemetrySpanHandle {
+  id: string | null;
   span: Span | null;
 }
 
@@ -361,6 +363,7 @@ export function createFleetGraphTelemetryRun(
           trigger_type: input.triggerType,
           workspace_id: input.workspaceId,
           question: input.prompt?.question ?? null,
+          question_source: input.prompt?.questionSource ?? null,
         },
         metadata: {
           surface: input.activeView?.surface ?? null,
@@ -413,6 +416,7 @@ export function createFleetGraphTelemetryRun(
             action_outcome: result?.actionResult?.outcome ?? null,
             error_class: result?.error?.code ?? (error instanceof Error ? error.name : null),
             terminal_outcome: result?.terminalOutcome ?? null,
+            question_source: result?.prompt?.questionSource ?? input.prompt?.questionSource ?? null,
           },
           metrics: {
             latency_ms: latencyMs,
@@ -447,4 +451,96 @@ export function createFleetGraphTelemetryRun(
       }
     },
   };
+}
+
+export function recordFleetGraphFeedback(
+  input: {
+    workspaceId: string | null;
+    actorId: string | null;
+    actorRole: string | null;
+    feedback: FleetGraphFeedbackEventRequest;
+  },
+  logger: FleetGraphLogger
+): void {
+  const telemetryLogger = getBraintrustLogger();
+  if (!telemetryLogger) {
+    return;
+  }
+
+  let span: Span | null = null;
+
+  try {
+    span = telemetryLogger.startSpan({
+      name: `fleetgraph.feedback.${input.feedback.event_name}`,
+      type: 'task',
+      spanAttributes: {
+        event_name: input.feedback.event_name,
+      },
+      event: {
+        input: {
+          thread_id: input.feedback.thread_id ?? null,
+          turn_id: input.feedback.turn_id ?? null,
+          question_source: input.feedback.question_source ?? null,
+          question_theme: input.feedback.question_theme ?? null,
+          answer_mode: input.feedback.answer_mode ?? null,
+        },
+        metadata: {
+          workspace_id: input.workspaceId,
+          actor_id: input.actorId,
+          actor_role: input.actorRole,
+          route: input.feedback.surface.route,
+          active_view_surface: input.feedback.surface.activeViewSurface,
+          entity_type: input.feedback.surface.entityType,
+          page_context_kind: input.feedback.surface.pageContextKind,
+          tab: input.feedback.surface.tab,
+          project_id: input.feedback.surface.projectId,
+          route_action_label: input.feedback.route_action?.label ?? null,
+          route_action_route: input.feedback.route_action?.route ?? null,
+          route_action_featured: input.feedback.route_action?.featured ?? null,
+          route_action_intent: input.feedback.route_action?.intent ?? null,
+        },
+      },
+    });
+
+    if (!span) {
+      return;
+    }
+
+    span.log({
+      metadata: {
+        workspace_id: input.workspaceId,
+        actor_id: input.actorId,
+        actor_role: input.actorRole,
+        route: input.feedback.surface.route,
+        active_view_surface: input.feedback.surface.activeViewSurface,
+        entity_type: input.feedback.surface.entityType,
+        page_context_kind: input.feedback.surface.pageContextKind,
+        tab: input.feedback.surface.tab,
+        project_id: input.feedback.surface.projectId,
+        question_source: input.feedback.question_source ?? null,
+        question_theme: input.feedback.question_theme ?? null,
+        answer_mode: input.feedback.answer_mode ?? null,
+        route_action_label: input.feedback.route_action?.label ?? null,
+        route_action_route: input.feedback.route_action?.route ?? null,
+        route_action_featured: input.feedback.route_action?.featured ?? null,
+        route_action_intent: input.feedback.route_action?.intent ?? null,
+      },
+      metrics: {
+        latency_ms: input.feedback.latency_ms ?? 0,
+      },
+    });
+  } catch (error) {
+    logger.warn('FleetGraph feedback telemetry failed to record', {
+      message: error instanceof Error ? error.message : 'Unknown FleetGraph feedback telemetry failure',
+      eventName: input.feedback.event_name,
+    });
+  } finally {
+    try {
+      span?.close();
+    } catch (error) {
+      logger.warn('FleetGraph feedback telemetry span failed to close', {
+        message: error instanceof Error ? error.message : 'Unknown FleetGraph feedback span close failure',
+      });
+    }
+  }
 }

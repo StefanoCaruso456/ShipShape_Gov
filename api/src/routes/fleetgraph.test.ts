@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const { invokeFleetGraphMock, resumeFleetGraphMock } = vi.hoisted(() => ({
+const { invokeFleetGraphMock, resumeFleetGraphMock, recordFleetGraphFeedbackMock } = vi.hoisted(() => ({
   invokeFleetGraphMock: vi.fn(),
   resumeFleetGraphMock: vi.fn(),
+  recordFleetGraphFeedbackMock: vi.fn(),
 }));
 
 vi.mock('../middleware/auth.js', () => ({
@@ -42,6 +43,17 @@ vi.mock('../services/fleetgraph-proactive.js', () => ({
   listFleetGraphFindingsForUser: vi.fn(),
   runFleetGraphProactiveSweep: vi.fn(),
 }));
+
+vi.mock('../services/fleetgraph-telemetry.js', async () => {
+  const actual = await vi.importActual<typeof import('../services/fleetgraph-telemetry.js')>(
+    '../services/fleetgraph-telemetry.js'
+  );
+
+  return {
+    ...actual,
+    recordFleetGraphFeedback: recordFleetGraphFeedbackMock,
+  };
+});
 
 import fleetGraphRouter from './fleetgraph.js';
 
@@ -144,6 +156,7 @@ describe('FleetGraph API route validation', () => {
   beforeEach(() => {
     invokeFleetGraphMock.mockReset();
     resumeFleetGraphMock.mockReset();
+    recordFleetGraphFeedbackMock.mockReset();
     invokeFleetGraphMock.mockResolvedValue(createInvokeResult());
     app = express();
     app.use(express.json());
@@ -156,6 +169,7 @@ describe('FleetGraph API route validation', () => {
       .send({
         active_view: null,
         question: 'Which issues need attention first?',
+        question_source: 'starter_prompt',
         page_context: {
           kind: 'issue_surface',
           route: '/documents/program-1/issues',
@@ -195,5 +209,75 @@ describe('FleetGraph API route validation', () => {
 
     expect(response.status).toBe(200);
     expect(invokeFleetGraphMock).toHaveBeenCalledTimes(1);
+    expect(invokeFleetGraphMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: expect.objectContaining({
+          question: 'Which issues need attention first?',
+          questionSource: 'starter_prompt',
+        }),
+      }),
+      expect.anything()
+    );
+  });
+
+  it('records FleetGraph feedback events', async () => {
+    const response = await request(app)
+      .post('/api/fleetgraph/feedback')
+      .send({
+        event_name: 'route_clicked',
+        thread_id: 'thread-1',
+        turn_id: 'turn-1',
+        question_source: 'follow_up_prompt',
+        question_theme: 'risk',
+        answer_mode: 'execution',
+        latency_ms: 245,
+        surface: {
+          route: '/documents/program-1/issues',
+          activeViewSurface: 'document',
+          entityType: 'program',
+          pageContextKind: 'issue_surface',
+          tab: 'issues',
+          projectId: null,
+        },
+        route_action: {
+          label: 'Open risk cluster Week 3',
+          route: '/documents/week-3/issues',
+          featured: true,
+          intent: 'prioritize',
+        },
+      });
+
+    expect(response.status).toBe(204);
+    expect(recordFleetGraphFeedbackMock).toHaveBeenCalledWith(
+      {
+        workspaceId: 'workspace-123',
+        actorId: 'user-123',
+        actorRole: 'admin',
+        feedback: {
+          event_name: 'route_clicked',
+          thread_id: 'thread-1',
+          turn_id: 'turn-1',
+          question_source: 'follow_up_prompt',
+          question_theme: 'risk',
+          answer_mode: 'execution',
+          latency_ms: 245,
+          surface: {
+            route: '/documents/program-1/issues',
+            activeViewSurface: 'document',
+            entityType: 'program',
+            pageContextKind: 'issue_surface',
+            tab: 'issues',
+            projectId: null,
+          },
+          route_action: {
+            label: 'Open risk cluster Week 3',
+            route: '/documents/week-3/issues',
+            featured: true,
+            intent: 'prioritize',
+          },
+        },
+      },
+      expect.anything()
+    );
   });
 });
