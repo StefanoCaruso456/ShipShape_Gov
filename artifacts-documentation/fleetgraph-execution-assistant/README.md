@@ -128,7 +128,7 @@ Phase 5 comes before action quality because FleetGraph should understand not jus
 
 Phase 1 through Phase 4 are merged to `main`.
 
-Phase 5 implementation is complete and awaiting merge.
+Phase 5 and Phase 6 implementations are complete and awaiting merge.
 
 See:
 
@@ -137,6 +137,7 @@ See:
 - [phase-3-issues-surface-execution-reasoning.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-3-issues-surface-execution-reasoning.md)
 - [phase-4-conversational-questioning.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-4-conversational-questioning.md)
 - [phase-5-business-value-scoring.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-5-business-value-scoring.md)
+- [phase-6-action-quality-and-in-app-routing.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-6-action-quality-and-in-app-routing.md)
 
 ## Current Status
 
@@ -171,6 +172,13 @@ Phase 4 status:
 - production status: pending deploy verification in this roadmap doc
 
 Phase 5 status:
+
+- implementation status: complete
+- verification status: passed
+- merge-to-main status: pending
+- production status: not live yet
+
+Phase 6 status:
 
 - implementation status: complete
 - verification status: passed

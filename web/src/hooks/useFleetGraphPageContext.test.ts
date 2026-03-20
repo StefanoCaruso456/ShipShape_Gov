@@ -401,6 +401,8 @@ describe('buildMyWeekPageContext', () => {
         expect.objectContaining({
           label: 'Open Core API',
           route: '/documents/project-1',
+          intent: 'inspect',
+          reason: expect.stringContaining('Program: API Platform'),
         }),
       ])
     );
@@ -459,10 +461,14 @@ describe('buildIssueSurfacePageContext', () => {
         expect.objectContaining({
           label: 'Open highest-impact #14',
           route: '/documents/issue-3',
+          intent: 'prioritize',
+          reason: expect.stringContaining('Business value 87/100'),
         }),
         expect.objectContaining({
-          label: 'Open Week 3',
+          label: 'Open risk cluster Week 3',
           route: '/documents/week-3/issues',
+          intent: 'prioritize',
+          reason: expect.stringContaining('holds 3 open issues'),
         }),
       ])
     );

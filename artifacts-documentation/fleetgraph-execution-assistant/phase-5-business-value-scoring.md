@@ -131,6 +131,10 @@ As of 2026-03-20:
 
 Phase 5 unlocks Phase 6:
 
+- [phase-6-action-quality-and-in-app-routing.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-6-action-quality-and-in-app-routing.md)
+
+Specifically:
+
 - tighter actions and in-app routing grounded in both business importance and execution risk
 
 That order is intentional. FleetGraph should know what matters most before it decides who to follow up with, what to cut, or what route button to push to the top.

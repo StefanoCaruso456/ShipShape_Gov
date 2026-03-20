@@ -1,6 +1,10 @@
 import { Command } from '@langchain/langgraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
-import type { FleetGraphPageContext } from '@ship/shared';
+import type {
+  FleetGraphPageContext,
+  FleetGraphPageContextAction,
+  FleetGraphPageContextActionIntent,
+} from '@ship/shared';
 import { beginFleetGraphNode, createFleetGraphCommand } from '../node-runtime.js';
 import type { FleetGraphState } from '../state.js';
 import { createHandoff } from '../supervision.js';
@@ -43,8 +47,161 @@ function getMetricValue(pageContext: FleetGraphPageContext, label: string): stri
   return pageContext.metrics.find((metric) => metric.label === label)?.value ?? null;
 }
 
-function getFirstAction(pageContext: FleetGraphPageContext, prefix: string): string | null {
-  return pageContext.actions?.find((action) => action.label.startsWith(prefix))?.label ?? null;
+function getFirstAction(pageContext: FleetGraphPageContext, prefix: string): FleetGraphPageContextAction | null {
+  return pageContext.actions?.find((action) => action.label.startsWith(prefix)) ?? null;
+}
+
+function getPreferredActionIntents(
+  pageContext: FleetGraphPageContext,
+  question: string | null
+): FleetGraphPageContextActionIntent[] {
+  const normalizedQuestion = question?.trim().toLowerCase() ?? '';
+
+  if (
+    normalizedQuestion.includes('impact') ||
+    normalizedQuestion.includes('value') ||
+    normalizedQuestion.includes('roi') ||
+    normalizedQuestion.includes('retention') ||
+    normalizedQuestion.includes('acquisition') ||
+    normalizedQuestion.includes('growth')
+  ) {
+    return ['prioritize', 'inspect', 'follow_up'];
+  }
+
+  if (
+    normalizedQuestion.includes('follow-up') ||
+    normalizedQuestion.includes('follow up') ||
+    normalizedQuestion.includes('who') ||
+    normalizedQuestion.includes('owner')
+  ) {
+    return ['follow_up', 'prioritize', 'inspect'];
+  }
+
+  if (
+    normalizedQuestion.includes('write') ||
+    normalizedQuestion.includes('update') ||
+    normalizedQuestion.includes('standup')
+  ) {
+    return ['write', 'follow_up', 'inspect'];
+  }
+
+  if (
+    normalizedQuestion.includes('complete') ||
+    normalizedQuestion.includes('finish') ||
+    normalizedQuestion.includes('retro') ||
+    normalizedQuestion.includes('plan')
+  ) {
+    return ['complete', 'write', 'inspect'];
+  }
+
+  if (pageContext.kind === 'issue_surface') {
+    return ['prioritize', 'follow_up', 'inspect'];
+  }
+
+  if (pageContext.kind === 'my_week') {
+    return ['follow_up', 'write', 'complete', 'inspect'];
+  }
+
+  return ['inspect', 'prioritize', 'follow_up', 'write', 'complete'];
+}
+
+function getQuestionMatchBoost(
+  action: FleetGraphPageContextAction,
+  question: string | null
+): number {
+  const normalizedQuestion = question?.trim().toLowerCase() ?? '';
+  const corpus = `${action.label} ${action.reason ?? ''}`.toLowerCase();
+
+  if (
+    normalizedQuestion.includes('impact') ||
+    normalizedQuestion.includes('value') ||
+    normalizedQuestion.includes('roi') ||
+    normalizedQuestion.includes('retention') ||
+    normalizedQuestion.includes('acquisition') ||
+    normalizedQuestion.includes('growth')
+  ) {
+    return corpus.includes('highest-impact') || corpus.includes('business value') ? 3 : 0;
+  }
+
+  if (
+    normalizedQuestion.includes('follow-up') ||
+    normalizedQuestion.includes('follow up') ||
+    normalizedQuestion.includes('who') ||
+    normalizedQuestion.includes('owner')
+  ) {
+    return (action.intent === 'follow_up' ? 2 : 0) + (corpus.includes('owner') ? 1 : 0);
+  }
+
+  if (
+    normalizedQuestion.includes('risk') ||
+    normalizedQuestion.includes('blocked') ||
+    normalizedQuestion.includes('stale') ||
+    normalizedQuestion.includes('stuck')
+  ) {
+    return corpus.includes('risk cluster') || corpus.includes('stale') || corpus.includes('not started') ? 3 : 0;
+  }
+
+  if (
+    normalizedQuestion.includes('write') ||
+    normalizedQuestion.includes('update') ||
+    normalizedQuestion.includes('standup')
+  ) {
+    return action.intent === 'write' ? 3 : 0;
+  }
+
+  if (
+    normalizedQuestion.includes('complete') ||
+    normalizedQuestion.includes('finish') ||
+    normalizedQuestion.includes('retro') ||
+    normalizedQuestion.includes('plan')
+  ) {
+    return action.intent === 'complete' ? 3 : 0;
+  }
+
+  return 0;
+}
+
+function getPreferredAction(
+  pageContext: FleetGraphPageContext,
+  question: string | null
+): FleetGraphPageContextAction | null {
+  const actions = pageContext.actions ?? [];
+  if (actions.length === 0) {
+    return null;
+  }
+
+  const preferredIntents = getPreferredActionIntents(pageContext, question);
+  const rankedActions = [...actions].sort((left, right) => {
+    const questionBoostDelta = getQuestionMatchBoost(right, question) - getQuestionMatchBoost(left, question);
+    if (questionBoostDelta !== 0) {
+      return questionBoostDelta;
+    }
+
+    const leftRank = preferredIntents.indexOf(left.intent ?? 'inspect');
+    const rightRank = preferredIntents.indexOf(right.intent ?? 'inspect');
+    return (leftRank === -1 ? preferredIntents.length : leftRank)
+      - (rightRank === -1 ? preferredIntents.length : rightRank);
+  });
+
+  return rankedActions[0] ?? null;
+}
+
+function formatActionRecommendation(
+  action: FleetGraphPageContextAction | null,
+  fallback: string,
+  extraWhenAction?: string | null
+): string {
+  if (!action) {
+    return fallback;
+  }
+
+  const parts = [
+    action.label.endsWith('.') ? action.label : `${action.label}.`,
+    action.reason,
+    extraWhenAction,
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.join(' ');
 }
 
 function buildRecommendedNextStep(
@@ -52,6 +209,7 @@ function buildRecommendedNextStep(
   question: string | null
 ): string | null {
   const normalizedQuestion = question?.trim().toLowerCase() ?? '';
+  const preferredAction = getPreferredAction(pageContext, question);
 
   if (
     pageContext.kind === 'issue_surface' &&
@@ -66,7 +224,11 @@ function buildRecommendedNextStep(
   ) {
     const highestImpactAction = getFirstAction(pageContext, 'Open highest-impact');
     if (highestImpactAction) {
-      return `${highestImpactAction}. Then confirm whether its business case and delivery timing still justify keeping it at the top of the queue.`;
+      return formatActionRecommendation(
+        highestImpactAction,
+        'Then confirm whether its business case and delivery timing still justify keeping it at the top of the queue.',
+        'Then confirm whether its business case and delivery timing still justify keeping it at the top of the queue.'
+      );
     }
   }
 
@@ -87,11 +249,15 @@ function buildRecommendedNextStep(
 
   switch (pageContext.kind) {
     case 'my_week':
-      return 'Use this My Week surface to decide the next follow-up, weekly doc, or project that needs attention right now.';
+      return formatActionRecommendation(
+        preferredAction,
+        'Use this My Week surface to decide the next follow-up, weekly doc, or project that needs attention right now.'
+      );
     case 'issue_surface':
-      return pageContext.actions?.[0]?.label
-        ? `${pageContext.actions[0].label}. Then either move one visible todo issue forward or cut scope from the busiest issue cluster on this tab.`
-        : 'Use this issues surface to move one visible todo issue forward, or cut scope from the busiest week or work cluster.';
+      return formatActionRecommendation(
+        preferredAction,
+        'Use this issues surface to move one visible todo issue forward, or cut scope from the busiest week or work cluster.'
+      );
     case 'programs':
       return 'Open the program that looks most active or least clear so you can inspect its projects, issues, and current sprint.';
     case 'projects':

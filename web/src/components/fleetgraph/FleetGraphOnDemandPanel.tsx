@@ -7,6 +7,8 @@ import type {
   FleetGraphDerivedSignals,
   FleetGraphOnDemandResponse,
   FleetGraphPageContext,
+  FleetGraphPageContextAction,
+  FleetGraphPageContextActionIntent,
 } from '@ship/shared';
 import { cn } from '@/lib/cn';
 import { invokeFleetGraphOnDemand, resumeFleetGraphOnDemand } from '@/lib/fleetgraph';
@@ -14,10 +16,7 @@ import { useFleetGraphActiveView } from '@/hooks/useFleetGraphActiveView';
 import { useFleetGraphPageContext } from '@/hooks/useFleetGraphPageContext';
 
 type FleetGraphPageContextWithActions = FleetGraphPageContext & {
-  actions?: Array<{
-    label: string;
-    route: string;
-  }>;
+  actions?: FleetGraphPageContextAction[];
 };
 
 const DRAWER_STORAGE_KEY = 'ship:fleetgraphDrawerOpen';
@@ -794,39 +793,171 @@ function toRouteActionLabel(label: string): string {
   return /^(Open|Create|Write|Complete)\b/.test(label) ? label : `Open ${label}`;
 }
 
+type FleetGraphRouteAction = FleetGraphPageContextAction & {
+  source: 'proposed' | 'page_context' | 'item';
+  order: number;
+};
+
+function getPreferredActionIntentsForTurn(
+  turn: FleetGraphChatTurn,
+  answerMode: FleetGraphAnswerMode
+): FleetGraphPageContextActionIntent[] {
+  const theme = inferPromptTheme(turn);
+
+  switch (theme) {
+    case 'coordination':
+      return ['follow_up', 'prioritize', 'inspect', 'write', 'complete'];
+    case 'scope':
+    case 'risk':
+      return ['prioritize', 'inspect', 'follow_up', 'complete', 'write'];
+    case 'status':
+    case 'blockers':
+      return ['follow_up', 'inspect', 'prioritize', 'complete', 'write'];
+    case 'review':
+      return ['complete', 'inspect', 'prioritize', 'write', 'follow_up'];
+    case 'execution_failure':
+      return ['inspect', 'follow_up', 'prioritize', 'write', 'complete'];
+    default:
+      return answerMode === 'launcher'
+        ? ['inspect', 'prioritize', 'follow_up', 'write', 'complete']
+        : ['prioritize', 'follow_up', 'inspect', 'write', 'complete'];
+  }
+}
+
+function getRouteActionQuestionBoost(
+  action: FleetGraphPageContextAction,
+  question: string
+): number {
+  const normalizedQuestion = question.trim().toLowerCase();
+  const corpus = `${action.label} ${action.reason ?? ''}`.toLowerCase();
+
+  if (
+    normalizedQuestion.includes('impact') ||
+    normalizedQuestion.includes('value') ||
+    normalizedQuestion.includes('roi') ||
+    normalizedQuestion.includes('retention') ||
+    normalizedQuestion.includes('acquisition') ||
+    normalizedQuestion.includes('growth')
+  ) {
+    return corpus.includes('highest-impact') || corpus.includes('business value') ? 3 : 0;
+  }
+
+  if (
+    normalizedQuestion.includes('follow-up') ||
+    normalizedQuestion.includes('follow up') ||
+    normalizedQuestion.includes('who') ||
+    normalizedQuestion.includes('owner')
+  ) {
+    return (action.intent === 'follow_up' ? 2 : 0) + (corpus.includes('owner') ? 1 : 0);
+  }
+
+  if (
+    normalizedQuestion.includes('risk') ||
+    normalizedQuestion.includes('blocked') ||
+    normalizedQuestion.includes('stale') ||
+    normalizedQuestion.includes('stuck')
+  ) {
+    return corpus.includes('risk cluster') || corpus.includes('stale') || corpus.includes('not started') ? 3 : 0;
+  }
+
+  if (
+    normalizedQuestion.includes('write') ||
+    normalizedQuestion.includes('update') ||
+    normalizedQuestion.includes('standup')
+  ) {
+    return action.intent === 'write' ? 3 : 0;
+  }
+
+  if (
+    normalizedQuestion.includes('complete') ||
+    normalizedQuestion.includes('finish') ||
+    normalizedQuestion.includes('retro') ||
+    normalizedQuestion.includes('plan')
+  ) {
+    return action.intent === 'complete' ? 3 : 0;
+  }
+
+  return 0;
+}
+
 function getRouteActions(
-  pageContext: FleetGraphPageContext | null,
-  result: FleetGraphOnDemandResponse | null
+  turn: FleetGraphChatTurn,
+  activeView: FleetGraphActiveViewContext | null
 ): Array<NonNullable<FleetGraphPageContextWithActions['actions']>[number]> {
+  const { pageContext, result } = turn;
   const pageContextWithActions = pageContext as FleetGraphPageContextWithActions | null;
-  const candidates: Array<NonNullable<FleetGraphPageContextWithActions['actions']>[number] | null> = [
+  const answerMode = getAnswerMode(result, activeView, pageContext);
+  const preferredIntents = getPreferredActionIntentsForTurn(turn, answerMode);
+  const candidates: Array<FleetGraphRouteAction | null> = [
     result?.proposedAction?.targetRoute
       ? {
           label: 'Open target doc',
           route: result.proposedAction.targetRoute,
+          intent: 'follow_up',
+          reason: result.proposedAction.rationale,
+          source: 'proposed',
+          order: 0,
         }
       : null,
-    ...((pageContextWithActions?.actions ?? []).map((action) => ({
+    ...((pageContextWithActions?.actions ?? []).map((action, index) => ({
       label: action.label,
       route: action.route,
+      intent: action.intent,
+      reason: action.reason,
+      owner: action.owner,
+      source: 'page_context' as const,
+      order: index + 1,
     }))),
     ...((pageContext?.items ?? [])
       .filter((item) => Boolean(item.route))
-      .map((item) => ({
+      .map((item, index) => ({
         label: toRouteActionLabel(item.label),
         route: item.route as string,
+        intent: 'inspect' as const,
+        reason: item.detail ?? null,
+        source: 'item' as const,
+        order: index + 20,
       }))),
   ];
   const seenRoutes = new Set<string>();
-
-  return candidates.filter((candidate): candidate is NonNullable<FleetGraphPageContextWithActions['actions']>[number] => {
+  const deduped = candidates.filter((candidate): candidate is FleetGraphRouteAction => {
     if (!candidate || seenRoutes.has(candidate.route)) {
       return false;
     }
 
     seenRoutes.add(candidate.route);
     return true;
-  }).slice(0, 4);
+  });
+
+  deduped.sort((left, right) => {
+    const questionBoostDelta =
+      getRouteActionQuestionBoost(right, turn.question) - getRouteActionQuestionBoost(left, turn.question);
+    if (questionBoostDelta !== 0) {
+      return questionBoostDelta;
+    }
+
+    const leftRank = preferredIntents.indexOf(left.intent ?? 'inspect');
+    const rightRank = preferredIntents.indexOf(right.intent ?? 'inspect');
+    const normalizedLeftRank = leftRank === -1 ? preferredIntents.length : leftRank;
+    const normalizedRightRank = rightRank === -1 ? preferredIntents.length : rightRank;
+
+    if (normalizedLeftRank !== normalizedRightRank) {
+      return normalizedLeftRank - normalizedRightRank;
+    }
+
+    const sourceRank = {
+      proposed: 0,
+      page_context: 1,
+      item: 2,
+    } as const;
+    if (sourceRank[left.source] !== sourceRank[right.source]) {
+      return sourceRank[left.source] - sourceRank[right.source];
+    }
+
+    return left.order - right.order;
+  });
+
+  return deduped.slice(0, 4).map(({ source: _source, order: _order, ...action }) => action);
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -865,15 +996,43 @@ function SignalItem({ signal }: { signal: FleetGraphDerivedSignal }) {
   );
 }
 
+function getRouteActionSupportingText(
+  action: NonNullable<FleetGraphPageContextWithActions['actions']>[number]
+): string | null {
+  const reason = action.reason?.trim() ?? '';
+  const owner = action.owner?.trim() ?? '';
+
+  if (reason && owner && !reason.toLowerCase().includes(owner.toLowerCase())) {
+    return `${reason} Owner: ${owner}.`;
+  }
+
+  if (reason) {
+    return reason;
+  }
+
+  if (owner) {
+    return `Owner: ${owner}.`;
+  }
+
+  return null;
+}
+
 function RouteActionLink({
   action,
+  featured = false,
 }: {
   action: NonNullable<FleetGraphPageContextWithActions['actions']>[number];
+  featured?: boolean;
 }) {
   return (
     <Link
       to={action.route}
-      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-white/10"
+      className={cn(
+        'rounded-xl border px-3 py-2 text-sm font-medium transition-colors',
+        featured
+          ? 'inline-flex items-center justify-center border-cyan-500/30 bg-cyan-500/10 text-cyan-50 hover:bg-cyan-500/15'
+          : 'border-white/10 bg-white/5 text-foreground hover:bg-white/10'
+      )}
     >
       {action.label}
     </Link>
@@ -1349,7 +1508,9 @@ export function FleetGraphOnDemandPanel({
                 const errorGuidance = buildErrorGuidance(result, turn, activeView);
                 const isBusy = activeTurnId === turn.id;
                 const pendingApproval = result?.pendingApproval ?? null;
-                const routeActions = getRouteActions(turn.pageContext, result);
+                const routeActions = getRouteActions(turn, activeView);
+                const primaryRouteAction = routeActions[0] ?? null;
+                const secondaryRouteActions = routeActions.slice(1);
                 const derivedMetrics = result?.derivedSignals.metrics ?? null;
                 const hasDerivedMetrics = Boolean(
                   derivedMetrics &&
@@ -1485,16 +1646,33 @@ export function FleetGraphOnDemandPanel({
                         {!summary && routeActions.length > 0 && (
                           <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
                             <div className="text-[11px] uppercase tracking-[0.18em] text-muted">
-                              Open in Ship
+                              {answerMode === 'launcher' ? 'Best next surface' : 'Best route in Ship'}
                             </div>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {routeActions.map((action) => (
-                                <RouteActionLink
-                                  key={`${action.label}-${action.route}`}
-                                  action={action}
-                                />
-                              ))}
-                            </div>
+                            {primaryRouteAction && (
+                              <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+                                <RouteActionLink action={primaryRouteAction} featured />
+                                {getRouteActionSupportingText(primaryRouteAction) && (
+                                  <p className="mt-3 text-xs leading-6 text-muted">
+                                    {getRouteActionSupportingText(primaryRouteAction)}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            {secondaryRouteActions.length > 0 && (
+                              <div className="mt-3">
+                                <div className="text-[11px] uppercase tracking-[0.18em] text-muted">
+                                  Open in Ship
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {secondaryRouteActions.map((action) => (
+                                    <RouteActionLink
+                                      key={`${action.label}-${action.route}`}
+                                      action={action}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -1577,16 +1755,33 @@ export function FleetGraphOnDemandPanel({
                             {routeActions.length > 0 && (
                               <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
                                 <div className="text-[11px] uppercase tracking-[0.18em] text-muted">
-                                  Open in Ship
+                                  {answerMode === 'launcher' ? 'Best next surface' : 'Best route in Ship'}
                                 </div>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  {routeActions.map((action) => (
-                                    <RouteActionLink
-                                      key={`${action.label}-${action.route}`}
-                                      action={action}
-                                    />
-                                  ))}
-                                </div>
+                                {primaryRouteAction && (
+                                  <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+                                    <RouteActionLink action={primaryRouteAction} featured />
+                                    {getRouteActionSupportingText(primaryRouteAction) && (
+                                      <p className="mt-3 text-xs leading-6 text-muted">
+                                        {getRouteActionSupportingText(primaryRouteAction)}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                                {secondaryRouteActions.length > 0 && (
+                                  <div className="mt-3">
+                                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted">
+                                      Open in Ship
+                                    </div>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                      {secondaryRouteActions.map((action) => (
+                                        <RouteActionLink
+                                          key={`${action.label}-${action.route}`}
+                                          action={action}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
 
