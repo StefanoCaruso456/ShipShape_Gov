@@ -116,13 +116,14 @@ If launcher pages still look like execution-health answers, every later improvem
 
 ## Active Phase
 
-Phase 1 is complete.
+Phase 1 is complete and live.
 
-Phase 2 is the next phase to execute.
+Phase 2 implementation is complete and awaiting merge.
 
 See:
 
 - [phase-1-answer-modes-and-response-contract.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-1-answer-modes-and-response-contract.md)
+- [phase-2-my-week-execution-depth.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-2-my-week-execution-depth.md)
 
 ## Current Status
 
@@ -134,6 +135,13 @@ As of 2026-03-20:
 - production status: live
 
 Phase 1 is therefore complete as both an implementation phase and a merged/live product phase.
+
+Phase 2 status:
+
+- implementation status: complete
+- verification status: passed
+- merge-to-main status: pending
+- production status: not live yet
 
 ## Completion Standard
 
