@@ -123,6 +123,8 @@ export const FleetGraphStateAnnotation = Annotation.Root({
         recentAverageTotalIssues: null,
         throughputSampleSize: 0,
         throughputLoadRatio: null,
+        allocatedPeopleCount: null,
+        incompleteIssuesPerAllocatedPerson: null,
       },
     }),
   }),

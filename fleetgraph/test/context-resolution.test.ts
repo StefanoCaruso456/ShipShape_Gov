@@ -190,6 +190,32 @@ function createSprintContextResponses(
         started_count: 1,
       },
     ],
+    [`/api/weekly-plans/project-allocation-grid/${projectId}`]: {
+      projectId,
+      projectTitle: 'Project',
+      currentSprintNumber: 15,
+      weeks: [],
+      people: [
+        {
+          id: 'owner-1',
+          name: 'Owner 1',
+          weeks: {
+            15: {
+              isAllocated: true,
+            },
+          },
+        },
+        {
+          id: 'owner-2',
+          name: 'Owner 2',
+          weeks: {
+            15: {
+              isAllocated: true,
+            },
+          },
+        },
+      ],
+    },
   };
 }
 
@@ -255,15 +281,16 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.expandedScope.projectId).toBe(projectId);
     expect(result.activeView?.entity.type).toBe('project');
     expect(result.fetched.entity?.id).toBe(weekId);
-    expect(result.toolCalls).toHaveLength(5);
+    expect(result.toolCalls).toHaveLength(6);
     expect(result.toolCalls.map((trace) => trace.toolName)).toEqual([
       'get_surface_context',
       'get_sprint_snapshot',
       'get_visible_issue_worklist',
       'get_scope_change_signals',
       'get_recent_delivery_history',
+      'get_team_ownership_and_capacity',
     ]);
-    expect(result.telemetry.toolCallCount).toBe(5);
+    expect(result.telemetry.toolCallCount).toBe(6);
     expect(result.telemetry.toolFailureCount).toBe(0);
   });
 
@@ -331,15 +358,16 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.expandedScope.projectId).toBe(projectId);
     expect(result.activeView?.projectId).toBe(projectId);
     expect(result.fetched.entity?.id).toBe(weekId);
-    expect(result.toolCalls).toHaveLength(5);
+    expect(result.toolCalls).toHaveLength(6);
     expect(result.toolCalls.map((trace) => trace.toolName)).toEqual([
       'get_surface_context',
       'get_sprint_snapshot',
       'get_visible_issue_worklist',
       'get_scope_change_signals',
       'get_recent_delivery_history',
+      'get_team_ownership_and_capacity',
     ]);
-    expect(result.telemetry.toolCallCount).toBe(5);
+    expect(result.telemetry.toolCallCount).toBe(6);
     expect(result.telemetry.toolFailureCount).toBe(0);
   });
 

@@ -11,6 +11,7 @@ import type {
   FleetGraphDocumentContextSnapshot,
   FleetGraphPlanningSnapshot,
   FleetGraphPeopleSnapshot,
+  FleetGraphProjectAllocationSnapshot,
   FleetGraphProjectWeekSnapshot,
   FleetGraphScopeChangeSnapshot,
   FleetGraphSprintIssueSnapshot,
@@ -142,6 +143,55 @@ function normalizeProjectWeeks(
     .slice(0, 3);
 }
 
+function buildCapacitySnapshot(
+  allocationGrid: Record<string, unknown>
+): FleetGraphProjectAllocationSnapshot | null {
+  const currentSprintNumber =
+    typeof allocationGrid.currentSprintNumber === 'number'
+      ? allocationGrid.currentSprintNumber
+      : null;
+  const people = Array.isArray(allocationGrid.people) ? allocationGrid.people : [];
+
+  if (currentSprintNumber === null || people.length === 0) {
+    return {
+      currentSprintNumber,
+      allocatedPeopleCount: 0,
+      allocatedPeople: [],
+    };
+  }
+
+  const allocatedPeople = people
+    .map((person) => {
+      if (!person || typeof person !== 'object') {
+        return null;
+      }
+
+      const typedPerson = person as {
+        id?: unknown;
+        name?: unknown;
+        weeks?: Record<string, { isAllocated?: boolean }>;
+      };
+      const weekKey = String(currentSprintNumber);
+      const isAllocated = typedPerson.weeks?.[weekKey]?.isAllocated === true;
+
+      if (!isAllocated || typeof typedPerson.id !== 'string' || typeof typedPerson.name !== 'string') {
+        return null;
+      }
+
+      return {
+        personId: typedPerson.id,
+        name: typedPerson.name,
+      };
+    })
+    .filter((person): person is NonNullable<typeof person> => person !== null);
+
+  return {
+    currentSprintNumber,
+    allocatedPeopleCount: allocatedPeople.length,
+    allocatedPeople,
+  };
+}
+
 async function fetchOptionalTool<T>(
   context: Parameters<typeof runFleetGraphEvidenceTool<T>>[0],
   input: Parameters<typeof runFleetGraphEvidenceTool<T>>[1]
@@ -224,8 +274,28 @@ export async function fetchSprintContextNode(
           result: null,
           trace: null,
         });
+    const earlyCapacityPromise = earlyProjectId
+      ? fetchOptionalTool<FleetGraphProjectAllocationSnapshot | null>(started.context, {
+          toolName: 'get_team_ownership_and_capacity',
+          inputSummary: `Fetch current staffing allocation for project ${earlyProjectId}.`,
+          call: async () => {
+            const allocationGrid = await runtime.shipApi.get<Record<string, unknown>>(
+              `/api/weekly-plans/project-allocation-grid/${earlyProjectId}`
+            );
+            return buildCapacitySnapshot(allocationGrid);
+          },
+          resultSummary: (capacity) =>
+            capacity && capacity.allocatedPeopleCount > 0
+              ? `Fetched ${capacity.allocatedPeopleCount} allocated people for the current project week.`
+              : 'No currently allocated people were found for the project allocation grid.',
+          resultCount: (capacity) => capacity?.allocatedPeopleCount ?? 0,
+        })
+      : Promise.resolve({
+          result: null,
+          trace: null,
+        });
 
-    const [snapshotResult, issuesResult, scopeChangesResult, earlyThroughputResult] = await Promise.all([
+    const [snapshotResult, issuesResult, scopeChangesResult, earlyThroughputResult, earlyCapacityResult] = await Promise.all([
       runFleetGraphEvidenceTool(started.context, {
         toolName: 'get_sprint_snapshot',
         inputSummary: `Fetch sprint execution snapshot for ${sprintId}.`,
@@ -272,6 +342,7 @@ export async function fetchSprintContextNode(
         resultCount: (scopeChanges) => scopeChanges.scopeChanges.length,
       }),
       earlyThroughputPromise,
+      earlyCapacityPromise,
     ]);
 
     const {
@@ -303,6 +374,27 @@ export async function fetchSprintContextNode(
         resultCount: (weeks) => weeks.length,
       });
     }
+    let capacityResult = earlyCapacityResult;
+    if (resolvedProjectId && resolvedProjectId !== earlyProjectId) {
+      capacityResult = await fetchOptionalTool<FleetGraphProjectAllocationSnapshot | null>(
+        started.context,
+        {
+          toolName: 'get_team_ownership_and_capacity',
+          inputSummary: `Fetch current staffing allocation for project ${resolvedProjectId}.`,
+          call: async () => {
+            const allocationGrid = await runtime.shipApi.get<Record<string, unknown>>(
+              `/api/weekly-plans/project-allocation-grid/${resolvedProjectId}`
+            );
+            return buildCapacitySnapshot(allocationGrid);
+          },
+          resultSummary: (capacity) =>
+            capacity && capacity.allocatedPeopleCount > 0
+              ? `Fetched ${capacity.allocatedPeopleCount} allocated people for the current project week.`
+              : 'No currently allocated people were found for the project allocation grid.',
+          resultCount: (capacity) => capacity?.allocatedPeopleCount ?? 0,
+        }
+      );
+    }
 
     const people: FleetGraphPeopleSnapshot = {
       owner: entity.owner ?? null,
@@ -318,10 +410,17 @@ export async function fetchSprintContextNode(
               recentWeeks: throughputResult.result,
             }
           : null,
+      capacity: capacityResult.result,
       workload: buildWorkloadSnapshot(issuesResult.result ?? []),
     };
 
-    const toolTraces = [trace, issuesResult.trace, scopeChangesResult.trace, throughputResult.trace].filter(
+    const toolTraces = [
+      trace,
+      issuesResult.trace,
+      scopeChangesResult.trace,
+      throughputResult.trace,
+      capacityResult.trace,
+    ].filter(
       (toolTrace): toolTrace is FleetGraphToolCallTrace => toolTrace !== null
     );
 

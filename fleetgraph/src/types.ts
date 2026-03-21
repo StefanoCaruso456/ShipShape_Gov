@@ -203,6 +203,15 @@ export interface FleetGraphProjectWeekSnapshot {
   started_count: number;
 }
 
+export interface FleetGraphProjectAllocationSnapshot {
+  currentSprintNumber: number | null;
+  allocatedPeopleCount: number;
+  allocatedPeople: Array<{
+    personId: string;
+    name: string;
+  }>;
+}
+
 export interface FleetGraphWorkloadOwnerSnapshot {
   assigneeId: string | null;
   assigneeName: string | null;
@@ -217,6 +226,7 @@ export interface FleetGraphPlanningSnapshot {
   throughputHistory: {
     recentWeeks: FleetGraphProjectWeekSnapshot[];
   } | null;
+  capacity: FleetGraphProjectAllocationSnapshot | null;
   workload: {
     owners: FleetGraphWorkloadOwnerSnapshot[];
     unassignedIssues: number;
@@ -254,7 +264,8 @@ export type FleetGraphSignalKind =
   | 'scope_growth'
   | 'blocked_work'
   | 'workload_concentration'
-  | 'throughput_gap';
+  | 'throughput_gap'
+  | 'staffing_pressure';
 
 export interface FleetGraphDerivedSignal {
   kind: FleetGraphSignalKind;
@@ -282,6 +293,8 @@ export interface FleetGraphDerivedMetrics {
   recentAverageTotalIssues: number | null;
   throughputSampleSize: number;
   throughputLoadRatio: number | null;
+  allocatedPeopleCount: number | null;
+  incompleteIssuesPerAllocatedPerson: number | null;
 }
 
 export interface FleetGraphDerivedSignals {

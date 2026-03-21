@@ -61,6 +61,7 @@ Both modes use the same graph.
   - blocked work
   - workload concentration
   - throughput gap vs recent delivery history
+  - staffing pressure from current project allocation
 
 ### Not implemented yet
 
@@ -178,12 +179,15 @@ Started the planning-intelligence expansion:
 - sprint issue worklist added as planning evidence
 - sprint scope-change history added as planning evidence
 - recent project week history added for throughput comparison
+- current project allocation grid added for staffing comparison
 - deterministic planning signals now include:
   - `scope_growth`
   - `blocked_work`
   - `workload_concentration`
   - `throughput_gap`
+  - `staffing_pressure`
 - capacity-style questions can now answer whether the sprint looks overcommitted relative to recent delivery history
+- staffing-style questions can now answer whether the sprint load looks thin relative to the currently allocated team
 
 ### Phase 9
 

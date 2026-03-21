@@ -14,6 +14,8 @@ const SCOPE_GROWTH_ACTION_PERCENT = 40;
 const WORKLOAD_CONCENTRATION_WARNING_SHARE = 0.5;
 const THROUGHPUT_GAP_WARNING_RATIO = 1.25;
 const THROUGHPUT_GAP_ACTION_RATIO = 1.75;
+const STAFFING_PRESSURE_WARNING_LOAD = 3;
+const STAFFING_PRESSURE_ACTION_LOAD = 4;
 
 type ApprovalKey = 'plan_approval' | 'review_approval';
 
@@ -155,6 +157,11 @@ export function deriveSprintSignals(
     recentAverageCompletedIssues && recentAverageCompletedIssues > 0
       ? Number((incompleteIssues / recentAverageCompletedIssues).toFixed(2))
       : null;
+  const allocatedPeopleCount = inputs.planning?.capacity?.allocatedPeopleCount ?? null;
+  const incompleteIssuesPerAllocatedPerson =
+    allocatedPeopleCount && allocatedPeopleCount > 0
+      ? Number((incompleteIssues / allocatedPeopleCount).toFixed(2))
+      : null;
   const { recentActivityCount, recentActiveDays } = getRecentActivityMetrics(inputs.activity, now);
 
   const metrics = {
@@ -175,6 +182,8 @@ export function deriveSprintSignals(
     recentAverageTotalIssues,
     throughputSampleSize,
     throughputLoadRatio,
+    allocatedPeopleCount,
+    incompleteIssuesPerAllocatedPerson,
   };
 
   const signals: FleetGraphDerivedSignal[] = [];
@@ -362,6 +371,35 @@ export function deriveSprintSignals(
           `Current incomplete issues: ${incompleteIssues}.`,
           `Recent average completed issues: ${recentAverageCompletedIssues}.`,
           `Comparison uses ${throughputSampleSize} recent project weeks.`,
+        ]
+      )
+    );
+  }
+
+  if (
+    sprintStatus === 'active' &&
+    allocatedPeopleCount !== null &&
+    allocatedPeopleCount > 0 &&
+    incompleteIssuesPerAllocatedPerson !== null &&
+    incompleteIssues >= 6 &&
+    incompleteIssuesPerAllocatedPerson >= STAFFING_PRESSURE_WARNING_LOAD
+  ) {
+    const allocatedNames = inputs.planning?.capacity?.allocatedPeople
+      .slice(0, 3)
+      .map((person) => person.name) ?? [];
+
+    signals.push(
+      createSignal(
+        sprintId,
+        'staffing_pressure',
+        incompleteIssuesPerAllocatedPerson >= STAFFING_PRESSURE_ACTION_LOAD ? 'action' : 'warning',
+        'The remaining sprint load looks heavy for the currently allocated team.',
+        [
+          `Allocated people this week: ${allocatedPeopleCount}.`,
+          `Incomplete issues per allocated person: ${incompleteIssuesPerAllocatedPerson}.`,
+          allocatedNames.length > 0
+            ? `Current allocated team: ${allocatedNames.join(', ')}.`
+            : 'Allocated team names were not available.',
         ]
       )
     );

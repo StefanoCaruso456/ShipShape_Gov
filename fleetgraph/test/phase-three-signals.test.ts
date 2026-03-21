@@ -63,12 +63,21 @@ function createPlanningResponses(
   projectId: string,
   issues: Array<Record<string, unknown>>,
   scopeChanges: Record<string, unknown>,
-  projectWeeks: Array<Record<string, unknown>> = []
+  projectWeeks: Array<Record<string, unknown>> = [],
+  allocationGrid: Record<string, unknown> | null = null
 ) {
   return {
     [`/api/weeks/${weekId}/issues`]: issues,
     [`/api/weeks/${weekId}/scope-changes`]: scopeChanges,
     [`/api/projects/${projectId}/weeks`]: projectWeeks,
+    [`/api/weekly-plans/project-allocation-grid/${projectId}`]:
+      allocationGrid ?? {
+        projectId,
+        projectTitle: 'Project',
+        currentSprintNumber: null,
+        weeks: [],
+        people: [],
+      },
   };
 }
 
@@ -830,7 +839,33 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
               completed_count: 4,
               started_count: 1,
             },
-          ]
+          ],
+          {
+            projectId: 'project-1',
+            projectTitle: 'Project',
+            currentSprintNumber: 17,
+            weeks: [],
+            people: [
+              {
+                id: 'owner-1',
+                name: 'Lead Engineer',
+                weeks: {
+                  17: {
+                    isAllocated: true,
+                  },
+                },
+              },
+              {
+                id: 'owner-2',
+                name: 'Pair Engineer',
+                weeks: {
+                  17: {
+                    isAllocated: true,
+                  },
+                },
+              },
+            ],
+          }
         ),
       }),
       now: () => new Date('2026-03-19T12:00:00.000Z'),
@@ -849,11 +884,13 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
     );
 
     expect(result.derivedSignals.signals.map((signal) => signal.kind)).toEqual(
-      expect.arrayContaining(['throughput_gap'])
+      expect.arrayContaining(['throughput_gap', 'staffing_pressure'])
     );
     expect(result.derivedSignals.metrics.recentAverageCompletedIssues).toBe(4.33);
     expect(result.derivedSignals.metrics.throughputSampleSize).toBe(3);
     expect(result.derivedSignals.metrics.throughputLoadRatio).toBe(1.85);
+    expect(result.derivedSignals.metrics.allocatedPeopleCount).toBe(2);
+    expect(result.derivedSignals.metrics.incompleteIssuesPerAllocatedPerson).toBe(4);
     expect(result.reasoning?.summary.toLowerCase()).toContain('overcommitted');
     expect(result.reasoning?.recommendedNextStep?.toLowerCase()).toContain('reduce scope');
   });
