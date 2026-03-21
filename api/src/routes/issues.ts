@@ -14,6 +14,7 @@ import {
 import { broadcastToUser } from '../collaboration/index.js';
 import { listIssueDependencySignals } from '../services/issue-dependency-signals.js';
 import {
+  enqueueFleetGraphIssueIterationEvent,
   enqueueFleetGraphIssueMutationEvent,
   scheduleFleetGraphProactiveEventProcessing,
 } from '../services/fleetgraph-proactive-events.js';
@@ -1582,7 +1583,7 @@ const listIterationsSchema = z.object({
 // Create iteration entry - POST /api/issues/:id/iterations
 router.post('/:id/iterations', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { id: issueId } = req.params;
+    const issueId = String(req.params.id);
     const authContext = getAuthContext(req, res);
     if (!authContext) {
       return;
@@ -1629,6 +1630,20 @@ router.post('/:id/iterations', authMiddleware, async (req: Request, res: Respons
 
     const iteration = result.rows[0];
     const author = authorResult.rows[0];
+
+    await enqueueFleetGraphIssueIterationEvent({
+      workspaceId,
+      issueId,
+      actorId: userId,
+      iteration: {
+        id: typeof iteration.id === 'string' ? iteration.id : null,
+        status,
+        blockersEncountered: blockers_encountered ?? null,
+        authorId: userId,
+        authorName: author?.name ?? null,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
 
     res.status(201).json({
       id: iteration.id,

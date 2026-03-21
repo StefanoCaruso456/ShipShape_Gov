@@ -61,6 +61,19 @@ Phase 13 should be built in this order:
 4. ensure every trigger emits structured evidence, not just a summary string
 5. add focused tests for trigger eligibility and quiet/noisy boundaries
 
+Current implementation slice on this branch:
+
+- issue iteration events now surface explicit blocker logging
+- sprint approval-change routes now emit proactive events for plan and review churn
+- issue update events now surface reopened-after-done and missing-project-context-in-active-sprint conditions
+
+Remaining Phase 13 expansion after this slice:
+
+- standup-driven proactive event coverage
+- late sprint movement and move-out triggers
+- richer dependency-resolution triggers
+- more time-threshold triggers beyond the current mutation-time signals
+
 ## Purpose
 
 The purpose of Phase 13 is to make proactive FleetGraph notice the execution problems teams actually feel in day-to-day scrum work, not just the first obvious subset.
@@ -100,7 +113,7 @@ Not included in Phase 13:
 
 As of 2026-03-20:
 
-- implementation status: not started
-- verification status: not started
+- implementation status: in progress
+- verification status: passed for the current event-expansion slice
 - merge-to-main status: not started
 - production status: not live yet
