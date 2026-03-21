@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildFleetGraphActiveViewContext,
+  buildFleetGraphDashboardActiveViewContext,
   buildFleetGraphMyWeekActiveViewContext,
   extractFleetGraphProjectIdFromDocument,
   resolveFleetGraphActiveView,
@@ -183,5 +184,188 @@ describe('resolveFleetGraphActiveView', () => {
       tab: 'overview',
       projectId: '33333333-3333-3333-3333-333333333333',
     });
+  });
+});
+
+describe('buildFleetGraphDashboardActiveViewContext', () => {
+  it('prefers an overdue dashboard action item and maps it back to the sprint tab that needs attention', () => {
+    const activeView = buildFleetGraphDashboardActiveViewContext({
+      pathname: '/dashboard?view=my-work',
+      view: 'my-work',
+      activeWeeks: [
+        {
+          id: 'week-1',
+          name: 'Week 12',
+          sprint_number: 12,
+          status: 'active',
+          owner: null,
+          issue_count: 4,
+          completed_count: 1,
+          started_count: 2,
+          program_id: 'program-1',
+          program_name: 'Core Platform',
+          days_remaining: 4,
+        },
+      ],
+      actionItems: [
+        {
+          id: 'retro-1',
+          type: 'retro',
+          sprint_id: 'week-overdue',
+          sprint_title: 'Week 11',
+          program_id: 'program-1',
+          program_name: 'Core Platform',
+          sprint_number: 11,
+          urgency: 'overdue',
+          days_until_due: -2,
+          message: 'Retro is overdue',
+        },
+      ],
+      projects: [],
+    });
+
+    expect(activeView).toEqual({
+      entity: {
+        id: 'week-overdue',
+        type: 'week',
+        sourceDocumentType: 'sprint',
+      },
+      surface: 'dashboard',
+      route: '/dashboard?view=my-work',
+      tab: 'retro',
+      projectId: null,
+    });
+  });
+
+  it('falls back to the most urgent active week when there is no overdue action item', () => {
+    const activeView = buildFleetGraphDashboardActiveViewContext({
+      pathname: '/dashboard?view=overview',
+      view: 'overview',
+      activeWeeks: [
+        {
+          id: 'week-later',
+          name: 'Week 13',
+          sprint_number: 13,
+          status: 'active',
+          owner: null,
+          issue_count: 5,
+          completed_count: 0,
+          started_count: 1,
+          program_id: 'program-1',
+          program_name: 'Core Platform',
+          days_remaining: 5,
+        },
+        {
+          id: 'week-soon',
+          name: 'Week 12',
+          sprint_number: 12,
+          status: 'active',
+          owner: null,
+          issue_count: 6,
+          completed_count: 2,
+          started_count: 3,
+          program_id: 'program-2',
+          program_name: 'Growth',
+          days_remaining: 2,
+        },
+      ],
+      actionItems: [],
+      projects: [],
+    });
+
+    expect(activeView).toEqual({
+      entity: {
+        id: 'week-soon',
+        type: 'week',
+        sourceDocumentType: 'sprint',
+      },
+      surface: 'dashboard',
+      route: '/dashboard?view=overview',
+      tab: 'issues',
+      projectId: null,
+    });
+  });
+
+  it('falls back to the strongest active project when there is no focused week to inspect', () => {
+    const activeView = buildFleetGraphDashboardActiveViewContext({
+      pathname: '/dashboard?view=overview',
+      view: 'overview',
+      activeWeeks: [],
+      actionItems: [],
+      projects: [
+        {
+          id: 'project-low',
+          title: 'Backlog cleanup',
+          impact: null,
+          confidence: null,
+          ease: null,
+          ice_score: 24,
+          roi: null,
+          retention: null,
+          acquisition: null,
+          growth: null,
+          business_value_score: 40,
+          color: '#000000',
+          emoji: null,
+          program_id: null,
+          owner: null,
+          sprint_count: 1,
+          issue_count: 3,
+          inferred_status: 'active',
+          archived_at: null,
+          created_at: '2026-03-01T00:00:00.000Z',
+          updated_at: '2026-03-21T00:00:00.000Z',
+          is_complete: null,
+          missing_fields: [],
+        },
+        {
+          id: 'project-high',
+          title: 'Release planning',
+          impact: null,
+          confidence: null,
+          ease: null,
+          ice_score: 80,
+          roi: null,
+          retention: null,
+          acquisition: null,
+          growth: null,
+          business_value_score: 92,
+          color: '#111111',
+          emoji: null,
+          program_id: null,
+          owner: null,
+          sprint_count: 2,
+          issue_count: 7,
+          inferred_status: 'active',
+          archived_at: null,
+          created_at: '2026-03-01T00:00:00.000Z',
+          updated_at: '2026-03-21T00:00:00.000Z',
+          is_complete: null,
+          missing_fields: [],
+        },
+      ],
+    });
+
+    expect(activeView).toEqual({
+      entity: {
+        id: 'project-high',
+        type: 'project',
+        sourceDocumentType: 'project',
+      },
+      surface: 'dashboard',
+      route: '/dashboard?view=overview',
+      tab: 'issues',
+      projectId: 'project-high',
+    });
+  });
+
+  it('returns null when the dashboard has no actionable focus yet', () => {
+    expect(buildFleetGraphDashboardActiveViewContext({
+      pathname: '/dashboard?view=my-work',
+      view: 'my-work',
+      activeWeeks: [],
+      actionItems: [],
+      projects: [],
+    })).toBeNull();
   });
 });
