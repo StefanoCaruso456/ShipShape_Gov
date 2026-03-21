@@ -5,6 +5,7 @@ import {
   type FleetGraphRunInput,
 } from '@ship/fleetgraph';
 import type {
+  FleetGraphFeedbackEventRequest,
   FleetGraphOnDemandRequest,
   FleetGraphOnDemandResumeRequest,
 } from '@ship/shared';
@@ -16,8 +17,10 @@ import {
   resumeFleetGraph,
   type FleetGraphInvokeResult,
 } from '../services/fleetgraph-runner.js';
+import { recordFleetGraphFeedback } from '../services/fleetgraph-telemetry.js';
 import {
   listFleetGraphFindingsForUser,
+  getFleetGraphProactiveStatus,
   runFleetGraphProactiveSweep,
 } from '../services/fleetgraph-proactive.js';
 
@@ -94,9 +97,49 @@ const onDemandRequestSchema = z.object({
   active_view: activeViewSchema.nullable().optional(),
   page_context: pageContextSchema.nullable().optional(),
   question: z.string().trim().min(1).nullable().optional(),
+  question_source: z.enum(['typed', 'starter_prompt', 'follow_up_prompt']).nullable().optional(),
 }).refine((value) => Boolean(value.active_view || value.page_context), {
   message: 'FleetGraph on-demand requests require either active_view or page_context',
   path: ['active_view'],
+});
+
+const feedbackSurfaceSchema = z.object({
+  route: z.string().trim().min(1),
+  activeViewSurface: z.enum(['document', 'dashboard', 'my_week', 'week', 'project', 'program', 'issue', 'person']).nullable(),
+  entityType: z.enum(['issue', 'week', 'project', 'program', 'person']).nullable(),
+  pageContextKind: z.enum([
+    'dashboard',
+    'my_week',
+    'programs',
+    'projects',
+    'issues',
+    'issue_surface',
+    'documents',
+    'document',
+    'team_directory',
+    'person',
+    'settings',
+    'generic',
+  ]).nullable(),
+  tab: z.string().trim().min(1).nullable(),
+  projectId: z.string().uuid().nullable(),
+});
+
+const feedbackEventSchema = z.object({
+  event_name: z.enum(['drawer_opened', 'route_clicked']),
+  thread_id: z.string().min(1).nullable().optional(),
+  turn_id: z.string().min(1).nullable().optional(),
+  question_source: z.enum(['typed', 'starter_prompt', 'follow_up_prompt']).nullable().optional(),
+  question_theme: z.enum(['risk', 'blockers', 'scope', 'status', 'impact', 'follow_up', 'generic']).nullable().optional(),
+  answer_mode: z.enum(['execution', 'context', 'launcher']).nullable().optional(),
+  latency_ms: z.number().min(0).max(10 * 60 * 1000).nullable().optional(),
+  surface: feedbackSurfaceSchema,
+  route_action: z.object({
+    label: z.string().trim().min(1),
+    route: z.string().trim().min(1),
+    featured: z.boolean(),
+    intent: z.enum(['inspect', 'prioritize', 'follow_up', 'write', 'complete']).optional(),
+  }).nullable().optional(),
 });
 
 const onDemandResumeRequestSchema = z.object({
@@ -203,6 +246,7 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
       prompt: {
         question: parsed.data.question ?? null,
         pageContext: parsed.data.page_context ?? null,
+        questionSource: parsed.data.question_source ?? null,
       },
       trace: {
         runName: 'fleetgraph-on-demand',
@@ -211,6 +255,7 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
           'on-demand',
           parsed.data.active_view?.entity.type ?? parsed.data.page_context?.kind ?? 'current-view',
           parsed.data.active_view?.surface ?? 'current-view',
+          `question-source:${parsed.data.question_source ?? 'typed'}`,
         ],
       },
     };
@@ -225,6 +270,39 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
   } catch (error) {
     console.error('FleetGraph on-demand invoke error:', error);
     res.status(500).json({ error: 'Failed to run FleetGraph on-demand analysis' });
+  }
+});
+
+router.post('/feedback', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+
+    const parsed = feedbackEventSchema.safeParse(req.body satisfies FleetGraphFeedbackEventRequest);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid FleetGraph feedback request',
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+
+    recordFleetGraphFeedback(
+      {
+        workspaceId: authContext.workspaceId,
+        actorId: authContext.userId,
+        actorRole: req.workspaceRole ?? null,
+        feedback: parsed.data,
+      },
+      fleetGraphLogger
+    );
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('FleetGraph feedback telemetry error:', error);
+    res.status(500).json({ error: 'Failed to record FleetGraph feedback' });
   }
 });
 
@@ -307,6 +385,25 @@ router.post('/proactive/run', authMiddleware, async (req: Request, res: Response
   } catch (error) {
     console.error('FleetGraph proactive sweep error:', error);
     res.status(500).json({ error: 'Failed to run FleetGraph proactive sweep' });
+  }
+});
+
+router.get('/proactive/status', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+
+    if (!canRunProactiveSweep(req)) {
+      res.status(403).json({ error: 'Only workspace admins can view FleetGraph proactive status' });
+      return;
+    }
+
+    res.json(getFleetGraphProactiveStatus());
+  } catch (error) {
+    console.error('FleetGraph proactive status error:', error);
+    res.status(500).json({ error: 'Failed to load FleetGraph proactive status' });
   }
 });
 

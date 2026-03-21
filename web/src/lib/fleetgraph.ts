@@ -1,6 +1,7 @@
 import type {
   DocumentType,
   FleetGraphActiveViewContext,
+  FleetGraphFeedbackEventRequest,
   FleetGraphOnDemandRequest,
   FleetGraphOnDemandResumeRequest,
   FleetGraphOnDemandResponse,
@@ -8,6 +9,9 @@ import type {
 } from '@ship/shared';
 import { apiGet, apiPost } from '@/lib/api';
 import type { DocumentResponse } from '@/lib/document-tabs';
+import type { ActionItem } from '@/hooks/useDashboardActionItems';
+import type { Project } from '@/hooks/useProjectsQuery';
+import type { ActiveWeek } from '@/hooks/useWeeksQuery';
 
 interface BuildFleetGraphActiveViewContextArgs {
   currentDocumentId: string | null;
@@ -121,6 +125,100 @@ export function buildFleetGraphMyWeekActiveViewContext({
   };
 }
 
+interface BuildFleetGraphDashboardActiveViewContextArgs {
+  pathname: string;
+  view: 'my-work' | 'overview';
+  activeWeeks: ActiveWeek[];
+  actionItems: ActionItem[];
+  projects: Project[];
+}
+
+function getDashboardFocusWeek(
+  actionItems: ActionItem[],
+  activeWeeks: ActiveWeek[]
+): { id: string; tab: string | null } | null {
+  const overdueActionItem = [...actionItems]
+    .filter((item) => item.urgency === 'overdue')
+    .sort(
+      (left, right) =>
+        left.days_until_due - right.days_until_due ||
+        left.sprint_number - right.sprint_number ||
+        left.id.localeCompare(right.id)
+    )[0];
+
+  if (overdueActionItem) {
+    return {
+      id: overdueActionItem.sprint_id,
+      tab: overdueActionItem.type === 'plan' ? 'plan' : 'retro',
+    };
+  }
+
+  const activeWeek = [...activeWeeks].sort(
+    (left, right) =>
+      left.days_remaining - right.days_remaining ||
+      left.sprint_number - right.sprint_number ||
+      left.id.localeCompare(right.id)
+  )[0];
+
+  return activeWeek
+    ? {
+        id: activeWeek.id,
+        tab: 'issues',
+      }
+    : null;
+}
+
+function getDashboardFocusProject(projects: Project[]): Project | null {
+  return [...projects]
+    .filter((project) => !project.archived_at)
+    .sort(
+      (left, right) =>
+        (right.business_value_score ?? right.ice_score ?? -1) - (left.business_value_score ?? left.ice_score ?? -1) ||
+        right.issue_count - left.issue_count ||
+        left.title.localeCompare(right.title)
+    )[0] ?? null;
+}
+
+export function buildFleetGraphDashboardActiveViewContext({
+  pathname,
+  view,
+  activeWeeks,
+  actionItems,
+  projects,
+}: BuildFleetGraphDashboardActiveViewContextArgs): FleetGraphActiveViewContext | null {
+  const focusedWeek = getDashboardFocusWeek(actionItems, activeWeeks);
+  if (focusedWeek) {
+    return {
+      entity: {
+        id: focusedWeek.id,
+        type: 'week',
+        sourceDocumentType: 'sprint',
+      },
+      surface: 'dashboard',
+      route: pathname,
+      tab: focusedWeek.tab,
+      projectId: null,
+    };
+  }
+
+  const focusedProject = getDashboardFocusProject(projects);
+  if (focusedProject) {
+    return {
+      entity: {
+        id: focusedProject.id,
+        type: 'project',
+        sourceDocumentType: 'project',
+      },
+      surface: 'dashboard',
+      route: pathname,
+      tab: view === 'overview' ? 'issues' : null,
+      projectId: focusedProject.id,
+    };
+  }
+
+  return null;
+}
+
 interface ResolveFleetGraphActiveViewArgs extends Omit<BuildFleetGraphActiveViewContextArgs, 'pathname'> {
   currentRoute: string;
   currentView: FleetGraphActiveViewContext | null;
@@ -170,6 +268,15 @@ export async function resumeFleetGraphOnDemand(
   }
 
   return response.json();
+}
+
+export async function reportFleetGraphFeedback(
+  request: FleetGraphFeedbackEventRequest
+): Promise<void> {
+  const response = await apiPost('/api/fleetgraph/feedback', request);
+  if (!response.ok) {
+    throw new Error('FleetGraph feedback request failed');
+  }
 }
 
 export async function listFleetGraphProactiveFindings(limit = 1): Promise<FleetGraphProactiveFinding[]> {

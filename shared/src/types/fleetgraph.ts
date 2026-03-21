@@ -82,10 +82,41 @@ export interface FleetGraphPageContext {
   actions?: FleetGraphPageContextAction[];
 }
 
+export type FleetGraphQuestionSource = 'typed' | 'starter_prompt' | 'follow_up_prompt';
+
 export interface FleetGraphOnDemandRequest {
   active_view: FleetGraphActiveViewContext | null;
   page_context?: FleetGraphPageContext | null;
   question?: string | null;
+  question_source?: FleetGraphQuestionSource | null;
+}
+
+export type FleetGraphIssueDependencyStatus = 'pass' | 'fail' | 'in_progress';
+
+export interface FleetGraphIssueDependencySignal {
+  issueId: string;
+  latestStatus: FleetGraphIssueDependencyStatus | null;
+  hasUnresolvedBlocker: boolean;
+  hasRecentBlockerMention: boolean;
+  blockerSummary: string | null;
+  blockerLoggedAt: string | null;
+  blockerAgeDays: number | null;
+  blockerLoggedBy: string | null;
+  isStale: boolean;
+}
+
+export interface FleetGraphIssueDependencySignalsSummary {
+  requestedIssueCount: number;
+  accessibleIssueCount: number;
+  unresolvedBlockerCount: number;
+  staleBlockedIssueCount: number;
+  recentBlockerMentionCount: number;
+  oldestUnresolvedBlockerDays: number | null;
+}
+
+export interface FleetGraphIssueDependencySignalsResponse {
+  summary: FleetGraphIssueDependencySignalsSummary;
+  issues: FleetGraphIssueDependencySignal[];
 }
 
 export interface FleetGraphResumeDecision {
@@ -247,6 +278,36 @@ export interface FleetGraphOnDemandFinding {
 }
 
 export type FleetGraphAnswerMode = 'execution' | 'context' | 'launcher';
+
+export type FleetGraphFeedbackEventName = 'drawer_opened' | 'route_clicked';
+
+export interface FleetGraphFeedbackSurfaceContext {
+  route: string;
+  activeViewSurface: FleetGraphViewSurface | null;
+  entityType: FleetGraphViewEntityType | null;
+  pageContextKind: FleetGraphPageContextKind | null;
+  tab: string | null;
+  projectId: string | null;
+}
+
+export interface FleetGraphFeedbackRouteAction {
+  label: string;
+  route: string;
+  featured: boolean;
+  intent?: FleetGraphPageContextActionIntent;
+}
+
+export interface FleetGraphFeedbackEventRequest {
+  event_name: FleetGraphFeedbackEventName;
+  thread_id?: string | null;
+  turn_id?: string | null;
+  question_source?: FleetGraphQuestionSource | null;
+  question_theme?: FleetGraphQuestionTheme | null;
+  answer_mode?: FleetGraphAnswerMode | null;
+  latency_ms?: number | null;
+  surface: FleetGraphFeedbackSurfaceContext;
+  route_action?: FleetGraphFeedbackRouteAction | null;
+}
 
 export interface FleetGraphOnDemandReasoning {
   answerMode: FleetGraphAnswerMode;
@@ -504,4 +565,162 @@ export interface FleetGraphProactiveFinding {
   signalKinds: string[];
   lastDetectedAt: string;
   lastNotifiedAt: string;
+}
+
+export type FleetGraphProactiveEventEntityType = 'issue' | 'sprint';
+
+export type FleetGraphProactiveEventKind =
+  | 'issue_created'
+  | 'issue_updated'
+  | 'issue_iteration_created'
+  | 'sprint_updated'
+  | 'sprint_started'
+  | 'sprint_plan_changes_requested'
+  | 'sprint_review_changes_requested';
+
+export type FleetGraphProactiveTriggerKind =
+  | 'issue_unassigned_in_active_sprint'
+  | 'issue_missing_project_context_in_active_sprint'
+  | 'issue_added_after_sprint_start'
+  | 'issue_open_on_last_sprint_day'
+  | 'issue_reopened_after_done'
+  | 'issue_blocker_logged'
+  | 'sprint_active_without_owner'
+  | 'sprint_plan_changes_requested'
+  | 'sprint_review_changes_requested';
+
+export interface FleetGraphProactiveIssueSnapshot {
+  id: string;
+  title: string;
+  ticketNumber: number | null;
+  state: string;
+  assigneeId: string | null;
+  projectId: string | null;
+  projectTitle: string | null;
+  projectOwnerUserId: string | null;
+  sprintId: string | null;
+  sprintTitle: string | null;
+  sprintNumber: number | null;
+  sprintStatus: string | null;
+  sprintSnapshotTakenAt: string | null;
+  sprintOwnerUserId: string | null;
+  sprintEndDate: string | null;
+  route: string;
+}
+
+export interface FleetGraphProactiveIssueEventPayload {
+  issue: FleetGraphProactiveIssueSnapshot;
+  previous: {
+    state: string | null;
+    assigneeId: string | null;
+    sprintId: string | null;
+  };
+  actorId: string | null;
+  occurredAt: string;
+}
+
+export interface FleetGraphProactiveIssueIterationEventPayload {
+  issue: FleetGraphProactiveIssueSnapshot;
+  iteration: {
+    id: string | null;
+    status: 'pass' | 'fail' | 'in_progress';
+    blockersEncountered: string | null;
+    authorId: string | null;
+    authorName: string | null;
+  };
+  actorId: string | null;
+  occurredAt: string;
+}
+
+export interface FleetGraphProactiveSprintSnapshot {
+  id: string;
+  title: string;
+  sprintNumber: number | null;
+  status: string | null;
+  ownerPersonId: string | null;
+  ownerUserId: string | null;
+  projectId: string | null;
+  programId: string | null;
+  programOwnerUserId: string | null;
+  route: string;
+}
+
+export interface FleetGraphProactiveSprintEventPayload {
+  sprint: FleetGraphProactiveSprintSnapshot;
+  previous: {
+    status: string | null;
+    ownerPersonId: string | null;
+  };
+  actorId: string | null;
+  occurredAt: string;
+}
+
+export interface FleetGraphProactiveSprintApprovalEventPayload {
+  sprint: FleetGraphProactiveSprintSnapshot;
+  approval: {
+    kind: 'plan' | 'review';
+    previousState: string | null;
+    nextState: 'changes_requested';
+    feedback: string | null;
+    requestedByUserId: string | null;
+  };
+  actorId: string | null;
+  occurredAt: string;
+}
+
+export interface FleetGraphProactiveEventRecord {
+  id: string;
+  workspaceId: string;
+  entityId: string;
+  entityType: FleetGraphProactiveEventEntityType;
+  eventKind: FleetGraphProactiveEventKind;
+  route: string;
+  payload:
+    | FleetGraphProactiveIssueEventPayload
+    | FleetGraphProactiveIssueIterationEventPayload
+    | FleetGraphProactiveSprintEventPayload
+    | FleetGraphProactiveSprintApprovalEventPayload;
+  matchedTriggerKinds: FleetGraphProactiveTriggerKind[];
+  findingsCreated: number;
+  processingStatus: 'pending' | 'processing' | 'processed' | 'ignored' | 'failed';
+  errorMessage: string | null;
+  createdAt: string;
+  processingStartedAt: string | null;
+  processedAt: string | null;
+}
+
+export interface FleetGraphProactiveTriggerMatch {
+  triggerKind: FleetGraphProactiveTriggerKind;
+  summary: string;
+  severity: 'warning' | 'action';
+  route: string;
+  weekId: string | null;
+  projectId: string | null;
+  programId: string | null;
+  targetUserId: string | null;
+  signalKinds: string[];
+  payload: Record<string, unknown>;
+}
+
+export type FleetGraphProactiveWorkerState =
+  | 'disabled'
+  | 'misconfigured'
+  | 'idle'
+  | 'sweeping';
+
+export interface FleetGraphProactiveStatusResponse {
+  workerState: FleetGraphProactiveWorkerState;
+  workerEnabled: boolean;
+  apiTokenConfigured: boolean;
+  intervalMs: number;
+  cooldownMs: number;
+  startedAt: string | null;
+  running: boolean;
+  lastSweepStartedAt: string | null;
+  lastSweepFinishedAt: string | null;
+  lastSweepError: string | null;
+  lastSweepWorkspaceCount: number | null;
+  lastSweepProcessedWeeks: number | null;
+  lastSweepSurfacedFindings: number | null;
+  lastSweepNewNotifications: number | null;
 }

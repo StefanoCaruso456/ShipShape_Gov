@@ -1,6 +1,9 @@
 import { randomUUID } from 'crypto';
 import type { FleetGraphRunInput, FleetGraphShipApiClient } from '@ship/fleetgraph';
-import type { FleetGraphProactiveFinding } from '@ship/shared';
+import type {
+  FleetGraphProactiveFinding,
+  FleetGraphProactiveStatusResponse,
+} from '@ship/shared';
 import { pool } from '../db/client.js';
 import { broadcastToUser } from '../collaboration/index.js';
 import {
@@ -50,10 +53,37 @@ interface PersistProactiveFindingResult {
 
 export interface FleetGraphProactiveSweepResult {
   processedWeeks: number;
+  processedWorkspaces: number;
   surfacedFindings: number;
   newNotifications: number;
   findings: FleetGraphProactiveFinding[];
 }
+
+type FleetGraphProactiveWorkerState = FleetGraphProactiveStatusResponse['workerState'];
+
+const proactiveRuntimeState: {
+  workerState: FleetGraphProactiveWorkerState;
+  startedAt: string | null;
+  running: boolean;
+  lastSweepStartedAt: string | null;
+  lastSweepFinishedAt: string | null;
+  lastSweepError: string | null;
+  lastSweepWorkspaceCount: number | null;
+  lastSweepProcessedWeeks: number | null;
+  lastSweepSurfacedFindings: number | null;
+  lastSweepNewNotifications: number | null;
+} = {
+  workerState: 'disabled',
+  startedAt: null,
+  running: false,
+  lastSweepStartedAt: null,
+  lastSweepFinishedAt: null,
+  lastSweepError: null,
+  lastSweepWorkspaceCount: null,
+  lastSweepProcessedWeeks: null,
+  lastSweepSurfacedFindings: null,
+  lastSweepNewNotifications: null,
+};
 
 function getCooldownMs(): number {
   const parsed = Number.parseInt(process.env.FLEETGRAPH_FINDING_COOLDOWN_MS ?? '', 10);
@@ -63,6 +93,28 @@ function getCooldownMs(): number {
 function getSweepIntervalMs(): number {
   const parsed = Number.parseInt(process.env.FLEETGRAPH_PROACTIVE_SWEEP_INTERVAL_MS ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_SWEEP_INTERVAL_MS;
+}
+
+export function getFleetGraphProactiveStatus(): FleetGraphProactiveStatusResponse {
+  const enabled = process.env.FLEETGRAPH_ENABLE_PROACTIVE_WORKER === 'true';
+  const apiTokenConfigured = Boolean(process.env.FLEETGRAPH_INTERNAL_API_TOKEN?.trim());
+
+  return {
+    workerState: proactiveRuntimeState.workerState,
+    workerEnabled: enabled,
+    apiTokenConfigured,
+    intervalMs: getSweepIntervalMs(),
+    cooldownMs: getCooldownMs(),
+    startedAt: proactiveRuntimeState.startedAt,
+    running: proactiveRuntimeState.running,
+    lastSweepStartedAt: proactiveRuntimeState.lastSweepStartedAt,
+    lastSweepFinishedAt: proactiveRuntimeState.lastSweepFinishedAt,
+    lastSweepError: proactiveRuntimeState.lastSweepError,
+    lastSweepWorkspaceCount: proactiveRuntimeState.lastSweepWorkspaceCount,
+    lastSweepProcessedWeeks: proactiveRuntimeState.lastSweepProcessedWeeks,
+    lastSweepSurfacedFindings: proactiveRuntimeState.lastSweepSurfacedFindings,
+    lastSweepNewNotifications: proactiveRuntimeState.lastSweepNewNotifications,
+  };
 }
 
 function buildSignalSignature(signalKinds: string[], weekId: string): string {
@@ -482,6 +534,7 @@ export async function runFleetGraphProactiveSweep(options: {
 
   return {
     processedWeeks: targets.length,
+    processedWorkspaces: 1,
     surfacedFindings,
     newNotifications,
     findings,
@@ -492,8 +545,14 @@ export function startFleetGraphProactiveWorker(): { stop(): void } {
   const logger = createFleetGraphLogger('FleetGraph worker');
   const enabled = process.env.FLEETGRAPH_ENABLE_PROACTIVE_WORKER === 'true';
   const apiToken = process.env.FLEETGRAPH_INTERNAL_API_TOKEN?.trim();
+  const intervalMs = getSweepIntervalMs();
+
+  proactiveRuntimeState.startedAt = new Date().toISOString();
+  proactiveRuntimeState.running = false;
+  proactiveRuntimeState.lastSweepError = null;
 
   if (!enabled) {
+    proactiveRuntimeState.workerState = 'disabled';
     logger.info('FleetGraph proactive worker is disabled', {
       env: 'FLEETGRAPH_ENABLE_PROACTIVE_WORKER',
     });
@@ -501,14 +560,14 @@ export function startFleetGraphProactiveWorker(): { stop(): void } {
   }
 
   if (!apiToken) {
+    proactiveRuntimeState.workerState = 'misconfigured';
     logger.warn('FleetGraph proactive worker is enabled but missing internal API token', {
       env: 'FLEETGRAPH_INTERNAL_API_TOKEN',
     });
     return { stop() {} };
   }
 
-  const shipApi = createApiTokenShipApiClient(apiToken);
-  const intervalMs = getSweepIntervalMs();
+  proactiveRuntimeState.workerState = 'idle';
   let timer: NodeJS.Timeout | null = null;
   let initialTimer: NodeJS.Timeout | null = null;
   let running = false;
@@ -520,6 +579,10 @@ export function startFleetGraphProactiveWorker(): { stop(): void } {
     }
 
     running = true;
+    proactiveRuntimeState.running = true;
+    proactiveRuntimeState.workerState = 'sweeping';
+    proactiveRuntimeState.lastSweepStartedAt = new Date().toISOString();
+    proactiveRuntimeState.lastSweepError = null;
 
     try {
       const workspaces = await pool.query(
@@ -528,20 +591,40 @@ export function startFleetGraphProactiveWorker(): { stop(): void } {
          WHERE archived_at IS NULL
          ORDER BY created_at ASC`
       );
+      let processedWeeks = 0;
+      let surfacedFindings = 0;
+      let newNotifications = 0;
 
       for (const row of workspaces.rows) {
-        await runFleetGraphProactiveSweep({
+        const result = await runFleetGraphProactiveSweep({
           workspaceId: row.id,
-          shipApi,
+          shipApi: createApiTokenShipApiClient(apiToken, {
+            workspaceId: row.id,
+          }),
           logger,
         });
+        processedWeeks += result.processedWeeks;
+        surfacedFindings += result.surfacedFindings;
+        newNotifications += result.newNotifications;
       }
+
+      proactiveRuntimeState.lastSweepWorkspaceCount = workspaces.rows.length;
+      proactiveRuntimeState.lastSweepProcessedWeeks = processedWeeks;
+      proactiveRuntimeState.lastSweepSurfacedFindings = surfacedFindings;
+      proactiveRuntimeState.lastSweepNewNotifications = newNotifications;
+      proactiveRuntimeState.lastSweepFinishedAt = new Date().toISOString();
+      proactiveRuntimeState.workerState = 'idle';
     } catch (error) {
+      proactiveRuntimeState.lastSweepFinishedAt = new Date().toISOString();
+      proactiveRuntimeState.lastSweepError =
+        error instanceof Error ? error.message : 'Unknown proactive sweep failure';
+      proactiveRuntimeState.workerState = 'idle';
       logger.error('FleetGraph proactive worker sweep failed', {
         message: error instanceof Error ? error.message : 'Unknown proactive sweep failure',
       });
     } finally {
       running = false;
+      proactiveRuntimeState.running = false;
     }
   };
 

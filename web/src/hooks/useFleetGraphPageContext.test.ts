@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { FleetGraphActiveViewContext } from '@ship/shared';
+import type {
+  FleetGraphActiveViewContext,
+  FleetGraphIssueDependencySignalsResponse,
+} from '@ship/shared';
 import type { MyWeekResponse } from '@/hooks/useMyWeekQuery';
 import type { Issue } from '@/hooks/useIssuesQuery';
 import type { Project } from '@/hooks/useProjectsQuery';
@@ -325,6 +328,39 @@ const issueSurfaceProjects: Project[] = [
   },
 ];
 
+const issueSurfaceDependencySignals: FleetGraphIssueDependencySignalsResponse = {
+  summary: {
+    requestedIssueCount: 5,
+    accessibleIssueCount: 5,
+    unresolvedBlockerCount: 1,
+    staleBlockedIssueCount: 1,
+    recentBlockerMentionCount: 1,
+    oldestUnresolvedBlockerDays: 4,
+  },
+  issues: [
+    {
+      issueId: 'issue-1',
+      latestStatus: 'in_progress',
+      hasUnresolvedBlocker: true,
+      hasRecentBlockerMention: true,
+      blockerSummary: 'Waiting on API review from platform team',
+      blockerLoggedAt: '2026-03-16T12:00:00.000Z',
+      blockerAgeDays: 4,
+      blockerLoggedBy: 'stefano caruso',
+      isStale: true,
+    },
+  ],
+};
+
+const stalledIssueSurfaceIssues: Issue[] = issueSurfaceIssues.map((issue) =>
+  issue.id === 'issue-1'
+    ? {
+        ...issue,
+        updated_at: '2026-03-16T02:00:00.000Z',
+      }
+    : issue
+);
+
 describe('buildMyWeekPageContext', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -461,6 +497,11 @@ describe('buildIssueSurfacePageContext', () => {
           route: '/documents/issue-3',
         }),
         expect.objectContaining({
+          label: '#15 Explore stretch improvements',
+          route: '/documents/issue-4',
+          detail: expect.stringContaining('Cut candidate'),
+        }),
+        expect.objectContaining({
           label: 'Week 3',
           route: '/documents/week-3/issues',
         }),
@@ -475,10 +516,97 @@ describe('buildIssueSurfacePageContext', () => {
           reason: expect.stringContaining('Business value 87/100'),
         }),
         expect.objectContaining({
+          label: 'Review cut candidate #15',
+          route: '/documents/issue-4',
+          intent: 'prioritize',
+          reason: expect.stringContaining('Safer to move out'),
+        }),
+        expect.objectContaining({
           label: 'Open risk cluster Week 3',
           route: '/documents/week-3/issues',
           intent: 'prioritize',
           reason: expect.stringContaining('holds 3 open issues'),
+        }),
+      ])
+    );
+  });
+
+  it('surfaces stalled active work when an in-progress issue goes stale', () => {
+    const context = buildIssueSurfacePageContext(
+      '/documents/program-1/issues',
+      {
+        type: 'program',
+        id: 'program-1',
+        title: 'API Platform',
+      },
+      stalledIssueSurfaceIssues,
+      issueSurfaceProjects
+    );
+
+    expect(context.summary).toContain('has active work that looks stalled');
+    expect(context.metrics).toEqual(
+      expect.arrayContaining([
+        { label: 'Stalled active', value: '1' },
+      ])
+    );
+    expect(context.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: '#12 Implement core workflow',
+          detail: expect.stringContaining('Stalled in progress'),
+          route: '/documents/issue-1',
+        }),
+      ])
+    );
+    expect(context.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Follow up on stalled #12',
+          route: '/documents/issue-1',
+          intent: 'follow_up',
+          reason: expect.stringContaining('looks stalled'),
+        }),
+      ])
+    );
+  });
+
+  it('surfaces explicit blocker evidence when issue iterations show unresolved blockers', () => {
+    const context = buildIssueSurfacePageContext(
+      '/documents/program-1/issues',
+      {
+        type: 'program',
+        id: 'program-1',
+        title: 'API Platform',
+      },
+      issueSurfaceIssues,
+      issueSurfaceProjects,
+      issueSurfaceDependencySignals
+    );
+
+    expect(context.summary).toContain('has explicit blocker evidence on this issues surface');
+    expect(context.metrics).toEqual(
+      expect.arrayContaining([
+        { label: 'Blocked issues', value: '1' },
+        { label: 'Stale blockers', value: '1' },
+        { label: 'Oldest blocker', value: '4 days' },
+      ])
+    );
+    expect(context.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: '#12 Implement core workflow',
+          detail: expect.stringContaining('Blocker: Waiting on API review from platform team'),
+          route: '/documents/issue-1',
+        }),
+      ])
+    );
+    expect(context.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Follow up on blocker #12',
+          route: '/documents/issue-1',
+          intent: 'follow_up',
+          reason: expect.stringContaining('has been blocked for 4 days'),
         }),
       ])
     );

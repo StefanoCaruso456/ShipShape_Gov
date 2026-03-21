@@ -5,6 +5,8 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
+      "@ship/fleetgraph": ["../fleetgraph/dist"],
+      "@ship/fleetgraph/*": ["../fleetgraph/dist/*"],
       "@ship/shared": ["../shared/dist"],
       "@ship/shared/*": ["../shared/dist/*"]
     }

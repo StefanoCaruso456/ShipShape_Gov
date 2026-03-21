@@ -561,7 +561,7 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.reasoningSource).toBe('deterministic');
     expect(result.reasoning?.answerMode).toBe('execution');
     expect(result.reasoning?.summary).toContain('does not show a named blocker');
-    expect(result.reasoning?.whyNow).toContain('visible issues on the current tab');
+    expect(result.reasoning?.whyNow).toContain('explicit blocker evidence');
     expect(result.reasoning?.recommendedNextStep).toContain('Open risk cluster Week 3');
   });
 
@@ -641,5 +641,238 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.reasoning?.summary).toContain('#14 is the highest-impact visible issue');
     expect(result.reasoning?.summary).toContain('87/100');
     expect(result.reasoning?.recommendedNextStep).toContain('Open highest-impact #14');
+  });
+
+  it('answers blocker questions from explicit issue-surface blocker evidence', async () => {
+    const graph = createFleetGraph();
+    const runtime = createFleetGraphRuntime({
+      now: () => new Date('2026-03-20T12:00:00.000Z'),
+    });
+
+    const result = await graph.invoke(
+      {
+        runId: 'issue-surface-blocker-context',
+        mode: 'on_demand',
+        triggerType: 'user_invoke',
+        workspaceId: 'workspace-1',
+        actor: {
+          id: 'user-1',
+          kind: 'user',
+          role: 'pm',
+        },
+        activeView: null,
+        contextEntity: null,
+        prompt: {
+          question: 'What is blocked, by whom, and for how long?',
+          pageContext: {
+            kind: 'issue_surface',
+            route: '/documents/program-1/issues',
+            title: 'API Platform Issues',
+            summary:
+              'API Platform has explicit blocker evidence on this issues surface. #12 is currently blocked and has been sitting for 4 days under stefano caruso.',
+            emptyState: false,
+            metrics: [
+              { label: 'Visible issues', value: '5' },
+              { label: 'Blocked issues', value: '1' },
+              { label: 'Stale blockers', value: '1' },
+              { label: 'Oldest blocker', value: '4 days' },
+              { label: 'Risk cluster', value: 'Week 3' },
+            ],
+            items: [
+              {
+                label: '#12 Implement core workflow',
+                detail:
+                  'Blocked 4 days • Owner: stefano caruso • Logged by: stefano caruso • Blocker: Waiting on API review from platform team',
+                route: '/documents/issue-1',
+              },
+            ],
+            actions: [
+              {
+                label: 'Follow up on blocker #12',
+                route: '/documents/issue-1',
+                intent: 'follow_up',
+                reason:
+                  '#12 has been blocked for 4 days. Owner: stefano caruso. Blocker: Waiting on API review from platform team',
+                owner: 'stefano caruso',
+              },
+            ],
+          },
+        },
+        trace: {
+          runName: 'fleetgraph-issue-surface-blocker-context-test',
+          tags: ['fleetgraph', 'test', 'issue-surface', 'blockers'],
+        },
+      } satisfies FleetGraphRunInput,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'issue-surface-blocker-context',
+      })
+    );
+
+    expect(result.status).toBe('completed');
+    expect(result.stage).toBe('current_view_reasoned');
+    expect(result.reasoning?.answerMode).toBe('execution');
+    expect(result.reasoning?.summary).toContain('#12 Implement core workflow is the clearest visible blocker right now');
+    expect(result.reasoning?.summary).toContain('Oldest blocker: 4 days');
+    expect(result.reasoning?.recommendedNextStep).toContain('Follow up on blocker #12');
+  });
+
+  it('answers stalled-work questions with a direct stalled issue instead of generic risk copy', async () => {
+    const graph = createFleetGraph();
+    const runtime = createFleetGraphRuntime({
+      now: () => new Date('2026-03-20T12:00:00.000Z'),
+    });
+
+    const result = await graph.invoke(
+      {
+        runId: 'issue-surface-stalled-context',
+        mode: 'on_demand',
+        triggerType: 'user_invoke',
+        workspaceId: 'workspace-1',
+        actor: {
+          id: 'user-1',
+          kind: 'user',
+          role: 'pm',
+        },
+        activeView: null,
+        contextEntity: null,
+        prompt: {
+          question: 'Which "in progress" issues are actually stalled?',
+          pageContext: {
+            kind: 'issue_surface',
+            route: '/documents/program-1/issues',
+            title: 'API Platform Issues',
+            summary:
+              'API Platform has active work that looks stalled on this issues surface. #12 is still in progress under stefano caruso and has gone stale.',
+            emptyState: false,
+            metrics: [
+              { label: 'Visible issues', value: '5' },
+              { label: 'In progress', value: '2' },
+              { label: 'Stalled active', value: '1' },
+              { label: 'Not started', value: '3' },
+            ],
+            items: [
+              {
+                label: '#12 Implement core workflow',
+                detail:
+                  'Stalled in progress • State: In Progress • Week: Week 3 • Owner: stefano caruso • Updated 4d ago',
+                route: '/documents/issue-1',
+              },
+            ],
+            actions: [
+              {
+                label: 'Follow up on stalled #12',
+                route: '/documents/issue-1',
+                intent: 'follow_up',
+                reason:
+                  '#12 looks stalled while still in progress. Owner: stefano caruso. Updated 4d ago.',
+                owner: 'stefano caruso',
+              },
+            ],
+          },
+        },
+        trace: {
+          runName: 'fleetgraph-issue-surface-stalled-test',
+          tags: ['fleetgraph', 'test', 'issue-surface', 'stalled'],
+        },
+      } satisfies FleetGraphRunInput,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'issue-surface-stalled-context',
+      })
+    );
+
+    expect(result.status).toBe('completed');
+    expect(result.reasoning?.answerMode).toBe('execution');
+    expect(result.reasoning?.summary).toContain('#12 Implement core workflow is the clearest in-progress issue that looks stalled right now');
+    expect(result.reasoning?.recommendedNextStep).toContain('Follow up on stalled #12');
+  });
+
+  it('answers cut questions with named cut candidates instead of generic highest-impact guidance', async () => {
+    const graph = createFleetGraph();
+    const runtime = createFleetGraphRuntime({
+      now: () => new Date('2026-03-20T12:00:00.000Z'),
+    });
+
+    const result = await graph.invoke(
+      {
+        runId: 'issue-surface-cut-context',
+        mode: 'on_demand',
+        triggerType: 'user_invoke',
+        workspaceId: 'workspace-1',
+        actor: {
+          id: 'user-1',
+          kind: 'user',
+          role: 'pm',
+        },
+        activeView: null,
+        contextEntity: null,
+        prompt: {
+          question: 'What can we cut and still protect delivery?',
+          pageContext: {
+            kind: 'issue_surface',
+            route: '/documents/program-1/issues',
+            title: 'API Platform Issues',
+            summary:
+              'API Platform does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet.',
+            emptyState: false,
+            metrics: [
+              { label: 'Visible issues', value: '15' },
+              { label: 'Not started', value: '9' },
+              { label: 'Risk cluster', value: 'Backlog' },
+              { label: 'Highest impact issue', value: '#9' },
+              { label: 'Business value', value: '64/100' },
+            ],
+            items: [
+              {
+                label: '#15 Explore stretch improvements',
+                detail:
+                  'Cut candidate • State: Backlog • Backlog • Business value: 24/100 • Not started and safer to move out than the active or higher-value work on this tab',
+                route: '/documents/issue-15',
+              },
+              {
+                label: '#10 Explore stretch improvements',
+                detail:
+                  'Cut candidate • State: Backlog • Backlog • Business value: 28/100 • Not started and safer to move out than the active or higher-value work on this tab',
+                route: '/documents/issue-10',
+              },
+              {
+                label: '#9 Expand test coverage',
+                detail:
+                  'Highest impact • State: Todo • Week: Week 3 • Business value: 64/100 • Drivers: ROI 4/5 + Growth 4/5 • Risk: not started inside Backlog',
+                route: '/documents/issue-9',
+              },
+            ],
+            actions: [
+              {
+                label: 'Review cut candidate #15',
+                route: '/documents/issue-15',
+                intent: 'prioritize',
+                reason:
+                  '#15 is not started yet. Business value 24/100. Safer to move out than the active or higher-value work on this tab. Keeps #9 protected.',
+              },
+              {
+                label: 'Open highest-impact #9',
+                route: '/documents/issue-9',
+                intent: 'prioritize',
+                reason:
+                  '#9 carries the strongest business value signal on this tab. Business value 64/100. Current risk: not started inside Backlog.',
+              },
+            ],
+          },
+        },
+        trace: {
+          runName: 'fleetgraph-issue-surface-cut-test',
+          tags: ['fleetgraph', 'test', 'issue-surface', 'cut'],
+        },
+      } satisfies FleetGraphRunInput,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'issue-surface-cut-context',
+      })
+    );
+
+    expect(result.status).toBe('completed');
+    expect(result.reasoning?.answerMode).toBe('execution');
+    expect(result.reasoning?.summary).toContain('If you need to cut scope, start with #15 Explore stretch improvements, then #10 Explore stretch improvements');
+    expect(result.reasoning?.summary).toContain('lower value than #9');
+    expect(result.reasoning?.recommendedNextStep).toContain('Review cut candidate #15');
   });
 });

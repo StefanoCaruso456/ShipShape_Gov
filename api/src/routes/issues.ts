@@ -16,6 +16,12 @@ import {
   deriveStoryPointsFromEstimateHours,
   ensureSprintAnalyticsSnapshot,
 } from '../utils/sprint-planning.js';
+import { listIssueDependencySignals } from '../services/issue-dependency-signals.js';
+import {
+  enqueueFleetGraphIssueIterationEvent,
+  enqueueFleetGraphIssueMutationEvent,
+  scheduleFleetGraphProactiveEventProcessing,
+} from '../services/fleetgraph-proactive-events.js';
 
 type RouterType = ReturnType<typeof Router>;
 const router: RouterType = Router();
@@ -85,6 +91,18 @@ const updateIssueSchema = z.object({
 
 const rejectIssueSchema = z.object({
   reason: z.string().min(1).max(1000),
+});
+
+const dependencySignalsQuerySchema = z.object({
+  issue_ids: z
+    .string()
+    .transform((value) =>
+      value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+    .pipe(z.array(z.string().uuid()).min(1).max(25)),
 });
 
 // Helper to extract issue properties from row (without belongs_to - added separately)
@@ -444,6 +462,50 @@ router.get('/by-ticket/:number', authMiddleware, async (req: Request, res: Respo
   }
 });
 
+// Get aggregated blocker and dependency signals for a visible issue set
+router.get('/dependency-signals', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+    const { userId, workspaceId } = authContext;
+
+    const parsed = dependencySignalsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Invalid dependency signal query', details: parsed.error.errors });
+      return;
+    }
+
+    const requestedIssueIds = parsed.data.issue_ids;
+    const { isAdmin } = await getVisibilityContext(userId, workspaceId);
+
+    const accessibleResult = await pool.query<{ id: string }>(
+      `SELECT d.id
+       FROM documents d
+       WHERE d.workspace_id = $1
+         AND d.document_type = 'issue'
+         AND d.id = ANY($2::uuid[])
+         AND d.archived_at IS NULL
+         AND d.deleted_at IS NULL
+         AND ${VISIBILITY_FILTER_SQL('d', '$3', '$4')}`,
+      [workspaceId, requestedIssueIds, userId, isAdmin]
+    );
+
+    const accessibleIssueIds = accessibleResult.rows.map((row) => row.id);
+    const dependencySignals = await listIssueDependencySignals({
+      workspaceId,
+      issueIds: accessibleIssueIds,
+      requestedIssueCount: requestedIssueIds.length,
+    });
+
+    res.json(dependencySignals);
+  } catch (err) {
+    console.error('Get dependency signals error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get sub-issues (children) of an issue
 router.get('/:id/children', authMiddleware, async (req: Request, res: Response) => {
   try {
@@ -728,8 +790,23 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         client
       );
     }
+    await enqueueFleetGraphIssueMutationEvent(
+      {
+        workspaceId: req.workspaceId!,
+        issueId: newIssueId,
+        actorId: req.userId ?? null,
+        eventKind: 'issue_created',
+        previous: {
+          state: null,
+          assigneeId: null,
+          sprintId: null,
+        },
+      },
+      client
+    );
 
     await client.query('COMMIT');
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Auto-complete sprint_issues accountability when first issue is created in a sprint
     const sprintAssociations = belongs_to.filter(bt => bt.type === 'sprint');
@@ -805,6 +882,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
     const existingIssue = existing.rows[0];
     const currentProps = existingIssue.properties || {};
+    const existingBelongsTo = await getBelongsToAssociations(id);
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -967,12 +1045,10 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
     // Handle belongs_to association updates via junction table
     let belongsToChanged = false;
-    let oldBelongsTo: BelongsToEntry[] = [];
+    let oldBelongsTo: BelongsToEntry[] = existingBelongsTo;
     let newBelongsTo: BelongsToEntry[] = [];
 
     if (data.belongs_to !== undefined) {
-      // Get existing associations for comparison
-      oldBelongsTo = await getBelongsToAssociations(id);
       newBelongsTo = data.belongs_to;
 
       // Compare to see if associations changed
@@ -1096,6 +1172,21 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       }
     }
 
+    await enqueueFleetGraphIssueMutationEvent(
+      {
+        workspaceId,
+        issueId: id,
+        actorId: userId,
+        eventKind: 'issue_updated',
+        previous: {
+          state: currentProps.state || null,
+          assigneeId: currentProps.assignee_id || null,
+          sprintId: oldBelongsTo.find((entry) => entry.type === 'sprint')?.id ?? null,
+        },
+      },
+      client
+    );
+
     // Fetch the updated issue
     const result = await client.query(
       `SELECT * FROM documents WHERE id = $1 AND workspace_id = $2`,
@@ -1103,6 +1194,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     );
 
     await client.query('COMMIT');
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Post-commit operations (non-transactional)
 
@@ -1626,7 +1718,7 @@ const listIterationsSchema = z.object({
 // Create iteration entry - POST /api/issues/:id/iterations
 router.post('/:id/iterations', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { id: issueId } = req.params;
+    const issueId = String(req.params.id);
     const authContext = getAuthContext(req, res);
     if (!authContext) {
       return;
@@ -1673,6 +1765,20 @@ router.post('/:id/iterations', authMiddleware, async (req: Request, res: Respons
 
     const iteration = result.rows[0];
     const author = authorResult.rows[0];
+
+    await enqueueFleetGraphIssueIterationEvent({
+      workspaceId,
+      issueId,
+      actorId: userId,
+      iteration: {
+        id: typeof iteration.id === 'string' ? iteration.id : null,
+        status,
+        blockersEncountered: blockers_encountered ?? null,
+        authorId: userId,
+        authorName: author?.name ?? null,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
 
     res.status(201).json({
       id: iteration.id,

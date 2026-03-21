@@ -90,6 +90,10 @@ export async function loadProductionSecrets(): Promise<void> {
     openAiModel,
     openAiInputCost,
     openAiOutputCost,
+    fleetGraphEnableProactiveWorker,
+    fleetGraphInternalApiToken,
+    fleetGraphProactiveSweepIntervalMs,
+    fleetGraphFindingCooldownMs,
   ] = await Promise.all([
     getOptionalSSMSecret(`${basePath}/BRAINTRUST_API_KEY`),
     getOptionalSSMSecret(`${basePath}/BRAINTRUST_PROJECT`),
@@ -102,6 +106,10 @@ export async function loadProductionSecrets(): Promise<void> {
     getOptionalSSMSecret(`${basePath}/OPENAI_MODEL`),
     getOptionalSSMSecret(`${basePath}/OPENAI_INPUT_COST_PER_MILLION_USD`),
     getOptionalSSMSecret(`${basePath}/OPENAI_OUTPUT_COST_PER_MILLION_USD`),
+    getOptionalSSMSecret(`${basePath}/FLEETGRAPH_ENABLE_PROACTIVE_WORKER`),
+    getOptionalSSMSecret(`${basePath}/FLEETGRAPH_INTERNAL_API_TOKEN`),
+    getOptionalSSMSecret(`${basePath}/FLEETGRAPH_PROACTIVE_SWEEP_INTERVAL_MS`),
+    getOptionalSSMSecret(`${basePath}/FLEETGRAPH_FINDING_COOLDOWN_MS`),
   ]);
 
   process.env.DATABASE_URL = databaseUrl;
@@ -122,6 +130,10 @@ export async function loadProductionSecrets(): Promise<void> {
     setIfDefined('OPENAI_MODEL', openAiModel),
     setIfDefined('OPENAI_INPUT_COST_PER_MILLION_USD', openAiInputCost),
     setIfDefined('OPENAI_OUTPUT_COST_PER_MILLION_USD', openAiOutputCost),
+    setIfDefined('FLEETGRAPH_ENABLE_PROACTIVE_WORKER', fleetGraphEnableProactiveWorker),
+    setIfDefined('FLEETGRAPH_INTERNAL_API_TOKEN', fleetGraphInternalApiToken),
+    setIfDefined('FLEETGRAPH_PROACTIVE_SWEEP_INTERVAL_MS', fleetGraphProactiveSweepIntervalMs),
+    setIfDefined('FLEETGRAPH_FINDING_COOLDOWN_MS', fleetGraphFindingCooldownMs),
   ].filter(Boolean).length;
 
   console.log('Secrets loaded from SSM Parameter Store');

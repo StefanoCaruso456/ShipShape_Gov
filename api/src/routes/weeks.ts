@@ -17,6 +17,11 @@ import {
   takeSprintPlanningSnapshot,
   upsertSprintAnalyticsSnapshot,
 } from '../utils/sprint-planning.js';
+import {
+  enqueueFleetGraphSprintApprovalEvent,
+  enqueueFleetGraphSprintMutationEvent,
+  scheduleFleetGraphProactiveEventProcessing,
+} from '../services/fleetgraph-proactive-events.js';
 
 type RouterType = ReturnType<typeof Router>;
 const router: RouterType = Router();
@@ -1359,6 +1364,18 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       [...values, id, req.workspaceId]
     );
 
+    await enqueueFleetGraphSprintMutationEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_updated',
+      previous: {
+        status: currentProps.status || null,
+        ownerPersonId: currentProps.owner_id || null,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
+
     // Re-query to get full sprint with owner info
     const result = await pool.query(
       `SELECT d.id, d.title, d.properties, prog_da.related_id as program_id,
@@ -1463,6 +1480,18 @@ router.post('/:id/start', authMiddleware, async (req: Request, res: Response) =>
       `UPDATE documents SET properties = $1, updated_at = now() WHERE id = $2`,
       [JSON.stringify(newProps), id]
     );
+
+    await enqueueFleetGraphSprintMutationEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_started',
+      previous: {
+        status: currentStatus,
+        ownerPersonId: currentProps.owner_id || null,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Broadcast celebration when sprint is started
     broadcastToUser(req.userId!, 'accountability:updated', { type: 'week_start', targetId: id as string });
@@ -3308,6 +3337,19 @@ router.post('/:id/request-plan-changes', authMiddleware, async (req: Request, re
       [JSON.stringify(newProps), id]
     );
 
+    await enqueueFleetGraphSprintApprovalEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_plan_changes_requested',
+      approval: {
+        previousState: currentProps.plan_approval?.state ?? null,
+        feedback: feedback.trim(),
+        requestedByUserId: userId,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
+
     // Notify the sprint owner that changes were requested
     const sprintOwnerId = sprint.sprint_owner_id;
     if (sprintOwnerId) {
@@ -3403,6 +3445,19 @@ router.post('/:id/request-retro-changes', authMiddleware, async (req: Request, r
        WHERE id = $2 AND document_type = 'sprint'`,
       [JSON.stringify(newProps), id]
     );
+
+    await enqueueFleetGraphSprintApprovalEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_review_changes_requested',
+      approval: {
+        previousState: currentProps.review_approval?.state ?? null,
+        feedback: feedback.trim(),
+        requestedByUserId: userId,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Notify the sprint owner that changes were requested
     const sprintOwnerId = sprint.sprint_owner_id;
