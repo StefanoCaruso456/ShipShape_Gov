@@ -60,6 +60,15 @@ export const FLEETGRAPH_EVIDENCE_TOOL_REGISTRY: Record<
     executor: 'ship_api_read',
     toolVersion: 'v1',
   },
+  get_recent_delivery_history: {
+    name: 'get_recent_delivery_history',
+    description: 'Fetch recent project sprint history for throughput comparison.',
+    purpose:
+      'Use when FleetGraph needs to compare current sprint load against recent delivery history before claiming overcommitment or capacity pressure.',
+    targetSurfaces: ['my_week', 'sprint', 'project_issues', 'program_issues', 'project'],
+    executor: 'ship_api_read',
+    toolVersion: 'v1',
+  },
   get_dependency_signals: {
     name: 'get_dependency_signals',
     description: 'Fetch and normalize blocked work and dependency signals.',

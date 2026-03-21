@@ -11,6 +11,7 @@ import type {
   FleetGraphDocumentContextSnapshot,
   FleetGraphPlanningSnapshot,
   FleetGraphPeopleSnapshot,
+  FleetGraphProjectWeekSnapshot,
   FleetGraphScopeChangeSnapshot,
   FleetGraphSprintIssueSnapshot,
   FleetGraphSprintEntitySnapshot,
@@ -97,6 +98,50 @@ function buildWorkloadSnapshot(issues: FleetGraphSprintIssueSnapshot[]): FleetGr
   };
 }
 
+function normalizeProjectWeeks(
+  weeks: Array<Record<string, unknown>>,
+  currentSprintId: string
+): FleetGraphProjectWeekSnapshot[] {
+  return weeks
+    .map((week): FleetGraphProjectWeekSnapshot => {
+      const status: FleetGraphProjectWeekSnapshot['status'] = (() => {
+        const rawStatus = week.status;
+        if (rawStatus === 'planning' || rawStatus === 'active' || rawStatus === 'completed') {
+          return rawStatus;
+        }
+        return 'planning';
+      })();
+
+      return {
+        id: typeof week.id === 'string' ? week.id : '',
+        name: typeof week.name === 'string' ? week.name : 'Untitled Week',
+        sprint_number:
+          typeof week.sprint_number === 'number'
+            ? week.sprint_number
+            : Number(week.sprint_number ?? 0),
+        status,
+        issue_count:
+          typeof week.issue_count === 'number'
+            ? week.issue_count
+            : Number(week.issue_count ?? 0),
+        completed_count:
+          typeof week.completed_count === 'number'
+            ? week.completed_count
+            : Number(week.completed_count ?? 0),
+        started_count:
+          typeof week.started_count === 'number'
+            ? week.started_count
+            : Number(week.started_count ?? 0),
+      };
+    })
+    .filter((week) => week.id.length > 0)
+    .filter((week) => week.id !== currentSprintId)
+    .filter((week) => week.status !== 'planning')
+    .filter((week) => week.issue_count > 0)
+    .sort((left, right) => right.sprint_number - left.sprint_number)
+    .slice(0, 3);
+}
+
 async function fetchOptionalTool<T>(
   context: Parameters<typeof runFleetGraphEvidenceTool<T>>[0],
   input: Parameters<typeof runFleetGraphEvidenceTool<T>>[1]
@@ -158,7 +203,29 @@ export async function fetchSprintContextNode(
   });
 
   try {
-    const [snapshotResult, issuesResult, scopeChangesResult] = await Promise.all([
+    const earlyProjectId = state.expandedScope.projectId ?? state.activeView?.projectId ?? null;
+    const earlyThroughputPromise = earlyProjectId
+      ? fetchOptionalTool<FleetGraphProjectWeekSnapshot[]>(started.context, {
+          toolName: 'get_recent_delivery_history',
+          inputSummary: `Fetch recent sprint delivery history for project ${earlyProjectId}.`,
+          call: async () => {
+            const projectWeeks = await runtime.shipApi.get<Array<Record<string, unknown>>>(
+              `/api/projects/${earlyProjectId}/weeks`
+            );
+            return normalizeProjectWeeks(projectWeeks, sprintId);
+          },
+          resultSummary: (weeks) =>
+            weeks.length > 0
+              ? `Fetched ${weeks.length} recent project weeks for throughput comparison.`
+              : 'No recent completed or active project weeks were available for throughput comparison.',
+          resultCount: (weeks) => weeks.length,
+        })
+      : Promise.resolve({
+          result: null,
+          trace: null,
+        });
+
+    const [snapshotResult, issuesResult, scopeChangesResult, earlyThroughputResult] = await Promise.all([
       runFleetGraphEvidenceTool(started.context, {
         toolName: 'get_sprint_snapshot',
         inputSummary: `Fetch sprint execution snapshot for ${sprintId}.`,
@@ -204,12 +271,38 @@ export async function fetchSprintContextNode(
           `Fetched sprint scope-change snapshot at ${scopeChanges.scopeChangePercent}% change from start.`,
         resultCount: (scopeChanges) => scopeChanges.scopeChanges.length,
       }),
+      earlyThroughputPromise,
     ]);
 
     const {
       result: { entity, supporting, activity, accountability },
       trace,
     } = snapshotResult;
+
+    const resolvedProjectId =
+      state.expandedScope.projectId ??
+      accountability.project?.id ??
+      supporting.belongs_to.find((item) => item.type === 'project')?.id ??
+      null;
+
+    let throughputResult = earlyThroughputResult;
+    if (resolvedProjectId && resolvedProjectId !== earlyProjectId) {
+      throughputResult = await fetchOptionalTool<FleetGraphProjectWeekSnapshot[]>(started.context, {
+        toolName: 'get_recent_delivery_history',
+        inputSummary: `Fetch recent sprint delivery history for project ${resolvedProjectId}.`,
+        call: async () => {
+          const projectWeeks = await runtime.shipApi.get<Array<Record<string, unknown>>>(
+            `/api/projects/${resolvedProjectId}/weeks`
+          );
+          return normalizeProjectWeeks(projectWeeks, sprintId);
+        },
+        resultSummary: (weeks) =>
+          weeks.length > 0
+            ? `Fetched ${weeks.length} recent project weeks for throughput comparison.`
+            : 'No recent completed or active project weeks were available for throughput comparison.',
+        resultCount: (weeks) => weeks.length,
+      });
+    }
 
     const people: FleetGraphPeopleSnapshot = {
       owner: entity.owner ?? null,
@@ -219,10 +312,16 @@ export async function fetchSprintContextNode(
     const planning: FleetGraphPlanningSnapshot = {
       issues: issuesResult.result ?? [],
       scopeChanges: scopeChangesResult.result,
+      throughputHistory:
+        throughputResult.result && throughputResult.result.length > 0
+          ? {
+              recentWeeks: throughputResult.result,
+            }
+          : null,
       workload: buildWorkloadSnapshot(issuesResult.result ?? []),
     };
 
-    const toolTraces = [trace, issuesResult.trace, scopeChangesResult.trace].filter(
+    const toolTraces = [trace, issuesResult.trace, scopeChangesResult.trace, throughputResult.trace].filter(
       (toolTrace): toolTrace is FleetGraphToolCallTrace => toolTrace !== null
     );
 
@@ -235,11 +334,7 @@ export async function fetchSprintContextNode(
         expandedScope: {
           ...state.expandedScope,
           weekId: sprintId,
-          projectId:
-            state.expandedScope.projectId ??
-            accountability.project?.id ??
-            supporting.belongs_to.find((item) => item.type === 'project')?.id ??
-            null,
+          projectId: resolvedProjectId,
           programId:
             state.expandedScope.programId ??
             accountability.program?.id ??

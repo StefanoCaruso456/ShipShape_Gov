@@ -56,6 +56,11 @@ Both modes use the same graph.
 - cooldown / dedupe memory
 - realtime finding event
 - Ship toast wiring for proactive findings
+- planning-aware sprint signals for:
+  - scope growth
+  - blocked work
+  - workload concentration
+  - throughput gap vs recent delivery history
 
 ### Not implemented yet
 
@@ -165,6 +170,20 @@ Built runtime hardening for the MVP slice:
 - per-node latency telemetry and compact node trace history
 - Braintrust top-level and child-span instrumentation
 - bounded action catalog and FleetGraph reasoning/action skills
+
+### Phase 8
+
+Started the planning-intelligence expansion:
+
+- sprint issue worklist added as planning evidence
+- sprint scope-change history added as planning evidence
+- recent project week history added for throughput comparison
+- deterministic planning signals now include:
+  - `scope_growth`
+  - `blocked_work`
+  - `workload_concentration`
+  - `throughput_gap`
+- capacity-style questions can now answer whether the sprint looks overcommitted relative to recent delivery history
 
 ### Phase 9
 

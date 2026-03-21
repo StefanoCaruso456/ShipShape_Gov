@@ -161,6 +161,35 @@ function createSprintContextResponses(
       sprintStartDate: '2026-03-15T00:00:00.000Z',
       scopeChanges: [],
     },
+    [`/api/projects/${projectId}/weeks`]: [
+      {
+        id: weekId,
+        name: 'Week 15',
+        sprint_number: 15,
+        status: 'active',
+        issue_count: 4,
+        completed_count: 2,
+        started_count: 2,
+      },
+      {
+        id: 'week-14',
+        name: 'Week 14',
+        sprint_number: 14,
+        status: 'completed',
+        issue_count: 5,
+        completed_count: 5,
+        started_count: 1,
+      },
+      {
+        id: 'week-13',
+        name: 'Week 13',
+        sprint_number: 13,
+        status: 'completed',
+        issue_count: 4,
+        completed_count: 4,
+        started_count: 1,
+      },
+    ],
   };
 }
 
@@ -226,14 +255,15 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.expandedScope.projectId).toBe(projectId);
     expect(result.activeView?.entity.type).toBe('project');
     expect(result.fetched.entity?.id).toBe(weekId);
-    expect(result.toolCalls).toHaveLength(4);
+    expect(result.toolCalls).toHaveLength(5);
     expect(result.toolCalls.map((trace) => trace.toolName)).toEqual([
       'get_surface_context',
       'get_sprint_snapshot',
       'get_visible_issue_worklist',
       'get_scope_change_signals',
+      'get_recent_delivery_history',
     ]);
-    expect(result.telemetry.toolCallCount).toBe(4);
+    expect(result.telemetry.toolCallCount).toBe(5);
     expect(result.telemetry.toolFailureCount).toBe(0);
   });
 
@@ -301,14 +331,15 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.expandedScope.projectId).toBe(projectId);
     expect(result.activeView?.projectId).toBe(projectId);
     expect(result.fetched.entity?.id).toBe(weekId);
-    expect(result.toolCalls).toHaveLength(4);
+    expect(result.toolCalls).toHaveLength(5);
     expect(result.toolCalls.map((trace) => trace.toolName)).toEqual([
       'get_surface_context',
       'get_sprint_snapshot',
       'get_visible_issue_worklist',
       'get_scope_change_signals',
+      'get_recent_delivery_history',
     ]);
-    expect(result.telemetry.toolCallCount).toBe(4);
+    expect(result.telemetry.toolCallCount).toBe(5);
     expect(result.telemetry.toolFailureCount).toBe(0);
   });
 

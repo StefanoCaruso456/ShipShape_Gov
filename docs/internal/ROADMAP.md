@@ -38,7 +38,7 @@ Fast current-state summary:
 | Phase 5: On-demand UI | complete | embedded week/project FleetGraph panels are live, plus My Week when one project is in scope |
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
-| Phase 8: Planning intelligence | in progress | first slice adds planning-aware sprint analysis for scope growth, blocked work, and workload concentration |
+| Phase 8: Planning intelligence | in progress | current slices add planning-aware sprint analysis for scope growth, blocked work, workload concentration, and throughput gap vs recent delivery history |
 | Phase 9: Evidence and submission | complete | shared LangSmith links are captured and the public CloudFront deployment is verified |
 
 ## Phase execution summary
@@ -67,6 +67,7 @@ The roadmap work that still adds new product value is:
      - scope growth
      - blocked work
      - workload concentration
+     - throughput gap vs recent delivery history
    - next expansion:
      - capacity and throughput
      - scope creep and burn trends
