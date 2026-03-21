@@ -41,6 +41,35 @@ Fast current-state summary:
 | Phase 8: Planning intelligence | later | expansion path after MVP |
 | Phase 9: Evidence and submission | complete | shared LangSmith links are captured and the public CloudFront deployment is verified |
 
+## Phase execution summary
+
+This is the cleanest way to read the roadmap going forward. Each phase is here to deliver a capability, not just to create another milestone.
+
+| Phase | Delivers | Why | How | Purpose |
+|---|---|---|---|---|
+| Phase 0: MVP framing | Locked scope, use cases, trigger model, `FLEETGRAPH.md` | Prevents architecture drift and keeps the build tied to real requirements | Define the exact proactive use case, on-demand question, and HITL boundary before implementation | Give the project a defensible target |
+| Phase 1: Graph foundation | LangGraph runtime, supervisor, state, runtime services, fallback | The agent needs real control-plane structure before UI or prompts | Build the TypeScript graph package, typed state, runtime container, routing, and checkpoint-ready setup | Make FleetGraph a real system instead of a loose workflow |
+| Phase 2: Context and fetch | Active View Context plus real Ship data fetches | The graph cannot reason if it does not know what page, tab, or scope it is on | Pass typed page context from Ship into the graph and fetch live REST data in parallel | Turn the Ship app surface into usable agent context |
+| Phase 3: Deterministic signals | Rules-first risk detection and quiet-vs-flagged branches | Keeps cost down and avoids using the model for basic filtering | Derive typed signals from fetched sprint/project data before reasoning runs | Give the graph grounded evidence and clear branch conditions |
+| Phase 4: Proactive flow | Worker/sweep detection, persisted findings, dedupe, delivery | FleetGraph must act without being asked | Run event or sweep-triggered checks, store findings, and surface them in Ship | Make the proactive mode real |
+| Phase 5: On-demand UI | Embedded FleetGraph panel in Ship | The assignment requires contextual on-demand interaction, not a standalone chatbot | Invoke the same graph from the current issue/week/project/program surface | Make FleetGraph usable where work is actually happening |
+| Phase 6: Reasoning and HITL | Grounded explanation, action proposals, approve/dismiss/snooze | Detection alone is not enough; the agent must explain and pause before action | Add bounded reasoning, typed actions, and interrupt/resume approval flow | Turn findings into safe, useful next-step guidance |
+| Phase 7: Reliability and memory | Failure handling, resume safety, operational memory, telemetry | A graph that only works on the happy path will not hold up in real use | Add retry policy, terminal outcomes, checkpoint-aware resume, cooldowns, and run telemetry | Make FleetGraph durable and observable |
+| Phase 8: Planning intelligence | Capacity, velocity, scope creep, dependencies, release confidence, roadmaping | This is the broader PM/PO product value beyond execution drift | Add planning primitives to Ship and reason over them with the same graph | Expand FleetGraph from execution intelligence into planning intelligence |
+| Phase 9: Evidence and deployment | Shared traces, public verification, deploy proof, evidence bundles | Working code is not enough; we need proof and repeatable verification | Capture LangSmith traces, verify public routes, and package evidence | Close the loop for release and external review |
+
+## What we are starting now
+
+The roadmap work that still adds new product value is:
+
+1. **Phase 8: Planning intelligence**
+   - capacity and throughput
+   - scope creep and burn trends
+   - dependency and release confidence
+   - roadmap and staffing intelligence
+
+The earlier phases remain important because they explain how FleetGraph was built, but they are already absorbed into the current product. We should only reopen them when we need to extend or harden an existing capability.
+
 ## Architecture we are building toward
 
 FleetGraph will follow the three-layer architecture already defined in:
