@@ -33,7 +33,7 @@ That creates two product problems:
 
 ## What
 
-This roadmap focuses on eleven product outcomes:
+This roadmap focuses on twelve product outcomes:
 
 1. FleetGraph answers in the right mode for the current surface
 2. FleetGraph uses richer My Week and workflow-stage context
@@ -46,6 +46,7 @@ This roadmap focuses on eleven product outcomes:
 9. FleetGraph can point to explicit blockers and dependency drag, not just infer risk from stale work
 10. FleetGraph answers issue-surface questions with intent-specific PM/agile guidance instead of reusing one generic response
 11. FleetGraph proactive assistance can run safely in production, prove its runtime state, and evolve toward event-driven delivery
+12. FleetGraph has a transactional proactive trigger foundation for mutation-driven scrum events
 
 ## How
 
@@ -64,6 +65,7 @@ The phases are ordered so that:
 - then gets direct blocker and dependency evidence for the work that needs follow-up
 - then turns that evidence into sharper, question-specific conversational guidance
 - then hardens proactive execution so production can trust worker auth, config, and runtime status before adding event-driven triggers
+- then adds a typed proactive event outbox and trigger registry for the first event-driven scrum detections
 
 ## Purpose
 
@@ -125,6 +127,7 @@ See:
 | 9 | Blocker and Dependency Evidence | FleetGraph still often infers delivery drag without naming the actual blocker, blocker owner, or blocker age | FleetGraph can surface explicit blocker evidence from issue updates, rank blocked work higher, and recommend the right follow-up path |
 | 10 | Intent-Specific Conversational Reasoning | Issue-tab answers are grounded now, but they still reuse the same generic response shape across blockers, stalled work, cuts, and value-risk questions | FleetGraph answers issue-surface questions with direct PM/agile guidance tailored to the actual question intent and the right next decision |
 | 11 | Proactive Hardening and Safe Enablement | Proactive FleetGraph exists in code but is disabled in production and not yet safe for multi-workspace worker auth | FleetGraph can be enabled safely in production with workspace-aware service auth, loaded worker config, and an admin-visible runtime status endpoint |
+| 12 | Proactive Trigger Registry and Event Foundation | Safe proactive runtime is necessary but not enough; FleetGraph still needs mutation-driven entry points for high-signal scrum states | FleetGraph can enqueue issue and sprint events transactionally, evaluate deterministic trigger rules, and surface findings without waiting only on the next sweep |
 
 ## Phase Order Rationale
 
@@ -144,11 +147,13 @@ Phase 10 comes after blocker evidence because conversational quality is only use
 
 Phase 11 comes after intent-specific reasoning because proactive delivery quality now depends less on wording and more on operational trust: safe auth, runtime visibility, and production activation.
 
+Phase 12 comes after proactive hardening because event-driven triggers should only be added once the worker auth, config, and runtime visibility are safe enough to trust in production.
+
 ## Active Phase
 
-Phase 1 through Phase 10 are merged to `main`.
+Phase 1 through Phase 11 are merged to `main`.
 
-Phase 11 is the active implementation phase.
+Phase 12 is the active implementation phase.
 
 See:
 
@@ -163,6 +168,7 @@ See:
 - [phase-9-blocker-and-dependency-evidence.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-9-blocker-and-dependency-evidence.md)
 - [phase-10-intent-specific-conversational-reasoning.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-10-intent-specific-conversational-reasoning.md)
 - [phase-11-proactive-hardening-and-safe-enablement.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-11-proactive-hardening-and-safe-enablement.md)
+- [phase-12-proactive-trigger-registry-and-event-foundation.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-12-proactive-trigger-registry-and-event-foundation.md)
 - [tooling-registry.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/tooling-registry.md)
 
 ## Current Status
@@ -243,7 +249,14 @@ Phase 11 status:
 
 - implementation status: complete
 - verification status: passed
-- merge-to-main status: pending
+- merge-to-main status: complete
+- production status: pending deploy verification in this roadmap doc
+
+Phase 12 status:
+
+- implementation status: in progress
+- verification status: pending
+- merge-to-main status: not started
 - production status: not live yet
 
 ## Completion Standard

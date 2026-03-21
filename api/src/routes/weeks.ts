@@ -11,6 +11,10 @@ import {
 import { logDocumentChange, getLatestDocumentFieldHistory } from '../utils/document-crud.js';
 import { broadcastToUser } from '../collaboration/index.js';
 import { extractText } from '../utils/document-content.js';
+import {
+  enqueueFleetGraphSprintMutationEvent,
+  scheduleFleetGraphProactiveEventProcessing,
+} from '../services/fleetgraph-proactive-events.js';
 
 type RouterType = ReturnType<typeof Router>;
 const router: RouterType = Router();
@@ -1171,6 +1175,18 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       [...values, id, req.workspaceId]
     );
 
+    await enqueueFleetGraphSprintMutationEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_updated',
+      previous: {
+        status: currentProps.status || null,
+        ownerPersonId: currentProps.owner_id || null,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
+
     // Re-query to get full sprint with owner info
     const result = await pool.query(
       `SELECT d.id, d.title, d.properties, prog_da.related_id as program_id,
@@ -1272,6 +1288,18 @@ router.post('/:id/start', authMiddleware, async (req: Request, res: Response) =>
       `UPDATE documents SET properties = $1, updated_at = now() WHERE id = $2`,
       [JSON.stringify(newProps), id]
     );
+
+    await enqueueFleetGraphSprintMutationEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_started',
+      previous: {
+        status: currentStatus,
+        ownerPersonId: currentProps.owner_id || null,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Broadcast celebration when sprint is started
     broadcastToUser(req.userId!, 'accountability:updated', { type: 'week_start', targetId: id as string });

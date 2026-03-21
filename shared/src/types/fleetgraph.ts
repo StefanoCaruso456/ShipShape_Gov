@@ -504,6 +504,99 @@ export interface FleetGraphProactiveFinding {
   lastNotifiedAt: string;
 }
 
+export type FleetGraphProactiveEventEntityType = 'issue' | 'sprint';
+
+export type FleetGraphProactiveEventKind =
+  | 'issue_created'
+  | 'issue_updated'
+  | 'sprint_updated'
+  | 'sprint_started';
+
+export type FleetGraphProactiveTriggerKind =
+  | 'issue_unassigned_in_active_sprint'
+  | 'issue_added_after_sprint_start'
+  | 'issue_open_on_last_sprint_day'
+  | 'sprint_active_without_owner';
+
+export interface FleetGraphProactiveIssueEventPayload {
+  issue: {
+    id: string;
+    title: string;
+    ticketNumber: number | null;
+    state: string;
+    assigneeId: string | null;
+    projectId: string | null;
+    projectTitle: string | null;
+    projectOwnerUserId: string | null;
+    sprintId: string | null;
+    sprintTitle: string | null;
+    sprintNumber: number | null;
+    sprintStatus: string | null;
+    sprintSnapshotTakenAt: string | null;
+    sprintOwnerUserId: string | null;
+    sprintEndDate: string | null;
+    route: string;
+  };
+  previous: {
+    state: string | null;
+    assigneeId: string | null;
+    sprintId: string | null;
+  };
+  actorId: string | null;
+  occurredAt: string;
+}
+
+export interface FleetGraphProactiveSprintEventPayload {
+  sprint: {
+    id: string;
+    title: string;
+    sprintNumber: number | null;
+    status: string | null;
+    ownerPersonId: string | null;
+    ownerUserId: string | null;
+    projectId: string | null;
+    programId: string | null;
+    programOwnerUserId: string | null;
+    route: string;
+  };
+  previous: {
+    status: string | null;
+    ownerPersonId: string | null;
+  };
+  actorId: string | null;
+  occurredAt: string;
+}
+
+export interface FleetGraphProactiveEventRecord {
+  id: string;
+  workspaceId: string;
+  entityId: string;
+  entityType: FleetGraphProactiveEventEntityType;
+  eventKind: FleetGraphProactiveEventKind;
+  route: string;
+  payload: FleetGraphProactiveIssueEventPayload | FleetGraphProactiveSprintEventPayload;
+  matchedTriggerKinds: FleetGraphProactiveTriggerKind[];
+  findingsCreated: number;
+  processingStatus: 'pending' | 'processing' | 'processed' | 'ignored' | 'failed';
+  errorMessage: string | null;
+  createdAt: string;
+  processingStartedAt: string | null;
+  processedAt: string | null;
+}
+
+export interface FleetGraphProactiveTriggerMatch {
+  triggerKind: FleetGraphProactiveTriggerKind;
+  summary: string;
+  severity: 'warning' | 'action';
+  route: string;
+  weekId: string | null;
+  projectId: string | null;
+  programId: string | null;
+  targetUserId: string | null;
+  signalKinds: string[];
+  payload: Record<string, unknown>;
+}
+
 export type FleetGraphProactiveWorkerState =
   | 'disabled'
   | 'misconfigured'
