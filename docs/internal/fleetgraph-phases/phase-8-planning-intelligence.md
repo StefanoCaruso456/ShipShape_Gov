@@ -13,10 +13,12 @@ Current implementation slice:
   - blocked work
   - workload concentration
   - throughput gap compared to recent delivery history
+  - staffing pressure from current project allocation
 - planning evidence fetched from real Ship APIs:
   - sprint issue worklist
   - sprint scope-change history
   - recent project week history for throughput comparison
+  - project allocation grid for staffing comparison
 
 Later expansion targets:
 
@@ -24,7 +26,6 @@ Later expansion targets:
 - velocity
 - roadmap generation
 - burn-up / burn-down
-- staffing pressure
 - dependency and release confidence
 
 ## Why
@@ -37,6 +38,10 @@ This is where FleetGraph becomes more valuable to PMs, directors, and product ow
   - fetch sprint issues and scope changes in parallel
   - derive deterministic planning signals from those payloads
   - answer planning-aware questions from the same FleetGraph graph
+- current extension:
+  - compare incomplete sprint work against recent project throughput
+  - compare incomplete sprint work against the currently allocated team
+  - surface grounded planning explanations before any model-only reasoning
 - later slices:
   - add stronger planning primitives to Ship
   - add historical planning state
@@ -52,4 +57,5 @@ Give the graph and the LLM a stronger product foundation so they can reason abou
 - planning-aware FleetGraph has begun
 - stronger PM / PO workflows can now start from real scope-drift and workload evidence
 - FleetGraph can now answer overcommitment questions with recent project delivery history instead of only current-sprint intuition
+- FleetGraph can now answer staffing-pressure questions from real allocation data instead of generic capacity language
 - better connection between roadmap questions and execution evidence

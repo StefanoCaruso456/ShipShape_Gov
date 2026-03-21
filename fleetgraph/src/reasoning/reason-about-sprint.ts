@@ -60,6 +60,9 @@ function buildPlanningQuestionSummary(
     const throughputLoadRatio = derivedSignals.metrics.throughputLoadRatio;
     const recentAverageCompletedIssues = derivedSignals.metrics.recentAverageCompletedIssues;
     const throughputSampleSize = derivedSignals.metrics.throughputSampleSize;
+    const allocatedPeopleCount = derivedSignals.metrics.allocatedPeopleCount;
+    const incompleteIssuesPerAllocatedPerson =
+      derivedSignals.metrics.incompleteIssuesPerAllocatedPerson;
     const leadOwner = planning?.workload?.owners[0] ?? null;
     const drivers: string[] = [];
 
@@ -82,6 +85,16 @@ function buildPlanningQuestionSummary(
         `${derivedSignals.metrics.incompleteIssues} issues remain, versus a recent average of ${recentAverageCompletedIssues} completed across ${throughputSampleSize} project weeks`
       );
     }
+    if (
+      allocatedPeopleCount !== null &&
+      allocatedPeopleCount > 0 &&
+      incompleteIssuesPerAllocatedPerson !== null &&
+      incompleteIssuesPerAllocatedPerson >= 3
+    ) {
+      drivers.push(
+        `${allocatedPeopleCount} people are currently allocated, leaving ${incompleteIssuesPerAllocatedPerson} incomplete issues per person`
+      );
+    }
 
     if (drivers.length > 0) {
       return {
@@ -97,6 +110,15 @@ function buildPlanningQuestionSummary(
             throughputSampleSize >= 2
           ) {
             return 'The current sprint looks overcommitted relative to recent delivery history, with blockers or workload concentration making that harder to recover.';
+          }
+
+          if (
+            allocatedPeopleCount !== null &&
+            allocatedPeopleCount > 0 &&
+            incompleteIssuesPerAllocatedPerson !== null &&
+            incompleteIssuesPerAllocatedPerson >= 3
+          ) {
+            return 'The current sprint risk looks driven by staffing pressure on the currently allocated team, with too much unfinished work per person.';
           }
 
           return 'The current sprint risk is coming from a mix of blockers and workload pressure rather than clean execution alone.';
@@ -164,6 +186,9 @@ function buildPlanningQuestionSummary(
     const throughputLoadRatio = derivedSignals.metrics.throughputLoadRatio;
     const recentAverageCompletedIssues = derivedSignals.metrics.recentAverageCompletedIssues;
     const throughputSampleSize = derivedSignals.metrics.throughputSampleSize;
+    const allocatedPeopleCount = derivedSignals.metrics.allocatedPeopleCount;
+    const incompleteIssuesPerAllocatedPerson =
+      derivedSignals.metrics.incompleteIssuesPerAllocatedPerson;
     const loadShare = derivedSignals.metrics.maxAssigneeLoadShare;
     const leadOwner = planning?.workload?.owners[0] ?? null;
     if (
@@ -186,6 +211,28 @@ function buildPlanningQuestionSummary(
           throughputLoadRatio >= 1.25
             ? 'Reduce scope first or add delivery capacity, because the remaining sprint load is above what this project has recently finished in a week.'
             : 'Hold the current scope steady and focus on execution flow before assuming the team needs more capacity.',
+      };
+    }
+
+    if (
+      allocatedPeopleCount !== null &&
+      allocatedPeopleCount > 0 &&
+      incompleteIssuesPerAllocatedPerson !== null
+    ) {
+      return {
+        summary:
+          incompleteIssuesPerAllocatedPerson >= 3
+            ? `The current staffing looks thin for this sprint: ${allocatedPeopleCount} allocated people are carrying about ${incompleteIssuesPerAllocatedPerson} incomplete issues each.`
+            : 'The current allocated team size does not show strong staffing pressure on its own.',
+        evidence: [
+          `Allocated people this week: ${allocatedPeopleCount}.`,
+          `Incomplete issues: ${derivedSignals.metrics.incompleteIssues}.`,
+          `Incomplete issues per allocated person: ${incompleteIssuesPerAllocatedPerson}.`,
+        ],
+        recommendedNextStep:
+          incompleteIssuesPerAllocatedPerson >= 3
+            ? 'Either cut scope or add delivery capacity, because the currently allocated team is carrying too much unfinished work per person.'
+            : 'Keep the current team shape steady and focus on execution quality before changing staffing.',
       };
     }
 
