@@ -33,7 +33,7 @@ That creates two product problems:
 
 ## What
 
-This roadmap focuses on twelve product outcomes:
+This roadmap focuses on fifteen product outcomes:
 
 1. FleetGraph answers in the right mode for the current surface
 2. FleetGraph uses richer My Week and workflow-stage context
@@ -47,6 +47,9 @@ This roadmap focuses on twelve product outcomes:
 10. FleetGraph answers issue-surface questions with intent-specific PM/agile guidance instead of reusing one generic response
 11. FleetGraph proactive assistance can run safely in production, prove its runtime state, and evolve toward event-driven delivery
 12. FleetGraph has a transactional proactive trigger foundation for mutation-driven scrum events
+13. FleetGraph can detect a broader set of proactive scrum and workflow conditions from issue, sprint, standup, approval, dependency, and comment events
+14. FleetGraph can reason about backlog pull-in, capacity opening, and scope/value tradeoffs before delivery slips
+15. FleetGraph can target the right people, escalate appropriately, and deliver proactive findings through the right channel
 
 ## How
 
@@ -66,6 +69,9 @@ The phases are ordered so that:
 - then turns that evidence into sharper, question-specific conversational guidance
 - then hardens proactive execution so production can trust worker auth, config, and runtime status before adding event-driven triggers
 - then adds a typed proactive event outbox and trigger registry for the first event-driven scrum detections
+- then broadens event coverage and trigger rules across the scrum workflow
+- then adds backlog, capacity, and scope-tradeoff reasoning
+- then turns proactive findings into better targeted, channel-aware delivery and escalation
 
 ## Purpose
 
@@ -128,6 +134,9 @@ See:
 | 10 | Intent-Specific Conversational Reasoning | Issue-tab answers are grounded now, but they still reuse the same generic response shape across blockers, stalled work, cuts, and value-risk questions | FleetGraph answers issue-surface questions with direct PM/agile guidance tailored to the actual question intent and the right next decision |
 | 11 | Proactive Hardening and Safe Enablement | Proactive FleetGraph exists in code but is disabled in production and not yet safe for multi-workspace worker auth | FleetGraph can be enabled safely in production with workspace-aware service auth, loaded worker config, and an admin-visible runtime status endpoint |
 | 12 | Proactive Trigger Registry and Event Foundation | Safe proactive runtime is necessary but not enough; FleetGraph still needs mutation-driven entry points for high-signal scrum states | FleetGraph can enqueue issue and sprint events transactionally, evaluate deterministic trigger rules, and surface findings without waiting only on the next sweep |
+| 13 | Expanded Proactive Event Coverage and Trigger Catalog | The first event-driven slice is useful, but proactive FleetGraph still misses key scrum conditions like missing standups, blocker-age thresholds, approval churn, dependency changes, and late scope movement | FleetGraph can react to the broader workflow states that PMs and engineers actually care about, with deterministic quieting and dedupe policies |
+| 14 | Backlog, Capacity, and Scope Tradeoff Intelligence | Detecting drift is not enough if FleetGraph cannot suggest what to pull in, cut, or protect when capacity or value shifts | FleetGraph can identify when capacity opens, when higher-value backlog work should be pulled in, and when lower-value in-sprint work should move out |
+| 15 | Notification Targeting, Escalation, and Delivery Channels | A proactive finding is only useful if it reaches the right person with the right urgency and context | FleetGraph can map findings to responsible/accountable roles, escalate appropriately, and deliver proactive guidance through in-app feed/toast first and optional external channels later |
 
 ## Phase Order Rationale
 
@@ -149,11 +158,40 @@ Phase 11 comes after intent-specific reasoning because proactive delivery qualit
 
 Phase 12 comes after proactive hardening because event-driven triggers should only be added once the worker auth, config, and runtime visibility are safe enough to trust in production.
 
+Phase 13 comes after the first trigger foundation because the system should prove out the outbox and consumer pattern on a small slice before broadening the event catalog across standups, approvals, dependencies, and scope changes.
+
+Phase 14 comes after trigger expansion because backlog pull-in and scope-tradeoff recommendations depend on the broader proactive evidence layer already being in place.
+
+Phase 15 comes after backlog and capacity reasoning because notification targeting and escalation quality depend on understanding not just that something changed, but what decision or action the team actually needs next.
+
+## Proactive Coverage Map
+
+The proactive direction discussed for FleetGraph is explicitly covered across Phases 11 through 15.
+
+- safe proactive runtime in production:
+  - covered by Phase 11
+- event-driven triggers in addition to periodic sweeps:
+  - covered by Phase 12
+- broader proactive scrum condition coverage:
+  - covered by Phase 13
+- backlog, capacity-open, and scope-tradeoff reasoning:
+  - covered by Phase 14
+- targeting the right person, escalation policy, and delivery channels:
+  - covered by Phase 15
+
+This means the roadmap now covers the full proactive execution-agent direction:
+
+- detect meaningful execution conditions without being asked
+- decide when to stay quiet vs surface something
+- reason about sprint, issue, dependency, backlog, and capacity state
+- target the right person or role
+- deliver actionable context instead of generic dashboard narration
+
 ## Active Phase
 
-Phase 1 through Phase 11 are merged to `main`.
+Phase 1 through Phase 12 are merged to `main`.
 
-Phase 12 is the active implementation phase.
+Phase 13 is the active roadmap phase.
 
 See:
 
@@ -169,6 +207,9 @@ See:
 - [phase-10-intent-specific-conversational-reasoning.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-10-intent-specific-conversational-reasoning.md)
 - [phase-11-proactive-hardening-and-safe-enablement.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-11-proactive-hardening-and-safe-enablement.md)
 - [phase-12-proactive-trigger-registry-and-event-foundation.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-12-proactive-trigger-registry-and-event-foundation.md)
+- [phase-13-expanded-proactive-event-coverage-and-trigger-catalog.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-13-expanded-proactive-event-coverage-and-trigger-catalog.md)
+- [phase-14-backlog-capacity-and-scope-tradeoff-intelligence.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-14-backlog-capacity-and-scope-tradeoff-intelligence.md)
+- [phase-15-notification-targeting-escalation-and-delivery-channels.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-15-notification-targeting-escalation-and-delivery-channels.md)
 - [tooling-registry.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/tooling-registry.md)
 
 ## Current Status
@@ -250,12 +291,33 @@ Phase 11 status:
 - implementation status: complete
 - verification status: passed
 - merge-to-main status: complete
-- production status: pending deploy verification in this roadmap doc
+- production status: live foundation, worker activation still config-gated
 
 Phase 12 status:
 
-- implementation status: in progress
-- verification status: pending
+- implementation status: complete
+- verification status: passed
+- merge-to-main status: complete
+- production status: live
+
+Phase 13 status:
+
+- implementation status: not started
+- verification status: not started
+- merge-to-main status: not started
+- production status: not live yet
+
+Phase 14 status:
+
+- implementation status: not started
+- verification status: not started
+- merge-to-main status: not started
+- production status: not live yet
+
+Phase 15 status:
+
+- implementation status: not started
+- verification status: not started
 - merge-to-main status: not started
 - production status: not live yet
 
