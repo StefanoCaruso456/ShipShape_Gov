@@ -37,6 +37,44 @@ export interface AuthContext {
   isApiToken: boolean;
 }
 
+const API_TOKEN_WORKSPACE_OVERRIDE_HEADER = 'x-ship-workspace-id';
+
+async function resolveApiTokenWorkspaceId(
+  tokenData: {
+    workspaceId: string;
+    isSuperAdmin: boolean;
+  },
+  requestedWorkspaceId: string | null
+): Promise<{ workspaceId: string } | { errorStatus: number; errorMessage: string }> {
+  if (!requestedWorkspaceId || requestedWorkspaceId === tokenData.workspaceId) {
+    return { workspaceId: requestedWorkspaceId ?? tokenData.workspaceId };
+  }
+
+  if (!tokenData.isSuperAdmin) {
+    return {
+      errorStatus: HTTP_STATUS.FORBIDDEN,
+      errorMessage: 'API token cannot override workspace scope',
+    };
+  }
+
+  const result = await pool.query(
+    `SELECT id
+     FROM workspaces
+     WHERE id = $1
+       AND archived_at IS NULL`,
+    [requestedWorkspaceId]
+  );
+
+  if (result.rows.length === 0) {
+    return {
+      errorStatus: HTTP_STATUS.NOT_FOUND,
+      errorMessage: 'Requested workspace does not exist',
+    };
+  }
+
+  return { workspaceId: requestedWorkspaceId };
+}
+
 export function getAuthContext(req: Request, res: Response): AuthContext | null {
   if (!req.userId || !req.workspaceId) {
     res.status(HTTP_STATUS.UNAUTHORIZED).json({
@@ -108,6 +146,10 @@ export async function authMiddleware(
   const authHeader = req.headers?.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
+    const requestedWorkspaceId =
+      typeof req.headers[API_TOKEN_WORKSPACE_OVERRIDE_HEADER] === 'string'
+        ? req.headers[API_TOKEN_WORKSPACE_OVERRIDE_HEADER].trim()
+        : null;
 
     try {
       const tokenData = await validateApiToken(token);
@@ -123,9 +165,24 @@ export async function authMiddleware(
         return;
       }
 
+      const resolvedWorkspace = await resolveApiTokenWorkspaceId(tokenData, requestedWorkspaceId);
+      if ('errorStatus' in resolvedWorkspace) {
+        res.status(resolvedWorkspace.errorStatus).json({
+          success: false,
+          error: {
+            code:
+              resolvedWorkspace.errorStatus === HTTP_STATUS.NOT_FOUND
+                ? ERROR_CODES.NOT_FOUND
+                : ERROR_CODES.FORBIDDEN,
+            message: resolvedWorkspace.errorMessage,
+          },
+        });
+        return;
+      }
+
       // Attach token info to request
       req.userId = tokenData.userId;
-      req.workspaceId = tokenData.workspaceId;
+      req.workspaceId = resolvedWorkspace.workspaceId;
       req.isSuperAdmin = tokenData.isSuperAdmin;
       req.isApiToken = true;
 

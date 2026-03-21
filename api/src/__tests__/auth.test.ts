@@ -287,10 +287,13 @@ describe('authMiddleware', () => {
   });
 
   describe('bearer token authentication', () => {
-    function createMockReqResWithAuth(authHeader: string | undefined) {
+    function createMockReqResWithAuth(
+      authHeader: string | undefined,
+      extraHeaders: Record<string, string> = {}
+    ) {
       const req = createMockRequest({
         cookies: {},
-        headers: { authorization: authHeader },
+        headers: { authorization: authHeader, ...extraHeaders },
       });
       const res = createMockResponse();
       const next = createMockNext();
@@ -318,6 +321,62 @@ describe('authMiddleware', () => {
       expect(req.workspaceId).toBe('ws-123');
       expect(req.isApiToken).toBe(true);
       expect(next).toHaveBeenCalled();
+    });
+
+    it('allows super-admin bearer tokens to override workspace scope', async () => {
+      const { req, res, next } = createMockReqResWithAuth('Bearer ship_admin_token', {
+        'x-ship-workspace-id': 'ws-override',
+      });
+
+      queryMock
+        .mockResolvedValueOnce(queryResponse({
+          rows: [{
+            id: 'token-1',
+            user_id: 'admin-123',
+            workspace_id: 'ws-default',
+            is_super_admin: true,
+          }],
+        }))
+        .mockResolvedValueOnce(queryResponse({ rows: [] }))
+        .mockResolvedValueOnce(queryResponse({
+          rows: [{ id: 'ws-override' }],
+        }));
+
+      await authMiddleware(req, res, next);
+
+      expect(req.userId).toBe('admin-123');
+      expect(req.workspaceId).toBe('ws-override');
+      expect(req.isSuperAdmin).toBe(true);
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('rejects workspace override for non-super-admin bearer tokens', async () => {
+      const { req, res, next } = createMockReqResWithAuth('Bearer ship_member_token', {
+        'x-ship-workspace-id': 'ws-override',
+      });
+
+      queryMock
+        .mockResolvedValueOnce(queryResponse({
+          rows: [{
+            id: 'token-1',
+            user_id: 'user-123',
+            workspace_id: 'ws-default',
+            is_super_admin: false,
+          }],
+        }))
+        .mockResolvedValueOnce(queryResponse({ rows: [] }));
+
+      await authMiddleware(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({
+            message: 'API token cannot override workspace scope',
+          }),
+        })
+      );
+      expect(next).not.toHaveBeenCalled();
     });
 
     it('returns 401 for invalid bearer token', async () => {
