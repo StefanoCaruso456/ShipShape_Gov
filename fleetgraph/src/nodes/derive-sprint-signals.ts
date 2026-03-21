@@ -31,6 +31,7 @@ export async function deriveSprintSignalsNode(
       entity: state.fetched.entity,
       activity: state.fetched.activity,
       accountability: state.fetched.accountability,
+      planning: state.fetched.planning,
     },
     runtime.now()
   );

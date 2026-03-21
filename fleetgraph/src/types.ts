@@ -166,6 +166,49 @@ export interface FleetGraphPeopleSnapshot {
   accountableId: string | null;
 }
 
+export interface FleetGraphSprintIssueSnapshot {
+  id: string;
+  title: string;
+  state: string;
+  priority: string;
+  ticket_number: number;
+  display_id: string;
+  assignee_id: string | null;
+  assignee_name: string | null;
+  estimate: number | null;
+}
+
+export interface FleetGraphScopeChangeSnapshot {
+  originalScope: number;
+  currentScope: number;
+  scopeChangePercent: number;
+  sprintStartDate: string;
+  scopeChanges: Array<{
+    timestamp: string;
+    scopeAfter: number;
+    changeType: 'added' | 'removed';
+    estimateChange: number;
+  }>;
+}
+
+export interface FleetGraphWorkloadOwnerSnapshot {
+  assigneeId: string | null;
+  assigneeName: string | null;
+  totalIssues: number;
+  incompleteIssues: number;
+  blockedIssues: number;
+}
+
+export interface FleetGraphPlanningSnapshot {
+  issues: FleetGraphSprintIssueSnapshot[];
+  scopeChanges: FleetGraphScopeChangeSnapshot | null;
+  workload: {
+    owners: FleetGraphWorkloadOwnerSnapshot[];
+    unassignedIssues: number;
+    maxIncompleteOwnerShare: number | null;
+  } | null;
+}
+
 export interface FleetGraphScope {
   issueId: string | null;
   weekId: string | null;
@@ -180,6 +223,7 @@ export interface FleetGraphFetchedPayloads {
   accountability: FleetGraphSprintReviewContextSnapshot | null;
   people: FleetGraphPeopleSnapshot | null;
   supporting: FleetGraphDocumentContextSnapshot | null;
+  planning: FleetGraphPlanningSnapshot | null;
 }
 
 export type FleetGraphSignalSeverity = 'info' | 'warning' | 'action';
@@ -191,7 +235,10 @@ export type FleetGraphSignalKind =
   | 'missing_standup'
   | 'no_completed_work'
   | 'work_not_started'
-  | 'missing_review';
+  | 'missing_review'
+  | 'scope_growth'
+  | 'blocked_work'
+  | 'workload_concentration';
 
 export interface FleetGraphDerivedSignal {
   kind: FleetGraphSignalKind;
@@ -207,10 +254,13 @@ export interface FleetGraphDerivedMetrics {
   inProgressIssues: number;
   incompleteIssues: number;
   cancelledIssues: number;
+  blockedIssues: number;
   standupCount: number;
   recentActivityCount: number;
   recentActiveDays: number;
   completionRate: number | null;
+  scopeChangePercent: number | null;
+  maxAssigneeLoadShare: number | null;
 }
 
 export interface FleetGraphDerivedSignals {
