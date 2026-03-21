@@ -30,6 +30,11 @@ Later expansion targets:
 - roadmap generation
 - burn-up / burn-down
 - dependency and release confidence
+- Jira-like story-point estimation and sprint analytics:
+  - committed baseline
+  - daily burn series
+  - scope-change overlays
+  - capacity interpretation
 
 ## Why
 
@@ -51,6 +56,8 @@ This is where FleetGraph becomes more valuable to PMs, directors, and product ow
   - add historical planning state
   - add roadmap and milestone structure
   - reason on top of those signals with the same graph foundation
+  - add story points, sprint analytics, and burn-up / burn-down support as defined in:
+    - [story-points-burn-tracking-plan.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/story-points-burn-tracking-plan.md)
 
 ## Purpose
 
@@ -64,3 +71,4 @@ Give the graph and the LLM a stronger product foundation so they can reason abou
 - FleetGraph can now answer staffing-pressure questions from real allocation data instead of generic capacity language
 - FleetGraph can now answer whether blocked sprint work appears to be waiting on another decision or work item
 - better connection between roadmap questions and execution evidence
+- next major planning foundation should be Jira-like story points plus real burn-up / burn-down telemetry
