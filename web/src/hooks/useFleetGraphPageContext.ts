@@ -10,9 +10,13 @@ import { useProjects } from '@/contexts/ProjectsContext';
 import { apiGet } from '@/lib/api';
 import type { DocumentResponse } from '@/lib/document-tabs';
 import {
+  getProgramId,
   getProgramTitle,
+  getProjectId,
   getProjectTitle,
+  getSprintId,
   getSprintTitle,
+  type Issue,
 } from '@/hooks/useIssuesQuery';
 import { useDashboardActionItems } from '@/hooks/useDashboardActionItems';
 import { useMyWeekQuery, type MyWeekResponse, type StandupSlot } from '@/hooks/useMyWeekQuery';
@@ -404,6 +408,231 @@ function buildDocumentsPageContext(
       { label: 'Private docs', value: String(privateCount) },
     ]),
     items,
+  };
+}
+
+type IssueSurfaceScope = {
+  type: 'program' | 'project';
+  id: string;
+  title: string;
+};
+
+type IssueSurfaceBucket = {
+  id: string | null;
+  title: string;
+  route: string | null;
+  total: number;
+  open: number;
+  notStarted: number;
+  active: number;
+};
+
+function getPriorityRank(priority: string | null | undefined): number {
+  switch (priority) {
+    case 'urgent':
+      return 0;
+    case 'high':
+      return 1;
+    case 'medium':
+      return 2;
+    case 'low':
+      return 3;
+    default:
+      return 4;
+  }
+}
+
+function formatRelativeIssueUpdate(updatedAt: string | undefined): string | null {
+  if (!updatedAt) {
+    return null;
+  }
+
+  const timestamp = new Date(updatedAt).getTime();
+  if (Number.isNaN(timestamp)) {
+    return null;
+  }
+
+  const diffMs = Date.now() - timestamp;
+  const diffHours = Math.max(1, Math.round(diffMs / (1000 * 60 * 60)));
+  if (diffHours < 24) {
+    return `Updated ${diffHours}h ago`;
+  }
+
+  const diffDays = Math.max(1, Math.round(diffHours / 24));
+  return `Updated ${diffDays}d ago`;
+}
+
+function isIssueStale(issue: Issue): boolean {
+  if (!issue.updated_at || issue.state === 'done' || issue.state === 'cancelled') {
+    return false;
+  }
+
+  const diffMs = Date.now() - new Date(issue.updated_at).getTime();
+  return diffMs >= 1000 * 60 * 60 * 24 * 3;
+}
+
+function getIssueSurfaceScopeIssueFilter(scope: IssueSurfaceScope) {
+  return (issue: Issue) =>
+    scope.type === 'program' ? getProgramId(issue) === scope.id : getProjectId(issue) === scope.id;
+}
+
+export function buildIssueSurfacePageContext(
+  route: string,
+  scope: IssueSurfaceScope,
+  scopedIssues: Issue[]
+): FleetGraphPageContextWithActions {
+  const visibleIssues = [...scopedIssues].sort((left, right) => {
+    const priorityDelta = getPriorityRank(left.priority) - getPriorityRank(right.priority);
+    if (priorityDelta !== 0) {
+      return priorityDelta;
+    }
+
+    return right.ticket_number - left.ticket_number;
+  });
+  const openIssues = visibleIssues.filter(
+    (issue) => issue.state !== 'done' && issue.state !== 'cancelled'
+  );
+  const doneCount = visibleIssues.filter((issue) => issue.state === 'done').length;
+  const cancelledCount = visibleIssues.filter((issue) => issue.state === 'cancelled').length;
+  const inProgressCount = visibleIssues.filter((issue) => issue.state === 'in_progress').length;
+  const inReviewCount = visibleIssues.filter((issue) => issue.state === 'in_review').length;
+  const notStartedIssues = visibleIssues.filter((issue) =>
+    issue.state === 'triage' || issue.state === 'backlog' || issue.state === 'todo'
+  );
+  const staleOpenIssues = openIssues.filter(isIssueStale);
+  const assigneeCount = new Set(
+    openIssues
+      .map((issue) => issue.assignee_name?.trim().toLowerCase() ?? null)
+      .filter((value): value is string => Boolean(value))
+  ).size;
+
+  const sprintBuckets = new Map<string, IssueSurfaceBucket>();
+  for (const issue of openIssues) {
+    const sprintId = getSprintId(issue);
+    const sprintTitle = getSprintTitle(issue) ?? 'Backlog';
+    const key = sprintId ?? `backlog:${sprintTitle}`;
+    const existing = sprintBuckets.get(key) ?? {
+      id: sprintId,
+      title: sprintTitle,
+      route: sprintId ? `/documents/${sprintId}/issues` : null,
+      total: 0,
+      open: 0,
+      notStarted: 0,
+      active: 0,
+    };
+
+    existing.total += 1;
+    existing.open += 1;
+    if (issue.state === 'in_progress' || issue.state === 'in_review') {
+      existing.active += 1;
+    }
+    if (issue.state === 'triage' || issue.state === 'backlog' || issue.state === 'todo') {
+      existing.notStarted += 1;
+    }
+
+    sprintBuckets.set(key, existing);
+  }
+
+  const focusBucket =
+    [...sprintBuckets.values()].sort((left, right) => {
+      if (right.open !== left.open) {
+        return right.open - left.open;
+      }
+      if (right.notStarted !== left.notStarted) {
+        return right.notStarted - left.notStarted;
+      }
+      return right.active - left.active;
+    })[0] ?? null;
+
+  const topAttentionIssues = [...openIssues].sort((left, right) => {
+    const staleDelta = Number(isIssueStale(right)) - Number(isIssueStale(left));
+    if (staleDelta !== 0) {
+      return staleDelta;
+    }
+
+    const priorityDelta = getPriorityRank(left.priority) - getPriorityRank(right.priority);
+    if (priorityDelta !== 0) {
+      return priorityDelta;
+    }
+
+    return right.ticket_number - left.ticket_number;
+  });
+
+  const summary = (() => {
+    if (visibleIssues.length === 0) {
+      return `${scope.title} has no visible issues on this tab yet.`;
+    }
+
+    if (openIssues.length === 0) {
+      return `${scope.title} does not show an active delivery blocker on this issues surface right now. All visible issues are already done or cancelled.`;
+    }
+
+    if (staleOpenIssues.length > 0) {
+      return `${scope.title} has visible delivery risk from stale work. ${pluralize(staleOpenIssues.length, 'open issue')} have not moved in at least 3 days${focusBucket ? `, and ${focusBucket.title} is carrying the heaviest open cluster.` : '.'}`;
+    }
+
+    if (notStartedIssues.length > inProgressCount + inReviewCount) {
+      return `${scope.title} does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet. ${pluralize(notStartedIssues.length, 'visible issue')} are still sitting in triage, backlog, or todo${focusBucket ? `, led by ${focusBucket.title}.` : '.'}`;
+    }
+
+    if (focusBucket && focusBucket.notStarted > 0) {
+      return `${scope.title} has active delivery work, but ${focusBucket.title} carries the biggest risk cluster with ${pluralize(focusBucket.open, 'open issue')} and ${pluralize(focusBucket.notStarted, 'issue')} still not started.`;
+    }
+
+    return `${scope.title} shows active movement on this issues surface. ${pluralize(inProgressCount + inReviewCount, 'issue')} are already in progress or review, so the main question is scope balance rather than a visible blocker.`;
+  })();
+
+  return {
+    kind: 'issue_surface',
+    route,
+    title: `${scope.title} Issues`,
+    summary,
+    emptyState: visibleIssues.length === 0,
+    metrics: buildMetrics([
+      { label: 'Visible issues', value: String(visibleIssues.length) },
+      { label: 'Not started', value: String(notStartedIssues.length) },
+      { label: 'In progress', value: String(inProgressCount) },
+      { label: 'In review', value: String(inReviewCount) },
+      { label: 'Stale open', value: String(staleOpenIssues.length) },
+      focusBucket ? { label: 'Risk cluster', value: focusBucket.title } : null,
+      assigneeCount > 0 ? { label: 'Assignees', value: String(assigneeCount) } : null,
+      doneCount > 0 || cancelledCount > 0
+        ? { label: 'Closed', value: String(doneCount + cancelledCount) }
+        : null,
+    ]),
+    items: buildItems([
+      focusBucket
+        ? {
+            label: focusBucket.title,
+            detail: `${pluralize(focusBucket.open, 'open issue')} • ${pluralize(focusBucket.active, 'issue')} active • ${pluralize(focusBucket.notStarted, 'issue')} not started`,
+            route: focusBucket.route,
+          }
+        : null,
+      ...topAttentionIssues.slice(0, 3).map((issue) => ({
+        label: issue.display_id ? `${issue.display_id} ${issue.title}` : issue.title,
+        detail: [
+          `State: ${issue.state}`,
+          getSprintTitle(issue) ? `Week: ${getSprintTitle(issue)}` : 'Backlog',
+          issue.assignee_name ? `Owner: ${issue.assignee_name}` : null,
+          formatRelativeIssueUpdate(issue.updated_at),
+        ]
+          .filter(Boolean)
+          .join(' • '),
+        route: `/documents/${issue.id}`,
+      })),
+    ]),
+    actions: buildActions([
+      focusBucket?.route
+        ? {
+            label: `Open ${focusBucket.title}`,
+            route: focusBucket.route,
+          }
+        : null,
+      ...topAttentionIssues.slice(0, 2).map((issue) => ({
+        label: `Open ${issue.display_id ?? `#${issue.ticket_number}`}`,
+        route: `/documents/${issue.id}`,
+      })),
+    ]),
   };
 }
 
@@ -850,6 +1079,38 @@ function buildDocumentPageContext(
   const issue = issues.find((candidate) => candidate.id === document.id);
   const person = people.find((candidate) => candidate.id === document.id);
   const tabLabel = activeView?.tab ? `Tab: ${activeView.tab}` : null;
+
+  if (activeView?.tab === 'issues' && document.document_type === 'program') {
+    return buildIssueSurfacePageContext(
+      route,
+      {
+        type: 'program',
+        id: document.id,
+        title: document.title,
+      },
+      issues.filter(getIssueSurfaceScopeIssueFilter({
+        type: 'program',
+        id: document.id,
+        title: document.title,
+      }))
+    );
+  }
+
+  if (activeView?.tab === 'issues' && document.document_type === 'project') {
+    return buildIssueSurfacePageContext(
+      route,
+      {
+        type: 'project',
+        id: document.id,
+        title: document.title,
+      },
+      issues.filter(getIssueSurfaceScopeIssueFilter({
+        type: 'project',
+        id: document.id,
+        title: document.title,
+      }))
+    );
+  }
 
   if (document.document_type === 'program') {
     return {

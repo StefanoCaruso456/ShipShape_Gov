@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FleetGraphActiveViewContext } from '@ship/shared';
 import type { MyWeekResponse } from '@/hooks/useMyWeekQuery';
-import { buildMyWeekPageContext } from './useFleetGraphPageContext';
+import type { Issue } from '@/hooks/useIssuesQuery';
+import { buildIssueSurfacePageContext, buildMyWeekPageContext } from './useFleetGraphPageContext';
 
 const activeView: FleetGraphActiveViewContext = {
   entity: {
@@ -141,6 +142,103 @@ const baseMyWeek: MyWeekResponse = {
   ],
 };
 
+const issueSurfaceIssues: Issue[] = [
+  {
+    id: 'issue-1',
+    title: 'Implement core workflow',
+    state: 'in_progress',
+    priority: 'high',
+    ticket_number: 12,
+    display_id: '#12',
+    assignee_id: 'user-1',
+    assignee_name: 'stefano caruso',
+    estimate: 3,
+    belongs_to: [
+      { id: 'program-1', type: 'program', title: 'API Platform' },
+      { id: 'project-1', type: 'project', title: 'Core Features' },
+      { id: 'week-3', type: 'sprint', title: 'Week 3' },
+    ],
+    source: 'internal',
+    rejection_reason: null,
+    updated_at: '2026-03-20T02:00:00.000Z',
+  },
+  {
+    id: 'issue-2',
+    title: 'Add validation and edge-case handling',
+    state: 'todo',
+    priority: 'medium',
+    ticket_number: 13,
+    display_id: '#13',
+    assignee_id: 'user-1',
+    assignee_name: 'stefano caruso',
+    estimate: 2,
+    belongs_to: [
+      { id: 'program-1', type: 'program', title: 'API Platform' },
+      { id: 'project-1', type: 'project', title: 'Core Features' },
+      { id: 'week-3', type: 'sprint', title: 'Week 3' },
+    ],
+    source: 'internal',
+    rejection_reason: null,
+    updated_at: '2026-03-20T02:00:00.000Z',
+  },
+  {
+    id: 'issue-3',
+    title: 'Expand test coverage',
+    state: 'todo',
+    priority: 'medium',
+    ticket_number: 14,
+    display_id: '#14',
+    assignee_id: 'user-1',
+    assignee_name: 'stefano caruso',
+    estimate: 2,
+    belongs_to: [
+      { id: 'program-1', type: 'program', title: 'API Platform' },
+      { id: 'project-2', type: 'project', title: 'Performance' },
+      { id: 'week-3', type: 'sprint', title: 'Week 3' },
+    ],
+    source: 'internal',
+    rejection_reason: null,
+    updated_at: '2026-03-16T02:00:00.000Z',
+  },
+  {
+    id: 'issue-4',
+    title: 'Explore stretch improvements',
+    state: 'backlog',
+    priority: 'low',
+    ticket_number: 15,
+    display_id: '#15',
+    assignee_id: 'user-1',
+    assignee_name: 'stefano caruso',
+    estimate: 1,
+    belongs_to: [
+      { id: 'program-1', type: 'program', title: 'API Platform' },
+      { id: 'project-2', type: 'project', title: 'Performance' },
+    ],
+    source: 'internal',
+    rejection_reason: null,
+    updated_at: '2026-03-20T02:00:00.000Z',
+  },
+  {
+    id: 'issue-5',
+    title: 'Define acceptance criteria',
+    state: 'done',
+    priority: 'high',
+    ticket_number: 11,
+    display_id: '#11',
+    assignee_id: 'user-1',
+    assignee_name: 'stefano caruso',
+    estimate: 1,
+    belongs_to: [
+      { id: 'program-1', type: 'program', title: 'API Platform' },
+      { id: 'project-1', type: 'project', title: 'Core Features' },
+      { id: 'week-1', type: 'sprint', title: 'Week 1' },
+    ],
+    source: 'internal',
+    rejection_reason: null,
+    updated_at: '2026-03-20T02:00:00.000Z',
+  },
+];
+
 describe('buildMyWeekPageContext', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -227,6 +325,60 @@ describe('buildMyWeekPageContext', () => {
         expect.objectContaining({
           label: 'Open Core API',
           route: '/documents/project-1',
+        }),
+      ])
+    );
+  });
+});
+
+describe('buildIssueSurfacePageContext', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-20T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('builds issue-surface execution context from visible issue rows', () => {
+    const context = buildIssueSurfacePageContext(
+      '/documents/program-1/issues',
+      {
+        type: 'program',
+        id: 'program-1',
+        title: 'API Platform',
+      },
+      issueSurfaceIssues
+    );
+
+    expect(context.kind).toBe('issue_surface');
+    expect(context.summary).toContain('API Platform has visible delivery risk from stale work.');
+    expect(context.metrics).toEqual(
+      expect.arrayContaining([
+        { label: 'Visible issues', value: '5' },
+        { label: 'Not started', value: '3' },
+        { label: 'Stale open', value: '1' },
+        { label: 'Risk cluster', value: 'Week 3' },
+      ])
+    );
+    expect(context.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Week 3',
+          route: '/documents/week-3/issues',
+        }),
+        expect.objectContaining({
+          label: '#14 Expand test coverage',
+          route: '/documents/issue-3',
+        }),
+      ])
+    );
+    expect(context.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Open Week 3',
+          route: '/documents/week-3/issues',
         }),
       ])
     );
