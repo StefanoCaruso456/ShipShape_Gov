@@ -59,6 +59,8 @@ const updateDocumentSchema = z.object({
   // Issue-specific fields (stored in properties but accepted at top level for convenience)
   state: z.string().optional(),
   priority: z.string().optional(),
+  story_points: z.number().nullable().optional(),
+  estimate_hours: z.number().nullable().optional(),
   estimate: z.number().nullable().optional(),
   assignee_id: z.string().uuid().nullable().optional(),
   source: z.enum(['internal', 'external']).optional(),
@@ -141,7 +143,9 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
         // Flatten common properties for backwards compatibility
         state: props.state,
         priority: props.priority,
-        estimate: props.estimate,
+        story_points: props.story_points,
+        estimate_hours: props.estimate_hours ?? props.estimate,
+        estimate: props.estimate_hours ?? props.estimate,
         assignee_id: props.assignee_id,
         source: props.source,
         prefix: props.prefix,
@@ -340,7 +344,9 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
       // Issue properties
       state: props.state,
       priority: props.priority,
-      estimate: props.estimate,
+      story_points: props.story_points,
+      estimate_hours: props.estimate_hours ?? props.estimate,
+      estimate: props.estimate_hours ?? props.estimate,
       assignee_id: props.assignee_id,
       source: props.source,
       // Project properties
@@ -708,6 +714,8 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     const topLevelProps: Record<string, unknown> = {};
     if (data.state !== undefined) topLevelProps.state = data.state;
     if (data.priority !== undefined) topLevelProps.priority = data.priority;
+    if (data.story_points !== undefined) topLevelProps.story_points = data.story_points;
+    if (data.estimate_hours !== undefined) topLevelProps.estimate_hours = data.estimate_hours;
     if (data.estimate !== undefined) topLevelProps.estimate = data.estimate;
     if (data.assignee_id !== undefined) topLevelProps.assignee_id = data.assignee_id;
     if (data.source !== undefined) topLevelProps.source = data.source;

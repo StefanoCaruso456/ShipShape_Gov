@@ -32,6 +32,8 @@ export interface Issue {
   assignee_id: string | null;
   assignee_name: string | null;
   assignee_archived?: boolean;
+  story_points: number | null;
+  estimate_hours: number | null;
   estimate: number | null;
   // belongs_to array contains all associations (program, sprint, project, parent)
   belongs_to: BelongsTo[];
@@ -225,6 +227,8 @@ export function useCreateIssue() {
         display_id: 'PENDING',
         assignee_id: null,
         assignee_name: null,
+        story_points: null,
+        estimate_hours: null,
         estimate: null,
         belongs_to,
         source: 'internal',

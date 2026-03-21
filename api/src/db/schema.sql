@@ -294,6 +294,24 @@ CREATE TABLE IF NOT EXISTS issue_iterations (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS sprint_analytics_snapshots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sprint_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  snapshot_date DATE NOT NULL,
+  current_issue_count INTEGER NOT NULL DEFAULT 0,
+  completed_issue_count INTEGER NOT NULL DEFAULT 0,
+  current_story_points NUMERIC(10,2) NOT NULL DEFAULT 0,
+  completed_story_points NUMERIC(10,2) NOT NULL DEFAULT 0,
+  remaining_story_points NUMERIC(10,2) NOT NULL DEFAULT 0,
+  current_estimate_hours NUMERIC(10,2) NOT NULL DEFAULT 0,
+  completed_estimate_hours NUMERIC(10,2) NOT NULL DEFAULT 0,
+  remaining_estimate_hours NUMERIC(10,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (sprint_id, snapshot_date)
+);
+
 -- File uploads (images, attachments)
 CREATE TABLE IF NOT EXISTS files (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

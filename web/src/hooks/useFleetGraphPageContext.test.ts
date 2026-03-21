@@ -156,6 +156,8 @@ const issueSurfaceIssues: Issue[] = [
     display_id: '#12',
     assignee_id: 'user-1',
     assignee_name: 'stefano caruso',
+    story_points: 3,
+    estimate_hours: 3,
     estimate: 3,
     belongs_to: [
       { id: 'program-1', type: 'program', title: 'API Platform' },
@@ -175,6 +177,8 @@ const issueSurfaceIssues: Issue[] = [
     display_id: '#13',
     assignee_id: 'user-1',
     assignee_name: 'stefano caruso',
+    story_points: 2,
+    estimate_hours: 2,
     estimate: 2,
     belongs_to: [
       { id: 'program-1', type: 'program', title: 'API Platform' },
@@ -194,6 +198,8 @@ const issueSurfaceIssues: Issue[] = [
     display_id: '#14',
     assignee_id: 'user-1',
     assignee_name: 'stefano caruso',
+    story_points: 2,
+    estimate_hours: 2,
     estimate: 2,
     belongs_to: [
       { id: 'program-1', type: 'program', title: 'API Platform' },
@@ -213,6 +219,8 @@ const issueSurfaceIssues: Issue[] = [
     display_id: '#15',
     assignee_id: 'user-1',
     assignee_name: 'stefano caruso',
+    story_points: 1,
+    estimate_hours: 1,
     estimate: 1,
     belongs_to: [
       { id: 'program-1', type: 'program', title: 'API Platform' },
@@ -231,6 +239,8 @@ const issueSurfaceIssues: Issue[] = [
     display_id: '#11',
     assignee_id: 'user-1',
     assignee_name: 'stefano caruso',
+    story_points: 1,
+    estimate_hours: 1,
     estimate: 1,
     belongs_to: [
       { id: 'program-1', type: 'program', title: 'API Platform' },

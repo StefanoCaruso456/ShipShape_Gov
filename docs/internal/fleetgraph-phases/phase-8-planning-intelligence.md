@@ -15,6 +15,13 @@ Current implementation slice:
   - workload concentration
   - throughput gap compared to recent delivery history
   - staffing pressure from current project allocation
+- Jira-like sprint planning foundation for:
+  - issue-level story points
+  - issue-level estimate hours
+  - sprint commitment baseline snapshots
+  - daily sprint analytics snapshots
+  - week analytics API
+  - burn-up / burn-down charts in week surfaces
 - planning evidence fetched from real Ship APIs:
   - sprint issue worklist
   - sprint scope-change history
@@ -70,5 +77,6 @@ Give the graph and the LLM a stronger product foundation so they can reason abou
 - FleetGraph can now answer overcommitment questions with recent project delivery history instead of only current-sprint intuition
 - FleetGraph can now answer staffing-pressure questions from real allocation data instead of generic capacity language
 - FleetGraph can now answer whether blocked sprint work appears to be waiting on another decision or work item
+- Ship now has the first real story-point and sprint-analytics foundation required for Jira-like burn tracking
 - better connection between roadmap questions and execution evidence
-- next major planning foundation should be Jira-like story points plus real burn-up / burn-down telemetry
+- next major planning foundation should deepen historical capacity, release confidence, and roadmap-level planning rollups

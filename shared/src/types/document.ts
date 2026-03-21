@@ -75,6 +75,8 @@ export interface IssueProperties {
   priority: IssuePriority;
   assignee_id?: string | null;
   estimate?: number | null;
+  estimate_hours?: number | null;
+  story_points?: number | null;
   source: IssueSource;
   rejection_reason?: string | null;
   // Due date for issues (ISO date string, e.g., "2025-01-26")
