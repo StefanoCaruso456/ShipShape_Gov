@@ -38,7 +38,7 @@ Fast current-state summary:
 | Phase 5: On-demand UI | complete | embedded week/project FleetGraph panels are live, plus My Week when one project is in scope |
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
-| Phase 8: Planning intelligence | in progress | current slices add planning-aware sprint analysis for scope growth, blocked work, workload concentration, throughput gap vs recent delivery history, and staffing pressure from live project allocation |
+| Phase 8: Planning intelligence | in progress | current slices add planning-aware sprint analysis for scope growth, blocked work, dependency risk, workload concentration, throughput gap vs recent delivery history, and staffing pressure from live project allocation |
 | Phase 9: Evidence and submission | complete | shared LangSmith links are captured and the public CloudFront deployment is verified |
 
 ## Phase execution summary
@@ -66,13 +66,14 @@ The roadmap work that still adds new product value is:
    - first live slice:
      - scope growth
      - blocked work
+     - dependency risk from issue updates and hierarchy
      - workload concentration
      - throughput gap vs recent delivery history
      - staffing pressure from current project allocation
    - next expansion:
      - deeper capacity and throughput history
      - scope creep and burn trends
-     - dependency and release confidence
+     - richer dependency and release confidence
      - roadmap and staffing intelligence
 
 The earlier phases remain important because they explain how FleetGraph was built, but they are already absorbed into the current product. We should only reopen them when we need to extend or harden an existing capability.

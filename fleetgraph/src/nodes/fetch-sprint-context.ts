@@ -8,7 +8,9 @@ import {
 import type { FleetGraphState } from '../state.js';
 import type {
   FleetGraphActivitySnapshot,
+  FleetGraphDependencySnapshot,
   FleetGraphDocumentContextSnapshot,
+  FleetGraphIssueDependencySnapshot,
   FleetGraphPlanningSnapshot,
   FleetGraphPeopleSnapshot,
   FleetGraphProjectAllocationSnapshot,
@@ -27,6 +29,40 @@ import {
 } from '../tool-runtime.js';
 
 type FetchSprintContextTargets = 'deriveSprintSignals' | 'completeRun' | 'fallback';
+
+const DEPENDENCY_CUE_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
+  {
+    pattern: /\bdepend(?:s|ency)?\b/i,
+    reason: 'mentions a dependency explicitly',
+  },
+  {
+    pattern: /\bblocked by\b/i,
+    reason: 'says the issue is blocked by another item or decision',
+  },
+  {
+    pattern: /\b(waiting on|waiting for|awaiting)\b/i,
+    reason: 'says the issue is waiting on another owner or input',
+  },
+  {
+    pattern: /\b(approval|review)\b/i,
+    reason: 'says the issue is waiting on approval or review',
+  },
+];
+
+interface FleetGraphIssueIterationRecord {
+  blockers_encountered?: string | null;
+  created_at?: string | null;
+  author?: {
+    name?: string | null;
+  } | null;
+}
+
+interface FleetGraphAssociationRecord {
+  related_id?: string;
+  related_title?: string | null;
+  document_id?: string;
+  document_title?: string | null;
+}
 
 function buildWorkloadSnapshot(issues: FleetGraphSprintIssueSnapshot[]): FleetGraphPlanningSnapshot['workload'] {
   if (issues.length === 0) {
@@ -192,6 +228,126 @@ function buildCapacitySnapshot(
   };
 }
 
+function extractLatestBlockerNote(
+  iterations: FleetGraphIssueIterationRecord[]
+): Pick<
+  FleetGraphIssueDependencySnapshot,
+  'blockerNote' | 'blockerUpdatedAt' | 'blockerAuthorName'
+> {
+  const latestIterationWithBlockerNote = iterations.find(
+    (iteration) =>
+      typeof iteration.blockers_encountered === 'string' &&
+      iteration.blockers_encountered.trim().length > 0
+  );
+
+  return {
+    blockerNote:
+      typeof latestIterationWithBlockerNote?.blockers_encountered === 'string'
+        ? latestIterationWithBlockerNote.blockers_encountered.trim()
+        : null,
+    blockerUpdatedAt:
+      typeof latestIterationWithBlockerNote?.created_at === 'string'
+        ? latestIterationWithBlockerNote.created_at
+        : null,
+    blockerAuthorName:
+      typeof latestIterationWithBlockerNote?.author?.name === 'string'
+        ? latestIterationWithBlockerNote.author.name
+        : null,
+  };
+}
+
+function buildDependencyIssueSnapshot(
+  issue: FleetGraphSprintIssueSnapshot,
+  iterations: FleetGraphIssueIterationRecord[],
+  parentAssociations: FleetGraphAssociationRecord[],
+  childAssociations: FleetGraphAssociationRecord[]
+): FleetGraphIssueDependencySnapshot | null {
+  const latestBlocker = extractLatestBlockerNote(iterations);
+  const cueReasons = DEPENDENCY_CUE_PATTERNS
+    .filter(({ pattern }) => latestBlocker.blockerNote !== null && pattern.test(latestBlocker.blockerNote))
+    .map(({ reason }) => reason);
+
+  const parentAssociation = parentAssociations[0];
+  const parentIssue =
+    typeof parentAssociation?.related_id === 'string'
+      ? {
+          id: parentAssociation.related_id,
+          title:
+            typeof parentAssociation.related_title === 'string' && parentAssociation.related_title.trim().length > 0
+              ? parentAssociation.related_title
+              : 'Parent issue',
+        }
+      : null;
+  const childIssueCount = childAssociations.filter(
+    (association) => typeof association.document_id === 'string'
+  ).length;
+
+  if (latestBlocker.blockerNote && parentIssue) {
+    cueReasons.push('links the blocker to a parent work item');
+  }
+
+  if (latestBlocker.blockerNote && childIssueCount > 0) {
+    cueReasons.push('links the blocker to child work that still needs coordination');
+  }
+
+  const dedupedCueReasons = [...new Set(cueReasons)];
+
+  if (dedupedCueReasons.length === 0) {
+    return null;
+  }
+
+  return {
+    issueId: issue.id,
+    title: issue.title,
+    displayId: issue.display_id,
+    blockerNote: latestBlocker.blockerNote,
+    blockerUpdatedAt: latestBlocker.blockerUpdatedAt,
+    blockerAuthorName: latestBlocker.blockerAuthorName,
+    parentIssue,
+    childIssueCount,
+    dependencyCueCount: dedupedCueReasons.length,
+    dependencyCueReasons: dedupedCueReasons,
+  };
+}
+
+async function buildDependencySnapshot(
+  issues: FleetGraphSprintIssueSnapshot[],
+  shipApi: {
+    get<T>(path: string): Promise<T>;
+  }
+): Promise<FleetGraphDependencySnapshot | null> {
+  const blockedIssues = issues.filter((issue) => issue.state === 'blocked').slice(0, 4);
+  if (blockedIssues.length === 0) {
+    return null;
+  }
+
+  const dependencyIssueSnapshots = await Promise.all(
+    blockedIssues.map(async (issue) => {
+      const [iterations, parentAssociations, childAssociations] = await Promise.all([
+        shipApi.get<FleetGraphIssueIterationRecord[]>(`/api/issues/${issue.id}/iterations`),
+        shipApi.get<FleetGraphAssociationRecord[]>(
+          `/api/documents/${issue.id}/associations?type=parent`
+        ),
+        shipApi.get<FleetGraphAssociationRecord[]>(
+          `/api/documents/${issue.id}/reverse-associations?type=parent`
+        ),
+      ]);
+
+      return buildDependencyIssueSnapshot(issue, iterations, parentAssociations, childAssociations);
+    })
+  );
+
+  const issuesWithDependencyEvidence = dependencyIssueSnapshots.filter(
+    (snapshot): snapshot is FleetGraphIssueDependencySnapshot => snapshot !== null
+  );
+
+  return {
+    blockedIssuesAnalyzed: blockedIssues.length,
+    dependencyRiskIssues: issuesWithDependencyEvidence.length,
+    issues: issuesWithDependencyEvidence,
+  };
+}
+
 async function fetchOptionalTool<T>(
   context: Parameters<typeof runFleetGraphEvidenceTool<T>>[0],
   input: Parameters<typeof runFleetGraphEvidenceTool<T>>[1]
@@ -345,6 +501,23 @@ export async function fetchSprintContextNode(
       earlyCapacityPromise,
     ]);
 
+    const dependencyResult =
+      issuesResult.result && issuesResult.result.some((issue) => issue.state === 'blocked')
+        ? await fetchOptionalTool<FleetGraphDependencySnapshot | null>(started.context, {
+            toolName: 'get_dependency_signals',
+            inputSummary: `Fetch dependency-style blocker evidence for blocked sprint issues in ${sprintId}.`,
+            call: async () => buildDependencySnapshot(issuesResult.result ?? [], runtime.shipApi),
+            resultSummary: (dependencySignals) =>
+              dependencySignals && dependencySignals.dependencyRiskIssues > 0
+                ? `Found ${dependencySignals.dependencyRiskIssues} blocked sprint issues with dependency-style blocker evidence.`
+                : 'No dependency-style blocker evidence was found for the blocked sprint issues.',
+            resultCount: (dependencySignals) => dependencySignals?.dependencyRiskIssues ?? 0,
+          })
+        : {
+            result: null,
+            trace: null,
+          };
+
     const {
       result: { entity, supporting, activity, accountability },
       trace,
@@ -404,6 +577,7 @@ export async function fetchSprintContextNode(
     const planning: FleetGraphPlanningSnapshot = {
       issues: issuesResult.result ?? [],
       scopeChanges: scopeChangesResult.result,
+      dependencySignals: dependencyResult.result,
       throughputHistory:
         throughputResult.result && throughputResult.result.length > 0
           ? {
@@ -418,6 +592,7 @@ export async function fetchSprintContextNode(
       trace,
       issuesResult.trace,
       scopeChangesResult.trace,
+      dependencyResult.trace,
       throughputResult.trace,
       capacityResult.trace,
     ].filter(

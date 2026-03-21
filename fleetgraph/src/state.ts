@@ -112,6 +112,7 @@ export const FleetGraphStateAnnotation = Annotation.Root({
         incompleteIssues: 0,
         cancelledIssues: 0,
         blockedIssues: 0,
+        dependencyRiskIssues: null,
         standupCount: 0,
         recentActivityCount: 0,
         recentActiveDays: 0,

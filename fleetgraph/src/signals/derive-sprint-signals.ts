@@ -12,6 +12,7 @@ const RECENT_ACTIVITY_WINDOW_DAYS = 3;
 const SCOPE_GROWTH_WARNING_PERCENT = 20;
 const SCOPE_GROWTH_ACTION_PERCENT = 40;
 const WORKLOAD_CONCENTRATION_WARNING_SHARE = 0.5;
+const DEPENDENCY_RISK_ACTION_ISSUES = 2;
 const THROUGHPUT_GAP_WARNING_RATIO = 1.25;
 const THROUGHPUT_GAP_ACTION_RATIO = 1.75;
 const STAFFING_PRESSURE_WARNING_LOAD = 3;
@@ -131,6 +132,7 @@ export function deriveSprintSignals(
   const cancelledIssues = stats?.cancelled ?? 0;
   const blockedIssues =
     inputs.planning?.issues.filter((issue) => issue.state === 'blocked').length ?? 0;
+  const dependencyRiskIssues = inputs.planning?.dependencySignals?.dependencyRiskIssues ?? null;
   const incompleteIssues =
     issues?.incomplete_items.length ??
     Math.max(totalIssues - completedIssues - cancelledIssues, 0);
@@ -171,6 +173,7 @@ export function deriveSprintSignals(
     incompleteIssues,
     cancelledIssues,
     blockedIssues,
+    dependencyRiskIssues,
     standupCount,
     recentActivityCount,
     recentActiveDays,
@@ -325,6 +328,35 @@ export function deriveSprintSignals(
         [
           `Blocked issues: ${blockedIssues}.`,
           ...blockedTitles,
+        ]
+      )
+    );
+  }
+
+  if (
+    sprintStatus === 'active' &&
+    dependencyRiskIssues !== null &&
+    dependencyRiskIssues > 0
+  ) {
+    const dependencyEvidence = inputs.planning?.dependencySignals?.issues
+      .slice(0, 2)
+      .map((issue) => {
+        const cueSummary = issue.dependencyCueReasons.slice(0, 2).join('; ');
+        return `${issue.displayId} ${issue.title}: ${cueSummary}.`;
+      }) ?? [];
+
+    signals.push(
+      createSignal(
+        sprintId,
+        'dependency_risk',
+        dependencyRiskIssues >= DEPENDENCY_RISK_ACTION_ISSUES ? 'action' : 'warning',
+        dependencyRiskIssues === 1
+          ? 'A blocked sprint issue is waiting on another decision or work item.'
+          : `${dependencyRiskIssues} blocked sprint issues show dependency-style blocker evidence.`,
+        [
+          `Blocked issues analyzed for dependency cues: ${inputs.planning?.dependencySignals?.blockedIssuesAnalyzed ?? 0}.`,
+          `Blocked issues with dependency evidence: ${dependencyRiskIssues}.`,
+          ...dependencyEvidence,
         ]
       )
     );
