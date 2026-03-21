@@ -12,6 +12,8 @@ const RECENT_ACTIVITY_WINDOW_DAYS = 3;
 const SCOPE_GROWTH_WARNING_PERCENT = 20;
 const SCOPE_GROWTH_ACTION_PERCENT = 40;
 const WORKLOAD_CONCENTRATION_WARNING_SHARE = 0.5;
+const THROUGHPUT_GAP_WARNING_RATIO = 1.25;
+const THROUGHPUT_GAP_ACTION_RATIO = 1.75;
 
 type ApprovalKey = 'plan_approval' | 'review_approval';
 
@@ -98,6 +100,15 @@ function highestSeverity(
   return 'none';
 }
 
+function average(values: number[]): number | null {
+  if (values.length === 0) {
+    return null;
+  }
+
+  const sum = values.reduce((total, value) => total + value, 0);
+  return Number((sum / values.length).toFixed(2));
+}
+
 export function deriveSprintSignals(
   inputs: {
     entity: FleetGraphSprintEntitySnapshot | null;
@@ -129,6 +140,21 @@ export function deriveSprintSignals(
       ? Math.round(((stats.added_mid_sprint ?? 0) / stats.planned_at_start) * 100)
       : null);
   const maxAssigneeLoadShare = inputs.planning?.workload?.maxIncompleteOwnerShare ?? null;
+  const throughputWeeks = inputs.planning?.throughputHistory?.recentWeeks ?? [];
+  const recentAverageCompletedIssues = average(
+    throughputWeeks.map((week) => week.completed_count)
+  );
+  const recentAverageStartedIssues = average(
+    throughputWeeks.map((week) => week.started_count)
+  );
+  const recentAverageTotalIssues = average(
+    throughputWeeks.map((week) => week.issue_count)
+  );
+  const throughputSampleSize = throughputWeeks.length;
+  const throughputLoadRatio =
+    recentAverageCompletedIssues && recentAverageCompletedIssues > 0
+      ? Number((incompleteIssues / recentAverageCompletedIssues).toFixed(2))
+      : null;
   const { recentActivityCount, recentActiveDays } = getRecentActivityMetrics(inputs.activity, now);
 
   const metrics = {
@@ -144,6 +170,11 @@ export function deriveSprintSignals(
     completionRate,
     scopeChangePercent,
     maxAssigneeLoadShare,
+    recentAverageCompletedIssues,
+    recentAverageStartedIssues,
+    recentAverageTotalIssues,
+    throughputSampleSize,
+    throughputLoadRatio,
   };
 
   const signals: FleetGraphDerivedSignal[] = [];
@@ -310,6 +341,27 @@ export function deriveSprintSignals(
           `${leadOwnerLabel} owns ${leadOwner?.incompleteIssues ?? 0} incomplete issues.`,
           `Incomplete sprint issues: ${incompleteIssues}.`,
           `Unassigned issues: ${inputs.planning?.workload?.unassignedIssues ?? 0}.`,
+        ]
+      )
+    );
+  }
+
+  if (
+    sprintStatus === 'active' &&
+    throughputSampleSize >= 2 &&
+    throughputLoadRatio !== null &&
+    throughputLoadRatio >= THROUGHPUT_GAP_WARNING_RATIO
+  ) {
+    signals.push(
+      createSignal(
+        sprintId,
+        'throughput_gap',
+        throughputLoadRatio >= THROUGHPUT_GAP_ACTION_RATIO ? 'action' : 'warning',
+        `This sprint is carrying more unfinished work than the project typically finishes in a week.`,
+        [
+          `Current incomplete issues: ${incompleteIssues}.`,
+          `Recent average completed issues: ${recentAverageCompletedIssues}.`,
+          `Comparison uses ${throughputSampleSize} recent project weeks.`,
         ]
       )
     );

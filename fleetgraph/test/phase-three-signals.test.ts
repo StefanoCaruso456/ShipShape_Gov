@@ -58,10 +58,17 @@ function createInput(weekId: string): FleetGraphRunInput {
   };
 }
 
-function createPlanningResponses(weekId: string, issues: Array<Record<string, unknown>>, scopeChanges: Record<string, unknown>) {
+function createPlanningResponses(
+  weekId: string,
+  projectId: string,
+  issues: Array<Record<string, unknown>>,
+  scopeChanges: Record<string, unknown>,
+  projectWeeks: Array<Record<string, unknown>> = []
+) {
   return {
     [`/api/weeks/${weekId}/issues`]: issues,
     [`/api/weeks/${weekId}/scope-changes`]: scopeChanges,
+    [`/api/projects/${projectId}/weeks`]: projectWeeks,
   };
 }
 
@@ -147,6 +154,7 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
         },
         ...createPlanningResponses(
           weekId,
+          'project-1',
           Array.from({ length: 6 }, (_, index) => ({
             id: `issue-${index + 1}`,
             title: `Issue ${index + 1}`,
@@ -164,7 +172,36 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
             scopeChangePercent: 0,
             sprintStartDate: '2026-03-15T00:00:00.000Z',
             scopeChanges: [],
-          }
+          },
+          [
+            {
+              id: weekId,
+              name: 'Week 14',
+              sprint_number: 14,
+              status: 'active',
+              issue_count: 6,
+              completed_count: 0,
+              started_count: 0,
+            },
+            {
+              id: 'week-13',
+              name: 'Week 13',
+              sprint_number: 13,
+              status: 'completed',
+              issue_count: 5,
+              completed_count: 5,
+              started_count: 1,
+            },
+            {
+              id: 'week-12',
+              name: 'Week 12',
+              sprint_number: 12,
+              status: 'completed',
+              issue_count: 4,
+              completed_count: 4,
+              started_count: 1,
+            },
+          ]
         ),
       }),
       now: () => new Date('2026-03-17T12:00:00.000Z'),
@@ -280,6 +317,7 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
         },
         ...createPlanningResponses(
           weekId,
+          'project-1',
           [
             {
               id: 'issue-1',
@@ -343,7 +381,36 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
             scopeChangePercent: 0,
             sprintStartDate: '2026-03-15T00:00:00.000Z',
             scopeChanges: [],
-          }
+          },
+          [
+            {
+              id: weekId,
+              name: 'Week 15',
+              sprint_number: 15,
+              status: 'active',
+              issue_count: 5,
+              completed_count: 3,
+              started_count: 2,
+            },
+            {
+              id: 'week-14',
+              name: 'Week 14',
+              sprint_number: 14,
+              status: 'completed',
+              issue_count: 5,
+              completed_count: 5,
+              started_count: 2,
+            },
+            {
+              id: 'week-13',
+              name: 'Week 13',
+              sprint_number: 13,
+              status: 'completed',
+              issue_count: 4,
+              completed_count: 4,
+              started_count: 2,
+            },
+          ]
         ),
       }),
       now: () => new Date('2026-03-17T12:00:00.000Z'),
@@ -450,6 +517,7 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
         },
         ...createPlanningResponses(
           weekId,
+          'project-1',
           [
             {
               id: 'issue-1',
@@ -537,7 +605,36 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
                 estimateChange: 3,
               },
             ],
-          }
+          },
+          [
+            {
+              id: weekId,
+              name: 'Week 16',
+              sprint_number: 16,
+              status: 'active',
+              issue_count: 6,
+              completed_count: 1,
+              started_count: 1,
+            },
+            {
+              id: 'week-15',
+              name: 'Week 15',
+              sprint_number: 15,
+              status: 'completed',
+              issue_count: 5,
+              completed_count: 5,
+              started_count: 2,
+            },
+            {
+              id: 'week-14',
+              name: 'Week 14',
+              sprint_number: 14,
+              status: 'completed',
+              issue_count: 4,
+              completed_count: 4,
+              started_count: 1,
+            },
+          ]
         ),
       }),
       now: () => new Date('2026-03-18T12:00:00.000Z'),
@@ -562,5 +659,202 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
     expect(result.derivedSignals.metrics.blockedIssues).toBe(2);
     expect(result.reasoning?.summary).toContain('scope');
     expect(result.fetched.planning?.workload?.owners[0]?.assigneeName).toBe('Lead Engineer');
+  });
+
+  it('detects overcommitment compared to recent delivery history', async () => {
+    const graph = createFleetGraph();
+    const weekId = 'week-throughput';
+    const runtime = createFleetGraphRuntime({
+      shipApi: createShipApiStub({
+        [`/api/documents/${weekId}`]: {
+          id: weekId,
+          document_type: 'sprint',
+          title: 'Week 17',
+          status: 'active',
+          plan: 'Push the roadmap forward',
+          owner_id: 'owner-1',
+          owner: null,
+          accountable_id: null,
+          properties: {},
+        },
+        [`/api/documents/${weekId}/context`]: {
+          current: {
+            id: weekId,
+            title: 'Week 17',
+            document_type: 'sprint',
+          },
+          breadcrumbs: [],
+          belongs_to: [
+            { id: 'project-1', title: 'Project', type: 'project' },
+            { id: 'program-1', title: 'Program', type: 'program' },
+          ],
+        },
+        [`/api/activity/sprint/${weekId}`]: {
+          days: [
+            { date: '2026-03-17', count: 3 },
+            { date: '2026-03-18', count: 2 },
+            { date: '2026-03-19', count: 1 },
+          ],
+        },
+        [`/api/claude/context?context_type=review&sprint_id=${weekId}`]: {
+          context_type: 'review',
+          sprint: {
+            id: weekId,
+            title: 'Week 17',
+            number: '17',
+            status: 'active',
+            plan: 'Push the roadmap forward',
+          },
+          program: {
+            id: 'program-1',
+            name: 'Program',
+            description: null,
+            goals: null,
+          },
+          project: {
+            id: 'project-1',
+            name: 'Project',
+            plan: 'Project plan',
+            ice_scores: {
+              impact: null,
+              confidence: null,
+              ease: null,
+            },
+            monetary_impact_expected: null,
+          },
+          standups: [
+            {
+              id: 'standup-1',
+              title: 'Standup',
+              content: {},
+              author: 'user-1',
+              created_at: '2026-03-19T09:00:00.000Z',
+            },
+          ],
+          issues: {
+            stats: {
+              total: 9,
+              completed: 1,
+              in_progress: 1,
+              planned_at_start: 9,
+              added_mid_sprint: 0,
+              cancelled: 0,
+            },
+            completed_items: [{ id: 'issue-1' }],
+            incomplete_items: Array.from({ length: 8 }, (_, index) => ({
+              id: `issue-${index + 2}`,
+            })),
+          },
+          existing_review: null,
+          clarifying_questions_context: [],
+        },
+        ...createPlanningResponses(
+          weekId,
+          'project-1',
+          [
+            {
+              id: 'issue-1',
+              title: 'Done issue',
+              state: 'done',
+              priority: 'medium',
+              ticket_number: 1,
+              display_id: '#1',
+              assignee_id: 'owner-1',
+              assignee_name: 'Lead Engineer',
+              estimate: 2,
+            },
+            {
+              id: 'issue-2',
+              title: 'Active issue',
+              state: 'in_progress',
+              priority: 'medium',
+              ticket_number: 2,
+              display_id: '#2',
+              assignee_id: 'owner-1',
+              assignee_name: 'Lead Engineer',
+              estimate: 3,
+            },
+            ...Array.from({ length: 7 }, (_, index) => ({
+              id: `issue-${index + 3}`,
+              title: `Todo issue ${index + 3}`,
+              state: 'todo',
+              priority: 'medium',
+              ticket_number: index + 3,
+              display_id: `#${index + 3}`,
+              assignee_id: index < 4 ? 'owner-1' : 'owner-2',
+              assignee_name: index < 4 ? 'Lead Engineer' : 'Pair Engineer',
+              estimate: 3,
+            })),
+          ],
+          {
+            originalScope: 9,
+            currentScope: 9,
+            scopeChangePercent: 0,
+            sprintStartDate: '2026-03-17T00:00:00.000Z',
+            scopeChanges: [],
+          },
+          [
+            {
+              id: weekId,
+              name: 'Week 17',
+              sprint_number: 17,
+              status: 'active',
+              issue_count: 9,
+              completed_count: 1,
+              started_count: 1,
+            },
+            {
+              id: 'week-16',
+              name: 'Week 16',
+              sprint_number: 16,
+              status: 'completed',
+              issue_count: 4,
+              completed_count: 4,
+              started_count: 1,
+            },
+            {
+              id: 'week-15',
+              name: 'Week 15',
+              sprint_number: 15,
+              status: 'completed',
+              issue_count: 5,
+              completed_count: 5,
+              started_count: 2,
+            },
+            {
+              id: 'week-14',
+              name: 'Week 14',
+              sprint_number: 14,
+              status: 'completed',
+              issue_count: 4,
+              completed_count: 4,
+              started_count: 1,
+            },
+          ]
+        ),
+      }),
+      now: () => new Date('2026-03-19T12:00:00.000Z'),
+    });
+
+    const result = await graph.invoke(
+      {
+        ...createInput(weekId),
+        prompt: {
+          question: 'Are we overcommitted compared to recent velocity?',
+        },
+      },
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'phase-8-throughput-gap',
+      })
+    );
+
+    expect(result.derivedSignals.signals.map((signal) => signal.kind)).toEqual(
+      expect.arrayContaining(['throughput_gap'])
+    );
+    expect(result.derivedSignals.metrics.recentAverageCompletedIssues).toBe(4.33);
+    expect(result.derivedSignals.metrics.throughputSampleSize).toBe(3);
+    expect(result.derivedSignals.metrics.throughputLoadRatio).toBe(1.85);
+    expect(result.reasoning?.summary.toLowerCase()).toContain('overcommitted');
+    expect(result.reasoning?.recommendedNextStep?.toLowerCase()).toContain('reduce scope');
   });
 });

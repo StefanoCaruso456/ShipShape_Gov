@@ -12,9 +12,11 @@ Current implementation slice:
   - scope growth
   - blocked work
   - workload concentration
+  - throughput gap compared to recent delivery history
 - planning evidence fetched from real Ship APIs:
   - sprint issue worklist
   - sprint scope-change history
+  - recent project week history for throughput comparison
 
 Later expansion targets:
 
@@ -49,4 +51,5 @@ Give the graph and the LLM a stronger product foundation so they can reason abou
 
 - planning-aware FleetGraph has begun
 - stronger PM / PO workflows can now start from real scope-drift and workload evidence
+- FleetGraph can now answer overcommitment questions with recent project delivery history instead of only current-sprint intuition
 - better connection between roadmap questions and execution evidence

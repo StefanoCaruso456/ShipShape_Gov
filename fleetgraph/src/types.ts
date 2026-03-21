@@ -191,6 +191,16 @@ export interface FleetGraphScopeChangeSnapshot {
   }>;
 }
 
+export interface FleetGraphProjectWeekSnapshot {
+  id: string;
+  name: string;
+  sprint_number: number;
+  status: 'planning' | 'active' | 'completed';
+  issue_count: number;
+  completed_count: number;
+  started_count: number;
+}
+
 export interface FleetGraphWorkloadOwnerSnapshot {
   assigneeId: string | null;
   assigneeName: string | null;
@@ -202,6 +212,9 @@ export interface FleetGraphWorkloadOwnerSnapshot {
 export interface FleetGraphPlanningSnapshot {
   issues: FleetGraphSprintIssueSnapshot[];
   scopeChanges: FleetGraphScopeChangeSnapshot | null;
+  throughputHistory: {
+    recentWeeks: FleetGraphProjectWeekSnapshot[];
+  } | null;
   workload: {
     owners: FleetGraphWorkloadOwnerSnapshot[];
     unassignedIssues: number;
@@ -238,7 +251,8 @@ export type FleetGraphSignalKind =
   | 'missing_review'
   | 'scope_growth'
   | 'blocked_work'
-  | 'workload_concentration';
+  | 'workload_concentration'
+  | 'throughput_gap';
 
 export interface FleetGraphDerivedSignal {
   kind: FleetGraphSignalKind;
@@ -261,6 +275,11 @@ export interface FleetGraphDerivedMetrics {
   completionRate: number | null;
   scopeChangePercent: number | null;
   maxAssigneeLoadShare: number | null;
+  recentAverageCompletedIssues: number | null;
+  recentAverageStartedIssues: number | null;
+  recentAverageTotalIssues: number | null;
+  throughputSampleSize: number;
+  throughputLoadRatio: number | null;
 }
 
 export interface FleetGraphDerivedSignals {

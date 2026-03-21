@@ -124,6 +124,7 @@ export type FleetGraphEvidenceToolName =
   | 'get_sprint_snapshot'
   | 'get_scrum_artifact_status'
   | 'get_scope_change_signals'
+  | 'get_recent_delivery_history'
   | 'get_dependency_signals'
   | 'get_team_ownership_and_capacity'
   | 'get_business_value_context';
@@ -195,7 +196,8 @@ export type FleetGraphSignalKind =
   | 'missing_review'
   | 'scope_growth'
   | 'blocked_work'
-  | 'workload_concentration';
+  | 'workload_concentration'
+  | 'throughput_gap';
 
 export interface FleetGraphDerivedSignal {
   kind: FleetGraphSignalKind;
@@ -218,6 +220,11 @@ export interface FleetGraphDerivedMetrics {
   completionRate: number | null;
   scopeChangePercent?: number | null;
   maxAssigneeLoadShare?: number | null;
+  recentAverageCompletedIssues?: number | null;
+  recentAverageStartedIssues?: number | null;
+  recentAverageTotalIssues?: number | null;
+  throughputSampleSize?: number;
+  throughputLoadRatio?: number | null;
 }
 
 export interface FleetGraphDerivedSignals {

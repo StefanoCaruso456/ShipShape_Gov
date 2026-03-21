@@ -57,6 +57,9 @@ function buildPlanningQuestionSummary(
     const scopeChangePercent = derivedSignals.metrics.scopeChangePercent;
     const blockedIssues = derivedSignals.metrics.blockedIssues;
     const loadShare = derivedSignals.metrics.maxAssigneeLoadShare;
+    const throughputLoadRatio = derivedSignals.metrics.throughputLoadRatio;
+    const recentAverageCompletedIssues = derivedSignals.metrics.recentAverageCompletedIssues;
+    const throughputSampleSize = derivedSignals.metrics.throughputSampleSize;
     const leadOwner = planning?.workload?.owners[0] ?? null;
     const drivers: string[] = [];
 
@@ -69,18 +72,42 @@ function buildPlanningQuestionSummary(
     if (loadShare !== null && loadShare >= 0.5 && leadOwner) {
       drivers.push(`${leadOwner.assigneeName ?? 'one assignee'} owns ${Math.round(loadShare * 100)}% of the incomplete work`);
     }
+    if (
+      throughputLoadRatio !== null &&
+      throughputLoadRatio >= 1.25 &&
+      recentAverageCompletedIssues !== null &&
+      throughputSampleSize >= 2
+    ) {
+      drivers.push(
+        `${derivedSignals.metrics.incompleteIssues} issues remain, versus a recent average of ${recentAverageCompletedIssues} completed across ${throughputSampleSize} project weeks`
+      );
+    }
 
     if (drivers.length > 0) {
       return {
-        summary:
-          scopeChangePercent !== null && scopeChangePercent >= 20
-            ? `The risk is coming primarily from scope growth, with blocker and workload pressure reinforcing it.`
-            : `The current sprint risk is coming from a mix of blockers and workload pressure rather than clean execution alone.`,
+        summary: (() => {
+          if (scopeChangePercent !== null && scopeChangePercent >= 20) {
+            return 'The risk is coming primarily from scope growth, with delivery pressure reinforcing it.';
+          }
+
+          if (
+            throughputLoadRatio !== null &&
+            throughputLoadRatio >= 1.25 &&
+            recentAverageCompletedIssues !== null &&
+            throughputSampleSize >= 2
+          ) {
+            return 'The current sprint looks overcommitted relative to recent delivery history, with blockers or workload concentration making that harder to recover.';
+          }
+
+          return 'The current sprint risk is coming from a mix of blockers and workload pressure rather than clean execution alone.';
+        })(),
         evidence: drivers.map((driver) => driver.charAt(0).toUpperCase() + driver.slice(1) + '.'),
         recommendedNextStep:
           scopeChangePercent !== null && scopeChangePercent >= 20
             ? 'Reduce late-added scope first, then clear the top blocker and rebalance the remaining incomplete work.'
-            : 'Clear the top blocker first, then rebalance the remaining incomplete work across owners before adding more scope.',
+            : throughputLoadRatio !== null && throughputLoadRatio >= 1.25
+              ? 'Cut scope or add capacity before committing to more work, then clear the top blocker and rebalance the remaining load.'
+              : 'Clear the top blocker first, then rebalance the remaining incomplete work across owners before adding more scope.',
       };
     }
   }
@@ -134,8 +161,34 @@ function buildPlanningQuestionSummary(
   }
 
   if (questionTheme === 'capacity') {
+    const throughputLoadRatio = derivedSignals.metrics.throughputLoadRatio;
+    const recentAverageCompletedIssues = derivedSignals.metrics.recentAverageCompletedIssues;
+    const throughputSampleSize = derivedSignals.metrics.throughputSampleSize;
     const loadShare = derivedSignals.metrics.maxAssigneeLoadShare;
     const leadOwner = planning?.workload?.owners[0] ?? null;
+    if (
+      throughputLoadRatio !== null &&
+      recentAverageCompletedIssues !== null &&
+      throughputSampleSize >= 2
+    ) {
+      const ratioPercent = Math.round(throughputLoadRatio * 100);
+      return {
+        summary:
+          throughputLoadRatio >= 1.25
+            ? `Yes. The sprint looks overcommitted: ${derivedSignals.metrics.incompleteIssues} issues remain, which is ${ratioPercent}% of the team's recent weekly completion pace.`
+            : 'No strong overcommitment signal shows up in recent delivery history, so the current risk looks more execution-specific than capacity-specific.',
+        evidence: [
+          `Current incomplete issues: ${derivedSignals.metrics.incompleteIssues}.`,
+          `Recent average completed issues: ${recentAverageCompletedIssues} across ${throughputSampleSize} project weeks.`,
+          `Current total sprint scope: ${derivedSignals.metrics.totalIssues}.`,
+        ],
+        recommendedNextStep:
+          throughputLoadRatio >= 1.25
+            ? 'Reduce scope first or add delivery capacity, because the remaining sprint load is above what this project has recently finished in a week.'
+            : 'Hold the current scope steady and focus on execution flow before assuming the team needs more capacity.',
+      };
+    }
+
     if (loadShare !== null && leadOwner) {
       const sharePercent = Math.round(loadShare * 100);
       return {
