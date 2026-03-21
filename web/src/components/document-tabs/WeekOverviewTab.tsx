@@ -8,6 +8,7 @@ import { useAssignableMembersQuery } from '@/hooks/useTeamMembersQuery';
 import { useActiveWeeksQuery } from '@/hooks/useWeeksQuery';
 import { apiPatch, apiDelete } from '@/lib/api';
 import type { DocumentTabProps } from '@/lib/document-tabs';
+import { WeekAnalyticsPanel } from '@/components/week';
 
 /**
  * SprintOverviewTab - Renders the sprint document in the UnifiedEditor
@@ -132,14 +133,21 @@ export default function SprintOverviewTab({ documentId, document }: DocumentTabP
   if (!user) return null;
 
   return (
-    <UnifiedEditor
-      document={unifiedDocument}
-      sidebarData={sidebarData}
-      onUpdate={handleUpdate}
-      onBack={handleBack}
-      backLabel="weeks"
-      onDelete={handleDelete}
-      showTypeSelector={false}
-    />
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border p-4">
+        <WeekAnalyticsPanel sprintId={documentId} />
+      </div>
+      <div className="min-h-0 flex-1">
+        <UnifiedEditor
+          document={unifiedDocument}
+          sidebarData={sidebarData}
+          onUpdate={handleUpdate}
+          onBack={handleBack}
+          backLabel="weeks"
+          onDelete={handleDelete}
+          showTypeSelector={false}
+        />
+      </div>
+    </div>
   );
 }

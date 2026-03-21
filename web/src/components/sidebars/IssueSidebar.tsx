@@ -14,6 +14,8 @@ interface Issue {
   id: string;
   state: string;
   priority: string;
+  story_points: number | null;
+  estimate_hours: number | null;
   estimate: number | null;
   assignee_id: string | null;
   assignee_name?: string | null;
@@ -232,8 +234,8 @@ export function IssueSidebar({
 
   // Legacy sprint change handler
   const handleSprintChange = async (sprintId: string | null) => {
-    if (sprintId && !issue.estimate) {
-      setSprintError('Please add an estimate before assigning to a week');
+    if (sprintId && !issue.story_points && !issue.estimate_hours && !issue.estimate) {
+      setSprintError('Please add story points or estimate hours before assigning to a week');
       return;
     }
     setSprintError(null);
@@ -371,7 +373,27 @@ export function IssueSidebar({
         </select>
       </PropertyRow>
 
-      <PropertyRow label="Estimate">
+      <PropertyRow label="Story Points">
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            step="1"
+            min="0"
+            placeholder="—"
+            aria-label="Story points"
+            value={issue.story_points ?? ''}
+            onChange={(e) => {
+              const value = e.target.value ? parseFloat(e.target.value) : null;
+              onUpdate({ story_points: value });
+              if (value) setSprintError(null);
+            }}
+            className="w-20 rounded bg-border px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+          />
+          <span className="text-xs text-muted">points</span>
+        </div>
+      </PropertyRow>
+
+      <PropertyRow label="Estimate Hours">
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -379,10 +401,10 @@ export function IssueSidebar({
             min="0"
             placeholder="—"
             aria-label="Estimate in hours"
-            value={issue.estimate ?? ''}
+            value={issue.estimate_hours ?? issue.estimate ?? ''}
             onChange={(e) => {
               const value = e.target.value ? parseFloat(e.target.value) : null;
-              onUpdate({ estimate: value });
+              onUpdate({ estimate_hours: value, estimate: value });
               if (value) setSprintError(null);
             }}
             className="w-20 rounded bg-border px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
@@ -537,4 +559,3 @@ export function IssueSidebar({
     </div>
   );
 }
-

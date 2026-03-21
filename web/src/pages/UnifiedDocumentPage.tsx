@@ -305,8 +305,38 @@ export function UnifiedDocumentPage() {
   // Handle update
   const handleUpdate = useCallback(async (updates: Partial<UnifiedDocument>) => {
     if (!id) return;
+    const issueFieldKeys = new Set([
+      'title',
+      'state',
+      'priority',
+      'story_points',
+      'estimate_hours',
+      'estimate',
+      'assignee_id',
+      'belongs_to',
+      'source',
+      'rejection_reason',
+    ]);
+    const updateKeys = Object.keys(updates);
+    const isIssueFieldUpdate =
+      document?.document_type === 'issue' &&
+      updateKeys.length > 0 &&
+      updateKeys.every((key) => issueFieldKeys.has(key));
+
+    if (isIssueFieldUpdate) {
+      const response = await apiPatch(`/api/issues/${id}`, updates as Partial<DocumentResponse>);
+      if (!response.ok) {
+        throw new Error('Failed to update issue');
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['document', id] }),
+        queryClient.invalidateQueries({ queryKey: issueKeys.lists() }),
+      ]);
+      return;
+    }
+
     await updateMutation.mutateAsync({ documentId: id, updates: updates as Partial<DocumentResponse> });
-  }, [updateMutation, id]);
+  }, [document?.document_type, id, issueKeys, queryClient, updateMutation]);
 
   // Handle delete
   const handleDelete = useCallback(async () => {
@@ -412,6 +442,8 @@ export function UnifiedDocumentPage() {
       ...(document.document_type === 'issue' && {
         state: (document.state as string) || 'backlog',
         priority: (document.priority as string) || 'medium',
+        story_points: (document.story_points as number | null) ?? null,
+        estimate_hours: (document.estimate_hours as number | null) ?? (document.estimate as number | null) ?? null,
         estimate: document.estimate as number | undefined,
         assignee_id: document.assignee_id as string | undefined,
         assignee_name: document.assignee_name as string | undefined,

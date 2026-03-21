@@ -30,6 +30,9 @@ export const TRACKED_FIELDS = [
   'priority',
   'assignee_id',
   'estimate',
+  'estimate_hours',
+  'story_points',
+  'sprint_id',
   'belongs_to',
 ];
 

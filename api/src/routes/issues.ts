@@ -12,6 +12,10 @@ import {
   type BelongsToEntry,
 } from '../utils/document-crud.js';
 import { broadcastToUser } from '../collaboration/index.js';
+import {
+  deriveStoryPointsFromEstimateHours,
+  ensureSprintAnalyticsSnapshot,
+} from '../utils/sprint-planning.js';
 
 type RouterType = ReturnType<typeof Router>;
 const router: RouterType = Router();
@@ -32,6 +36,9 @@ const createIssueSchema = z.object({
   priority: z.enum(['urgent', 'high', 'medium', 'low', 'none']).optional().default('medium'),
   assignee_id: z.string().uuid().optional().nullable(),
   belongs_to: z.array(belongsToEntrySchema).optional().default([]),
+  story_points: z.number().positive().nullable().optional(),
+  estimate_hours: z.number().positive().nullable().optional(),
+  estimate: z.number().positive().nullable().optional(),
   // Source for the issue (internal, external, or action_items for system-generated)
   source: z.enum(['internal', 'external', 'action_items']).optional().default('internal'),
   // Due date (ISO date string)
@@ -49,6 +56,8 @@ const updateIssueSchema = z.object({
   priority: z.enum(['urgent', 'high', 'medium', 'low', 'none']).optional(),
   assignee_id: z.string().uuid().optional().nullable(),
   belongs_to: z.array(belongsToEntrySchema).optional(),
+  story_points: z.number().positive().nullable().optional(),
+  estimate_hours: z.number().positive().nullable().optional(),
   estimate: z.number().positive().nullable().optional(),
   // Confirm closing parent with incomplete children (removes their parent association)
   confirm_orphan_children: z.boolean().optional(),
@@ -87,7 +96,9 @@ function extractIssueFromRow(row: any) {
     state: props.state || 'backlog',
     priority: props.priority || 'medium',
     assignee_id: props.assignee_id || null,
-    estimate: props.estimate ?? null,
+    story_points: props.story_points ?? null,
+    estimate_hours: props.estimate_hours ?? props.estimate ?? null,
+    estimate: props.estimate_hours ?? props.estimate ?? null,
     source: props.source || 'internal',
     rejection_reason: props.rejection_reason || null,
     // Accountability fields for action_items issues
@@ -603,12 +614,22 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       priority,
       assignee_id,
       belongs_to,
+      story_points,
+      estimate_hours,
+      estimate,
       source,
       due_date,
       is_system_generated,
       accountability_target_id,
       accountability_type,
     } = parsed.data;
+
+    const resolvedEstimateHours =
+      estimate_hours !== undefined ? estimate_hours : (estimate !== undefined ? estimate : null);
+    const resolvedStoryPoints =
+      story_points !== undefined
+        ? story_points
+        : deriveStoryPointsFromEstimateHours(resolvedEstimateHours);
 
     await client.query('BEGIN');
 
@@ -634,6 +655,9 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       priority: priority || 'medium',
       source: source || 'internal',
       assignee_id: assignee_id || null,
+      story_points: resolvedStoryPoints,
+      estimate_hours: resolvedEstimateHours,
+      estimate: resolvedEstimateHours,
       rejection_reason: null,
       // Accountability fields for action_items issues
       due_date: due_date || null,
@@ -661,6 +685,50 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       );
     }
 
+    const sprintAssociation = belongs_to.find((assoc) => assoc.type === 'sprint');
+    if (resolvedStoryPoints !== null) {
+      await logDocumentChange(
+        newIssueId,
+        'story_points',
+        null,
+        resolvedStoryPoints.toString(),
+        req.userId!,
+        undefined,
+        client
+      );
+    }
+    if (resolvedEstimateHours !== null) {
+      await logDocumentChange(
+        newIssueId,
+        'estimate_hours',
+        null,
+        resolvedEstimateHours.toString(),
+        req.userId!,
+        undefined,
+        client
+      );
+      await logDocumentChange(
+        newIssueId,
+        'estimate',
+        null,
+        resolvedEstimateHours.toString(),
+        req.userId!,
+        undefined,
+        client
+      );
+    }
+    if (sprintAssociation) {
+      await logDocumentChange(
+        newIssueId,
+        'sprint_id',
+        null,
+        sprintAssociation.id,
+        req.userId!,
+        undefined,
+        client
+      );
+    }
+
     await client.query('COMMIT');
 
     // Auto-complete sprint_issues accountability when first issue is created in a sprint
@@ -678,6 +746,8 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       if (issueCount === 1) {
         broadcastToUser(req.userId!, 'accountability:updated', { type: 'week_issues', targetId: sprintAssoc.id });
       }
+
+      await ensureSprintAnalyticsSnapshot(sprintAssoc.id, req.workspaceId!);
     }
 
     // Get the belongs_to associations with display info
@@ -745,9 +815,15 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     if (data.belongs_to) {
       const hasSprintAssociation = data.belongs_to.some(bt => bt.type === 'sprint');
       if (hasSprintAssociation) {
-        const effectiveEstimate = data.estimate !== undefined ? data.estimate : currentProps.estimate;
-        if (!effectiveEstimate) {
-          res.status(400).json({ error: 'Estimate is required before assigning to a week' });
+        const effectiveStoryPoints =
+          data.story_points !== undefined ? data.story_points : currentProps.story_points;
+        const effectiveEstimateHours =
+          data.estimate_hours !== undefined
+            ? data.estimate_hours
+            : (data.estimate !== undefined ? data.estimate : (currentProps.estimate_hours ?? currentProps.estimate));
+
+        if (!effectiveStoryPoints && !effectiveEstimateHours) {
+          res.status(400).json({ error: 'Story points or estimate hours are required before assigning to a week' });
           return;
         }
       }
@@ -837,9 +913,38 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       newProps.assignee_id = data.assignee_id;
       propsChanged = true;
     }
-    if (data.estimate !== undefined && data.estimate !== currentProps.estimate) {
-      changes.push({ field: 'estimate', oldValue: currentProps.estimate?.toString() || null, newValue: data.estimate?.toString() || null });
-      newProps.estimate = data.estimate;
+    if (data.story_points !== undefined && data.story_points !== currentProps.story_points) {
+      changes.push({
+        field: 'story_points',
+        oldValue: currentProps.story_points?.toString() || null,
+        newValue: data.story_points?.toString() || null,
+      });
+      newProps.story_points = data.story_points;
+      propsChanged = true;
+    }
+
+    const nextEstimateHours =
+      data.estimate_hours !== undefined
+        ? data.estimate_hours
+        : (data.estimate !== undefined ? data.estimate : undefined);
+    const currentEstimateHours = currentProps.estimate_hours ?? currentProps.estimate ?? null;
+
+    if (nextEstimateHours !== undefined && nextEstimateHours !== currentEstimateHours) {
+      changes.push({
+        field: 'estimate_hours',
+        oldValue: currentEstimateHours?.toString() || null,
+        newValue: nextEstimateHours?.toString() || null,
+      });
+      changes.push({
+        field: 'estimate',
+        oldValue: currentEstimateHours?.toString() || null,
+        newValue: nextEstimateHours?.toString() || null,
+      });
+      newProps.estimate_hours = nextEstimateHours;
+      newProps.estimate = nextEstimateHours;
+      if ((newProps.story_points === undefined || newProps.story_points === null) && nextEstimateHours) {
+        newProps.story_points = deriveStoryPointsFromEstimateHours(nextEstimateHours);
+      }
       propsChanged = true;
     }
 
@@ -921,6 +1026,14 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
           propsChanged = true;
         }
 
+        if ((oldSprintAssoc?.id ?? null) !== (newSprintAssoc?.id ?? null)) {
+          changes.push({
+            field: 'sprint_id',
+            oldValue: oldSprintAssoc?.id ?? null,
+            newValue: newSprintAssoc?.id ?? null,
+          });
+        }
+
         // Log belongs_to change
         changes.push({
           field: 'belongs_to',
@@ -993,11 +1106,15 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
     // Post-commit operations (non-transactional)
 
+    const impactedSprintIds = new Set<string>();
+
     // Check if a NEW sprint association was added and this is the first issue in that sprint
     if (belongsToChanged) {
       const oldSprintIds = oldBelongsTo.filter(bt => bt.type === 'sprint').map(bt => bt.id);
       const newSprintIds = newBelongsTo.filter(bt => bt.type === 'sprint').map(bt => bt.id);
       const addedSprintIds = newSprintIds.filter(sprintId => !oldSprintIds.includes(sprintId));
+      for (const sprintId of oldSprintIds) impactedSprintIds.add(sprintId);
+      for (const sprintId of newSprintIds) impactedSprintIds.add(sprintId);
 
       for (const sprintId of addedSprintIds) {
         const issueCountResult = await pool.query(
@@ -1011,6 +1128,25 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
           broadcastToUser(req.userId!, 'accountability:updated', { type: 'week_issues', targetId: sprintId });
         }
       }
+    }
+
+    if (
+      data.state !== undefined ||
+      data.story_points !== undefined ||
+      data.estimate_hours !== undefined ||
+      data.estimate !== undefined
+    ) {
+      const activeSprintIds = (belongsToChanged ? newBelongsTo : await getBelongsToAssociations(id))
+        .filter((assoc) => assoc.type === 'sprint')
+        .map((assoc) => assoc.id);
+
+      for (const sprintId of activeSprintIds) {
+        impactedSprintIds.add(sprintId);
+      }
+    }
+
+    for (const sprintId of impactedSprintIds) {
+      await ensureSprintAnalyticsSnapshot(sprintId, workspaceId);
     }
 
     const row = result.rows[0];

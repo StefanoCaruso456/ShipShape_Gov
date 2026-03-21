@@ -77,8 +77,14 @@ export const IssueResponseSchema = z.object({
   assignee_archived: z.boolean().optional().openapi({
     description: 'Whether the assigned user has been archived',
   }),
+  story_points: z.number().positive().nullable().openapi({
+    description: 'Story points used for sprint planning and burn tracking',
+  }),
+  estimate_hours: z.number().positive().nullable().openapi({
+    description: 'Estimate in hours used for capacity planning',
+  }),
   estimate: z.number().positive().nullable().openapi({
-    description: 'Time estimate in hours',
+    description: 'Legacy alias for estimate_hours',
   }),
   source: IssueSourceSchema,
   due_date: DateSchema.nullable().optional(),
@@ -122,6 +128,11 @@ export const CreateIssueSchema = z.object({
   belongs_to: z.array(BelongsToEntrySchema).optional().default([]).openapi({
     description: 'Associate with programs, projects, sprints, or parent issues',
   }),
+  story_points: z.number().positive().nullable().optional(),
+  estimate_hours: z.number().positive().nullable().optional(),
+  estimate: z.number().positive().nullable().optional().openapi({
+    description: 'Legacy alias for estimate_hours',
+  }),
   source: IssueSourceSchema.optional().default('internal'),
   due_date: DateSchema.optional().nullable(),
   is_system_generated: z.boolean().optional().default(false),
@@ -139,6 +150,8 @@ export const UpdateIssueSchema = z.object({
   priority: IssuePrioritySchema.optional(),
   assignee_id: UuidSchema.optional().nullable(),
   belongs_to: z.array(BelongsToEntrySchema).optional(),
+  story_points: z.number().positive().nullable().optional(),
+  estimate_hours: z.number().positive().nullable().optional(),
   estimate: z.number().positive().nullable().optional(),
   confirm_orphan_children: z.boolean().optional().openapi({
     description: 'Confirm closing parent issue with incomplete children',

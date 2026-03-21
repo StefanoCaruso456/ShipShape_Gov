@@ -47,6 +47,8 @@ interface IssueDocument extends BaseDocument {
   document_type: 'issue';
   state: string;
   priority: string;
+  story_points: number | null;
+  estimate_hours: number | null;
   estimate: number | null;
   assignee_id: string | null;
   assignee_name?: string | null;

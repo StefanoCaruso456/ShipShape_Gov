@@ -12,6 +12,24 @@ Add a planning foundation that lets Ship and FleetGraph answer:
 - is the team under-committed, over-committed, or staffed correctly?
 - do we need less scope, more capacity, or a dependency decision?
 
+## Current implementation status
+
+Implemented in code now:
+
+- issue-level `story_points`
+- issue-level `estimate_hours`
+- sprint commitment baseline snapshots on weeks
+- daily `sprint_analytics_snapshots`
+- `GET /api/weeks/:id/analytics`
+- burn-up / burn-down week charts in Ship
+
+Still to deepen later:
+
+- richer sprint history and history APIs
+- release-confidence rollups
+- roadmap-level planning views
+- deeper capacity and staffing forecasting
+
 ## Product Decision
 
 Use **story points** as the primary sprint planning unit.

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { StandupFeed } from '@/components/StandupFeed';
 import { IssuesList } from '@/components/IssuesList';
-import { WeekProgressGraph } from './WeekProgressGraph';
+import { WeekAnalyticsPanel } from './WeekAnalyticsPanel';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '';
 
@@ -28,6 +28,8 @@ export interface WeekIssue {
   assignee_archived?: boolean;
   display_id: string;
   sprint_ref_id: string | null;
+  story_points: number | null;
+  estimate_hours: number | null;
   estimate: number | null;
 }
 
@@ -82,34 +84,6 @@ export function WeekDetailView({
     return () => { cancelled = true; };
   }, [sprintId]);
 
-  // Calculate estimates
-  const sprintEstimate = issues.reduce((sum, issue) => sum + (issue.estimate || 0), 0);
-  const completedEstimate = issues
-    .filter(issue => issue.state === 'done')
-    .reduce((sum, issue) => sum + (issue.estimate || 0), 0);
-
-  // Compute sprint dates from sprint_number
-  const computeSprintDates = (sprintNumber: number, workspaceStartDate: string) => {
-    const baseDate = new Date(workspaceStartDate);
-    const sprintDuration = 7; // 1 week
-
-    const startDate = new Date(baseDate);
-    startDate.setDate(startDate.getDate() + (sprintNumber - 1) * sprintDuration);
-
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + sprintDuration - 1);
-
-    const now = new Date();
-    let status: 'planning' | 'active' | 'completed' = 'planning';
-    if (now >= startDate && now <= endDate) {
-      status = 'active';
-    } else if (now > endDate) {
-      status = 'completed';
-    }
-
-    return { startDate: startDate.toISOString(), endDate: endDate.toISOString(), status };
-  };
-
   if (loading || !sprint) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -117,11 +91,6 @@ export function WeekDetailView({
       </div>
     );
   }
-
-  const { startDate, endDate, status } = computeSprintDates(
-    sprint.sprint_number,
-    sprint.workspace_sprint_start_date
-  );
 
   const progress = sprint.issue_count > 0
     ? Math.round((sprint.completed_count / sprint.issue_count) * 100)
@@ -177,17 +146,7 @@ export function WeekDetailView({
           {/* Sprint Progress - Fixed */}
           <div className="flex-shrink-0 border-b border-border p-4">
             <h3 className="text-sm font-medium text-foreground mb-3">Week Progress</h3>
-            {sprintEstimate > 0 ? (
-              <WeekProgressGraph
-                startDate={startDate}
-                endDate={endDate}
-                scopeHours={sprintEstimate}
-                completedHours={completedEstimate}
-                status={status}
-              />
-            ) : (
-              <div className="text-sm text-muted">No estimates yet</div>
-            )}
+            <WeekAnalyticsPanel sprintId={sprintId} compact />
             {/* Plans are now per-person weekly_plan documents, accessible via the Weeks tab */}
           </div>
 

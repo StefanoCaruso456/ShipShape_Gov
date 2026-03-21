@@ -63,6 +63,11 @@ Both modes use the same graph.
   - workload concentration
   - throughput gap vs recent delivery history
   - staffing pressure from current project allocation
+- issue-level story points and estimate hours
+- sprint commitment baseline snapshots
+- daily sprint analytics snapshots
+- week analytics endpoint with burn-up / burn-down series
+- burn-up / burn-down charts on week surfaces
 
 ### Not implemented yet
 
@@ -192,6 +197,12 @@ Started the planning-intelligence expansion:
 - capacity-style questions can now answer whether the sprint looks overcommitted relative to recent delivery history
 - staffing-style questions can now answer whether the sprint load looks thin relative to the currently allocated team
 - blocker questions can now answer whether blocked work appears to be waiting on another decision or work item
+- Ship now has the first Jira-like sprint planning foundation:
+  - story points
+  - estimate hours
+  - commitment snapshots
+  - daily analytics snapshots
+  - burn-up / burn-down week charts
 
 ### Phase 9
 
