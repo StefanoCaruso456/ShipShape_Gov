@@ -127,11 +127,14 @@ Phase 2 implementation is complete and awaiting merge.
 
 Phase 3 implementation is complete and stacked behind Phase 2.
 
+Phase 4 implementation is complete and stacked behind Phase 3.
+
 See:
 
 - [phase-1-answer-modes-and-response-contract.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-1-answer-modes-and-response-contract.md)
 - [phase-2-my-week-execution-depth.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-2-my-week-execution-depth.md)
 - [phase-3-issues-surface-execution-reasoning.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-3-issues-surface-execution-reasoning.md)
+- [phase-4-conversational-questioning.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-execution-assistant/phase-4-conversational-questioning.md)
 
 ## Current Status
 
@@ -152,6 +155,13 @@ Phase 2 status:
 - production status: not live yet
 
 Phase 3 status:
+
+- implementation status: complete
+- verification status: passed
+- merge-to-main status: pending
+- production status: not live yet
+
+Phase 4 status:
 
 - implementation status: complete
 - verification status: passed
