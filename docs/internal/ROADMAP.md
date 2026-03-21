@@ -73,8 +73,13 @@ The roadmap work that still adds new product value is:
    - next expansion:
      - deeper capacity and throughput history
      - scope creep and burn trends
+     - Jira-like story-point estimation and sprint analytics
      - richer dependency and release confidence
      - roadmap and staffing intelligence
+
+Planning telemetry blueprint:
+
+- [story-points-burn-tracking-plan.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/story-points-burn-tracking-plan.md)
 
 The earlier phases remain important because they explain how FleetGraph was built, but they are already absorbed into the current product. We should only reopen them when we need to extend or harden an existing capability.
 
