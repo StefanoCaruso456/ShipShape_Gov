@@ -80,6 +80,16 @@ export function inferFleetGraphQuestionTheme(question: string | null | undefined
   }
 
   if (
+    normalized.includes('capacity') ||
+    normalized.includes('overloaded') ||
+    normalized.includes('overcommit') ||
+    normalized.includes('bandwidth') ||
+    normalized.includes('staffing')
+  ) {
+    return 'capacity';
+  }
+
+  if (
     normalized.includes('scope') ||
     normalized.includes('added') ||
     normalized.includes('change')

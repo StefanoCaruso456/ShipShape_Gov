@@ -108,6 +108,59 @@ function createSprintContextResponses(
       existing_review: null,
       clarifying_questions_context: [],
     },
+    [`/api/weeks/${weekId}/issues`]: [
+      {
+        id: 'issue-1',
+        title: 'Issue 1',
+        state: 'done',
+        priority: 'high',
+        ticket_number: 1,
+        display_id: '#1',
+        assignee_id: 'owner-1',
+        assignee_name: 'Owner 1',
+        estimate: 3,
+      },
+      {
+        id: 'issue-2',
+        title: 'Issue 2',
+        state: 'done',
+        priority: 'high',
+        ticket_number: 2,
+        display_id: '#2',
+        assignee_id: 'owner-2',
+        assignee_name: 'Owner 2',
+        estimate: 3,
+      },
+      {
+        id: 'issue-3',
+        title: 'Issue 3',
+        state: 'in_progress',
+        priority: 'medium',
+        ticket_number: 3,
+        display_id: '#3',
+        assignee_id: 'owner-1',
+        assignee_name: 'Owner 1',
+        estimate: 2,
+      },
+      {
+        id: 'issue-4',
+        title: 'Issue 4',
+        state: 'in_progress',
+        priority: 'medium',
+        ticket_number: 4,
+        display_id: '#4',
+        assignee_id: 'owner-2',
+        assignee_name: 'Owner 2',
+        estimate: 2,
+      },
+    ],
+    [`/api/weeks/${weekId}/scope-changes`]: {
+      originalScope: 10,
+      currentScope: 10,
+      scopeChangePercent: 0,
+      sprintStartDate: '2026-03-15T00:00:00.000Z',
+      scopeChanges: [],
+    },
   };
 }
 
@@ -173,12 +226,14 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.expandedScope.projectId).toBe(projectId);
     expect(result.activeView?.entity.type).toBe('project');
     expect(result.fetched.entity?.id).toBe(weekId);
-    expect(result.toolCalls).toHaveLength(2);
+    expect(result.toolCalls).toHaveLength(4);
     expect(result.toolCalls.map((trace) => trace.toolName)).toEqual([
       'get_surface_context',
       'get_sprint_snapshot',
+      'get_visible_issue_worklist',
+      'get_scope_change_signals',
     ]);
-    expect(result.telemetry.toolCallCount).toBe(2);
+    expect(result.telemetry.toolCallCount).toBe(4);
     expect(result.telemetry.toolFailureCount).toBe(0);
   });
 
@@ -246,12 +301,14 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.expandedScope.projectId).toBe(projectId);
     expect(result.activeView?.projectId).toBe(projectId);
     expect(result.fetched.entity?.id).toBe(weekId);
-    expect(result.toolCalls).toHaveLength(2);
+    expect(result.toolCalls).toHaveLength(4);
     expect(result.toolCalls.map((trace) => trace.toolName)).toEqual([
       'get_surface_context',
       'get_sprint_snapshot',
+      'get_visible_issue_worklist',
+      'get_scope_change_signals',
     ]);
-    expect(result.telemetry.toolCallCount).toBe(2);
+    expect(result.telemetry.toolCallCount).toBe(4);
     expect(result.telemetry.toolFailureCount).toBe(0);
   });
 

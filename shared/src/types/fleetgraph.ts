@@ -142,6 +142,7 @@ export type FleetGraphScrumSurface =
 export type FleetGraphQuestionTheme =
   | 'risk'
   | 'blockers'
+  | 'capacity'
   | 'scope'
   | 'status'
   | 'impact'
@@ -222,7 +223,10 @@ export type FleetGraphSignalKind =
   | 'missing_standup'
   | 'no_completed_work'
   | 'work_not_started'
-  | 'missing_review';
+  | 'missing_review'
+  | 'scope_growth'
+  | 'blocked_work'
+  | 'workload_concentration';
 
 export interface FleetGraphDerivedSignal {
   kind: FleetGraphSignalKind;
@@ -238,10 +242,13 @@ export interface FleetGraphDerivedMetrics {
   inProgressIssues: number;
   incompleteIssues: number;
   cancelledIssues: number;
+  blockedIssues?: number;
   standupCount: number;
   recentActivityCount: number;
   recentActiveDays: number;
   completionRate: number | null;
+  scopeChangePercent?: number | null;
+  maxAssigneeLoadShare?: number | null;
 }
 
 export interface FleetGraphDerivedSignals {
@@ -421,6 +428,49 @@ export interface FleetGraphOnDemandFetchedAccountability {
   } | null;
 }
 
+export interface FleetGraphOnDemandFetchedIssue {
+  id: string;
+  title: string;
+  state: string;
+  priority: string;
+  ticket_number: number;
+  display_id: string;
+  assignee_id: string | null;
+  assignee_name: string | null;
+  estimate: number | null;
+}
+
+export interface FleetGraphOnDemandFetchedScopeChange {
+  originalScope: number;
+  currentScope: number;
+  scopeChangePercent: number;
+  sprintStartDate: string;
+  scopeChanges: Array<{
+    timestamp: string;
+    scopeAfter: number;
+    changeType: 'added' | 'removed';
+    estimateChange: number;
+  }>;
+}
+
+export interface FleetGraphOnDemandFetchedWorkloadOwner {
+  assigneeId: string | null;
+  assigneeName: string | null;
+  totalIssues: number;
+  incompleteIssues: number;
+  blockedIssues: number;
+}
+
+export interface FleetGraphOnDemandFetchedPlanning {
+  issues: FleetGraphOnDemandFetchedIssue[];
+  scopeChanges: FleetGraphOnDemandFetchedScopeChange | null;
+  workload: {
+    owners: FleetGraphOnDemandFetchedWorkloadOwner[];
+    unassignedIssues: number;
+    maxIncompleteOwnerShare: number | null;
+  } | null;
+}
+
 export interface FleetGraphOnDemandFetchedPayloads {
   entity: FleetGraphOnDemandFetchedEntity | null;
   supporting: FleetGraphOnDemandFetchedSupporting | null;
@@ -439,6 +489,7 @@ export interface FleetGraphOnDemandFetchedPayloads {
     } | null;
     accountableId: string | null;
   } | null;
+  planning?: FleetGraphOnDemandFetchedPlanning | null;
 }
 
 export interface FleetGraphOnDemandExpandedScope {

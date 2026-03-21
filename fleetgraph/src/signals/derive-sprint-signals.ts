@@ -1,6 +1,7 @@
 import type { ApprovalTracking } from '@ship/shared';
 import type {
   FleetGraphActivitySnapshot,
+  FleetGraphPlanningSnapshot,
   FleetGraphDerivedSignal,
   FleetGraphDerivedSignals,
   FleetGraphSprintEntitySnapshot,
@@ -8,6 +9,9 @@ import type {
 } from '../types.js';
 
 const RECENT_ACTIVITY_WINDOW_DAYS = 3;
+const SCOPE_GROWTH_WARNING_PERCENT = 20;
+const SCOPE_GROWTH_ACTION_PERCENT = 40;
+const WORKLOAD_CONCENTRATION_WARNING_SHARE = 0.5;
 
 type ApprovalKey = 'plan_approval' | 'review_approval';
 
@@ -99,6 +103,7 @@ export function deriveSprintSignals(
     entity: FleetGraphSprintEntitySnapshot | null;
     activity: FleetGraphActivitySnapshot | null;
     accountability: FleetGraphSprintReviewContextSnapshot | null;
+    planning: FleetGraphPlanningSnapshot | null;
   },
   now: Date
 ): FleetGraphDerivedSignals {
@@ -111,11 +116,19 @@ export function deriveSprintSignals(
   const completedIssues = stats?.completed ?? 0;
   const inProgressIssues = stats?.in_progress ?? 0;
   const cancelledIssues = stats?.cancelled ?? 0;
+  const blockedIssues =
+    inputs.planning?.issues.filter((issue) => issue.state === 'blocked').length ?? 0;
   const incompleteIssues =
     issues?.incomplete_items.length ??
     Math.max(totalIssues - completedIssues - cancelledIssues, 0);
   const standupCount = inputs.accountability?.standups.length ?? 0;
   const completionRate = totalIssues > 0 ? completedIssues / totalIssues : null;
+  const scopeChangePercent =
+    inputs.planning?.scopeChanges?.scopeChangePercent ??
+    (stats?.planned_at_start && stats.planned_at_start > 0
+      ? Math.round(((stats.added_mid_sprint ?? 0) / stats.planned_at_start) * 100)
+      : null);
+  const maxAssigneeLoadShare = inputs.planning?.workload?.maxIncompleteOwnerShare ?? null;
   const { recentActivityCount, recentActiveDays } = getRecentActivityMetrics(inputs.activity, now);
 
   const metrics = {
@@ -124,10 +137,13 @@ export function deriveSprintSignals(
     inProgressIssues,
     incompleteIssues,
     cancelledIssues,
+    blockedIssues,
     standupCount,
     recentActivityCount,
     recentActiveDays,
     completionRate,
+    scopeChangePercent,
+    maxAssigneeLoadShare,
   };
 
   const signals: FleetGraphDerivedSignal[] = [];
@@ -221,6 +237,79 @@ export function deriveSprintSignals(
         [
           `Recent activity count is ${recentActivityCount}.`,
           `Recent active days is ${recentActiveDays}.`,
+        ]
+      )
+    );
+  }
+
+  if (
+    sprintStatus === 'active' &&
+    totalIssues > 0 &&
+    scopeChangePercent !== null &&
+    scopeChangePercent >= SCOPE_GROWTH_WARNING_PERCENT
+  ) {
+    const originalScope = inputs.planning?.scopeChanges?.originalScope ?? stats?.planned_at_start ?? 0;
+    const currentScope = inputs.planning?.scopeChanges?.currentScope ?? totalIssues;
+
+    signals.push(
+      createSignal(
+        sprintId,
+        'scope_growth',
+        scopeChangePercent >= SCOPE_GROWTH_ACTION_PERCENT ? 'action' : 'warning',
+        `Sprint scope has grown ${scopeChangePercent}% since the week started.`,
+        [
+          `Original sprint scope: ${originalScope}.`,
+          `Current sprint scope: ${currentScope}.`,
+          stats?.added_mid_sprint
+            ? `Issues added after start: ${stats.added_mid_sprint}.`
+            : 'Sprint scope-change history shows work was added after start.',
+        ]
+      )
+    );
+  }
+
+  if (sprintStatus === 'active' && blockedIssues > 0) {
+    const blockedTitles = inputs.planning?.issues
+      .filter((issue) => issue.state === 'blocked')
+      .slice(0, 2)
+      .map((issue) => issue.display_id ? `${issue.display_id} ${issue.title}` : issue.title) ?? [];
+
+    signals.push(
+      createSignal(
+        sprintId,
+        'blocked_work',
+        blockedIssues >= 2 ? 'action' : 'warning',
+        blockedIssues === 1
+          ? 'There is blocked work in the current sprint.'
+          : `${blockedIssues} sprint issues are currently blocked.`,
+        [
+          `Blocked issues: ${blockedIssues}.`,
+          ...blockedTitles,
+        ]
+      )
+    );
+  }
+
+  if (
+    sprintStatus === 'active' &&
+    incompleteIssues >= 4 &&
+    maxAssigneeLoadShare !== null &&
+    maxAssigneeLoadShare >= WORKLOAD_CONCENTRATION_WARNING_SHARE
+  ) {
+    const leadOwner = inputs.planning?.workload?.owners[0] ?? null;
+    const sharePercent = Math.round(maxAssigneeLoadShare * 100);
+    const leadOwnerLabel = leadOwner?.assigneeName ?? 'One assignee';
+
+    signals.push(
+      createSignal(
+        sprintId,
+        'workload_concentration',
+        sharePercent >= 70 ? 'action' : 'warning',
+        `${leadOwnerLabel} carries ${sharePercent}% of the incomplete sprint work.`,
+        [
+          `${leadOwnerLabel} owns ${leadOwner?.incompleteIssues ?? 0} incomplete issues.`,
+          `Incomplete sprint issues: ${incompleteIssues}.`,
+          `Unassigned issues: ${inputs.planning?.workload?.unassignedIssues ?? 0}.`,
         ]
       )
     );

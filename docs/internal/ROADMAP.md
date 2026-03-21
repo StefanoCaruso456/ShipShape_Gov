@@ -38,7 +38,7 @@ Fast current-state summary:
 | Phase 5: On-demand UI | complete | embedded week/project FleetGraph panels are live, plus My Week when one project is in scope |
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
-| Phase 8: Planning intelligence | later | expansion path after MVP |
+| Phase 8: Planning intelligence | in progress | first slice adds planning-aware sprint analysis for scope growth, blocked work, and workload concentration |
 | Phase 9: Evidence and submission | complete | shared LangSmith links are captured and the public CloudFront deployment is verified |
 
 ## Phase execution summary
@@ -63,10 +63,15 @@ This is the cleanest way to read the roadmap going forward. Each phase is here t
 The roadmap work that still adds new product value is:
 
 1. **Phase 8: Planning intelligence**
-   - capacity and throughput
-   - scope creep and burn trends
-   - dependency and release confidence
-   - roadmap and staffing intelligence
+   - first live slice:
+     - scope growth
+     - blocked work
+     - workload concentration
+   - next expansion:
+     - capacity and throughput
+     - scope creep and burn trends
+     - dependency and release confidence
+     - roadmap and staffing intelligence
 
 The earlier phases remain important because they explain how FleetGraph was built, but they are already absorbed into the current product. We should only reopen them when we need to extend or harden an existing capability.
 
@@ -588,6 +593,19 @@ A graph that only works on the happy path is not enough for this project or for 
 ### Goal
 
 Prepare FleetGraph to grow beyond execution drift into planning and portfolio intelligence.
+
+### Current progress
+
+- [x] fetched sprint issue worklist as planning evidence
+- [x] fetched sprint scope-change history as planning evidence
+- [x] added deterministic planning signals for:
+  - scope growth
+  - blocked work
+  - workload concentration
+- [x] added planning-aware reasoning for questions comparing scope, blockers, and capacity pressure
+- [ ] widen planning evidence into dependency-specific data
+- [ ] add true capacity and throughput history
+- [ ] add roadmap, release, and scenario-planning primitives
 
 ### What we plan to implement later
 

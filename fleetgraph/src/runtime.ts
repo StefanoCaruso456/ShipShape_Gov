@@ -32,6 +32,7 @@ export interface FleetGraphReasoningService {
   reasonAboutSprint(input: {
     activeViewRoute: string | null;
     question: string | null;
+    questionTheme: string | null;
     findingSummary: string | null;
     derivedSignals: {
       severity: string;
