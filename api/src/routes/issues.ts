@@ -13,6 +13,10 @@ import {
 } from '../utils/document-crud.js';
 import { broadcastToUser } from '../collaboration/index.js';
 import { listIssueDependencySignals } from '../services/issue-dependency-signals.js';
+import {
+  enqueueFleetGraphIssueMutationEvent,
+  scheduleFleetGraphProactiveEventProcessing,
+} from '../services/fleetgraph-proactive-events.js';
 
 type RouterType = ReturnType<typeof Router>;
 const router: RouterType = Router();
@@ -718,7 +722,23 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       );
     }
 
+    await enqueueFleetGraphIssueMutationEvent(
+      {
+        workspaceId: req.workspaceId!,
+        issueId: newIssueId,
+        actorId: req.userId ?? null,
+        eventKind: 'issue_created',
+        previous: {
+          state: null,
+          assigneeId: null,
+          sprintId: null,
+        },
+      },
+      client
+    );
+
     await client.query('COMMIT');
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Auto-complete sprint_issues accountability when first issue is created in a sprint
     const sprintAssociations = belongs_to.filter(bt => bt.type === 'sprint');
@@ -792,6 +812,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
     const existingIssue = existing.rows[0];
     const currentProps = existingIssue.properties || {};
+    const existingBelongsTo = await getBelongsToAssociations(id);
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -919,12 +940,10 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
     // Handle belongs_to association updates via junction table
     let belongsToChanged = false;
-    let oldBelongsTo: BelongsToEntry[] = [];
+    let oldBelongsTo: BelongsToEntry[] = existingBelongsTo;
     let newBelongsTo: BelongsToEntry[] = [];
 
     if (data.belongs_to !== undefined) {
-      // Get existing associations for comparison
-      oldBelongsTo = await getBelongsToAssociations(id);
       newBelongsTo = data.belongs_to;
 
       // Compare to see if associations changed
@@ -1040,6 +1059,21 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       }
     }
 
+    await enqueueFleetGraphIssueMutationEvent(
+      {
+        workspaceId,
+        issueId: id,
+        actorId: userId,
+        eventKind: 'issue_updated',
+        previous: {
+          state: currentProps.state || null,
+          assigneeId: currentProps.assignee_id || null,
+          sprintId: oldBelongsTo.find((entry) => entry.type === 'sprint')?.id ?? null,
+        },
+      },
+      client
+    );
+
     // Fetch the updated issue
     const result = await client.query(
       `SELECT * FROM documents WHERE id = $1 AND workspace_id = $2`,
@@ -1047,6 +1081,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     );
 
     await client.query('COMMIT');
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Post-commit operations (non-transactional)
 
