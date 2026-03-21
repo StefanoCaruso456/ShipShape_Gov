@@ -12,6 +12,7 @@ import { logDocumentChange, getLatestDocumentFieldHistory } from '../utils/docum
 import { broadcastToUser } from '../collaboration/index.js';
 import { extractText } from '../utils/document-content.js';
 import {
+  enqueueFleetGraphSprintApprovalEvent,
   enqueueFleetGraphSprintMutationEvent,
   scheduleFleetGraphProactiveEventProcessing,
 } from '../services/fleetgraph-proactive-events.js';
@@ -3125,6 +3126,19 @@ router.post('/:id/request-plan-changes', authMiddleware, async (req: Request, re
       [JSON.stringify(newProps), id]
     );
 
+    await enqueueFleetGraphSprintApprovalEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_plan_changes_requested',
+      approval: {
+        previousState: currentProps.plan_approval?.state ?? null,
+        feedback: feedback.trim(),
+        requestedByUserId: userId,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
+
     // Notify the sprint owner that changes were requested
     const sprintOwnerId = sprint.sprint_owner_id;
     if (sprintOwnerId) {
@@ -3220,6 +3234,19 @@ router.post('/:id/request-retro-changes', authMiddleware, async (req: Request, r
        WHERE id = $2 AND document_type = 'sprint'`,
       [JSON.stringify(newProps), id]
     );
+
+    await enqueueFleetGraphSprintApprovalEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_review_changes_requested',
+      approval: {
+        previousState: currentProps.review_approval?.state ?? null,
+        feedback: feedback.trim(),
+        requestedByUserId: userId,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Notify the sprint owner that changes were requested
     const sprintOwnerId = sprint.sprint_owner_id;

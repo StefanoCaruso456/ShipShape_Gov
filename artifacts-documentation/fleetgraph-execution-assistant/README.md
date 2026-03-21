@@ -302,8 +302,8 @@ Phase 12 status:
 
 Phase 13 status:
 
-- implementation status: not started
-- verification status: not started
+- implementation status: in progress
+- verification status: passed for the current event-expansion slice
 - merge-to-main status: not started
 - production status: not live yet
 
