@@ -196,6 +196,7 @@ export type FleetGraphSignalKind =
   | 'missing_review'
   | 'scope_growth'
   | 'blocked_work'
+  | 'dependency_risk'
   | 'workload_concentration'
   | 'throughput_gap'
   | 'staffing_pressure';
@@ -215,6 +216,7 @@ export interface FleetGraphDerivedMetrics {
   incompleteIssues: number;
   cancelledIssues: number;
   blockedIssues?: number;
+  dependencyRiskIssues?: number | null;
   standupCount: number;
   recentActivityCount: number;
   recentActiveDays: number;

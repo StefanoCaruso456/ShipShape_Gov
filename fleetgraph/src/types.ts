@@ -178,6 +178,28 @@ export interface FleetGraphSprintIssueSnapshot {
   estimate: number | null;
 }
 
+export interface FleetGraphIssueDependencySnapshot {
+  issueId: string;
+  title: string;
+  displayId: string;
+  blockerNote: string | null;
+  blockerUpdatedAt: string | null;
+  blockerAuthorName: string | null;
+  parentIssue: {
+    id: string;
+    title: string;
+  } | null;
+  childIssueCount: number;
+  dependencyCueCount: number;
+  dependencyCueReasons: string[];
+}
+
+export interface FleetGraphDependencySnapshot {
+  blockedIssuesAnalyzed: number;
+  dependencyRiskIssues: number;
+  issues: FleetGraphIssueDependencySnapshot[];
+}
+
 export interface FleetGraphScopeChangeSnapshot {
   originalScope: number;
   currentScope: number;
@@ -221,6 +243,7 @@ export interface FleetGraphWorkloadOwnerSnapshot {
 export interface FleetGraphPlanningSnapshot {
   issues: FleetGraphSprintIssueSnapshot[];
   scopeChanges: FleetGraphScopeChangeSnapshot | null;
+  dependencySignals: FleetGraphDependencySnapshot | null;
   throughputHistory: {
     recentWeeks: FleetGraphProjectWeekSnapshot[];
   } | null;
@@ -261,6 +284,7 @@ export type FleetGraphSignalKind =
   | 'missing_review'
   | 'scope_growth'
   | 'blocked_work'
+  | 'dependency_risk'
   | 'workload_concentration'
   | 'throughput_gap'
   | 'staffing_pressure';
@@ -280,6 +304,7 @@ export interface FleetGraphDerivedMetrics {
   incompleteIssues: number;
   cancelledIssues: number;
   blockedIssues: number;
+  dependencyRiskIssues: number | null;
   standupCount: number;
   recentActivityCount: number;
   recentActiveDays: number;

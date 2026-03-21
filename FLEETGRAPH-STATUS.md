@@ -59,6 +59,7 @@ Both modes use the same graph.
 - planning-aware sprint signals for:
   - scope growth
   - blocked work
+  - dependency risk from issue updates and hierarchy
   - workload concentration
   - throughput gap vs recent delivery history
   - staffing pressure from current project allocation
@@ -180,14 +181,17 @@ Started the planning-intelligence expansion:
 - sprint scope-change history added as planning evidence
 - recent project week history added for throughput comparison
 - current project allocation grid added for staffing comparison
+- issue-iteration blocker notes and issue hierarchy added for dependency comparison
 - deterministic planning signals now include:
   - `scope_growth`
   - `blocked_work`
+  - `dependency_risk`
   - `workload_concentration`
   - `throughput_gap`
   - `staffing_pressure`
 - capacity-style questions can now answer whether the sprint looks overcommitted relative to recent delivery history
 - staffing-style questions can now answer whether the sprint load looks thin relative to the currently allocated team
+- blocker questions can now answer whether blocked work appears to be waiting on another decision or work item
 
 ### Phase 9
 

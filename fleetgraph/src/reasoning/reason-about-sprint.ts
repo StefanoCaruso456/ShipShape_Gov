@@ -56,6 +56,7 @@ function buildPlanningQuestionSummary(
   if (asksForPlanningComparison) {
     const scopeChangePercent = derivedSignals.metrics.scopeChangePercent;
     const blockedIssues = derivedSignals.metrics.blockedIssues;
+    const dependencyRiskIssues = derivedSignals.metrics.dependencyRiskIssues;
     const loadShare = derivedSignals.metrics.maxAssigneeLoadShare;
     const throughputLoadRatio = derivedSignals.metrics.throughputLoadRatio;
     const recentAverageCompletedIssues = derivedSignals.metrics.recentAverageCompletedIssues;
@@ -71,6 +72,13 @@ function buildPlanningQuestionSummary(
     }
     if (blockedIssues > 0) {
       drivers.push(`${blockedIssues} issues are blocked`);
+    }
+    if (dependencyRiskIssues !== null && dependencyRiskIssues > 0) {
+      drivers.push(
+        dependencyRiskIssues === 1
+          ? 'one blocked issue is waiting on another decision or work item'
+          : `${dependencyRiskIssues} blocked issues are waiting on another decision or work item`
+      );
     }
     if (loadShare !== null && loadShare >= 0.5 && leadOwner) {
       drivers.push(`${leadOwner.assigneeName ?? 'one assignee'} owns ${Math.round(loadShare * 100)}% of the incomplete work`);
@@ -103,6 +111,10 @@ function buildPlanningQuestionSummary(
             return 'The risk is coming primarily from scope growth, with delivery pressure reinforcing it.';
           }
 
+          if (dependencyRiskIssues !== null && dependencyRiskIssues > 0) {
+            return 'The current sprint risk is being driven by blocked work that appears to depend on another decision or work item, not just normal execution churn.';
+          }
+
           if (
             throughputLoadRatio !== null &&
             throughputLoadRatio >= 1.25 &&
@@ -127,6 +139,8 @@ function buildPlanningQuestionSummary(
         recommendedNextStep:
           scopeChangePercent !== null && scopeChangePercent >= 20
             ? 'Reduce late-added scope first, then clear the top blocker and rebalance the remaining incomplete work.'
+            : dependencyRiskIssues !== null && dependencyRiskIssues > 0
+              ? 'Identify the exact dependency owner, confirm when that decision or upstream work will move, and escalate the blocker today if it still has no committed date.'
             : throughputLoadRatio !== null && throughputLoadRatio >= 1.25
               ? 'Cut scope or add capacity before committing to more work, then clear the top blocker and rebalance the remaining load.'
               : 'Clear the top blocker first, then rebalance the remaining incomplete work across owners before adding more scope.',
@@ -161,6 +175,28 @@ function buildPlanningQuestionSummary(
 
   if (questionTheme === 'blockers') {
     const blockedIssues = derivedSignals.metrics.blockedIssues;
+    const dependencyRiskIssues = derivedSignals.metrics.dependencyRiskIssues;
+    const dependencyEvidence = planning?.dependencySignals?.issues ?? [];
+    if (dependencyRiskIssues !== null && dependencyRiskIssues > 0 && dependencyEvidence.length > 0) {
+      const topDependencyIssues = dependencyEvidence.slice(0, 2).map((issue) => {
+        const cueSummary = issue.dependencyCueReasons.slice(0, 2).join('; ');
+        return `${issue.displayId} ${issue.title}: ${cueSummary}`;
+      });
+
+      return {
+        summary:
+          dependencyRiskIssues === 1
+            ? 'The highest-risk blocker looks dependency-driven: a sprint issue is waiting on another decision or work item.'
+            : `There are ${dependencyRiskIssues} blocked sprint issues showing dependency-style blocker evidence, so the main risk is upstream movement rather than normal execution alone.`,
+        evidence: [
+          `Blocked issues with dependency evidence: ${dependencyRiskIssues}.`,
+          ...topDependencyIssues,
+        ],
+        recommendedNextStep:
+          'Name the exact dependency owner, confirm the unblock date today, and escalate immediately if the owner or decision is still unclear.',
+      };
+    }
+
     if (blockedIssues > 0) {
       const blockedTitles = planning?.issues
         .filter((issue) => issue.state === 'blocked')
