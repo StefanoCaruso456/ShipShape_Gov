@@ -20,6 +20,7 @@ import {
 import { recordFleetGraphFeedback } from '../services/fleetgraph-telemetry.js';
 import {
   listFleetGraphFindingsForUser,
+  getFleetGraphProactiveStatus,
   runFleetGraphProactiveSweep,
 } from '../services/fleetgraph-proactive.js';
 
@@ -384,6 +385,25 @@ router.post('/proactive/run', authMiddleware, async (req: Request, res: Response
   } catch (error) {
     console.error('FleetGraph proactive sweep error:', error);
     res.status(500).json({ error: 'Failed to run FleetGraph proactive sweep' });
+  }
+});
+
+router.get('/proactive/status', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+
+    if (!canRunProactiveSweep(req)) {
+      res.status(403).json({ error: 'Only workspace admins can view FleetGraph proactive status' });
+      return;
+    }
+
+    res.json(getFleetGraphProactiveStatus());
+  } catch (error) {
+    console.error('FleetGraph proactive status error:', error);
+    res.status(500).json({ error: 'Failed to load FleetGraph proactive status' });
   }
 });
 

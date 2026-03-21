@@ -503,3 +503,26 @@ export interface FleetGraphProactiveFinding {
   lastDetectedAt: string;
   lastNotifiedAt: string;
 }
+
+export type FleetGraphProactiveWorkerState =
+  | 'disabled'
+  | 'misconfigured'
+  | 'idle'
+  | 'sweeping';
+
+export interface FleetGraphProactiveStatusResponse {
+  workerState: FleetGraphProactiveWorkerState;
+  workerEnabled: boolean;
+  apiTokenConfigured: boolean;
+  intervalMs: number;
+  cooldownMs: number;
+  startedAt: string | null;
+  running: boolean;
+  lastSweepStartedAt: string | null;
+  lastSweepFinishedAt: string | null;
+  lastSweepError: string | null;
+  lastSweepWorkspaceCount: number | null;
+  lastSweepProcessedWeeks: number | null;
+  lastSweepSurfacedFindings: number | null;
+  lastSweepNewNotifications: number | null;
+}

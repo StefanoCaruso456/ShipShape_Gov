@@ -137,10 +137,45 @@ export function createRequestScopedShipApiClient(req: Request): FleetGraphShipAp
   });
 }
 
-export function createApiTokenShipApiClient(apiToken: string): FleetGraphShipApiClient {
-  return createHeaderScopedShipApiClient({
+export function createApiTokenShipApiClient(
+  apiToken: string,
+  options?: {
+    workspaceId?: string | null;
+  }
+): FleetGraphShipApiClient {
+  const client = createHeaderScopedShipApiClient({
     authHeader: `Bearer ${apiToken}`,
   });
+
+  const workspaceHeader =
+    typeof options?.workspaceId === 'string' && options.workspaceId.length > 0
+      ? { 'x-ship-workspace-id': options.workspaceId }
+      : null;
+
+  if (!workspaceHeader) {
+    return client;
+  }
+
+  return {
+    async get<T>(path: string, init?: RequestInit): Promise<T> {
+      return client.get<T>(path, {
+        ...init,
+        headers: {
+          ...(init?.headers ?? {}),
+          ...workspaceHeader,
+        },
+      });
+    },
+    async post<T>(path: string, body?: unknown, init?: RequestInit): Promise<T> {
+      return client.post<T>(path, body, {
+        ...init,
+        headers: {
+          ...(init?.headers ?? {}),
+          ...workspaceHeader,
+        },
+      });
+    },
+  };
 }
 
 export function createFleetGraphLogger(scope: string): FleetGraphLogger {
