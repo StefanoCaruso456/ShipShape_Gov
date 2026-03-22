@@ -18,7 +18,7 @@ import { programKeys } from '@/hooks/useProgramsQuery';
 import { useStandupStatusQuery } from '@/hooks/useStandupStatusQuery';
 import { useActionItemsQuery, actionItemsKeys } from '@/hooks/useActionItemsQuery';
 import { useTeamMembersQuery } from '@/hooks/useTeamMembersQuery';
-import { useMyWeekQuery } from '@/hooks/useMyWeekQuery';
+import { useAnalyticsSprintsQuery } from '@/hooks/useAnalyticsSprintsQuery';
 import { cn, getContrastTextColor } from '@/lib/cn';
 import { buildDocumentTree, DocumentTreeNode } from '@/lib/documentTree';
 import {
@@ -94,7 +94,7 @@ export function AppLayout() {
   // Check if user needs to post a standup today
   const { data: standupStatus } = useStandupStatusQuery();
   const standupDue = standupStatus?.due ?? false;
-  const { data: myWeekData } = useMyWeekQuery();
+  const { data: analyticsSprintsData = [] } = useAnalyticsSprintsQuery();
 
   // Check if user has pending action items (accountability tasks)
   const { data: actionItemsData } = useActionItemsQuery();
@@ -276,29 +276,14 @@ export function AppLayout() {
   const inlineWeekId = getInlineWeekIdFromPath(location.pathname);
   const analyticsView = parseAnalyticsView(new URLSearchParams(location.search).get('view')) as AnalyticsView;
 
-  const analyticsSprints = useMemo<AnalyticsSidebarSprint[]>(() => {
-    if (!myWeekData?.projects) {
-      return [];
-    }
-
-    const seen = new Set<string>();
-    const nextSprints: AnalyticsSidebarSprint[] = [];
-
-    for (const project of myWeekData.projects) {
-      if (!project.sprint_id || seen.has(project.sprint_id)) {
-        continue;
-      }
-
-      seen.add(project.sprint_id);
-      nextSprints.push({
-        id: project.sprint_id,
-        title: project.title,
-        subtitle: [project.program_name, project.sprint_title].filter(Boolean).join(' • '),
-      });
-    }
-
-    return nextSprints.sort((left, right) => left.title.localeCompare(right.title));
-  }, [myWeekData?.projects]);
+  const analyticsSprints = useMemo<AnalyticsSidebarSprint[]>(
+    () => analyticsSprintsData.map((sprint) => ({
+      id: sprint.id,
+      title: sprint.title,
+      subtitle: sprint.subtitle,
+    })),
+    [analyticsSprintsData]
+  );
 
   const resolvePreferredAnalyticsSprintId = useCallback((): string | null => {
     if (inlineWeekId) {

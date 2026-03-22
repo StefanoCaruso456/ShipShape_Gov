@@ -1,30 +1,18 @@
 import { useMemo } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { WeekAnalyticsPanel } from '@/components/week';
-import { useMyWeekQuery } from '@/hooks/useMyWeekQuery';
+import { useAnalyticsSprintsQuery } from '@/hooks/useAnalyticsSprintsQuery';
 import { buildAnalyticsPath, parseAnalyticsView } from '@/lib/analytics-route';
 
 export function AnalyticsPage() {
   const [searchParams] = useSearchParams();
   const requestedSprintId = searchParams.get('sprintId');
   const activeView = parseAnalyticsView(searchParams.get('view'));
-  const { data, isLoading, error } = useMyWeekQuery();
+  const { data: analyticsSprints = [], isLoading, error } = useAnalyticsSprintsQuery();
 
   const availableSprintIds = useMemo(() => {
-    const seen = new Set<string>();
-    const sprintIds: string[] = [];
-
-    for (const project of data?.projects ?? []) {
-      if (!project.sprint_id || seen.has(project.sprint_id)) {
-        continue;
-      }
-
-      seen.add(project.sprint_id);
-      sprintIds.push(project.sprint_id);
-    }
-
-    return sprintIds;
-  }, [data?.projects]);
+    return analyticsSprints.map((sprint) => sprint.id);
+  }, [analyticsSprints]);
 
   const fallbackSprintId = availableSprintIds[0] ?? null;
   const requestedSprintIsKnown =

@@ -238,7 +238,7 @@ Enhance the issue sidebar and editor with:
 
 Add a dedicated `Analytics` tab to the sprint surface and a first-class `/analytics` left-rail mode with dashboard views for:
 
-- reachable from `/analytics?sprintId=:sprintId` and from the unified week document route `/documents/:sprintId/analytics`
+- reachable from `/analytics?sprintId=:sprintId` using recent historical weeks and from the unified week document route `/documents/:sprintId/analytics`
 
 - `Sprint Report`
   - burn-down
