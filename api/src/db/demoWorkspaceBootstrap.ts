@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { DEMO_PROGRAM_TEMPLATES, DEMO_PROJECT_TEMPLATES } from './demoWorkspaceTemplates.js';
+import { buildIssuePlanningProperties, ensureIssuePlanningProperties } from './seedPlanningUtils.js';
 import { inferSeedIssueType } from './seedIssueTypes.js';
 import { createIssueTemplateContent, shouldPopulateIssueTemplate } from '../utils/issueContentTemplate.js';
 
@@ -45,16 +46,87 @@ interface DemoWorkspacePopulationResult {
 
 interface DemoIssueTemplate {
   title: string;
-  state: 'done' | 'in_progress' | 'todo' | 'backlog';
+  state: 'done' | 'in_progress' | 'todo' | 'backlog' | 'cancelled';
   priority: 'high' | 'medium' | 'low';
   estimate: number;
-  sprintOffset: -1 | 0 | 1 | null;
+  sprintOffset: number | null;
 }
 
 const EXPECTED_DEMO_PROGRAM_COUNT = DEMO_PROGRAM_TEMPLATES.length;
 const EXPECTED_DEMO_PROJECT_COUNT = DEMO_PROGRAM_TEMPLATES.length * DEMO_PROJECT_TEMPLATES.length;
+const PAST_WEEKS_TO_SEED = 6;
 
 const DEMO_ISSUE_TEMPLATES: DemoIssueTemplate[] = [
+  {
+    title: 'Frame the problem space',
+    state: 'done',
+    priority: 'high',
+    estimate: 3,
+    sprintOffset: -6,
+  },
+  {
+    title: 'Capture the baseline workflow',
+    state: 'done',
+    priority: 'medium',
+    estimate: 2,
+    sprintOffset: -6,
+  },
+  {
+    title: 'Document delivery milestones',
+    state: 'done',
+    priority: 'medium',
+    estimate: 3,
+    sprintOffset: -5,
+  },
+  {
+    title: 'Define implementation outline',
+    state: 'done',
+    priority: 'high',
+    estimate: 5,
+    sprintOffset: -5,
+  },
+  {
+    title: 'Prototype the user flow',
+    state: 'done',
+    priority: 'high',
+    estimate: 5,
+    sprintOffset: -4,
+  },
+  {
+    title: 'Review dependency handoffs',
+    state: 'todo',
+    priority: 'medium',
+    estimate: 3,
+    sprintOffset: -4,
+  },
+  {
+    title: 'Set up project structure',
+    state: 'done',
+    priority: 'high',
+    estimate: 4,
+    sprintOffset: -3,
+  },
+  {
+    title: 'Create implementation notes',
+    state: 'done',
+    priority: 'medium',
+    estimate: 3,
+    sprintOffset: -3,
+  },
+  {
+    title: 'Define coding standards',
+    state: 'done',
+    priority: 'low',
+    estimate: 2,
+    sprintOffset: -2,
+  },
+  {
+    title: 'Configure CI checks',
+    state: 'done',
+    priority: 'high',
+    estimate: 4,
+    sprintOffset: -2,
+  },
   {
     title: 'Define acceptance criteria',
     state: 'done',
@@ -425,7 +497,10 @@ export async function populateDemoWorkspaceData(
   let sprintsCreated = 0;
 
   for (const project of base.projects) {
-    const offsets = project.id === primaryProject?.id ? [-1, 0, 1] : [-1, 1];
+    const offsets =
+      project.templateName === 'Core Features'
+        ? Array.from({ length: PAST_WEEKS_TO_SEED + 2 }, (_, index) => index - PAST_WEEKS_TO_SEED)
+        : [0, 1];
     const projectSprintMap = new Map<number, { id: string; programId: string }>();
 
     for (const offset of offsets) {
@@ -549,6 +624,12 @@ export async function populateDemoWorkspaceData(
           existingIssue.rows[0].content as Record<string, unknown> | undefined,
           issueContent
         );
+        await ensureIssuePlanningProperties(
+          pool,
+          existingIssue.rows[0].id,
+          existingIssue.rows[0].properties as Record<string, unknown> | undefined,
+          issueTemplate.estimate
+        );
         continue;
       }
 
@@ -559,6 +640,10 @@ export async function populateDemoWorkspaceData(
           ? null
           : projectSprints.get(currentWeekNumber + issueTemplate.sprintOffset) ??
             (issueTemplate.sprintOffset === 0 ? projectSprints.get(currentWeekNumber + 1) ?? null : null);
+
+      if (issueTemplate.sprintOffset !== null && !sprintRecord) {
+        continue;
+      }
 
       const createdIssue = await pool.query(
         `INSERT INTO documents (workspace_id, document_type, title, content, properties, ticket_number, visibility, created_by)
@@ -574,7 +659,7 @@ export async function populateDemoWorkspaceData(
             issue_type: issueType,
             source: 'internal',
             assignee_id: ownerUserId,
-            estimate: issueTemplate.estimate,
+            ...buildIssuePlanningProperties(issueTemplate.estimate),
           }),
           nextTicketNumber,
           ownerUserId,
