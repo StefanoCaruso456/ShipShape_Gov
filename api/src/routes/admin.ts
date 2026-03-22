@@ -332,7 +332,7 @@ router.post('/workspaces/:id/archive', async (req: Request, res: Response): Prom
 router.get('/users', async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
-      `SELECT u.id, u.email, u.name, u.is_super_admin, u.created_at,
+      `SELECT u.id, u.email, u.name, u.is_super_admin, u.work_persona, u.created_at,
               COALESCE(
                 json_agg(
                   json_build_object(
@@ -354,6 +354,7 @@ router.get('/users', async (req: Request, res: Response): Promise<void> => {
       id: row.id,
       email: row.email,
       name: row.name,
+      workPersona: row.work_persona ?? null,
       isSuperAdmin: row.is_super_admin,
       createdAt: row.created_at,
       workspaces: row.workspaces,

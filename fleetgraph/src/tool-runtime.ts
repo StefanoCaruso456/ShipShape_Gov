@@ -125,6 +125,7 @@ export function createFleetGraphScrumToolContext(
     workspaceId: state.workspaceId,
     actorId: state.actor?.id ?? null,
     actorRole: state.actor?.role ?? null,
+    actorWorkPersona: state.actor?.workPersona ?? null,
     surface: inferScrumSurface(state),
     route: state.activeView?.route ?? state.prompt?.pageContext?.route ?? 'unknown-route',
     tab: state.activeView?.tab ?? null,

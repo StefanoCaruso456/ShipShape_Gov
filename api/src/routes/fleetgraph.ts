@@ -235,6 +235,7 @@ router.post('/on-demand', authMiddleware, async (req: Request, res: Response) =>
         id: authContext.userId,
         kind: 'user',
         role: req.workspaceRole ?? null,
+        workPersona: req.userWorkPersona ?? null,
       },
       activeView: parsed.data.active_view ?? null,
       contextEntity: parsed.data.active_view

@@ -293,7 +293,12 @@ describe('Reports-To Features', () => {
   })
 
   describe('GET /api/team/people includes reportsTo', () => {
-    it('should include reportsTo and role fields in response', async () => {
+    it('should include reportsTo, legacy role, and workPersona fields in response', async () => {
+      await pool.query(
+        `UPDATE users SET work_persona = 'engineering_manager' WHERE id = $1`,
+        [adminUserId]
+      )
+
       const res = await request(app)
         .get('/api/team/people')
         .set('Cookie', adminCookie)
@@ -307,6 +312,8 @@ describe('Reports-To Features', () => {
       expect(member).toBeDefined()
       expect(member).toHaveProperty('reportsTo')
       expect(member).toHaveProperty('role')
+      const admin = res.body.find((p: { id: string }) => p.id === adminPersonDocId)
+      expect(admin).toHaveProperty('workPersona', 'engineering_manager')
     })
 
     it('should return correct reportsTo value for a person', async () => {

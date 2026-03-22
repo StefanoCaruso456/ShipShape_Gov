@@ -257,6 +257,7 @@ router.post('/:token/accept', async (req: Request, res: Response): Promise<void>
           id: user.id,
           email: invite.email,
           name: user.name,
+          workPersona: null,
         },
         workspace: {
           id: invite.workspace_id,

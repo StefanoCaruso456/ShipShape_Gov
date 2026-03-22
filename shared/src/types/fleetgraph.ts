@@ -1,4 +1,5 @@
 import type { DocumentType } from './document.js';
+import type { WorkPersona } from './user.js';
 
 export type FleetGraphViewSurface =
   | 'document'
@@ -168,6 +169,7 @@ export interface FleetGraphScrumToolContext {
   workspaceId: string | null;
   actorId: string | null;
   actorRole: string | null;
+  actorWorkPersona: WorkPersona | null;
   surface: FleetGraphScrumSurface;
   route: string;
   tab: string | null;
