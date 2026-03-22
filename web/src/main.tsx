@@ -151,11 +151,13 @@ function DocumentRedirect() {
 
 /**
  * Redirect component for /programs/:id/* routes to /documents/:id/*
- * Preserves the tab portion of the path (issues, projects, sprints)
+ * Preserves the tab portion of the path and maps legacy "sprints" to "weeks".
  */
 function ProgramTabRedirect() {
   const { id, '*': splat } = useParams<{ id: string; '*': string }>();
-  const tab = splat || '';
+  const tab = splat?.startsWith('sprints')
+    ? splat.replace(/^sprints\b/, 'weeks')
+    : splat || '';
   const targetPath = tab ? `/documents/${id}/${tab}` : `/documents/${id}`;
   return <Navigate to={targetPath} replace />;
 }
