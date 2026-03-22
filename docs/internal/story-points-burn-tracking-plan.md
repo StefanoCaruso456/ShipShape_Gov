@@ -234,6 +234,8 @@ Enhance the issue sidebar and editor with:
 
 Add a dedicated `Analytics` tab to the sprint surface with dashboard views for:
 
+- reachable from the unified week document route: `/documents/:documentId/weeks/:weekId`
+
 - `Sprint Report`
   - burn-down
   - burn-up
@@ -422,6 +424,7 @@ What:
 - compact sprint snapshot on overview
 - dedicated `Analytics` tab on weeks
 - sprint report, velocity, forecast, flow, workload, and hygiene dashboards
+- program week timelines deep-link into `/documents/:programId/weeks/:weekId`
 
 Why:
 
