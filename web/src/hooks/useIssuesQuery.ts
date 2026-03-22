@@ -35,6 +35,7 @@ export interface Issue {
   state: string;
   priority: string;
   issue_type?: IssueType | null;
+  content?: Record<string, unknown> | null;
   ticket_number: number;
   display_id: string;
   assignee_id: string | null;

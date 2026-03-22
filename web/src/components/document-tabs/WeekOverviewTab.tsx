@@ -135,7 +135,7 @@ export default function SprintOverviewTab({ documentId, document }: DocumentTabP
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-border p-4">
-        <WeekAnalyticsPanel sprintId={documentId} />
+        <WeekAnalyticsPanel sprintId={documentId} compact />
       </div>
       <div className="min-h-0 flex-1">
         <UnifiedEditor

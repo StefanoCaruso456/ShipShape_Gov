@@ -26,7 +26,13 @@ Implemented in code now:
 - sprint commitment baseline snapshots on weeks
 - daily `sprint_analytics_snapshots`
 - `GET /api/weeks/:id/analytics`
-- burn-up / burn-down week charts in Ship
+- dedicated week analytics tab in Ship with:
+  - sprint report
+  - velocity
+  - forecast
+  - flow
+  - workload
+  - hygiene
 
 Still to deepen later:
 
@@ -224,16 +230,37 @@ Enhance the issue sidebar and editor with:
 - bulk estimate-hour editing
 - sprint assignment warning if story points are missing
 
-### 2. Sprint / Week analytics panel
+### 2. Sprint / Week analytics surface
 
-Add a dedicated planning area to the sprint surface with:
+Add a dedicated `Analytics` tab to the sprint surface with dashboard views for:
 
-- burn-down chart
-- burn-up chart
-- commitment summary
-- scope-change summary
-- velocity comparison
-- staffing and capacity summary
+- `Sprint Report`
+  - burn-down
+  - burn-up
+  - commitment summary
+  - scope-change summary
+- `Velocity`
+  - completion pace
+  - commitment reliability
+  - daily throughput
+- `Forecast`
+  - projected sprint finish
+  - forecast range
+  - carryover risk
+- `Flow`
+  - created vs resolved
+  - WIP pressure
+  - state mix
+  - cycle and lead time
+- `Workload`
+  - remaining load by owner
+  - concentration risk
+  - unassigned work
+- `Hygiene`
+  - story point coverage
+  - acceptance criteria coverage
+  - assignee coverage
+  - issue-type coverage
 
 ### 3. Burn chart behavior
 
@@ -392,10 +419,9 @@ Outcome:
 
 What:
 
-- burn-up chart
-- burn-down chart
-- planning summary chips
-- capacity summary
+- compact sprint snapshot on overview
+- dedicated `Analytics` tab on weeks
+- sprint report, velocity, forecast, flow, workload, and hygiene dashboards
 
 Why:
 

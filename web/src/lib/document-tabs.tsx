@@ -66,6 +66,7 @@ const ProgramProjectsTab = React.lazy(() => import('@/components/document-tabs/P
 const ProgramWeeksTab = React.lazy(() => import('@/components/document-tabs/ProgramWeeksTab'));
 
 const WeekOverviewTab = React.lazy(() => import('@/components/document-tabs/WeekOverviewTab'));
+const WeekAnalyticsTab = React.lazy(() => import('@/components/document-tabs/WeekAnalyticsTab'));
 const WeekPlanningTab = React.lazy(() => import('@/components/document-tabs/WeekPlanningTab'));
 const WeekIssuesTab = React.lazy(() => import('@/components/document-tabs/WeekIssuesTab'));
 const WeekReviewTab = React.lazy(() => import('@/components/document-tabs/WeekReviewTab'));
@@ -133,6 +134,11 @@ export const documentTabConfigs: Record<string, DocumentTabConfig[]> = {
       component: WeekOverviewTab,
     },
     {
+      id: 'analytics',
+      label: 'Analytics',
+      component: WeekAnalyticsTab,
+    },
+    {
       id: 'plan',
       label: 'Plan',
       component: WeekPlanningTab,
@@ -156,6 +162,11 @@ export const documentTabConfigs: Record<string, DocumentTabConfig[]> = {
       component: WeekOverviewTab,
     },
     {
+      id: 'analytics',
+      label: 'Analytics',
+      component: WeekAnalyticsTab,
+    },
+    {
       id: 'plan',
       label: 'Plan',
       component: WeekPlanningTab,
@@ -167,6 +178,11 @@ export const documentTabConfigs: Record<string, DocumentTabConfig[]> = {
       id: 'overview',
       label: 'Overview',
       component: WeekOverviewTab,
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      component: WeekAnalyticsTab,
     },
     {
       id: 'issues',
