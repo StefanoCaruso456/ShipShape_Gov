@@ -33,6 +33,18 @@ export const IssuePrioritySchema = z.enum([
 
 registry.register('IssuePriority', IssuePrioritySchema);
 
+export const IssueTypeSchema = z.enum([
+  'story',
+  'bug',
+  'task',
+  'spike',
+  'chore',
+]).openapi({
+  description: 'Issue work item classification',
+});
+
+registry.register('IssueType', IssueTypeSchema);
+
 export const IssueSourceSchema = z.enum([
   'internal',
   'external',
@@ -70,6 +82,7 @@ export const IssueResponseSchema = z.object({
   }),
   state: IssueStateSchema,
   priority: IssuePrioritySchema,
+  issue_type: IssueTypeSchema,
   assignee_id: UuidSchema.nullable(),
   assignee_name: z.string().nullable().openapi({
     description: 'Name of assigned user',
@@ -124,6 +137,7 @@ export const CreateIssueSchema = z.object({
   }),
   state: IssueStateSchema.optional().default('backlog'),
   priority: IssuePrioritySchema.optional().default('medium'),
+  issue_type: IssueTypeSchema.optional().default('task'),
   assignee_id: UuidSchema.optional().nullable(),
   belongs_to: z.array(BelongsToEntrySchema).optional().default([]).openapi({
     description: 'Associate with programs, projects, sprints, or parent issues',
@@ -148,6 +162,7 @@ export const UpdateIssueSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   state: IssueStateSchema.optional(),
   priority: IssuePrioritySchema.optional(),
+  issue_type: IssueTypeSchema.optional(),
   assignee_id: UuidSchema.optional().nullable(),
   belongs_to: z.array(BelongsToEntrySchema).optional(),
   story_points: z.number().positive().nullable().optional(),
@@ -256,6 +271,7 @@ registry.registerPath({
         example: 'backlog,todo,in_progress',
       }),
       priority: IssuePrioritySchema.optional(),
+      issue_type: IssueTypeSchema.optional(),
       assignee_id: z.string().optional().openapi({
         description: 'Filter by assignee ID. Use "null" or "unassigned" for unassigned issues.',
       }),

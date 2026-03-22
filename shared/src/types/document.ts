@@ -49,6 +49,9 @@ export type IssueState = 'triage' | 'backlog' | 'todo' | 'in_progress' | 'in_rev
 // Issue priorities
 export type IssuePriority = 'low' | 'medium' | 'high' | 'urgent';
 
+// Issue classification - keeps the unified issue model while distinguishing work item types
+export type IssueType = 'story' | 'bug' | 'task' | 'spike' | 'chore';
+
 // Issue source - provenance, never changes after creation
 export type IssueSource = 'internal' | 'external' | 'action_items';
 
@@ -73,6 +76,7 @@ export type WeekStatus = 'active' | 'upcoming' | 'completed';
 export interface IssueProperties {
   state: IssueState;
   priority: IssuePriority;
+  issue_type?: IssueType | null;
   assignee_id?: string | null;
   estimate?: number | null;
   estimate_hours?: number | null;

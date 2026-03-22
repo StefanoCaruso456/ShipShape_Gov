@@ -27,6 +27,7 @@ import { ConversionDialog } from '@/components/dialogs/ConversionDialog';
 import { BacklogPickerModal } from '@/components/dialogs/BacklogPickerModal';
 import { useSelectionPersistenceOptional } from '@/contexts/SelectionPersistenceContext';
 import { InlineWeekSelector } from '@/components/InlineWeekSelector';
+import type { IssueSource, IssueType } from '@ship/shared';
 
 // Re-export Issue type for convenience
 export type { Issue } from '@/contexts/IssuesContext';
@@ -36,6 +37,7 @@ export const ALL_COLUMNS: ColumnDefinition[] = [
   { key: 'id', label: 'ID', hideable: true },
   { key: 'title', label: 'Title', hideable: false }, // Cannot hide title
   { key: 'status', label: 'Status', hideable: true },
+  { key: 'type', label: 'Type', hideable: true },
   { key: 'source', label: 'Source', hideable: true },
   { key: 'program', label: 'Program', hideable: true },
   { key: 'sprint', label: 'Week', hideable: true },
@@ -64,6 +66,7 @@ export const STATE_LABELS: Record<string, string> = {
 const SOURCE_STYLES: Record<string, string> = {
   internal: 'bg-blue-500/20 text-blue-300',
   external: 'bg-purple-500/20 text-purple-300',
+  action_items: 'bg-amber-500/20 text-amber-300',
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -81,6 +84,30 @@ const PRIORITY_COLORS: Record<string, string> = {
   low: 'text-blue-500',
   none: 'text-muted',
 };
+
+const ISSUE_TYPE_LABELS: Record<IssueType, string> = {
+  story: 'User Story',
+  bug: 'Bug',
+  task: 'Task',
+  spike: 'Spike',
+  chore: 'Chore',
+};
+
+const ISSUE_TYPE_STYLES: Record<IssueType, string> = {
+  story: 'bg-emerald-500/20 text-emerald-300',
+  bug: 'bg-rose-500/20 text-rose-300',
+  task: 'bg-sky-500/20 text-sky-300',
+  spike: 'bg-violet-500/20 text-violet-300',
+  chore: 'bg-zinc-500/20 text-zinc-300',
+};
+
+const ISSUE_TYPE_OPTIONS: Array<{ value: IssueType; label: string }> = [
+  { value: 'story', label: ISSUE_TYPE_LABELS.story },
+  { value: 'bug', label: ISSUE_TYPE_LABELS.bug },
+  { value: 'task', label: ISSUE_TYPE_LABELS.task },
+  { value: 'spike', label: ISSUE_TYPE_LABELS.spike },
+  { value: 'chore', label: ISSUE_TYPE_LABELS.chore },
+];
 
 const STATUS_COLORS: Record<string, string> = {
   triage: 'bg-yellow-500/20 text-yellow-300',
@@ -354,6 +381,7 @@ export function IssuesList({
   const [programFilter, setProgramFilter] = useState<string | null>(null);
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [sprintFilter, setSprintFilter] = useState<string | null>(null);
+  const [issueTypeFilter, setIssueTypeFilter] = useState<IssueType | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; selection: UseSelectionReturn } | null>(null);
 
   // Conversion state
@@ -570,6 +598,10 @@ export function IssuesList({
       result = result.filter(issue => getSprintId(issue) === sprintFilter);
     }
 
+    if (issueTypeFilter) {
+      result = result.filter(issue => (issue.issue_type ?? 'task') === issueTypeFilter);
+    }
+
     // Apply state filter (or special filters)
     if (stateFilter === '__no_project__') {
       // Special filter: show issues without a project association
@@ -580,7 +612,7 @@ export function IssuesList({
     }
 
     return result;
-  }, [issues, stateFilter, programFilter, projectFilter, sprintFilter]);
+  }, [issues, stateFilter, programFilter, projectFilter, sprintFilter, issueTypeFilter]);
 
   const handleCreateIssue = useCallback(async () => {
     // When self-fetching with context, use internal creation
@@ -1119,9 +1151,25 @@ export function IssuesList({
     </div>
   ) : null;
 
+  const issueTypeFilterContent = (
+    <div className="w-40">
+      <Combobox
+        options={ISSUE_TYPE_OPTIONS}
+        value={issueTypeFilter}
+        onChange={(value) => setIssueTypeFilter((value as IssueType | null) ?? null)}
+        placeholder="All Types"
+        aria-label="Filter issues by type"
+        id={`${storageKeyPrefix}-issue-type-filter`}
+        allowClear={true}
+        clearLabel="All Types"
+      />
+    </div>
+  );
+
   // Combine all filter content
-  const combinedFilterContent = (programFilterContent || projectFilterContent || sprintFilterContent || toolbarContent) ? (
+  const combinedFilterContent = (issueTypeFilterContent || programFilterContent || projectFilterContent || sprintFilterContent || toolbarContent) ? (
     <div className="flex items-center gap-2">
+      {issueTypeFilterContent}
       {programFilterContent}
       {projectFilterContent}
       {sprintFilterContent}
@@ -1385,6 +1433,11 @@ function IssueRowContent({ issue, visibleColumns, sprints, onSprintChange, isOut
           <StatusBadge state={issue.state} />
         </td>
       )}
+      {visibleColumns.has('type') && (
+        <td className={cn("px-4 py-3", cellClass)} role="gridcell">
+          <IssueTypeBadge issueType={issue.issue_type ?? 'task'} />
+        </td>
+      )}
       {visibleColumns.has('source') && (
         <td className={cn("px-4 py-3", cellClass)} role="gridcell">
           <SourceBadge source={issue.source} />
@@ -1516,8 +1569,26 @@ export function PriorityBadge({ priority }: { priority: string }) {
   );
 }
 
-function SourceBadge({ source }: { source: 'internal' | 'external' }) {
-  const label = source === 'internal' ? 'Internal' : 'External';
+function IssueTypeBadge({ issueType }: { issueType: IssueType }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded px-2 py-0.5 text-xs font-medium whitespace-nowrap',
+        ISSUE_TYPE_STYLES[issueType]
+      )}
+    >
+      {ISSUE_TYPE_LABELS[issueType]}
+    </span>
+  );
+}
+
+function SourceBadge({ source }: { source: IssueSource }) {
+  const label =
+    source === 'internal'
+      ? 'Internal'
+      : source === 'external'
+        ? 'External'
+        : 'Action Item';
   return (
     <span
       className={cn(

@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS documents (
   -- Use document_associations table for all relationship queries.
 
   -- Type-specific properties stored as JSONB
-  -- Issue properties: state, priority, assignee_id, source, rejection_reason
+  -- Issue properties: state, priority, issue_type, assignee_id, source, rejection_reason
   -- Program/Project properties: color
   -- Sprint properties: start_date, end_date, sprint_status, plan
   -- Person properties: user_id (links to users.id), email, capacity_hours, skills

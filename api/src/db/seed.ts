@@ -648,6 +648,7 @@ async function seed() {
         const issueProperties: Record<string, unknown> = {
           state: issue.state,
           priority: issue.priority,
+          issue_type: 'task',
           source: 'internal',
           assignee_id: assignee.id,
           feedback_status: null,
@@ -720,6 +721,7 @@ async function seed() {
           const issueProperties = {
             state: template.state,
             priority: template.priority,
+            issue_type: 'task',
             source: 'internal',
             assignee_id: assignee.id,
             feedback_status: null,

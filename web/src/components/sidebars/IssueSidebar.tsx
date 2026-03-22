@@ -6,7 +6,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { isCascadeWarningError, type IncompleteChild } from '@/hooks/useIssuesQuery';
 import { apiPost, apiDelete } from '@/lib/api';
 import { formatDateRange } from '@/lib/date-utils';
-import type { BelongsTo, BelongsToType } from '@ship/shared';
+import type { BelongsTo, BelongsToType, IssueSource, IssueType } from '@ship/shared';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '';
 
@@ -14,13 +14,14 @@ interface Issue {
   id: string;
   state: string;
   priority: string;
+  issue_type?: IssueType | null;
   story_points: number | null;
   estimate_hours: number | null;
   estimate: number | null;
   assignee_id: string | null;
   assignee_name?: string | null;
   assignee_archived?: boolean;
-  source?: 'internal' | 'external';
+  source?: IssueSource;
   rejection_reason?: string | null;
   converted_from_id?: string | null;
   /** Multi-parent associations via junction table */
@@ -87,6 +88,14 @@ const PRIORITIES = [
   { value: 'medium', label: 'Medium' },
   { value: 'low', label: 'Low' },
   { value: 'none', label: 'No Priority' },
+];
+
+const ISSUE_TYPES: Array<{ value: IssueType; label: string }> = [
+  { value: 'story', label: 'User Story' },
+  { value: 'bug', label: 'Bug' },
+  { value: 'task', label: 'Task' },
+  { value: 'spike', label: 'Spike' },
+  { value: 'chore', label: 'Chore' },
 ];
 
 // Compute sprint dates from sprint number (1-week sprints)
@@ -351,6 +360,23 @@ export function IssueSidebar({
           {STATES.map((s) => (
             <option key={s.value} value={s.value}>
               {s.label}
+            </option>
+          ))}
+        </select>
+      </PropertyRow>
+
+      <PropertyRow label="Issue Type" highlighted={isHighlighted('issue_type')}>
+        <select
+          value={issue.issue_type ?? 'task'}
+          onChange={(e) => onUpdate({ issue_type: e.target.value as IssueType })}
+          aria-label="Issue Type"
+          className={`w-full rounded px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent ${
+            isHighlighted('issue_type') ? 'bg-amber-500/20 border border-amber-500' : 'bg-border'
+          }`}
+        >
+          {ISSUE_TYPES.map((type) => (
+            <option key={type.value} value={type.value}>
+              {type.label}
             </option>
           ))}
         </select>

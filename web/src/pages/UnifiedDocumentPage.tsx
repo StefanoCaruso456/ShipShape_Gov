@@ -23,6 +23,7 @@ import {
   type TabCounts,
 } from '@/lib/document-tabs';
 import { buildFleetGraphActiveViewContext, extractFleetGraphProjectIdFromDocument } from '@/lib/fleetgraph';
+import type { IssueType } from '@ship/shared';
 
 /**
  * UnifiedDocumentPage - Renders any document type via /documents/:id route
@@ -309,6 +310,7 @@ export function UnifiedDocumentPage() {
       'title',
       'state',
       'priority',
+      'issue_type',
       'story_points',
       'estimate_hours',
       'estimate',
@@ -442,6 +444,7 @@ export function UnifiedDocumentPage() {
       ...(document.document_type === 'issue' && {
         state: (document.state as string) || 'backlog',
         priority: (document.priority as string) || 'medium',
+        issue_type: ((document.issue_type as IssueType | null) ?? 'task'),
         story_points: (document.story_points as number | null) ?? null,
         estimate_hours: (document.estimate_hours as number | null) ?? (document.estimate as number | null) ?? null,
         estimate: document.estimate as number | undefined,
@@ -449,7 +452,7 @@ export function UnifiedDocumentPage() {
         assignee_name: document.assignee_name as string | undefined,
         program_id: programIdFromBelongsTo,
         sprint_id: sprintIdFromBelongsTo,
-        source: document.source as 'internal' | 'external' | undefined,
+        source: document.source as 'internal' | 'external' | 'action_items' | undefined,
         converted_from_id: document.converted_from_id as string | undefined,
         display_id: (document.ticket_number as number) ? `#${document.ticket_number}` : undefined,
         belongs_to: document.belongs_to as Array<{
