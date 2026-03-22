@@ -39,7 +39,7 @@ export function AnalyticsPage() {
     return (
       <div className="flex h-full items-center justify-center px-6">
         <div className="rounded-lg border border-border bg-border/20 p-4 text-sm text-muted">
-          Analytics are not available yet.
+          Analytics could not load right now.
         </div>
       </div>
     );
@@ -49,7 +49,7 @@ export function AnalyticsPage() {
     return (
       <div className="flex h-full items-center justify-center px-6">
         <div className="rounded-lg border border-border bg-border/20 p-4 text-sm text-muted">
-          No sprint analytics are available yet.
+          No recent weeks with scoped sprint work were found yet. Add issues with points or estimates to unlock sprint analytics.
         </div>
       </div>
     );

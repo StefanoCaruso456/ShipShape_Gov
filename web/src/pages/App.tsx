@@ -281,6 +281,9 @@ export function AppLayout() {
       id: sprint.id,
       title: sprint.title,
       subtitle: sprint.subtitle,
+      programName: sprint.programName,
+      status: sprint.status,
+      statusLabel: sprint.statusLabel,
     })),
     [analyticsSprintsData]
   );
