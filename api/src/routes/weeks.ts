@@ -293,6 +293,174 @@ function enumerateDates(startDate: Date, endDate: Date): string[] {
   return dates;
 }
 
+interface VelocityHistoryPoint {
+  sprintNumber: number;
+  sprintName: string;
+  committedStoryPoints: number;
+  completedStoryPoints: number;
+  currentStoryPoints: number;
+  committedEstimateHours: number;
+  completedEstimateHours: number;
+  currentEstimateHours: number;
+  issueCount: number;
+  completedIssueCount: number;
+}
+
+async function getProgramVelocityHistory(
+  sprintId: string,
+  sprintNumber: number,
+  workspaceId: string,
+  userId: string,
+  isAdmin: boolean,
+  historyWindow = 6
+): Promise<VelocityHistoryPoint[]> {
+  const programResult = await pool.query<{ program_id: string }>(
+    `SELECT da.related_id AS program_id
+     FROM document_associations da
+     JOIN documents d ON d.id = da.related_id
+     WHERE da.document_id = $1
+       AND da.relationship_type = 'program'
+       AND d.document_type = 'program'
+     LIMIT 1`,
+    [sprintId]
+  );
+
+  const programId = programResult.rows[0]?.program_id;
+  if (!programId) {
+    return [];
+  }
+
+  const sprintResult = await pool.query<{
+    id: string;
+    title: string;
+    sprint_number: number;
+    properties: Record<string, unknown> | null;
+  }>(
+    `SELECT d.id,
+            d.title,
+            (d.properties->>'sprint_number')::int AS sprint_number,
+            d.properties
+     FROM documents d
+     JOIN document_associations da
+       ON da.document_id = d.id
+      AND da.related_id = $1
+      AND da.relationship_type = 'program'
+     WHERE d.workspace_id = $2
+       AND d.document_type = 'sprint'
+       AND d.archived_at IS NULL
+       AND d.deleted_at IS NULL
+       AND ${VISIBILITY_FILTER_SQL('d', '$3', '$4')}
+       AND (d.properties->>'sprint_number')::int < $5
+     ORDER BY (d.properties->>'sprint_number')::int DESC`,
+    [programId, workspaceId, userId, isAdmin, sprintNumber]
+  );
+
+  if (sprintResult.rows.length === 0) {
+    return [];
+  }
+
+  const sprintIds = sprintResult.rows.map((row) => row.id);
+  const issueResult = await pool.query<{
+    sprint_id: string;
+    properties: Record<string, unknown> | null;
+  }>(
+    `SELECT da.related_id AS sprint_id, d.properties
+     FROM documents d
+     JOIN document_associations da
+       ON da.document_id = d.id
+      AND da.related_id = ANY($1)
+      AND da.relationship_type = 'sprint'
+     WHERE d.workspace_id = $2
+       AND d.document_type = 'issue'
+       AND d.archived_at IS NULL
+       AND d.deleted_at IS NULL
+       AND ${VISIBILITY_FILTER_SQL('d', '$3', '$4')}`,
+    [sprintIds, workspaceId, userId, isAdmin]
+  );
+
+  const metricsBySprint = new Map<
+    string,
+    {
+      currentStoryPoints: number;
+      completedStoryPoints: number;
+      currentEstimateHours: number;
+      completedEstimateHours: number;
+      issueCount: number;
+      completedIssueCount: number;
+    }
+  >();
+
+  for (const issueRow of issueResult.rows) {
+    const metrics = getIssuePlanningMetrics(issueRow.properties ?? {});
+    const state = (issueRow.properties?.state as string | undefined) ?? 'backlog';
+    const bucket = metricsBySprint.get(issueRow.sprint_id) ?? {
+      currentStoryPoints: 0,
+      completedStoryPoints: 0,
+      currentEstimateHours: 0,
+      completedEstimateHours: 0,
+      issueCount: 0,
+      completedIssueCount: 0,
+    };
+
+    bucket.currentStoryPoints += metrics.storyPoints;
+    bucket.currentEstimateHours += metrics.estimateHours;
+    bucket.issueCount += 1;
+
+    if (state === 'done') {
+      bucket.completedStoryPoints += metrics.storyPoints;
+      bucket.completedEstimateHours += metrics.estimateHours;
+      bucket.completedIssueCount += 1;
+    }
+
+    metricsBySprint.set(issueRow.sprint_id, bucket);
+  }
+
+  const historyBySprintNumber = new Map<number, VelocityHistoryPoint>();
+
+  for (const sprintRow of sprintResult.rows) {
+    const props = (sprintRow.properties ?? {}) as Record<string, unknown>;
+    const liveMetrics = metricsBySprint.get(sprintRow.id) ?? {
+      currentStoryPoints: 0,
+      completedStoryPoints: 0,
+      currentEstimateHours: 0,
+      completedEstimateHours: 0,
+      issueCount: 0,
+      completedIssueCount: 0,
+    };
+    const committedStoryPoints = Number(props.planned_story_points ?? liveMetrics.currentStoryPoints);
+    const committedEstimateHours = Number(
+      props.planned_estimate_hours ?? props.planned_estimate ?? liveMetrics.currentEstimateHours
+    );
+    const currentEntry = historyBySprintNumber.get(sprintRow.sprint_number) ?? {
+      sprintNumber: sprintRow.sprint_number,
+      sprintName: `Week ${sprintRow.sprint_number}`,
+      committedStoryPoints: 0,
+      completedStoryPoints: 0,
+      currentStoryPoints: 0,
+      committedEstimateHours: 0,
+      completedEstimateHours: 0,
+      currentEstimateHours: 0,
+      issueCount: 0,
+      completedIssueCount: 0,
+    };
+
+    currentEntry.committedStoryPoints += committedStoryPoints;
+    currentEntry.completedStoryPoints += liveMetrics.completedStoryPoints;
+    currentEntry.currentStoryPoints += liveMetrics.currentStoryPoints;
+    currentEntry.committedEstimateHours += committedEstimateHours;
+    currentEntry.completedEstimateHours += liveMetrics.completedEstimateHours;
+    currentEntry.currentEstimateHours += liveMetrics.currentEstimateHours;
+    currentEntry.issueCount += liveMetrics.issueCount;
+    currentEntry.completedIssueCount += liveMetrics.completedIssueCount;
+    historyBySprintNumber.set(sprintRow.sprint_number, currentEntry);
+  }
+
+  return Array.from(historyBySprintNumber.values())
+    .sort((left, right) => right.sprintNumber - left.sprintNumber)
+    .slice(0, historyWindow)
+    .reverse();
+}
+
 async function getSprintScopeChangePayload(
   sprintId: string,
   workspaceId: string,
@@ -1951,6 +2119,7 @@ router.get('/:id/analytics', authMiddleware, async (req: Request, res: Response)
 
     const snapshots = await getSprintAnalyticsSnapshots(pool, id);
     const scopeChanges = await getSprintScopeChangePayload(id, workspaceId, userId, isAdmin);
+    const velocityHistory = await getProgramVelocityHistory(id, sprintNumber, workspaceId, userId, isAdmin);
     const props = (sprintRow.properties ?? {}) as Record<string, unknown>;
     const livePlanningSnapshot = status === 'planning'
       ? await takeSprintPlanningSnapshot(pool, id)
@@ -2031,8 +2200,8 @@ router.get('/:id/analytics', authMiddleware, async (req: Request, res: Response)
       sprintId: id,
       sprintName: sprintRow.title,
       status,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
+      startDate: formatIsoDate(startDate),
+      endDate: formatIsoDate(endDate),
       snapshotTakenAt: props.snapshot_taken_at ?? null,
       baseline: {
         issueCount: baselineIssueCount,
@@ -2055,6 +2224,7 @@ router.get('/:id/analytics', authMiddleware, async (req: Request, res: Response)
         addedEstimateHours: totalEstimateHoursAdded,
         removedEstimateHours: totalEstimateHoursRemoved,
       },
+      velocityHistory,
       days,
       scopeChanges,
     });

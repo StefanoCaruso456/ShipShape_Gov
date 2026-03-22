@@ -25,6 +25,7 @@ Implemented in code now:
   - `Acceptance Criteria`
 - sprint commitment baseline snapshots on weeks
 - daily `sprint_analytics_snapshots`
+- at least six seeded historical weeks per program with structured issue data, issue type, story points, and estimates
 - `GET /api/weeks/:id/analytics`
 - dedicated week analytics tab in Ship with:
   - sprint report
@@ -33,6 +34,7 @@ Implemented in code now:
   - flow
   - workload
   - hygiene
+- program-level historical velocity series and average delivered work in the velocity dashboard
 
 Still to deepen later:
 
@@ -188,6 +190,7 @@ It should return:
 - commitment baseline
 - current scope
 - projected completion
+- recent multi-sprint velocity history so the current sprint can be compared against the team’s recent delivery average
 
 ### 2. Sprint event history endpoint
 
@@ -242,9 +245,10 @@ Add a dedicated `Analytics` tab to the sprint surface with dashboard views for:
   - commitment summary
   - scope-change summary
 - `Velocity`
-  - completion pace
+  - six-week completed vs committed trend
+  - average delivered work
   - commitment reliability
-  - daily throughput
+  - current scope vs recent team velocity
 - `Forecast`
   - projected sprint finish
   - forecast range

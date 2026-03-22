@@ -38,7 +38,7 @@ Fast current-state summary:
 | Phase 5: On-demand UI | complete | embedded week/project FleetGraph panels are live, plus My Week when one project is in scope |
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
-| Phase 8: Planning intelligence | in progress | current slices add planning-aware sprint analysis plus live Jira-style sprint planning foundations: story points, estimate hours, issue-type classification, structured issue briefs, commitment snapshots, daily analytics snapshots, a dedicated week analytics tab, and direct week-sidebar access to sprint report, velocity, forecast, flow, workload, and hygiene dashboards |
+| Phase 8: Planning intelligence | in progress | current slices add planning-aware sprint analysis plus live Jira-style sprint planning foundations: story points, estimate hours, issue-type classification, structured issue briefs, commitment snapshots, daily analytics snapshots, six seeded historical weeks per program, a dedicated week analytics tab, direct week-sidebar access, and sprint report / velocity / forecast / flow / workload / hygiene dashboards with multi-sprint velocity context |
 | Phase 9: Evidence and submission | complete | shared LangSmith links are captured and the public CloudFront deployment is verified |
 
 ## Phase execution summary
@@ -75,8 +75,10 @@ The roadmap work that still adds new product value is:
       - structured issue briefs with user story, context, and acceptance criteria
       - sprint commitment baseline snapshots
       - daily sprint analytics snapshots
+      - six seeded historical weeks per program with structured issue data
       - week analytics endpoint
       - dedicated week analytics tab with sprint report, velocity, forecast, flow, workload, and hygiene dashboards
+      - program-level six-week historical velocity trend and average delivered work
    - next expansion:
       - deeper capacity and throughput history
       - scope creep and richer burn trends
