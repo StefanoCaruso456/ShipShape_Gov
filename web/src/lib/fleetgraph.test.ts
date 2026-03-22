@@ -373,7 +373,7 @@ describe('buildFleetGraphDashboardActiveViewContext', () => {
 });
 
 describe('buildFleetGraphProactiveFindingToastCopy', () => {
-  it('uses role-aware copy and an issue-specific action label for team findings', () => {
+  it('uses severity-based copy and an issue-specific action label for issue findings', () => {
     const finding: FleetGraphProactiveFinding = {
       id: 'finding-1',
       workspaceId: 'workspace-1',
@@ -386,18 +386,13 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
       route: '/documents/issue-1',
       surface: 'issue',
       tab: null,
-      audienceRole: 'team_member',
-      audienceScope: 'team',
-      deliverySource: 'event',
-      deliveryReason: 'Shared with the sprint team because this affects shared sprint coordination or commitments.',
       signalKinds: ['issue_blocker_logged'],
       lastDetectedAt: '2026-03-22T10:00:00.000Z',
       lastNotifiedAt: '2026-03-22T10:00:00.000Z',
     };
 
     expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
-      message:
-        'FleetGraph shared Week 12: A blocker was logged on a critical issue. Shared with the sprint team because this affects shared sprint coordination or commitments.',
+      message: 'FleetGraph noticed Week 12: A blocker was logged on a critical issue.',
       actionLabel: 'Open Issue',
     });
   });
@@ -415,18 +410,13 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
       route: '/documents/week-2/review',
       surface: 'document',
       tab: 'review',
-      audienceRole: 'accountable',
-      audienceScope: 'individual',
-      deliverySource: 'sweep',
-      deliveryReason: 'Escalated to you as accountable because approval follow-up is needed.',
       signalKinds: ['changes_requested_review'],
       lastDetectedAt: '2026-03-22T10:00:00.000Z',
       lastNotifiedAt: '2026-03-22T10:00:00.000Z',
     };
 
     expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
-      message:
-        'FleetGraph escalated Week 13: Review follow-up is overdue. Escalated to you as accountable because approval follow-up is needed.',
+      message: 'FleetGraph flagged Week 13: Review follow-up is overdue.',
       actionLabel: 'Open Review',
     });
   });
