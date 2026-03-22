@@ -59,6 +59,7 @@ export async function initializeOnDemandContextNode(
         id: null,
         kind: 'user',
         role: null,
+        workPersona: null,
       },
       handoff: createHandoff(
         'initializeOnDemandContext',

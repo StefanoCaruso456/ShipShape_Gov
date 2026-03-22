@@ -141,17 +141,17 @@ async function seed() {
 
     // Team members to seed (dev user + 10 fake users)
     const teamMembers = [
-      { email: 'dev@ship.local', name: 'Dev User' },
-      { email: 'alice.chen@ship.local', name: 'Alice Chen' },
-      { email: 'bob.martinez@ship.local', name: 'Bob Martinez' },
-      { email: 'carol.williams@ship.local', name: 'Carol Williams' },
-      { email: 'david.kim@ship.local', name: 'David Kim' },
-      { email: 'emma.johnson@ship.local', name: 'Emma Johnson' },
-      { email: 'frank.garcia@ship.local', name: 'Frank Garcia' },
-      { email: 'grace.lee@ship.local', name: 'Grace Lee' },
-      { email: 'henry.patel@ship.local', name: 'Henry Patel' },
-      { email: 'iris.nguyen@ship.local', name: 'Iris Nguyen' },
-      { email: 'jack.brown@ship.local', name: 'Jack Brown' },
+      { email: 'dev@ship.local', name: 'Dev User', workPersona: 'product_manager' },
+      { email: 'alice.chen@ship.local', name: 'Alice Chen', workPersona: 'engineering_manager' },
+      { email: 'bob.martinez@ship.local', name: 'Bob Martinez', workPersona: 'engineering_manager' },
+      { email: 'carol.williams@ship.local', name: 'Carol Williams', workPersona: 'designer' },
+      { email: 'david.kim@ship.local', name: 'David Kim', workPersona: 'engineer' },
+      { email: 'emma.johnson@ship.local', name: 'Emma Johnson', workPersona: 'engineer' },
+      { email: 'frank.garcia@ship.local', name: 'Frank Garcia', workPersona: 'qa' },
+      { email: 'grace.lee@ship.local', name: 'Grace Lee', workPersona: 'ops_platform' },
+      { email: 'henry.patel@ship.local', name: 'Henry Patel', workPersona: 'engineer' },
+      { email: 'iris.nguyen@ship.local', name: 'Iris Nguyen', workPersona: 'stakeholder' },
+      { email: 'jack.brown@ship.local', name: 'Jack Brown', workPersona: 'engineer' },
     ];
 
     const passwordHash = await bcrypt.hash('admin123', 10);
@@ -165,9 +165,9 @@ async function seed() {
 
       if (!existingUser.rows[0]) {
         await pool.query(
-          `INSERT INTO users (email, password_hash, name, last_workspace_id)
-           VALUES ($1, $2, $3, $4)`,
-          [member.email, passwordHash, member.name, workspaceId]
+          `INSERT INTO users (email, password_hash, name, work_persona, last_workspace_id)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [member.email, passwordHash, member.name, member.workPersona, workspaceId]
         );
         usersCreated++;
       }
@@ -224,7 +224,16 @@ async function seed() {
         await pool.query(
           `INSERT INTO documents (workspace_id, document_type, title, properties, created_by)
            VALUES ($1, 'person', $2, $3, $4)`,
-          [workspaceId, user.name, JSON.stringify({ user_id: user.id, email: user.email }), user.id]
+          [
+            workspaceId,
+            user.name,
+            JSON.stringify({
+              user_id: user.id,
+              email: user.email,
+              work_persona: teamMembers.find((member) => member.email === user.email)?.workPersona ?? null,
+            }),
+            user.id,
+          ]
         );
         personDocsCreated++;
       }

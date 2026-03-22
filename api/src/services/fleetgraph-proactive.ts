@@ -444,6 +444,7 @@ export async function runFleetGraphProactiveSweep(options: {
         id: null,
         kind: 'service',
         role: 'fleetgraph',
+        workPersona: null,
       },
       contextEntity: {
         id: target.weekId,

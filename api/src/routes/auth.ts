@@ -32,7 +32,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
   try {
     // Find user with their workspace memberships (case-insensitive email lookup)
     const userResult = await pool.query(
-      `SELECT u.id, u.email, u.password_hash, u.name, u.is_super_admin, u.last_workspace_id
+      `SELECT u.id, u.email, u.password_hash, u.name, u.is_super_admin, u.last_workspace_id, u.work_persona
        FROM users u
        WHERE LOWER(u.email) = LOWER($1)`,
       [email]
@@ -197,6 +197,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
           id: user.id,
           email: user.email,
           name: user.name,
+          workPersona: user.work_persona ?? null,
           isSuperAdmin: user.is_super_admin,
         },
         currentWorkspace: workspaceId ? {
@@ -319,6 +320,7 @@ router.get('/me', authMiddleware, async (req: Request, res: Response): Promise<v
           id: req.userId,
           email: req.userEmail,
           name: req.userName,
+          workPersona: req.userWorkPersona ?? null,
           isSuperAdmin: req.isSuperAdmin === true,
         },
         currentWorkspace,
