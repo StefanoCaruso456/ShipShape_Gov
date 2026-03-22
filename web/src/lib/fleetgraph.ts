@@ -2,6 +2,7 @@ import type {
   DocumentType,
   FleetGraphActiveViewContext,
   FleetGraphFeedbackEventRequest,
+  FleetGraphFeedbackEventName,
   FleetGraphOnDemandRequest,
   FleetGraphOnDemandResumeRequest,
   FleetGraphOnDemandResponse,
@@ -247,6 +248,63 @@ export function resolveFleetGraphActiveView({
     currentDocumentType,
     pathname: currentRoute,
   });
+}
+
+export function buildFleetGraphProactiveFindingToastCopy(
+  finding: FleetGraphProactiveFinding
+): { message: string; actionLabel: string } {
+  const title = finding.title ?? 'Current week';
+  const prefix =
+    finding.audienceRole === 'accountable' || finding.audienceRole === 'manager'
+      ? 'FleetGraph escalated'
+      : finding.audienceRole === 'team_member'
+        ? 'FleetGraph shared'
+        : finding.severity === 'action'
+          ? 'FleetGraph flagged'
+          : finding.severity === 'warning'
+            ? 'FleetGraph noticed'
+            : 'FleetGraph surfaced';
+  const reason = finding.deliveryReason ? ` ${finding.deliveryReason}` : '';
+
+  return {
+    message: `${prefix} ${title}: ${finding.summary}${reason}`,
+    actionLabel: 'Open',
+  };
+}
+
+export function buildFleetGraphProactiveFindingFeedback(
+  finding: FleetGraphProactiveFinding,
+  eventName: Extract<FleetGraphFeedbackEventName, 'proactive_toast_shown' | 'proactive_toast_clicked'>
+): FleetGraphFeedbackEventRequest {
+  return {
+    event_name: eventName,
+    surface: {
+      route: finding.route,
+      activeViewSurface: finding.surface,
+      entityType: 'week',
+      pageContextKind: 'document',
+      tab: finding.tab,
+      projectId: finding.projectId,
+    },
+    route_action:
+      eventName === 'proactive_toast_clicked'
+        ? {
+            label: 'Open',
+            route: finding.route,
+            featured: true,
+            intent: 'inspect',
+          }
+        : null,
+    finding_context: {
+      finding_id: finding.id,
+      delivery_source: finding.deliverySource,
+      audience_role: finding.audienceRole,
+      audience_scope: finding.audienceScope,
+      delivery_reason: finding.deliveryReason,
+      severity: finding.severity,
+      signal_kinds: finding.signalKinds,
+    },
+  };
 }
 
 export async function invokeFleetGraphOnDemand(
