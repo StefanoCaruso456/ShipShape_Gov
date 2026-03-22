@@ -3,9 +3,11 @@ import {
   buildFleetGraphActiveViewContext,
   buildFleetGraphDashboardActiveViewContext,
   buildFleetGraphMyWeekActiveViewContext,
+  buildFleetGraphProactiveFindingToastCopy,
   extractFleetGraphProjectIdFromDocument,
   resolveFleetGraphActiveView,
 } from './fleetgraph';
+import type { FleetGraphProactiveFinding } from '@ship/shared';
 
 describe('buildFleetGraphActiveViewContext', () => {
   it('maps sprint documents to a week active-view entity', () => {
@@ -367,5 +369,65 @@ describe('buildFleetGraphDashboardActiveViewContext', () => {
       actionItems: [],
       projects: [],
     })).toBeNull();
+  });
+});
+
+describe('buildFleetGraphProactiveFindingToastCopy', () => {
+  it('uses role-aware copy and an issue-specific action label for team findings', () => {
+    const finding: FleetGraphProactiveFinding = {
+      id: 'finding-1',
+      workspaceId: 'workspace-1',
+      weekId: 'week-1',
+      projectId: 'project-1',
+      programId: null,
+      title: 'Week 12',
+      summary: 'A blocker was logged on a critical issue.',
+      severity: 'warning',
+      route: '/documents/issue-1',
+      surface: 'issue',
+      tab: null,
+      audienceRole: 'team_member',
+      audienceScope: 'team',
+      deliverySource: 'event',
+      deliveryReason: 'Shared with the sprint team because this affects shared sprint coordination or commitments.',
+      signalKinds: ['issue_blocker_logged'],
+      lastDetectedAt: '2026-03-22T10:00:00.000Z',
+      lastNotifiedAt: '2026-03-22T10:00:00.000Z',
+    };
+
+    expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
+      message:
+        'FleetGraph shared Week 12: A blocker was logged on a critical issue. Shared with the sprint team because this affects shared sprint coordination or commitments.',
+      actionLabel: 'Open Issue',
+    });
+  });
+
+  it('uses tab-specific action labels for review surfaces', () => {
+    const finding: FleetGraphProactiveFinding = {
+      id: 'finding-2',
+      workspaceId: 'workspace-1',
+      weekId: 'week-2',
+      projectId: 'project-2',
+      programId: 'program-1',
+      title: 'Week 13',
+      summary: 'Review follow-up is overdue.',
+      severity: 'action',
+      route: '/documents/week-2/review',
+      surface: 'document',
+      tab: 'review',
+      audienceRole: 'accountable',
+      audienceScope: 'individual',
+      deliverySource: 'sweep',
+      deliveryReason: 'Escalated to you as accountable because approval follow-up is needed.',
+      signalKinds: ['changes_requested_review'],
+      lastDetectedAt: '2026-03-22T10:00:00.000Z',
+      lastNotifiedAt: '2026-03-22T10:00:00.000Z',
+    };
+
+    expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
+      message:
+        'FleetGraph escalated Week 13: Review follow-up is overdue. Escalated to you as accountable because approval follow-up is needed.',
+      actionLabel: 'Open Review',
+    });
   });
 });
