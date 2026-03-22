@@ -500,6 +500,7 @@ export async function populateDemoWorkspaceData(
           JSON.stringify({
             state: sprintRecord ? issueTemplate.state : 'backlog',
             priority: issueTemplate.priority,
+            issue_type: 'task',
             source: 'internal',
             assignee_id: ownerUserId,
             estimate: issueTemplate.estimate,

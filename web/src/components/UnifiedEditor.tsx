@@ -18,7 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { PlanQualityBanner, RetroQualityBanner } from '@/components/PlanQualityBanner';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import type { Person } from '@/components/PersonCombobox';
-import type { BelongsTo } from '@ship/shared';
+import type { BelongsTo, IssueSource, IssueType } from '@ship/shared';
 
 export type DocumentType = 'wiki' | 'issue' | 'project' | 'sprint' | 'program' | 'person' | 'weekly_plan' | 'weekly_retro';
 
@@ -45,6 +45,7 @@ interface IssueDocument extends BaseDocument {
   document_type: 'issue';
   state: string;
   priority: string;
+  issue_type?: IssueType | null;
   story_points: number | null;
   estimate_hours: number | null;
   estimate: number | null;
@@ -53,7 +54,7 @@ interface IssueDocument extends BaseDocument {
   assignee_archived?: boolean;
   program_id: string | null;
   sprint_id: string | null;
-  source?: 'internal' | 'external';
+  source?: IssueSource;
   rejection_reason?: string | null;
   converted_from_id?: string | null;
   display_id?: string;

@@ -59,11 +59,12 @@ const updateDocumentSchema = z.object({
   // Issue-specific fields (stored in properties but accepted at top level for convenience)
   state: z.string().optional(),
   priority: z.string().optional(),
+  issue_type: z.enum(['story', 'bug', 'task', 'spike', 'chore']).optional(),
   story_points: z.number().nullable().optional(),
   estimate_hours: z.number().nullable().optional(),
   estimate: z.number().nullable().optional(),
   assignee_id: z.string().uuid().nullable().optional(),
-  source: z.enum(['internal', 'external']).optional(),
+  source: z.enum(['internal', 'external', 'action_items']).optional(),
   rejection_reason: z.string().nullable().optional(),
   belongs_to: z.array(z.object({
     id: z.string().uuid(),
@@ -143,6 +144,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
         // Flatten common properties for backwards compatibility
         state: props.state,
         priority: props.priority,
+        issue_type: props.issue_type ?? 'task',
         story_points: props.story_points,
         estimate_hours: props.estimate_hours ?? props.estimate,
         estimate: props.estimate_hours ?? props.estimate,
@@ -344,6 +346,7 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
       // Issue properties
       state: props.state,
       priority: props.priority,
+      issue_type: props.issue_type ?? 'task',
       story_points: props.story_points,
       estimate_hours: props.estimate_hours ?? props.estimate,
       estimate: props.estimate_hours ?? props.estimate,
@@ -714,6 +717,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     const topLevelProps: Record<string, unknown> = {};
     if (data.state !== undefined) topLevelProps.state = data.state;
     if (data.priority !== undefined) topLevelProps.priority = data.priority;
+    if (data.issue_type !== undefined) topLevelProps.issue_type = data.issue_type;
     if (data.story_points !== undefined) topLevelProps.story_points = data.story_points;
     if (data.estimate_hours !== undefined) topLevelProps.estimate_hours = data.estimate_hours;
     if (data.estimate !== undefined) topLevelProps.estimate = data.estimate;
@@ -1097,6 +1101,9 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       // Issue properties
       state: props.state,
       priority: props.priority,
+      issue_type: props.issue_type ?? 'task',
+      story_points: props.story_points,
+      estimate_hours: props.estimate_hours ?? props.estimate,
       estimate: props.estimate,
       assignee_id: props.assignee_id,
       source: props.source,
@@ -1346,6 +1353,10 @@ router.post('/:id/convert', authMiddleware, async (req: Request, res: Response) 
       ...(target_type === 'issue' && {
         state: props.state,
         priority: props.priority,
+        issue_type: props.issue_type ?? 'task',
+        story_points: props.story_points,
+        estimate_hours: props.estimate_hours ?? props.estimate,
+        estimate: props.estimate_hours ?? props.estimate,
         assignee_id: props.assignee_id,
         source: props.source,
       }),
@@ -1512,6 +1523,10 @@ router.post('/:id/undo-conversion', authMiddleware, async (req: Request, res: Re
       ...(restoredType === 'issue' && {
         state: props.state,
         priority: props.priority,
+        issue_type: props.issue_type ?? 'task',
+        story_points: props.story_points,
+        estimate_hours: props.estimate_hours ?? props.estimate,
+        estimate: props.estimate_hours ?? props.estimate,
         assignee_id: props.assignee_id,
         source: props.source,
       }),

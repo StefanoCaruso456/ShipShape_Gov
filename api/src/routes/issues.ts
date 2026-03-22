@@ -34,12 +34,14 @@ const belongsToEntrySchema = z.object({
 
 // Accountability types enum for validation
 const accountabilityTypes = ['standup', 'weekly_plan', 'weekly_review', 'week_start', 'week_issues', 'project_plan', 'project_retro'] as const;
+const issueTypes = ['story', 'bug', 'task', 'spike', 'chore'] as const;
 
 // Validation schemas
 const createIssueSchema = z.object({
   title: z.string().min(1).max(500),
   state: z.enum(['triage', 'backlog', 'todo', 'in_progress', 'in_review', 'done', 'cancelled']).optional().default('backlog'),
   priority: z.enum(['urgent', 'high', 'medium', 'low', 'none']).optional().default('medium'),
+  issue_type: z.enum(issueTypes).optional().default('task'),
   assignee_id: z.string().uuid().optional().nullable(),
   belongs_to: z.array(belongsToEntrySchema).optional().default([]),
   story_points: z.number().positive().nullable().optional(),
@@ -60,6 +62,7 @@ const updateIssueSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   state: z.enum(['triage', 'backlog', 'todo', 'in_progress', 'in_review', 'done', 'cancelled']).optional(),
   priority: z.enum(['urgent', 'high', 'medium', 'low', 'none']).optional(),
+  issue_type: z.enum(issueTypes).optional(),
   assignee_id: z.string().uuid().optional().nullable(),
   belongs_to: z.array(belongsToEntrySchema).optional(),
   story_points: z.number().positive().nullable().optional(),
@@ -113,6 +116,7 @@ function extractIssueFromRow(row: any) {
     title: row.title,
     state: props.state || 'backlog',
     priority: props.priority || 'medium',
+    issue_type: props.issue_type || 'task',
     assignee_id: props.assignee_id || null,
     story_points: props.story_points ?? null,
     estimate_hours: props.estimate_hours ?? props.estimate ?? null,
@@ -143,7 +147,7 @@ function extractIssueFromRow(row: any) {
 // List issues with filters
 router.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { state, priority, assignee_id, program_id, sprint_id, source, parent_filter } = req.query;
+    const { state, priority, issue_type, assignee_id, program_id, sprint_id, source, parent_filter } = req.query;
     const authContext = getAuthContext(req, res);
     if (!authContext) {
       return;
@@ -207,6 +211,11 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     if (priority) {
       query += ` AND d.properties->>'priority' = $${params.length + 1}`;
       params.push(priority as string);
+    }
+
+    if (issue_type) {
+      query += ` AND COALESCE(d.properties->>'issue_type', 'task') = $${params.length + 1}`;
+      params.push(issue_type as string);
     }
 
     if (assignee_id) {
@@ -674,6 +683,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       title,
       state,
       priority,
+      issue_type,
       assignee_id,
       belongs_to,
       story_points,
@@ -715,6 +725,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
     const properties = {
       state: state || 'backlog',
       priority: priority || 'medium',
+      issue_type: issue_type || 'task',
       source: source || 'internal',
       assignee_id: assignee_id || null,
       story_points: resolvedStoryPoints,
@@ -984,6 +995,17 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     if (data.priority !== undefined && data.priority !== currentProps.priority) {
       changes.push({ field: 'priority', oldValue: currentProps.priority || null, newValue: data.priority });
       newProps.priority = data.priority;
+      propsChanged = true;
+    }
+
+    const currentIssueType = currentProps.issue_type || 'task';
+    if (data.issue_type !== undefined && data.issue_type !== currentIssueType) {
+      changes.push({
+        field: 'issue_type',
+        oldValue: currentIssueType,
+        newValue: data.issue_type,
+      });
+      newProps.issue_type = data.issue_type;
       propsChanged = true;
     }
     if (data.assignee_id !== undefined && data.assignee_id !== currentProps.assignee_id) {
