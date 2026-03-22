@@ -38,7 +38,7 @@ Fast current-state summary:
 | Phase 5: On-demand UI | complete | embedded week/project FleetGraph panels are live, plus My Week when one project is in scope |
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
-| Phase 8: Planning intelligence | in progress | current slices add planning-aware sprint analysis plus live Jira-style sprint planning foundations: story points, estimate hours, commitment snapshots, daily analytics snapshots, and burn-up / burn-down week charts |
+| Phase 8: Planning intelligence | in progress | current slices add planning-aware sprint analysis plus live Jira-style sprint planning foundations: story points, estimate hours, issue-type classification, structured issue briefs, commitment snapshots, daily analytics snapshots, and burn-up / burn-down week charts |
 | Phase 9: Evidence and submission | complete | shared LangSmith links are captured and the public CloudFront deployment is verified |
 
 ## Phase execution summary
@@ -71,6 +71,8 @@ The roadmap work that still adds new product value is:
      - throughput gap vs recent delivery history
      - staffing pressure from current project allocation
       - story points and estimate hours on issues
+      - issue-type classification on unified issue documents
+      - structured issue briefs with user story, context, and acceptance criteria
       - sprint commitment baseline snapshots
       - daily sprint analytics snapshots
       - week analytics endpoint

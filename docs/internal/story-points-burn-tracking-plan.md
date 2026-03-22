@@ -18,6 +18,11 @@ Implemented in code now:
 
 - issue-level `story_points`
 - issue-level `estimate_hours`
+- seeded/demo issue `issue_type` diversification across `story`, `bug`, `task`, `spike`, and `chore`
+- default structured issue briefs for new issues:
+  - `User Story`
+  - `Context`
+  - `Acceptance Criteria`
 - sprint commitment baseline snapshots on weeks
 - daily `sprint_analytics_snapshots`
 - `GET /api/weeks/:id/analytics`
@@ -81,11 +86,39 @@ Each issue should have:
 
 - `story_points: number | null`
 - `estimate_hours: number | null`
+- `issue_type: 'story' | 'bug' | 'task' | 'spike' | 'chore'`
 
 Best practice:
 
 - `story_points` is required before assigning an issue to a sprint
 - `estimate_hours` is optional unless a team is using capacity planning
+- keep `document_type = 'issue'`; issue flavor belongs in `issue_type`, not a new document subtype
+- every issue should carry a lightweight structured brief in the body
+
+### 1a. Keep issue briefs structured across all issue types
+
+Every issue should open with a short structured brief, even when it is not a literal product story.
+
+Recommended body sections:
+
+- `User Story`
+- `Context`
+- `Acceptance Criteria`
+
+Guidance by type:
+
+- `story`
+  - use classic `As a / I want / so that`
+- `bug`
+  - still state the user or workflow impact, then define fix and verification criteria
+- `task`
+  - state the desired operational outcome and what "done" means
+- `spike`
+  - state the investigation goal, decision needed, and exit criteria
+- `chore`
+  - state the maintenance outcome, cleanup scope, and verification steps
+
+Acceptance criteria should not be limited to stories. They are the completion contract for all issue types. The wording changes by type, but the section should exist everywhere.
 
 ### 2. Add sprint commitment snapshot
 

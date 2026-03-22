@@ -135,6 +135,9 @@ export const CreateIssueSchema = z.object({
     description: 'Issue title',
     example: 'Fix login button not responding',
   }),
+  content: z.record(z.unknown()).optional().openapi({
+    description: 'Optional TipTap JSON content. If omitted, the API seeds a default issue brief template.',
+  }),
   state: IssueStateSchema.optional().default('backlog'),
   priority: IssuePrioritySchema.optional().default('medium'),
   issue_type: IssueTypeSchema.optional().default('task'),

@@ -528,7 +528,7 @@ function getDefaultPlaceholder(documentType: DocumentType): string {
     case 'wiki':
       return 'Start writing...';
     case 'issue':
-      return 'Add a description...';
+      return 'Capture the user story, context, and acceptance criteria...';
     case 'project':
       return 'Describe this project...';
     case 'sprint':

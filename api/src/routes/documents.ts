@@ -5,6 +5,7 @@ import { authMiddleware, getAuthContext } from '../middleware/auth.js';
 import { isWorkspaceAdmin } from '../middleware/visibility.js';
 import { handleVisibilityChange, handleDocumentConversion, invalidateDocumentCache, broadcastToUser } from '../collaboration/index.js';
 import { extractHypothesisFromContent, extractSuccessCriteriaFromContent, extractVisionFromContent, extractGoalsFromContent, checkDocumentCompleteness } from '../utils/extractHypothesis.js';
+import { createIssueTemplateContent } from '../utils/issueContentTemplate.js';
 import { loadContentFromYjsState } from '../utils/yjsConverter.js';
 
 type RouterType = ReturnType<typeof Router>;
@@ -556,13 +557,25 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
     // Default to 'workspace' visibility if not specified
     visibility = visibility || 'workspace';
 
+    const resolvedContent =
+      content ?? (document_type === 'issue' ? createIssueTemplateContent({ title }) : null);
+
     await client.query('BEGIN');
 
     const result = await client.query(
       `INSERT INTO documents (workspace_id, document_type, title, parent_id, properties, created_by, visibility, content)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [req.workspaceId, document_type, title, parent_id || null, JSON.stringify(properties || {}), req.userId, visibility, content ? JSON.stringify(content) : null]
+      [
+        req.workspaceId,
+        document_type,
+        title,
+        parent_id || null,
+        JSON.stringify(properties || {}),
+        req.userId,
+        visibility,
+        resolvedContent ? JSON.stringify(resolvedContent) : null,
+      ]
     );
 
     const newDoc = result.rows[0];

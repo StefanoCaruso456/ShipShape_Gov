@@ -7,6 +7,8 @@ import bcrypt from 'bcryptjs';
 import { loadProductionSecrets } from '../config/ssm.js';
 import { WELCOME_DOCUMENT_TITLE, WELCOME_DOCUMENT_CONTENT } from './welcomeDocument.js';
 import { DEMO_PROGRAM_TEMPLATES, DEMO_PROJECT_TEMPLATES } from './demoWorkspaceTemplates.js';
+import { inferSeedIssueType } from './seedIssueTypes.js';
+import { createIssueTemplateContent, shouldPopulateIssueTemplate } from '../utils/issueContentTemplate.js';
 
 const { Pool } = pg;
 
@@ -33,6 +35,45 @@ async function createAssociation(
      VALUES ($1, $2, $3, $4)
      ON CONFLICT (document_id, related_id, relationship_type) DO NOTHING`,
     [documentId, relatedId, relationshipType, JSON.stringify(metadata || { created_via: 'seed' })]
+  );
+}
+
+async function ensureIssueType(
+  pool: pg.Pool,
+  issueId: string,
+  properties: Record<string, unknown> | null | undefined,
+  issueType: string
+): Promise<void> {
+  if ((properties?.issue_type as string | undefined) === issueType) {
+    return;
+  }
+
+  await pool.query(
+    `UPDATE documents
+     SET properties = $1,
+         updated_at = NOW()
+     WHERE id = $2`,
+    [JSON.stringify({ ...(properties ?? {}), issue_type: issueType }), issueId]
+  );
+}
+
+async function ensureIssueContent(
+  pool: pg.Pool,
+  issueId: string,
+  content: Record<string, unknown> | null | undefined,
+  nextContent: Record<string, unknown>
+): Promise<void> {
+  if (!shouldPopulateIssueTemplate(content)) {
+    return;
+  }
+
+  await pool.query(
+    `UPDATE documents
+     SET content = $1,
+         yjs_state = NULL,
+         updated_at = NOW()
+     WHERE id = $2`,
+    [JSON.stringify(nextContent), issueId]
   );
 }
 
@@ -636,19 +677,28 @@ async function seed() {
 
       // Check if issue already exists (via junction table association to program)
       const existingIssue = await pool.query(
-        `SELECT d.id FROM documents d
+        `SELECT d.id, d.properties, d.content FROM documents d
          JOIN document_associations da ON da.document_id = d.id
            AND da.related_id = $2 AND da.relationship_type = 'program'
          WHERE d.workspace_id = $1 AND d.title = $3 AND d.document_type = 'issue'`,
         [workspaceId, shipCoreProgram.id, issue.title]
       );
 
+      const issueType = inferSeedIssueType({
+        title: issue.title,
+      });
+      const issueContent = createIssueTemplateContent({
+        title: issue.title,
+        issueType,
+        mode: 'filled',
+      });
+
       if (!existingIssue.rows[0]) {
         maxTickets[shipCoreProgram.id]!++;
         const issueProperties: Record<string, unknown> = {
           state: issue.state,
           priority: issue.priority,
-          issue_type: 'task',
+          issue_type: issueType,
           source: 'internal',
           assignee_id: assignee.id,
           feedback_status: null,
@@ -660,10 +710,16 @@ async function seed() {
         }
         // Create issue document without legacy program_id and sprint_id columns
         const issueResult = await pool.query(
-          `INSERT INTO documents (workspace_id, document_type, title, properties, ticket_number)
-           VALUES ($1, 'issue', $2, $3, $4)
+          `INSERT INTO documents (workspace_id, document_type, title, content, properties, ticket_number)
+           VALUES ($1, 'issue', $2, $3, $4, $5)
            RETURNING id`,
-          [workspaceId, issue.title, JSON.stringify(issueProperties), maxTickets[shipCoreProgram.id]]
+          [
+            workspaceId,
+            issue.title,
+            JSON.stringify(issueContent),
+            JSON.stringify(issueProperties),
+            maxTickets[shipCoreProgram.id],
+          ]
         );
         const issueId = issueResult.rows[0].id;
 
@@ -686,6 +742,19 @@ async function seed() {
         }
 
         issuesCreated++;
+      } else {
+        await ensureIssueType(
+          pool,
+          existingIssue.rows[0].id,
+          existingIssue.rows[0].properties as Record<string, unknown> | undefined,
+          issueType
+        );
+        await ensureIssueContent(
+          pool,
+          existingIssue.rows[0].id,
+          existingIssue.rows[0].content as Record<string, unknown> | undefined,
+          issueContent
+        );
       }
     }
 
@@ -709,19 +778,28 @@ async function seed() {
 
         // Check if issue already exists (via junction table association to program)
         const existingIssue = await pool.query(
-          `SELECT d.id FROM documents d
+          `SELECT d.id, d.properties, d.content FROM documents d
            JOIN document_associations da ON da.document_id = d.id
              AND da.related_id = $2 AND da.relationship_type = 'program'
            WHERE d.workspace_id = $1 AND d.title = $3 AND d.document_type = 'issue'`,
           [workspaceId, program.id, template.title]
         );
 
+        const issueType = inferSeedIssueType({
+          title: template.title,
+        });
+        const issueContent = createIssueTemplateContent({
+          title: template.title,
+          issueType,
+          mode: 'filled',
+        });
+
         if (!existingIssue.rows[0]) {
           maxTickets[program.id]!++;
           const issueProperties = {
             state: template.state,
             priority: template.priority,
-            issue_type: 'task',
+            issue_type: issueType,
             source: 'internal',
             assignee_id: assignee.id,
             feedback_status: null,
@@ -730,10 +808,16 @@ async function seed() {
           };
           // Create issue document without legacy program_id and sprint_id columns
           const issueResult = await pool.query(
-            `INSERT INTO documents (workspace_id, document_type, title, properties, ticket_number)
-             VALUES ($1, 'issue', $2, $3, $4)
+            `INSERT INTO documents (workspace_id, document_type, title, content, properties, ticket_number)
+             VALUES ($1, 'issue', $2, $3, $4, $5)
              RETURNING id`,
-            [workspaceId, template.title, JSON.stringify(issueProperties), maxTickets[program.id]]
+            [
+              workspaceId,
+              template.title,
+              JSON.stringify(issueContent),
+              JSON.stringify(issueProperties),
+              maxTickets[program.id],
+            ]
           );
           const issueId = issueResult.rows[0].id;
 
@@ -756,6 +840,19 @@ async function seed() {
           }
 
           issuesCreated++;
+        } else {
+          await ensureIssueType(
+            pool,
+            existingIssue.rows[0].id,
+            existingIssue.rows[0].properties as Record<string, unknown> | undefined,
+            issueType
+          );
+          await ensureIssueContent(
+            pool,
+            existingIssue.rows[0].id,
+            existingIssue.rows[0].content as Record<string, unknown> | undefined,
+            issueContent
+          );
         }
       }
     }

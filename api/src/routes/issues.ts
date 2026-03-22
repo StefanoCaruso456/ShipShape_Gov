@@ -16,6 +16,7 @@ import {
   deriveStoryPointsFromEstimateHours,
   ensureSprintAnalyticsSnapshot,
 } from '../utils/sprint-planning.js';
+import { createIssueTemplateContent } from '../utils/issueContentTemplate.js';
 import { listIssueDependencySignals } from '../services/issue-dependency-signals.js';
 import {
   enqueueFleetGraphIssueIterationEvent,
@@ -44,6 +45,7 @@ const createIssueSchema = z.object({
   issue_type: z.enum(issueTypes).optional().default('task'),
   assignee_id: z.string().uuid().optional().nullable(),
   belongs_to: z.array(belongsToEntrySchema).optional().default([]),
+  content: z.record(z.unknown()).optional(),
   story_points: z.number().positive().nullable().optional(),
   estimate_hours: z.number().positive().nullable().optional(),
   estimate: z.number().positive().nullable().optional(),
@@ -686,6 +688,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       issue_type,
       assignee_id,
       belongs_to,
+      content,
       story_points,
       estimate_hours,
       estimate,
@@ -739,11 +742,20 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       accountability_type: accountability_type || null,
     };
 
+    const issueContent = content ?? createIssueTemplateContent({ title });
+
     const result = await client.query(
-      `INSERT INTO documents (workspace_id, document_type, title, properties, ticket_number, created_by)
-       VALUES ($1, 'issue', $2, $3, $4, $5)
+      `INSERT INTO documents (workspace_id, document_type, title, content, properties, ticket_number, created_by)
+       VALUES ($1, 'issue', $2, $3, $4, $5, $6)
        RETURNING *`,
-      [req.workspaceId, title, JSON.stringify(properties), ticketNumber, req.userId]
+      [
+        req.workspaceId,
+        title,
+        JSON.stringify(issueContent),
+        JSON.stringify(properties),
+        ticketNumber,
+        req.userId,
+      ]
     );
 
     const newIssueId = result.rows[0].id;
