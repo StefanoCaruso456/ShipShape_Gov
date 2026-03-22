@@ -34,6 +34,7 @@ Implemented in code now:
   - flow
   - workload
   - hygiene
+- primary left-rail analytics entry with sidebar shortcuts into current-week sprint dashboards
 - program-level historical velocity series and average delivered work in the velocity dashboard
 
 Still to deepen later:
