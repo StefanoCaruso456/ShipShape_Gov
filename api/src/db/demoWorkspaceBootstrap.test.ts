@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEMO_WORKSPACE_OWNER_SELECTION_SQL,
+  shouldBackfillMissingIssueTypesForWorkspace,
   shouldBackfillDemoWorkspace,
 } from './demoWorkspaceBootstrap.js';
 
@@ -51,6 +52,34 @@ describe('shouldBackfillDemoWorkspace', () => {
     expect(
       shouldBackfillDemoWorkspace({
         workspace_name: "stefano caruso's Workspace",
+        owner_user_id: 'user-123',
+        program_count: '5',
+        project_count: '15',
+        issue_count: '42',
+        sprint_count: '15',
+        welcome_doc_count: '1',
+      })
+    ).toBe(false);
+  });
+
+  it('still backfills missing issue types for full demo workspaces', () => {
+    expect(
+      shouldBackfillMissingIssueTypesForWorkspace({
+        workspace_name: "stefano caruso's Workspace",
+        owner_user_id: 'user-123',
+        program_count: '5',
+        project_count: '15',
+        issue_count: '42',
+        sprint_count: '15',
+        welcome_doc_count: '1',
+      })
+    ).toBe(true);
+  });
+
+  it('skips issue type backfill for non-setup workspaces', () => {
+    expect(
+      shouldBackfillMissingIssueTypesForWorkspace({
+        workspace_name: 'Ship Workspace',
         owner_user_id: 'user-123',
         program_count: '5',
         project_count: '15',

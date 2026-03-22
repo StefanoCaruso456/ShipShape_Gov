@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { pool } from '../db/client.js';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth.js';
+import { createIssueTemplateContent } from '../utils/issueContentTemplate.js';
 
 type RouterType = ReturnType<typeof Router>;
 
@@ -94,11 +95,13 @@ publicFeedbackRouter.post('/', async (req: Request, res: Response) => {
     };
 
     // Create the feedback issue (no created_by for public submissions)
+    const issueContent = content ?? createIssueTemplateContent({ title });
+
     const result = await pool.query(
       `INSERT INTO documents (workspace_id, document_type, title, properties, ticket_number, content)
        VALUES ($1, 'issue', $2, $3, $4, $5)
        RETURNING *`,
-      [workspaceId, title, JSON.stringify(properties), ticketNumber, content ? JSON.stringify(content) : null]
+      [workspaceId, title, JSON.stringify(properties), ticketNumber, JSON.stringify(issueContent)]
     );
 
     const feedbackId = result.rows[0].id;

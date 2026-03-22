@@ -264,6 +264,9 @@ describe('Issues API', () => {
       expect(res.body.state).toBe('backlog')
       expect(res.body.priority).toBe('medium')
       expect(res.body.belongs_to).toBeInstanceOf(Array)
+      expect(res.body.content).toBeTruthy()
+      expect(JSON.stringify(res.body.content)).toContain('User Story')
+      expect(JSON.stringify(res.body.content)).toContain('Acceptance Criteria')
     })
 
     it('should create issue with optional fields', async () => {
@@ -283,6 +286,30 @@ describe('Issues API', () => {
       expect(res.status).toBe(201)
       expect(res.body.state).toBe('in_progress')
       expect(res.body.priority).toBe('high')
+    })
+
+    it('should preserve explicit issue content when provided', async () => {
+      const customContent = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'Custom issue brief' }],
+          },
+        ],
+      }
+
+      const res = await request(app)
+        .post('/api/issues')
+        .set('Cookie', sessionCookie)
+        .set('x-csrf-token', csrfToken)
+        .send({
+          title: 'Issue With Custom Content',
+          content: customContent,
+        })
+
+      expect(res.status).toBe(201)
+      expect(res.body.content).toEqual(customContent)
     })
 
     it('should create issue without belongs_to (valid)', async () => {

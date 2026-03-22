@@ -1,5 +1,7 @@
 import type pg from 'pg';
 import { DEMO_PROGRAM_TEMPLATES, DEMO_PROJECT_TEMPLATES } from './demoWorkspaceTemplates.js';
+import { inferSeedIssueType } from './seedIssueTypes.js';
+import { createIssueTemplateContent, shouldPopulateIssueTemplate } from '../utils/issueContentTemplate.js';
 
 interface PopulateDemoWorkspaceOptions {
   workspaceId: string;
@@ -131,6 +133,13 @@ export function shouldBackfillDemoWorkspace(row: DemoWorkspaceScanRow): boolean 
   );
 }
 
+export function shouldBackfillMissingIssueTypesForWorkspace(row: DemoWorkspaceScanRow): boolean {
+  const welcomeDocCount = Number(row.welcome_doc_count);
+  const looksLikeSetupWorkspace = row.workspace_name.endsWith("'s Workspace");
+
+  return looksLikeSetupWorkspace && welcomeDocCount > 0;
+}
+
 async function createAssociation(
   pool: pg.Pool,
   documentId: string,
@@ -142,6 +151,45 @@ async function createAssociation(
      VALUES ($1, $2, $3, $4)
      ON CONFLICT (document_id, related_id, relationship_type) DO NOTHING`,
     [documentId, relatedId, relationshipType, JSON.stringify({ created_via: 'demo_bootstrap' })]
+  );
+}
+
+async function ensureIssueType(
+  pool: pg.Pool,
+  issueId: string,
+  properties: Record<string, unknown> | null | undefined,
+  issueType: string
+): Promise<void> {
+  if ((properties?.issue_type as string | undefined) === issueType) {
+    return;
+  }
+
+  await pool.query(
+    `UPDATE documents
+     SET properties = $1,
+         updated_at = NOW()
+     WHERE id = $2`,
+    [JSON.stringify({ ...(properties ?? {}), issue_type: issueType }), issueId]
+  );
+}
+
+async function ensureIssueContent(
+  pool: pg.Pool,
+  issueId: string,
+  content: Record<string, unknown> | null | undefined,
+  nextContent: Record<string, unknown>
+): Promise<void> {
+  if (!shouldPopulateIssueTemplate(content)) {
+    return;
+  }
+
+  await pool.query(
+    `UPDATE documents
+     SET content = $1,
+         yjs_state = NULL,
+         updated_at = NOW()
+     WHERE id = $2`,
+    [JSON.stringify(nextContent), issueId]
   );
 }
 
@@ -464,8 +512,18 @@ export async function populateDemoWorkspaceData(
 
     for (const issueTemplate of DEMO_ISSUE_TEMPLATES) {
       const issueTitle = `${project.templateName}: ${issueTemplate.title}`;
+      const issueType = inferSeedIssueType({
+        title: issueTitle,
+        projectTemplateName: project.templateName,
+      });
+      const issueContent = createIssueTemplateContent({
+        title: issueTitle,
+        issueType,
+        projectLabel: project.templateName,
+        mode: 'filled',
+      });
       const existingIssue = await pool.query(
-        `SELECT d.id
+        `SELECT d.id, d.properties, d.content
          FROM documents d
          JOIN document_associations da
            ON da.document_id = d.id
@@ -479,6 +537,18 @@ export async function populateDemoWorkspaceData(
       );
 
       if (existingIssue.rows[0]) {
+        await ensureIssueType(
+          pool,
+          existingIssue.rows[0].id,
+          existingIssue.rows[0].properties as Record<string, unknown> | undefined,
+          issueType
+        );
+        await ensureIssueContent(
+          pool,
+          existingIssue.rows[0].id,
+          existingIssue.rows[0].content as Record<string, unknown> | undefined,
+          issueContent
+        );
         continue;
       }
 
@@ -491,16 +561,17 @@ export async function populateDemoWorkspaceData(
             (issueTemplate.sprintOffset === 0 ? projectSprints.get(currentWeekNumber + 1) ?? null : null);
 
       const createdIssue = await pool.query(
-        `INSERT INTO documents (workspace_id, document_type, title, properties, ticket_number, visibility, created_by)
-         VALUES ($1, 'issue', $2, $3, $4, 'workspace', $5)
+        `INSERT INTO documents (workspace_id, document_type, title, content, properties, ticket_number, visibility, created_by)
+         VALUES ($1, 'issue', $2, $3, $4, $5, 'workspace', $6)
          RETURNING id`,
         [
           workspaceId,
           issueTitle,
+          JSON.stringify(issueContent),
           JSON.stringify({
             state: sprintRecord ? issueTemplate.state : 'backlog',
             priority: issueTemplate.priority,
-            issue_type: 'task',
+            issue_type: issueType,
             source: 'internal',
             assignee_id: ownerUserId,
             estimate: issueTemplate.estimate,
@@ -696,8 +767,53 @@ export async function backfillDemoWorkspaceDataForSetupWorkspaces(pool: pg.Pool)
 
   let candidates = 0;
   let workspacesUpdated = 0;
+  let issueTypesUpdated = 0;
+  let issueContentsUpdated = 0;
 
   for (const row of result.rows) {
+    if (shouldBackfillMissingIssueTypesForWorkspace(row)) {
+      const issueResult = await pool.query<{
+        id: string;
+        title: string;
+        properties: Record<string, unknown> | null;
+        content: Record<string, unknown> | null;
+      }>(
+        `SELECT id, title, properties, content
+         FROM documents
+         WHERE workspace_id = $1
+           AND document_type = 'issue'
+           AND archived_at IS NULL`,
+        [row.workspace_id]
+      );
+
+      for (const issue of issueResult.rows) {
+        const issueType = inferSeedIssueType({ title: issue.title });
+        if (issue.properties?.issue_type !== issueType) {
+          await ensureIssueType(
+            pool,
+            issue.id,
+            issue.properties ?? undefined,
+            issueType
+          );
+          issueTypesUpdated++;
+        }
+
+        if (shouldPopulateIssueTemplate(issue.content)) {
+          await ensureIssueContent(
+            pool,
+            issue.id,
+            issue.content ?? undefined,
+            createIssueTemplateContent({
+              title: issue.title,
+              issueType,
+              mode: 'filled',
+            })
+          );
+          issueContentsUpdated++;
+        }
+      }
+    }
+
     if (!shouldBackfillDemoWorkspace(row)) {
       continue;
     }
@@ -739,6 +855,8 @@ export async function backfillDemoWorkspaceDataForSetupWorkspaces(pool: pg.Pool)
 
   console.log(
     `ℹ️ Demo workspace backfill scan complete: ` +
-      `${candidates} candidate workspace(s), ${workspacesUpdated} updated`
+      `${candidates} candidate workspace(s), ${workspacesUpdated} updated, ` +
+      `${issueTypesUpdated} issue type(s) backfilled, ` +
+      `${issueContentsUpdated} issue content template(s) backfilled`
   );
 }
