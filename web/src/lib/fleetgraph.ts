@@ -2,7 +2,6 @@ import type {
   DocumentType,
   FleetGraphActiveViewContext,
   FleetGraphFeedbackEventRequest,
-  FleetGraphFeedbackEventName,
   FleetGraphOnDemandRequest,
   FleetGraphOnDemandResumeRequest,
   FleetGraphOnDemandResponse,
@@ -255,29 +254,24 @@ export function buildFleetGraphProactiveFindingToastCopy(
 ): { message: string; actionLabel: string } {
   const title = finding.title ?? 'Current week';
   const prefix =
-    finding.audienceRole === 'accountable' || finding.audienceRole === 'manager'
-      ? 'FleetGraph escalated'
-      : finding.audienceRole === 'team_member'
-        ? 'FleetGraph shared'
-        : finding.severity === 'action'
-          ? 'FleetGraph flagged'
-          : finding.severity === 'warning'
-            ? 'FleetGraph noticed'
-            : 'FleetGraph surfaced';
-  const reason = finding.deliveryReason ? ` ${finding.deliveryReason}` : '';
+    finding.severity === 'action'
+      ? 'FleetGraph flagged'
+      : finding.severity === 'warning'
+        ? 'FleetGraph noticed'
+        : 'FleetGraph surfaced';
 
   return {
-    message: `${prefix} ${title}: ${finding.summary}${reason}`,
+    message: `${prefix} ${title}: ${finding.summary}`,
     actionLabel: 'Open',
   };
 }
 
 export function buildFleetGraphProactiveFindingFeedback(
   finding: FleetGraphProactiveFinding,
-  eventName: Extract<FleetGraphFeedbackEventName, 'proactive_toast_shown' | 'proactive_toast_clicked'>
+  eventName: 'proactive_toast_shown' | 'proactive_toast_clicked'
 ): FleetGraphFeedbackEventRequest {
   return {
-    event_name: eventName,
+    event_name: eventName === 'proactive_toast_clicked' ? 'route_clicked' : 'drawer_opened',
     surface: {
       route: finding.route,
       activeViewSurface: finding.surface,
@@ -295,15 +289,6 @@ export function buildFleetGraphProactiveFindingFeedback(
             intent: 'inspect',
           }
         : null,
-    finding_context: {
-      finding_id: finding.id,
-      delivery_source: finding.deliverySource,
-      audience_role: finding.audienceRole,
-      audience_scope: finding.audienceScope,
-      delivery_reason: finding.deliveryReason,
-      severity: finding.severity,
-      signal_kinds: finding.signalKinds,
-    },
   };
 }
 
