@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useIssuesQuery, type Issue } from '@/hooks/useIssuesQuery';
 import { apiGet } from '@/lib/api';
 import { cn } from '@/lib/cn';
 
 type MetricMode = 'points' | 'hours';
-type DashboardId = 'report' | 'velocity' | 'forecast' | 'flow' | 'workload' | 'hygiene';
+export type DashboardId = 'report' | 'velocity' | 'forecast' | 'flow' | 'workload' | 'hygiene';
 
 const DASHBOARDS: Array<{ id: DashboardId; label: string; description: string }> = [
   {
@@ -105,6 +105,7 @@ export interface WeekAnalyticsResponse {
 interface WeekAnalyticsPanelProps {
   sprintId: string;
   compact?: boolean;
+  initialDashboard?: DashboardId;
 }
 
 interface AnalyticsIssue extends Issue {
@@ -553,9 +554,17 @@ function InsightBanner({ children }: { children: string }) {
   );
 }
 
-export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsPanelProps) {
+export function WeekAnalyticsPanel({
+  sprintId,
+  compact = false,
+  initialDashboard = 'report',
+}: WeekAnalyticsPanelProps) {
   const [mode, setMode] = useState<MetricMode>('points');
-  const [dashboard, setDashboard] = useState<DashboardId>('report');
+  const [dashboard, setDashboard] = useState<DashboardId>(initialDashboard);
+
+  useEffect(() => {
+    setDashboard(initialDashboard);
+  }, [initialDashboard]);
 
   const { data, isLoading, isError } = useQuery<WeekAnalyticsResponse>({
     queryKey: ['week-analytics', sprintId],
@@ -600,6 +609,7 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
       return null;
     }
 
+    const isPlanning = data.status === 'planning';
     const firstDay = chartSeries[0];
     const lastDay = chartSeries[chartSeries.length - 1];
     const xLabels = chartSeries.map((point) => formatDateLabel(point.date));
@@ -617,12 +627,12 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
       }
       return Math.max(point.completed - chartSeries[index - 1].completed, 0);
     });
-    const averageDailyCompleted = average(dailyCompleted) ?? 0;
+    const averageDailyCompleted = isPlanning ? 0 : (average(dailyCompleted) ?? 0);
     const recentCompleted = dailyCompleted.slice(-3);
-    const recentAverageCompleted = average(recentCompleted) ?? averageDailyCompleted;
+    const recentAverageCompleted = isPlanning ? 0 : (average(recentCompleted) ?? averageDailyCompleted);
     const totalSprintDays = getTotalSprintDays(data.startDate, data.endDate);
-    const observedDays = chartSeries.length;
-    const remainingCalendarDays = Math.max(totalSprintDays - observedDays, 0);
+    const observedDays = isPlanning ? 0 : chartSeries.length;
+    const remainingCalendarDays = isPlanning ? totalSprintDays : Math.max(totalSprintDays - observedDays, 0);
     const committed = firstDay.committed;
     const current = lastDay.current;
     const completed = lastDay.completed;
@@ -633,12 +643,17 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
     const commitmentReliability = committed > 0 ? (completed / committed) * 100 : null;
     const averageThroughput = averageDailyCompleted;
     const requiredDailyPace = remainingCalendarDays > 0 ? remaining / remainingCalendarDays : remaining > 0 ? remaining : 0;
-    const projectedDaysToFinish = averageThroughput > 0 ? remaining / averageThroughput : null;
+    const projectedDaysToFinish =
+      isPlanning
+        ? null
+        : averageThroughput > 0
+          ? remaining / averageThroughput
+          : null;
     const projectedFinishDate =
       projectedDaysToFinish !== null && Number.isFinite(projectedDaysToFinish)
         ? addDays(lastDay.date, Math.ceil(projectedDaysToFinish))
         : null;
-    const nonZeroThroughput = dailyCompleted.filter((value) => value > 0);
+    const nonZeroThroughput = isPlanning ? [] : dailyCompleted.filter((value) => value > 0);
     const optimisticPace = Math.max(averageThroughput, recentAverageCompleted, ...nonZeroThroughput, 0);
     const pessimisticPace =
       nonZeroThroughput.length > 0 ? Math.min(...nonZeroThroughput, averageThroughput || Infinity) : 0;
@@ -655,16 +670,19 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
       averageThroughput > 0 ? averageThroughput : 0
     );
     const forecastStatus =
-      remaining <= 0
-        ? 'done'
-        : projectedFinishDate === null
-          ? 'stalled'
-          : projectedFinishDate <= data.endDate
-            ? 'on_track'
-            : 'at_risk';
+      isPlanning
+        ? 'planning'
+        : remaining <= 0
+          ? 'done'
+          : projectedFinishDate === null
+            ? 'stalled'
+            : projectedFinishDate <= data.endDate
+              ? 'on_track'
+              : 'at_risk';
     const carryover = Math.max(remaining - Math.max(recentAverageCompleted, averageThroughput, 0) * remainingCalendarDays, 0);
 
     return {
+      isPlanning,
       firstDay,
       lastDay,
       committed,
@@ -879,6 +897,7 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
   }
 
   const {
+    isPlanning,
     committed,
     current,
     completed,
@@ -907,15 +926,19 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
 
   const fullDateLabels = allDates.map((date) => formatDateLabel(date));
   const reportInsight =
-    scopeAdded > 0
-      ? `Scope increased after start by ${formatMetric(scopeAdded, effectiveMode)}.`
-      : 'No scope increase recorded after start.';
+    isPlanning
+      ? `This week is still in planning with ${formatMetric(current, effectiveMode)} of scoped work across ${data.current.issueCount} issue${data.current.issueCount === 1 ? '' : 's'}.`
+      : scopeAdded > 0
+        ? `Scope increased after start by ${formatMetric(scopeAdded, effectiveMode)}.`
+        : 'No scope increase recorded after start.';
   const paceInsight =
-    remaining <= 0
-      ? 'The sprint is effectively burned down.'
-      : lastDay.remaining < analyticsSummary.firstDay.committed * 0.35
-        ? 'Burn-down is moving quickly relative to the original commitment.'
-        : 'Burn-down is still carrying meaningful remaining scope.';
+    isPlanning
+      ? 'The burn charts are showing the planned commitment baseline before execution starts.'
+      : remaining <= 0
+        ? 'The sprint is effectively burned down.'
+        : lastDay.remaining < analyticsSummary.firstDay.committed * 0.35
+          ? 'Burn-down is moving quickly relative to the original commitment.'
+          : 'Burn-down is still carrying meaningful remaining scope.';
 
   if (compact) {
     return (
@@ -1077,12 +1100,12 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
             <MetricCard
               label="Avg Throughput"
               value={formatMetricPerDay(averageThroughput, effectiveMode)}
-              detail={`${observedDays} observed day${observedDays === 1 ? '' : 's'}`}
+              detail={isPlanning ? 'Planning baseline before sprint start' : `${observedDays} observed day${observedDays === 1 ? '' : 's'}`}
             />
             <MetricCard
               label="Recent Pace"
               value={formatMetricPerDay(recentAverageCompleted, effectiveMode)}
-              detail="Last 3 observed days"
+              detail={isPlanning ? 'No execution days yet' : 'Last 3 observed days'}
             />
             <MetricCard
               label="Scope Change"
@@ -1117,7 +1140,9 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
           </div>
 
           <InsightBanner>
-            {commitmentReliability !== null && commitmentReliability >= 100
+            {isPlanning
+              ? `This week has not started yet. Use the commitment of ${formatMetric(committed, effectiveMode)} to pressure-test whether the planned scope is realistic.`
+              : commitmentReliability !== null && commitmentReliability >= 100
               ? `The sprint has already delivered the original commitment at ${formatPercent(commitmentReliability, 0)}.`
               : `The team is delivering at ${formatMetricPerDay(averageThroughput, effectiveMode)} against a current requirement of ${formatMetricPerDay(requiredDailyPace, effectiveMode)} to finish on time.`}
           </InsightBanner>
@@ -1131,7 +1156,17 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
               label="Projected Finish"
               value={formatForecastDate(projectedFinishDate)}
               detail={`Sprint ends ${formatForecastDate(data.endDate)}`}
-              tone={forecastStatus === 'on_track' ? 'success' : forecastStatus === 'at_risk' ? 'warning' : forecastStatus === 'stalled' ? 'danger' : 'success'}
+              tone={
+                forecastStatus === 'planning'
+                  ? 'default'
+                  : forecastStatus === 'on_track'
+                    ? 'success'
+                    : forecastStatus === 'at_risk'
+                      ? 'warning'
+                      : forecastStatus === 'stalled'
+                        ? 'danger'
+                        : 'success'
+              }
             />
             <MetricCard
               label="Forecast Range"
@@ -1140,7 +1175,7 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
                   ? `${formatForecastDate(forecastStartDate)} - ${formatForecastDate(forecastEndDate)}`
                   : 'TBD'
               }
-              detail="Best to worst observed pace"
+              detail={isPlanning ? 'Forecast begins after the sprint starts' : 'Best to worst observed pace'}
             />
             <MetricCard
               label="Required Pace"
@@ -1150,24 +1185,24 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
                   ? `${remainingCalendarDays} calendar day${remainingCalendarDays === 1 ? '' : 's'} left`
                   : 'Sprint end has arrived'
               }
-              tone={requiredDailyPace > averageThroughput && remaining > 0 ? 'warning' : 'default'}
+              tone={!isPlanning && requiredDailyPace > averageThroughput && remaining > 0 ? 'warning' : 'default'}
             />
             <MetricCard
               label="Likely Carryover"
               value={formatMetric(carryover, effectiveMode)}
-              detail="Remaining work at current recent pace"
-              tone={carryover > 0 ? 'warning' : 'success'}
+              detail={isPlanning ? 'Current scoped work before start' : 'Remaining work at current recent pace'}
+              tone={!isPlanning && carryover > 0 ? 'warning' : 'success'}
             />
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
             <SimpleSeriesChart
               title="Projected Burn Down"
-              subtitle="Observed remaining work extended with current average pace through sprint end"
+              subtitle={isPlanning ? 'Planned commitment envelope before execution begins' : 'Observed remaining work extended with current average pace through sprint end'}
               xLabels={fullDateLabels}
               series={[
                 { label: 'Ideal', values: forecastSeries.map((point) => point.idealRemaining) },
-                { label: 'Projected Remaining', values: forecastSeries.map((point) => point.projectedRemaining) },
+                { label: isPlanning ? 'Planned Remaining' : 'Projected Remaining', values: forecastSeries.map((point) => point.projectedRemaining) },
                 { label: 'Current Scope', values: forecastSeries.map((point) => point.scope) },
               ]}
               colors={['#94A3B8', '#F97316', '#0EA5E9']}
@@ -1175,7 +1210,7 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
 
             <SimpleSeriesChart
               title="Remaining Work"
-              subtitle="Actual remaining work over the observed sprint window"
+              subtitle={isPlanning ? 'Planned remaining work across the sprint window' : 'Actual remaining work over the observed sprint window'}
               xLabels={xLabels}
               series={[
                 { label: 'Remaining', values: chartSeries.map((point) => point.remaining) },
@@ -1186,7 +1221,9 @@ export function WeekAnalyticsPanel({ sprintId, compact = false }: WeekAnalyticsP
           </div>
 
           <InsightBanner>
-            {forecastStatus === 'done'
+            {forecastStatus === 'planning'
+              ? `The sprint has not started yet. The team needs roughly ${formatMetricPerDay(requiredDailyPace, effectiveMode)} to land the current commitment by ${formatForecastDate(data.endDate)}.`
+              : forecastStatus === 'done'
               ? 'The sprint has already burned down the remaining committed work.'
               : forecastStatus === 'stalled'
                 ? 'There is no recent delivery throughput yet, so the finish forecast is still indeterminate.'

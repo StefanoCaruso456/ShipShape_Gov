@@ -1952,14 +1952,28 @@ router.get('/:id/analytics', authMiddleware, async (req: Request, res: Response)
     const snapshots = await getSprintAnalyticsSnapshots(pool, id);
     const scopeChanges = await getSprintScopeChangePayload(id, workspaceId, userId, isAdmin);
     const props = (sprintRow.properties ?? {}) as Record<string, unknown>;
-    const baselineStoryPoints = Number(props.planned_story_points ?? 0);
-    const baselineEstimateHours = Number(props.planned_estimate_hours ?? props.planned_estimate ?? 0);
+    const livePlanningSnapshot = status === 'planning'
+      ? await takeSprintPlanningSnapshot(pool, id)
+      : null;
     const plannedIssueIds = Array.isArray(props.planned_issue_ids) ? props.planned_issue_ids : [];
-    const baselineIssueCount = Number(props.planned_issue_count ?? plannedIssueIds.length ?? 0);
+    const fallbackIssueCount =
+      plannedIssueIds.length > 0
+        ? plannedIssueIds.length
+        : (livePlanningSnapshot?.issueCount ?? 0);
+    const baselineStoryPoints = Number(props.planned_story_points ?? livePlanningSnapshot?.storyPoints ?? 0);
+    const baselineEstimateHours = Number(
+      props.planned_estimate_hours ?? props.planned_estimate ?? livePlanningSnapshot?.estimateHours ?? 0
+    );
+    const baselineIssueCount = Number(props.planned_issue_count ?? fallbackIssueCount);
 
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
-    const effectiveEndDate = status === 'completed' ? endDate : new Date(Math.min(endDate.getTime(), today.getTime()));
+    const effectiveEndDate =
+      status === 'planning'
+        ? endDate
+        : status === 'completed'
+          ? endDate
+          : new Date(Math.min(endDate.getTime(), today.getTime()));
     const dayKeys = enumerateDates(startDate, effectiveEndDate);
 
     const snapshotByDate = new Map(snapshots.map((snapshot) => [snapshot.snapshot_date, snapshot]));
