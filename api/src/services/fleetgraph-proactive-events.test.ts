@@ -29,7 +29,10 @@ vi.mock('./fleetgraph-proactive.js', () => ({
   persistFleetGraphProactiveFinding: persistFindingMock,
 }));
 
-import type { FleetGraphProactiveEventRecord } from '@ship/shared';
+import type {
+  FleetGraphProactiveEventRecord,
+  FleetGraphProactiveIssueEventPayload,
+} from '@ship/shared';
 import {
   evaluateFleetGraphProactiveEvent,
   processPendingFleetGraphProactiveEvents,
@@ -198,14 +201,7 @@ describe('FleetGraph proactive event trigger registry', () => {
 
   it('matches missing project context and reopened-after-done triggers on issue updates', () => {
     const baseEvent = createIssueEvent();
-    const basePayload = baseEvent.payload as FleetGraphProactiveEventRecord['payload'] & {
-      issue: {
-        state: string;
-        projectId: string | null;
-        projectTitle: string | null;
-        projectOwnerUserId: string | null;
-      };
-    };
+    const basePayload = baseEvent.payload as FleetGraphProactiveIssueEventPayload;
     const event = createIssueEvent({
       payload: {
         ...basePayload,
