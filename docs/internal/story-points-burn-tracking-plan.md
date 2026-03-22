@@ -425,6 +425,8 @@ What:
 - dedicated `Analytics` tab on weeks
 - sprint report, velocity, forecast, flow, workload, and hygiene dashboards
 - program week timelines deep-link into `/documents/:programId/weeks/:weekId`
+- program and project week detail sidebars now expose an `Open dashboard` entry plus quick links into the analytics views
+- planning weeks show the scoped baseline in analytics instead of a blank "not available yet" state
 
 Why:
 
