@@ -32,9 +32,9 @@ export function AnalyticsSidebar({
   return (
     <div className="space-y-4 px-2 py-2">
       <div className="px-2">
-        <div className="text-xs font-medium uppercase tracking-wider text-muted">Current Week</div>
+        <div className="text-xs font-medium uppercase tracking-wider text-muted">Recent Weeks</div>
         <p className="mt-1 text-xs text-muted/80">
-          Open sprint analytics directly from the left nav.
+          Open current or historical sprint analytics directly from the left nav.
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export function AnalyticsSidebar({
           ))
         ) : (
           <div className="px-2 text-sm text-muted">
-            No current sprint analytics available yet.
+            No sprint analytics are available yet.
           </div>
         )}
       </div>
