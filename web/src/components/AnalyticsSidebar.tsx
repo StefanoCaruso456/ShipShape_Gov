@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/cn';
 import type { DashboardId } from '@/components/week';
+import { buildAnalyticsPath } from '@/lib/analytics-route';
 
 export interface AnalyticsSidebarSprint {
   id: string;
@@ -42,7 +43,7 @@ export function AnalyticsSidebar({
           sprints.map((sprint) => (
             <Link
               key={sprint.id}
-              to={`/documents/${sprint.id}/analytics`}
+              to={buildAnalyticsPath(sprint.id)}
               className={cn(
                 'block rounded-md px-2 py-2 transition-colors',
                 sprint.id === activeSprintId
@@ -68,7 +69,7 @@ export function AnalyticsSidebar({
             {DASHBOARD_LINKS.map((dashboard) => (
               <Link
                 key={dashboard.id}
-                to={`/documents/${activeSprintId}/analytics?view=${dashboard.id}`}
+                to={buildAnalyticsPath(activeSprintId, dashboard.id)}
                 className={cn(
                   'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
                   dashboard.id === activeView
