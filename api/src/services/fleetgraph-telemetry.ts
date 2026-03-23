@@ -6,7 +6,14 @@ import type {
   FleetGraphTelemetryService,
   FleetGraphTelemetrySpanHandle,
 } from '@ship/fleetgraph';
-import type { FleetGraphFeedbackEventRequest } from '@ship/shared';
+import type {
+  FleetGraphFeedbackEventRequest,
+  FleetGraphProactiveAudienceRole,
+  FleetGraphProactiveAudienceScope,
+  FleetGraphProactiveDeliverySource,
+  FleetGraphProactiveFinding,
+  FleetGraphProactiveTriggerKind,
+} from '@ship/shared';
 
 const DEFAULT_BRAINTRUST_PROJECT = 'Shipshape';
 
@@ -483,6 +490,8 @@ export function recordFleetGraphFeedback(
           question_source: input.feedback.question_source ?? null,
           question_theme: input.feedback.question_theme ?? null,
           answer_mode: input.feedback.answer_mode ?? null,
+          finding_id: input.feedback.finding_context?.finding_id ?? null,
+          signal_kinds: input.feedback.finding_context?.signal_kinds ?? [],
         },
         metadata: {
           workspace_id: input.workspaceId,
@@ -498,6 +507,11 @@ export function recordFleetGraphFeedback(
           route_action_route: input.feedback.route_action?.route ?? null,
           route_action_featured: input.feedback.route_action?.featured ?? null,
           route_action_intent: input.feedback.route_action?.intent ?? null,
+          finding_delivery_source: input.feedback.finding_context?.delivery_source ?? null,
+          finding_audience_role: input.feedback.finding_context?.audience_role ?? null,
+          finding_audience_scope: input.feedback.finding_context?.audience_scope ?? null,
+          finding_delivery_reason: input.feedback.finding_context?.delivery_reason ?? null,
+          finding_severity: input.feedback.finding_context?.severity ?? null,
         },
       },
     });
@@ -524,6 +538,12 @@ export function recordFleetGraphFeedback(
         route_action_route: input.feedback.route_action?.route ?? null,
         route_action_featured: input.feedback.route_action?.featured ?? null,
         route_action_intent: input.feedback.route_action?.intent ?? null,
+        finding_id: input.feedback.finding_context?.finding_id ?? null,
+        finding_delivery_source: input.feedback.finding_context?.delivery_source ?? null,
+        finding_audience_role: input.feedback.finding_context?.audience_role ?? null,
+        finding_audience_scope: input.feedback.finding_context?.audience_scope ?? null,
+        finding_delivery_reason: input.feedback.finding_context?.delivery_reason ?? null,
+        finding_severity: input.feedback.finding_context?.severity ?? null,
       },
       metrics: {
         latency_ms: input.feedback.latency_ms ?? 0,
@@ -540,6 +560,120 @@ export function recordFleetGraphFeedback(
     } catch (error) {
       logger.warn('FleetGraph feedback telemetry span failed to close', {
         message: error instanceof Error ? error.message : 'Unknown FleetGraph feedback span close failure',
+      });
+    }
+  }
+}
+
+export function recordFleetGraphProactiveDelivery(
+  input: {
+    workspaceId: string;
+    weekId: string;
+    projectId: string | null;
+    programId: string | null;
+    findingId: string;
+    targetUserId: string;
+    audienceRole: FleetGraphProactiveAudienceRole;
+    audienceScope: FleetGraphProactiveAudienceScope;
+    deliverySource: FleetGraphProactiveDeliverySource;
+    deliveryReason: string | null;
+    severity: FleetGraphProactiveFinding['severity'];
+    signalKinds: string[];
+    route: string;
+    shouldNotify: boolean;
+    triggerKind?: FleetGraphProactiveTriggerKind | null;
+    langsmithRunId?: string | null;
+    langsmithRunUrl?: string | null;
+    langsmithShareUrl?: string | null;
+  },
+  logger: FleetGraphLogger
+): void {
+  const telemetryLogger = getBraintrustLogger();
+  if (!telemetryLogger) {
+    return;
+  }
+
+  let span: Span | null = null;
+
+  try {
+    span = telemetryLogger.startSpan({
+      name: 'fleetgraph.proactive.delivery',
+      type: 'task',
+      spanAttributes: {
+        delivery_source: input.deliverySource,
+        audience_role: input.audienceRole,
+        audience_scope: input.audienceScope,
+        severity: input.severity,
+      },
+      event: {
+        input: {
+          finding_id: input.findingId,
+          signal_kinds: input.signalKinds,
+          trigger_kind: input.triggerKind ?? null,
+          delivery_reason: input.deliveryReason ?? null,
+        },
+        metadata: {
+          workspace_id: input.workspaceId,
+          week_id: input.weekId,
+          project_id: input.projectId,
+          program_id: input.programId,
+          target_user_id: input.targetUserId,
+          audience_role: input.audienceRole,
+          audience_scope: input.audienceScope,
+          delivery_source: input.deliverySource,
+          route: input.route,
+          should_notify: input.shouldNotify,
+          langsmith_run_id: input.langsmithRunId ?? null,
+          langsmith_run_url: input.langsmithRunUrl ?? null,
+          langsmith_share_url: input.langsmithShareUrl ?? null,
+        },
+      },
+    });
+
+    if (!span) {
+      return;
+    }
+
+    span.log({
+      metadata: {
+        workspace_id: input.workspaceId,
+        week_id: input.weekId,
+        project_id: input.projectId,
+        program_id: input.programId,
+        finding_id: input.findingId,
+        target_user_id: input.targetUserId,
+        audience_role: input.audienceRole,
+        audience_scope: input.audienceScope,
+        delivery_source: input.deliverySource,
+        delivery_reason: input.deliveryReason ?? null,
+        route: input.route,
+        trigger_kind: input.triggerKind ?? null,
+        langsmith_run_id: input.langsmithRunId ?? null,
+        langsmith_run_url: input.langsmithRunUrl ?? null,
+        langsmith_share_url: input.langsmithShareUrl ?? null,
+      },
+      metrics: {
+        should_notify: input.shouldNotify ? 1 : 0,
+      },
+    });
+  } catch (error) {
+    logger.warn('FleetGraph proactive delivery telemetry failed to record', {
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Unknown FleetGraph proactive delivery telemetry failure',
+      findingId: input.findingId,
+      deliverySource: input.deliverySource,
+    });
+  } finally {
+    try {
+      span?.close();
+    } catch (error) {
+      logger.warn('FleetGraph proactive delivery telemetry span failed to close', {
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unknown FleetGraph proactive delivery span close failure',
       });
     }
   }

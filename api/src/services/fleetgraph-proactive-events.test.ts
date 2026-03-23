@@ -1,9 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { queryMock, broadcastToUserMock, persistFindingMock } = vi.hoisted(() => ({
+const {
+  queryMock,
+  broadcastToUserMock,
+  persistFindingMock,
+  resolveEventRecipientsMock,
+  recordDeliveryMock,
+  createApiTokenShipApiClientMock,
+  invokeFleetGraphMock,
+} = vi.hoisted(() => ({
   queryMock: vi.fn(),
   broadcastToUserMock: vi.fn(),
   persistFindingMock: vi.fn(),
+  resolveEventRecipientsMock: vi.fn(),
+  recordDeliveryMock: vi.fn(),
+  createApiTokenShipApiClientMock: vi.fn(() => ({
+    get: vi.fn(),
+    post: vi.fn(),
+  })),
+  invokeFleetGraphMock: vi.fn(),
 }));
 
 vi.mock('../db/client.js', () => ({
@@ -17,16 +32,26 @@ vi.mock('../collaboration/index.js', () => ({
 }));
 
 vi.mock('./fleetgraph-runner.js', () => ({
+  createApiTokenShipApiClient: createApiTokenShipApiClientMock,
   createFleetGraphLogger: vi.fn(() => ({
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
   })),
+  invokeFleetGraph: invokeFleetGraphMock,
 }));
 
 vi.mock('./fleetgraph-proactive.js', () => ({
   persistFleetGraphProactiveFinding: persistFindingMock,
+}));
+
+vi.mock('./fleetgraph-proactive-targeting.js', () => ({
+  resolveFleetGraphEventRecipients: resolveEventRecipientsMock,
+}));
+
+vi.mock('./fleetgraph-telemetry.js', () => ({
+  recordFleetGraphProactiveDelivery: recordDeliveryMock,
 }));
 
 import type {
@@ -183,6 +208,67 @@ describe('FleetGraph proactive event trigger registry', () => {
     queryMock.mockReset();
     broadcastToUserMock.mockReset();
     persistFindingMock.mockReset();
+    resolveEventRecipientsMock.mockReset();
+    recordDeliveryMock.mockReset();
+    createApiTokenShipApiClientMock.mockClear();
+    invokeFleetGraphMock.mockReset();
+    process.env.FLEETGRAPH_INTERNAL_API_TOKEN = 'test-token';
+    resolveEventRecipientsMock.mockResolvedValue([
+      {
+        userId: 'sprint-owner-1',
+        audienceRole: 'responsible_owner',
+        audienceScope: 'individual',
+        deliveryReason: 'Sent to you because you own the sprint or workstream that needs coordination next.',
+      },
+    ]);
+    invokeFleetGraphMock.mockResolvedValue({
+      finding: {
+        summary: 'FleetGraph surfaced an event-triggered risk.',
+        severity: 'warning',
+      },
+      derivedSignals: {
+        severity: 'warning',
+        reasons: ['FleetGraph surfaced an event-triggered risk.'],
+        summary: 'FleetGraph surfaced an event-triggered risk.',
+        shouldSurface: true,
+        signals: [
+          {
+            kind: 'issue_blocker_logged',
+            severity: 'warning',
+            summary: 'FleetGraph surfaced an event-triggered risk.',
+            evidence: ['Event signal'],
+            dedupeKey: 'event',
+          },
+        ],
+        metrics: {
+          totalIssues: 0,
+          completedIssues: 0,
+          inProgressIssues: 0,
+          incompleteIssues: 0,
+          cancelledIssues: 0,
+          blockedIssues: 0,
+          dependencyRiskIssues: null,
+          standupCount: 0,
+          recentActivityCount: 0,
+          recentActiveDays: 0,
+          completionRate: null,
+          scopeChangePercent: null,
+          maxAssigneeLoadShare: null,
+          recentAverageCompletedIssues: null,
+          recentAverageStartedIssues: null,
+          recentAverageTotalIssues: null,
+          throughputSampleSize: 0,
+          throughputLoadRatio: null,
+          allocatedPeopleCount: null,
+          incompleteIssuesPerAllocatedPerson: null,
+        },
+      },
+      telemetry: {
+        langsmithRunId: 'run-1',
+        langsmithRunUrl: 'https://smith.langchain.com/r/run-1',
+        langsmithShareUrl: 'https://smith.langchain.com/public/run-1/r',
+      },
+    });
   });
 
   it('matches unassigned, added-after-start, and last-day-open triggers for an active sprint issue', () => {
@@ -284,7 +370,30 @@ describe('FleetGraph proactive event trigger registry', () => {
     expect(result.processedEvents).toBe(1);
     expect(result.matchedTriggers).toBe(3);
     expect(result.findingsCreated).toBe(3);
+    expect(invokeFleetGraphMock).toHaveBeenCalledTimes(3);
+    expect(invokeFleetGraphMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        mode: 'proactive',
+        triggerType: 'event',
+        workspaceId: event.workspaceId,
+        contextEntity: {
+          id: 'sprint-1',
+          type: 'week',
+        },
+        injectedSignals: [
+          expect.objectContaining({
+            kind: 'issue_unassigned_in_active_sprint',
+          }),
+        ],
+      }),
+      expect.objectContaining({
+        checkpointNamespace: 'fleetgraph',
+      })
+    );
     expect(persistFindingMock).toHaveBeenCalledTimes(3);
     expect(broadcastToUserMock).toHaveBeenCalledTimes(3);
+    expect(resolveEventRecipientsMock).toHaveBeenCalledTimes(3);
+    expect(recordDeliveryMock).toHaveBeenCalledTimes(3);
   });
 });

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import type { FleetGraphProactiveFinding } from '@ship/shared';
 import {
   buildFleetGraphActiveViewContext,
   buildFleetGraphDashboardActiveViewContext,
+  buildFleetGraphProactiveFindingFeedback,
+  buildFleetGraphProactiveFindingToastCopy,
   buildFleetGraphMyWeekActiveViewContext,
   extractFleetGraphProjectIdFromDocument,
   resolveFleetGraphActiveView,
@@ -367,5 +370,91 @@ describe('buildFleetGraphDashboardActiveViewContext', () => {
       actionItems: [],
       projects: [],
     })).toBeNull();
+  });
+});
+
+describe('buildFleetGraphProactiveFindingToastCopy', () => {
+  it('uses an escalation prefix and reason for accountable recipients', () => {
+    const finding: FleetGraphProactiveFinding = {
+      id: 'finding-1',
+      workspaceId: 'workspace-1',
+      weekId: 'week-1',
+      projectId: 'project-1',
+      programId: null,
+      title: 'Week 12',
+      summary: 'Scope has grown 40% since the week started.',
+      severity: 'action',
+      route: '/documents/week-1/issues',
+      surface: 'document',
+      tab: 'issues',
+      audienceRole: 'accountable',
+      audienceScope: 'individual',
+      deliverySource: 'sweep',
+      deliveryReason: 'Escalated to you as accountable because this risk may need a tradeoff or unblock decision.',
+      signalKinds: ['scope_growth'],
+      lastDetectedAt: '2026-03-22T10:00:00.000Z',
+      lastNotifiedAt: '2026-03-22T10:00:00.000Z',
+    };
+
+    expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
+      message:
+        'FleetGraph escalated Week 12: Scope has grown 40% since the week started. Escalated to you as accountable because this risk may need a tradeoff or unblock decision.',
+      actionLabel: 'Open',
+    });
+  });
+});
+
+describe('buildFleetGraphProactiveFindingFeedback', () => {
+  it('packages proactive toast telemetry with audience metadata', () => {
+    const finding: FleetGraphProactiveFinding = {
+      id: 'finding-2',
+      workspaceId: 'workspace-1',
+      weekId: 'week-2',
+      projectId: null,
+      programId: 'program-1',
+      title: 'Week 13',
+      summary: 'A blocker was logged on the critical path issue.',
+      severity: 'warning',
+      route: '/documents/week-2/issues',
+      surface: 'document',
+      tab: 'issues',
+      audienceRole: 'team_member',
+      audienceScope: 'team',
+      deliverySource: 'event',
+      deliveryReason: 'Shared with the sprint team because this affects shared sprint coordination or commitments.',
+      signalKinds: ['issue_blocker_logged'],
+      lastDetectedAt: '2026-03-22T10:00:00.000Z',
+      lastNotifiedAt: '2026-03-22T10:00:00.000Z',
+    };
+
+    expect(
+      buildFleetGraphProactiveFindingFeedback(finding, 'proactive_toast_clicked')
+    ).toEqual({
+      event_name: 'proactive_toast_clicked',
+      surface: {
+        route: '/documents/week-2/issues',
+        activeViewSurface: 'document',
+        entityType: 'week',
+        pageContextKind: 'document',
+        tab: 'issues',
+        projectId: null,
+      },
+      route_action: {
+        label: 'Open',
+        route: '/documents/week-2/issues',
+        featured: true,
+        intent: 'inspect',
+      },
+      finding_context: {
+        finding_id: 'finding-2',
+        delivery_source: 'event',
+        audience_role: 'team_member',
+        audience_scope: 'team',
+        delivery_reason:
+          'Shared with the sprint team because this affects shared sprint coordination or commitments.',
+        severity: 'warning',
+        signal_kinds: ['issue_blocker_logged'],
+      },
+    });
   });
 });

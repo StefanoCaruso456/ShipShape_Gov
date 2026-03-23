@@ -14,6 +14,8 @@ import { extractText } from '../utils/document-content.js';
 import {
   getIssuePlanningMetrics,
   getSprintAnalyticsSnapshots,
+  hasSprintPlanningSnapshot,
+  persistSprintPlanningSnapshot,
   takeSprintPlanningSnapshot,
   upsertSprintAnalyticsSnapshot,
 } from '../utils/sprint-planning.js';
@@ -278,6 +280,31 @@ function formatIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+function extractContentText(node: unknown): string {
+  if (!node || typeof node !== 'object') {
+    return '';
+  }
+
+  const candidate = node as { type?: string; text?: string; content?: unknown[] };
+  if (candidate.type === 'text' && typeof candidate.text === 'string') {
+    return candidate.text;
+  }
+
+  if (Array.isArray(candidate.content)) {
+    return candidate.content.map(extractContentText).join('');
+  }
+
+  return '';
+}
+
+function hasIssueDescriptionContent(content: unknown): boolean {
+  return extractContentText(content).trim().length > 0;
+}
+
+function hasIssueAcceptanceCriteriaContent(content: unknown): boolean {
+  return extractContentText(content).toLowerCase().includes('acceptance criteria');
+}
+
 function enumerateDates(startDate: Date, endDate: Date): string[] {
   const dates: string[] = [];
   const cursor = new Date(startDate);
@@ -306,28 +333,73 @@ interface VelocityHistoryPoint {
   completedIssueCount: number;
 }
 
+interface VelocityHistoryMetaExcludedWeek {
+  sprintNumber: number;
+  issueCount: number;
+  missingStoryPoints: number;
+  missingEstimateHours: number;
+  missingIssueType: number;
+  missingDescription: number;
+  missingAcceptanceCriteria: number;
+}
+
+interface VelocityHistoryMeta {
+  scope: 'program';
+  scopeLabel: string | null;
+  programLabel: string | null;
+  recommendedWindow: number;
+  completedWeekCount: number;
+  qualifyingWeekCount: number;
+  includedWeekCount: number;
+  backfilledWeekCount: number;
+  excludedWeeks: VelocityHistoryMetaExcludedWeek[];
+}
+
+interface VelocityHistoryResult {
+  history: VelocityHistoryPoint[];
+  meta: VelocityHistoryMeta;
+}
+
 async function getProgramVelocityHistory(
   sprintId: string,
   sprintNumber: number,
   workspaceId: string,
   userId: string,
   isAdmin: boolean,
+  workspaceSprintStartDate: Date | string,
   historyWindow = 6
-): Promise<VelocityHistoryPoint[]> {
-  const programResult = await pool.query<{ program_id: string }>(
-    `SELECT da.related_id AS program_id
+): Promise<VelocityHistoryResult> {
+  const programResult = await pool.query<{
+    program_id: string | null;
+    program_name: string | null;
+  }>(
+    `SELECT
+       MAX(da.related_id::text)::uuid AS program_id,
+       MAX(d.title) AS program_name
      FROM document_associations da
      JOIN documents d ON d.id = da.related_id
      WHERE da.document_id = $1
        AND da.relationship_type = 'program'
-       AND d.document_type = 'program'
-     LIMIT 1`,
+       AND d.document_type = 'program'`,
     [sprintId]
   );
 
   const programId = programResult.rows[0]?.program_id;
+  const programName = programResult.rows[0]?.program_name ?? null;
+  const emptyMeta: VelocityHistoryMeta = {
+    scope: 'program',
+    scopeLabel: programName,
+    programLabel: programName,
+    recommendedWindow: historyWindow,
+    completedWeekCount: 0,
+    qualifyingWeekCount: 0,
+    includedWeekCount: 0,
+    backfilledWeekCount: 0,
+    excludedWeeks: [],
+  };
+
   if (!programId) {
-    return [];
+    return { history: [], meta: emptyMeta };
   }
 
   const sprintResult = await pool.query<{
@@ -350,21 +422,39 @@ async function getProgramVelocityHistory(
        AND d.archived_at IS NULL
        AND d.deleted_at IS NULL
        AND ${VISIBILITY_FILTER_SQL('d', '$3', '$4')}
+       AND COALESCE(d.properties->>'status', 'planning') = 'completed'
        AND (d.properties->>'sprint_number')::int < $5
      ORDER BY (d.properties->>'sprint_number')::int DESC`,
     [programId, workspaceId, userId, isAdmin, sprintNumber]
   );
 
   if (sprintResult.rows.length === 0) {
-    return [];
+    return { history: [], meta: emptyMeta };
+  }
+
+  const backfilledSprintIds = new Set<string>();
+  for (const sprintRow of sprintResult.rows) {
+    const sprintProperties = (sprintRow.properties ?? {}) as Record<string, unknown>;
+    if (hasSprintPlanningSnapshot(sprintProperties)) {
+      continue;
+    }
+
+    const { startDate } = calculateSprintDates(sprintRow.sprint_number, workspaceSprintStartDate);
+    const persisted = await persistSprintPlanningSnapshot(pool, sprintRow.id, sprintProperties, {
+      source: 'backfilled_from_current_scope',
+      snapshotTakenAt: startDate,
+    });
+    sprintRow.properties = persisted.properties;
+    backfilledSprintIds.add(sprintRow.id);
   }
 
   const sprintIds = sprintResult.rows.map((row) => row.id);
   const issueResult = await pool.query<{
     sprint_id: string;
     properties: Record<string, unknown> | null;
+    content: Record<string, unknown> | null;
   }>(
-    `SELECT da.related_id AS sprint_id, d.properties
+    `SELECT da.related_id AS sprint_id, d.properties, d.content
      FROM documents d
      JOIN document_associations da
        ON da.document_id = d.id
@@ -387,12 +477,20 @@ async function getProgramVelocityHistory(
       completedEstimateHours: number;
       issueCount: number;
       completedIssueCount: number;
+      missingStoryPoints: number;
+      missingEstimateHours: number;
+      missingIssueType: number;
+      missingDescription: number;
+      missingAcceptanceCriteria: number;
     }
   >();
 
   for (const issueRow of issueResult.rows) {
     const metrics = getIssuePlanningMetrics(issueRow.properties ?? {});
     const state = (issueRow.properties?.state as string | undefined) ?? 'backlog';
+    const issueType = issueRow.properties?.issue_type;
+    const rawStoryPoints = Number(issueRow.properties?.story_points ?? 0);
+    const rawEstimateHours = Number(issueRow.properties?.estimate_hours ?? issueRow.properties?.estimate ?? 0);
     const bucket = metricsBySprint.get(issueRow.sprint_id) ?? {
       currentStoryPoints: 0,
       completedStoryPoints: 0,
@@ -400,11 +498,36 @@ async function getProgramVelocityHistory(
       completedEstimateHours: 0,
       issueCount: 0,
       completedIssueCount: 0,
+      missingStoryPoints: 0,
+      missingEstimateHours: 0,
+      missingIssueType: 0,
+      missingDescription: 0,
+      missingAcceptanceCriteria: 0,
     };
 
     bucket.currentStoryPoints += metrics.storyPoints;
     bucket.currentEstimateHours += metrics.estimateHours;
     bucket.issueCount += 1;
+
+    if (!(rawStoryPoints > 0)) {
+      bucket.missingStoryPoints += 1;
+    }
+
+    if (!(rawEstimateHours > 0)) {
+      bucket.missingEstimateHours += 1;
+    }
+
+    if (typeof issueType !== 'string' || issueType.trim().length === 0) {
+      bucket.missingIssueType += 1;
+    }
+
+    if (!hasIssueDescriptionContent(issueRow.content)) {
+      bucket.missingDescription += 1;
+    }
+
+    if (!hasIssueAcceptanceCriteriaContent(issueRow.content)) {
+      bucket.missingAcceptanceCriteria += 1;
+    }
 
     if (state === 'done') {
       bucket.completedStoryPoints += metrics.storyPoints;
@@ -415,7 +538,17 @@ async function getProgramVelocityHistory(
     metricsBySprint.set(issueRow.sprint_id, bucket);
   }
 
-  const historyBySprintNumber = new Map<number, VelocityHistoryPoint>();
+  const historyBySprintNumber = new Map<
+    number,
+    VelocityHistoryPoint & {
+      missingStoryPoints: number;
+      missingEstimateHours: number;
+      missingIssueType: number;
+      missingDescription: number;
+      missingAcceptanceCriteria: number;
+      hasBackfilledBaseline: boolean;
+    }
+  >();
 
   for (const sprintRow of sprintResult.rows) {
     const props = (sprintRow.properties ?? {}) as Record<string, unknown>;
@@ -426,6 +559,11 @@ async function getProgramVelocityHistory(
       completedEstimateHours: 0,
       issueCount: 0,
       completedIssueCount: 0,
+      missingStoryPoints: 0,
+      missingEstimateHours: 0,
+      missingIssueType: 0,
+      missingDescription: 0,
+      missingAcceptanceCriteria: 0,
     };
     const committedStoryPoints = Number(props.planned_story_points ?? liveMetrics.currentStoryPoints);
     const committedEstimateHours = Number(
@@ -442,6 +580,12 @@ async function getProgramVelocityHistory(
       currentEstimateHours: 0,
       issueCount: 0,
       completedIssueCount: 0,
+      missingStoryPoints: 0,
+      missingEstimateHours: 0,
+      missingIssueType: 0,
+      missingDescription: 0,
+      missingAcceptanceCriteria: 0,
+      hasBackfilledBaseline: false,
     };
 
     currentEntry.committedStoryPoints += committedStoryPoints;
@@ -452,13 +596,65 @@ async function getProgramVelocityHistory(
     currentEntry.currentEstimateHours += liveMetrics.currentEstimateHours;
     currentEntry.issueCount += liveMetrics.issueCount;
     currentEntry.completedIssueCount += liveMetrics.completedIssueCount;
+    currentEntry.missingStoryPoints += liveMetrics.missingStoryPoints;
+    currentEntry.missingEstimateHours += liveMetrics.missingEstimateHours;
+    currentEntry.missingIssueType += liveMetrics.missingIssueType;
+    currentEntry.missingDescription += liveMetrics.missingDescription;
+    currentEntry.missingAcceptanceCriteria += liveMetrics.missingAcceptanceCriteria;
+    currentEntry.hasBackfilledBaseline ||= backfilledSprintIds.has(sprintRow.id);
     historyBySprintNumber.set(sprintRow.sprint_number, currentEntry);
   }
 
-  return Array.from(historyBySprintNumber.values())
-    .sort((left, right) => right.sprintNumber - left.sprintNumber)
-    .slice(0, historyWindow)
-    .reverse();
+  const aggregatedWeeks = Array.from(historyBySprintNumber.values()).sort(
+    (left, right) => right.sprintNumber - left.sprintNumber
+  );
+  const qualifyingWeeks = aggregatedWeeks.filter(
+    (week) =>
+      week.issueCount > 0 &&
+      week.missingStoryPoints === 0 &&
+      week.missingEstimateHours === 0 &&
+      week.missingIssueType === 0 &&
+      week.missingDescription === 0 &&
+      week.missingAcceptanceCriteria === 0
+  );
+  const selectedHistory = qualifyingWeeks.slice(0, historyWindow).reverse();
+
+  return {
+    history: selectedHistory.map((week) => ({
+      sprintNumber: week.sprintNumber,
+      sprintName: week.sprintName,
+      committedStoryPoints: week.committedStoryPoints,
+      completedStoryPoints: week.completedStoryPoints,
+      currentStoryPoints: week.currentStoryPoints,
+      committedEstimateHours: week.committedEstimateHours,
+      completedEstimateHours: week.completedEstimateHours,
+      currentEstimateHours: week.currentEstimateHours,
+      issueCount: week.issueCount,
+      completedIssueCount: week.completedIssueCount,
+    })),
+    meta: {
+      scope: 'program',
+      scopeLabel: programName,
+      programLabel: programName,
+      recommendedWindow: historyWindow,
+      completedWeekCount: aggregatedWeeks.length,
+      qualifyingWeekCount: qualifyingWeeks.length,
+      includedWeekCount: selectedHistory.length,
+      backfilledWeekCount: selectedHistory.filter((week) => week.hasBackfilledBaseline).length,
+      excludedWeeks: aggregatedWeeks
+        .filter((week) => !qualifyingWeeks.includes(week))
+        .slice(0, 12)
+        .map((week) => ({
+          sprintNumber: week.sprintNumber,
+          issueCount: week.issueCount,
+          missingStoryPoints: week.missingStoryPoints,
+          missingEstimateHours: week.missingEstimateHours,
+          missingIssueType: week.missingIssueType,
+          missingDescription: week.missingDescription,
+          missingAcceptanceCriteria: week.missingAcceptanceCriteria,
+        })),
+    },
+  };
 }
 
 async function getSprintScopeChangePayload(
@@ -2096,21 +2292,11 @@ router.get('/:id/analytics', authMiddleware, async (req: Request, res: Response)
     const { startDate, endDate } = calculateSprintDates(sprintNumber, sprintRow.workspace_sprint_start_date);
     const status = (sprintProps.status as string | undefined) ?? 'planning';
 
-    if (!sprintProps.planned_issue_ids && status !== 'planning') {
-      const snapshot = await takeSprintPlanningSnapshot(pool, id);
-      const newProps = {
-        ...sprintProps,
-        planned_issue_ids: snapshot.issueIds,
-        planned_issue_count: snapshot.issueCount,
-        planned_story_points: snapshot.storyPoints,
-        planned_estimate_hours: snapshot.estimateHours,
-        snapshot_taken_at: new Date().toISOString(),
-      };
-      await pool.query(
-        `UPDATE documents SET properties = $1, updated_at = now() WHERE id = $2`,
-        [JSON.stringify(newProps), id]
-      );
-      sprintRow.properties = newProps;
+    if (!hasSprintPlanningSnapshot(sprintProps) && status !== 'planning') {
+      const persisted = await persistSprintPlanningSnapshot(pool, id, sprintProps, {
+        source: 'backfilled_from_current_scope',
+      });
+      sprintRow.properties = persisted.properties;
     }
 
     if (status !== 'planning') {
@@ -2119,7 +2305,14 @@ router.get('/:id/analytics', authMiddleware, async (req: Request, res: Response)
 
     const snapshots = await getSprintAnalyticsSnapshots(pool, id);
     const scopeChanges = await getSprintScopeChangePayload(id, workspaceId, userId, isAdmin);
-    const velocityHistory = await getProgramVelocityHistory(id, sprintNumber, workspaceId, userId, isAdmin);
+    const velocityHistory = await getProgramVelocityHistory(
+      id,
+      sprintNumber,
+      workspaceId,
+      userId,
+      isAdmin,
+      sprintRow.workspace_sprint_start_date
+    );
     const props = (sprintRow.properties ?? {}) as Record<string, unknown>;
     const livePlanningSnapshot = status === 'planning'
       ? await takeSprintPlanningSnapshot(pool, id)
@@ -2224,7 +2417,8 @@ router.get('/:id/analytics', authMiddleware, async (req: Request, res: Response)
         addedEstimateHours: totalEstimateHoursAdded,
         removedEstimateHours: totalEstimateHoursRemoved,
       },
-      velocityHistory,
+      velocityHistory: velocityHistory.history,
+      historyMeta: velocityHistory.meta,
       days,
       scopeChanges,
     });

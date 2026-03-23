@@ -98,6 +98,25 @@ export interface WeekAnalyticsResponse {
     issueCount: number;
     completedIssueCount: number;
   }>;
+  historyMeta: {
+    scope: 'program';
+    scopeLabel: string | null;
+    programLabel: string | null;
+    recommendedWindow: number;
+    completedWeekCount: number;
+    qualifyingWeekCount: number;
+    includedWeekCount: number;
+    backfilledWeekCount: number;
+    excludedWeeks: Array<{
+      sprintNumber: number;
+      issueCount: number;
+      missingStoryPoints: number;
+      missingEstimateHours: number;
+      missingIssueType: number;
+      missingDescription: number;
+      missingAcceptanceCriteria: number;
+    }>;
+  };
   days: Array<{
     date: string;
     committedStoryPoints: number;
@@ -239,6 +258,53 @@ function formatPercent(value: number | null, fractionDigits = 0): string {
   }
 
   return `${value.toFixed(fractionDigits)}%`;
+}
+
+function formatDeltaPercent(value: number | null, fractionDigits = 0): string {
+  if (value === null || !Number.isFinite(value)) {
+    return 'N/A';
+  }
+
+  const normalized = Math.abs(value) < (fractionDigits === 0 ? 0.5 : 1 / 10 ** fractionDigits) ? 0 : value;
+  const sign = normalized > 0 ? '+' : '';
+  return `${sign}${normalized.toFixed(fractionDigits)}%`;
+}
+
+function formatHistoryLabel(historyCount: number, suffix: string): string {
+  if (historyCount <= 0) {
+    return `Recent ${suffix}`;
+  }
+
+  return `${historyCount}-Week ${suffix}`;
+}
+
+function formatRecentHistory(historyCount: number): string | null {
+  if (historyCount <= 0) {
+    return null;
+  }
+
+  return historyCount === 1
+    ? 'the last qualifying completed program week'
+    : `the last ${historyCount} qualifying completed program weeks`;
+}
+
+function formatExcludedHistoryWeek(
+  week: WeekAnalyticsResponse['historyMeta']['excludedWeeks'][number]
+): string {
+  if (week.issueCount === 0) {
+    return `W${week.sprintNumber} has no scoped issues`;
+  }
+
+  const reasons: string[] = [];
+  if (week.missingStoryPoints > 0) reasons.push('story points');
+  if (week.missingEstimateHours > 0) reasons.push('estimates');
+  if (week.missingIssueType > 0) reasons.push('issue types');
+  if (week.missingDescription > 0) reasons.push('descriptions');
+  if (week.missingAcceptanceCriteria > 0) reasons.push('acceptance criteria');
+
+  return reasons.length > 0
+    ? `W${week.sprintNumber} is missing ${reasons.slice(0, 3).join(', ')}`
+    : `W${week.sprintNumber} was excluded`;
 }
 
 function buildPath(
@@ -1013,6 +1079,84 @@ export function WeekAnalyticsPanel({
   const historicalAvgReliability = historicalVelocity?.avgReliability ?? null;
   const historicalScopeVsAverage = historicalVelocity?.currentScopeVsAverage ?? null;
   const historicalCommitmentVsAverage = historicalVelocity?.currentCommitmentVsAverage ?? null;
+  const historyMeta = data.historyMeta;
+  const historyWindowCount = historicalVelocity?.historyCount ?? 0;
+  const historyWindowDetail =
+    historyWindowCount > 0
+      ? 'Qualifying completed program weeks included in the velocity trend'
+      : 'Not enough completed history yet';
+  const historyAvgDoneLabel = formatHistoryLabel(historyWindowCount, 'Avg Done');
+  const historyAvgCommittedLabel = formatHistoryLabel(historyWindowCount, 'Avg Committed');
+  const historyReliabilityLabel = formatHistoryLabel(historyWindowCount, 'Reliability');
+  const historyEmptyState = 'Not enough completed history yet';
+  const recentHistoryDescriptor = formatRecentHistory(historyWindowCount);
+  const hasThinVelocityHistory = historyWindowCount > 0 && historyWindowCount < historyMeta.recommendedWindow;
+  const historyIntegritySummary =
+    historyWindowCount === 0
+      ? 'Not enough completed history yet. Weeks only count once every issue has story points, estimates, issue type, description, and acceptance criteria.'
+      : [
+          `Using ${historyWindowCount} qualifying completed program week${historyWindowCount === 1 ? '' : 's'} in the current trend window.`,
+          historyMeta.excludedWeeks.length > 0
+            ? `Excluded ${historyMeta.excludedWeeks.length} completed week${historyMeta.excludedWeeks.length === 1 ? '' : 's'} that were missing required planning fields.`
+            : null,
+          historyMeta.backfilledWeekCount > 0
+            ? `${historyMeta.backfilledWeekCount} included week${historyMeta.backfilledWeekCount === 1 ? '' : 's'} used a backfilled start-of-week baseline because no stored planning snapshot existed.`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' ');
+  const noThroughputState = 'No throughput yet';
+  const pendingStartState = 'Pending start';
+  const throughputHasStarted = averageThroughput > 0 || completed > 0;
+  const projectedFinishValue =
+    isPlanning
+      ? pendingStartState
+      : forecastStatus === 'stalled'
+        ? noThroughputState
+        : formatForecastDate(projectedFinishDate);
+  const projectedFinishDetail =
+    isPlanning
+      ? `Sprint ends ${formatForecastDate(data.endDate)}. Forecast begins after the sprint starts.`
+      : forecastStatus === 'stalled'
+        ? 'Finish forecast appears after the sprint records completed work.'
+        : `Sprint ends ${formatForecastDate(data.endDate)}`;
+  const forecastRangeValue =
+    isPlanning
+      ? pendingStartState
+      : forecastStatus === 'stalled'
+        ? noThroughputState
+        : forecastStartDate && forecastEndDate
+          ? `${formatForecastDate(forecastStartDate)} - ${formatForecastDate(forecastEndDate)}`
+          : 'TBD';
+  const forecastRangeDetail =
+    isPlanning
+      ? 'Forecast begins after the sprint starts.'
+      : forecastStatus === 'stalled'
+        ? 'Range appears after the sprint has measurable throughput.'
+        : 'Best to worst observed pace';
+  const averageThroughputValue =
+    !isPlanning && !throughputHasStarted
+      ? noThroughputState
+      : formatMetricPerDay(averageThroughput, effectiveMode);
+  const averageThroughputDetail =
+    isPlanning
+      ? 'Planning baseline before sprint start'
+      : !throughputHasStarted
+        ? 'Completed work will unlock pace-based forecasting.'
+        : `${observedDays} observed day${observedDays === 1 ? '' : 's'}`;
+  const flowEventCount = issueInsights
+    ? sum(issueInsights.createdResolvedByDay.map((day) => day.created + day.resolved))
+    : 0;
+  const flowActivityDays = issueInsights
+    ? issueInsights.createdResolvedByDay.filter((day) => day.created > 0 || day.resolved > 0).length
+    : 0;
+  const showEarlyFlowTrendMessage =
+    flowEventCount === 0 || (flowEventCount < 3 || flowActivityDays < 2 || observedDays < 3);
+  const flowTrendMessage =
+    flowEventCount === 0
+      ? 'No issue movement yet. Created vs resolved trends will appear after sprint work starts moving.'
+      : `Flow trend is still early: ${flowEventCount} created or resolved event${flowEventCount === 1 ? '' : 's'} across ${flowActivityDays} active day${flowActivityDays === 1 ? '' : 's'}. The distributions are trustworthy, but the trend line will stay jagged until more work moves.`;
+  const excludedWeeksPreview = historyMeta.excludedWeeks.slice(0, 3).map(formatExcludedHistoryWeek).join(' • ');
 
   const fullDateLabels = allDates.map((date) => formatDateLabel(date));
   const reportInsight =
@@ -1180,44 +1324,71 @@ export function WeekAnalyticsPanel({
 
       {dashboard === 'velocity' ? (
         <>
+          <div className="rounded-lg border border-border bg-border/10 p-3">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted">History Integrity</div>
+            <div className="mt-1 text-sm text-foreground">
+              {historyWindowCount} of {historyMeta.recommendedWindow} recent completed program week{historyMeta.recommendedWindow === 1 ? '' : 's'} currently qualify
+            </div>
+            <div className="mt-1 text-xs text-muted">
+              {historyIntegritySummary}
+            </div>
+            {excludedWeeksPreview ? (
+              <div className="mt-2 text-xs text-muted">
+                Excluded: {excludedWeeksPreview}
+              </div>
+            ) : null}
+          </div>
+
           <div className="grid gap-2 md:grid-cols-4">
             <MetricCard
               label="History Window"
-              value={`${historicalVelocity?.historyCount ?? 0} week${(historicalVelocity?.historyCount ?? 0) === 1 ? '' : 's'}`}
-              detail="Completed program weeks included in the velocity trend"
+              value={`${historyWindowCount} week${historyWindowCount === 1 ? '' : 's'}`}
+              detail={historyWindowDetail}
             />
             <MetricCard
-              label="6-Week Avg Done"
+              label={historyAvgDoneLabel}
               value={
                 historicalAvgCompleted !== null
                   ? formatMetric(historicalAvgCompleted, effectiveMode)
                   : 'N/A'
               }
-              detail="Average completed work per sprint"
+              detail={
+                historicalAvgCompleted !== null && recentHistoryDescriptor
+                  ? `Average completed work across ${recentHistoryDescriptor}`
+                  : historyEmptyState
+              }
               tone={historicalAvgCompleted !== null ? 'success' : 'default'}
             />
             <MetricCard
-              label="6-Week Avg Committed"
+              label={historyAvgCommittedLabel}
               value={
                 historicalAvgCommitted !== null
                   ? formatMetric(historicalAvgCommitted, effectiveMode)
                   : 'N/A'
               }
-              detail="Average starting commitment per sprint"
+              detail={
+                historicalAvgCommitted !== null && recentHistoryDescriptor
+                  ? `Average starting commitment across ${recentHistoryDescriptor}`
+                  : historyEmptyState
+              }
             />
             <MetricCard
-              label="6-Week Reliability"
+              label={historyReliabilityLabel}
               value={formatPercent(historicalAvgReliability, 0)}
-              detail="Average completed vs committed across recent history"
+              detail={
+                historicalAvgReliability !== null && recentHistoryDescriptor
+                  ? `Completed vs committed across ${recentHistoryDescriptor}`
+                  : historyEmptyState
+              }
               tone={historicalAvgReliability !== null && historicalAvgReliability >= 85 ? 'success' : 'warning'}
             />
             <MetricCard
-              label="Committed vs Avg Done"
-              value={formatPercent(historicalCommitmentVsAverage, 0)}
+              label="Commitment Delta vs Avg Done"
+              value={formatDeltaPercent(historicalCommitmentVsAverage, 0)}
               detail={
-                historicalAvgCompleted !== null
-                  ? `${formatMetric(committed, effectiveMode)} committed vs ${formatMetric(historicalAvgCompleted, effectiveMode)} avg done`
-                  : 'Historical velocity appears after completed sprints accumulate'
+                historicalAvgCompleted !== null && recentHistoryDescriptor
+                  ? `${formatMetric(committed, effectiveMode)} committed vs ${formatMetric(historicalAvgCompleted, effectiveMode)} avg delivered across ${recentHistoryDescriptor}`
+                  : historyEmptyState
               }
               tone={
                 historicalCommitmentVsAverage !== null && historicalCommitmentVsAverage > 10
@@ -1226,12 +1397,12 @@ export function WeekAnalyticsPanel({
               }
             />
             <MetricCard
-              label="Current Scope vs Avg"
-              value={formatPercent(historicalScopeVsAverage, 0)}
+              label="Scope Delta vs Avg Done"
+              value={formatDeltaPercent(historicalScopeVsAverage, 0)}
               detail={
-                historicalAvgCompleted !== null
-                  ? `${formatMetric(current, effectiveMode)} in scope vs ${formatMetric(historicalAvgCompleted, effectiveMode)} avg done`
-                  : 'Historical velocity appears after completed sprints accumulate'
+                historicalAvgCompleted !== null && recentHistoryDescriptor
+                  ? `${formatMetric(current, effectiveMode)} in scope vs ${formatMetric(historicalAvgCompleted, effectiveMode)} avg delivered across ${recentHistoryDescriptor}`
+                  : historyEmptyState
               }
               tone={
                 historicalScopeVsAverage !== null && historicalScopeVsAverage > 10
@@ -1241,8 +1412,8 @@ export function WeekAnalyticsPanel({
             />
             <MetricCard
               label="Avg Throughput"
-              value={formatMetricPerDay(averageThroughput, effectiveMode)}
-              detail={isPlanning ? 'Planning baseline before sprint start' : `${observedDays} observed day${observedDays === 1 ? '' : 's'}`}
+              value={averageThroughputValue}
+              detail={averageThroughputDetail}
             />
             <MetricCard
               label="Required Pace"
@@ -1271,7 +1442,7 @@ export function WeekAnalyticsPanel({
               />
             ) : (
               <div className="rounded-lg border border-border bg-border/20 p-4 text-sm text-muted">
-                Historical velocity will appear after this program has completed weeks with sprint estimates.
+                Not enough completed history yet. Velocity appears after this program accumulates completed weeks with clean planning data.
               </div>
             )}
 
@@ -1290,14 +1461,18 @@ export function WeekAnalyticsPanel({
 
           <InsightBanner>
             {historicalAvgCompleted !== null && historicalVelocity
-              ? historicalScopeVsAverage !== null && historicalScopeVsAverage > 10
-                ? `Current sprint scope is ${formatPercent(historicalScopeVsAverage, 0)} above the recent average delivered volume, so carryover risk is higher unless throughput improves.`
-                : `Current sprint scope is within the recent delivery band, with ${formatMetric(historicalAvgCompleted, effectiveMode)} as the team’s average completed work over the last ${historicalVelocity.historyCount} weeks.`
+              ? `${historyIntegritySummary} ${hasThinVelocityHistory && recentHistoryDescriptor ? `History is still thin, so this view is using ${recentHistoryDescriptor}. ` : ''}${
+                  historicalScopeVsAverage !== null && historicalScopeVsAverage > 10
+                    ? `Current sprint scope is ${formatPercent(historicalScopeVsAverage, 0)} above the recent average delivered volume, so carryover risk is higher unless throughput improves.`
+                    : `Current sprint scope is within the recent delivery band, with ${formatMetric(historicalAvgCompleted, effectiveMode)} as the team’s average completed work across ${recentHistoryDescriptor ?? `${historicalVelocity.historyCount} qualifying weeks`}.`
+                }`
               : isPlanning
-                ? `This week has not started yet. Use the commitment of ${formatMetric(committed, effectiveMode)} to pressure-test whether the planned scope is realistic.`
+                ? `${historyIntegritySummary} This week has not started yet. Use the commitment of ${formatMetric(committed, effectiveMode)} to pressure-test whether the planned scope is realistic.`
+                : !throughputHasStarted
+                  ? `${historyIntegritySummary} No throughput yet. Delivery pacing will become trustworthy after the sprint records completed work.`
                 : commitmentReliability !== null && commitmentReliability >= 100
-                  ? `The sprint has already delivered the original commitment at ${formatPercent(commitmentReliability, 0)}.`
-                  : `The team is delivering at ${formatMetricPerDay(averageThroughput, effectiveMode)} against a current requirement of ${formatMetricPerDay(requiredDailyPace, effectiveMode)} to finish on time.`}
+                  ? `${historyIntegritySummary} The sprint has already delivered the original commitment at ${formatPercent(commitmentReliability, 0)}.`
+                  : `${historyIntegritySummary} The team is delivering at ${formatMetricPerDay(averageThroughput, effectiveMode)} against a current requirement of ${formatMetricPerDay(requiredDailyPace, effectiveMode)} to finish on time.`}
           </InsightBanner>
         </>
       ) : null}
@@ -1307,8 +1482,8 @@ export function WeekAnalyticsPanel({
           <div className="grid gap-2 md:grid-cols-4">
             <MetricCard
               label="Projected Finish"
-              value={formatForecastDate(projectedFinishDate)}
-              detail={`Sprint ends ${formatForecastDate(data.endDate)}`}
+              value={projectedFinishValue}
+              detail={projectedFinishDetail}
               tone={
                 forecastStatus === 'planning'
                   ? 'default'
@@ -1323,12 +1498,8 @@ export function WeekAnalyticsPanel({
             />
             <MetricCard
               label="Forecast Range"
-              value={
-                forecastStartDate && forecastEndDate
-                  ? `${formatForecastDate(forecastStartDate)} - ${formatForecastDate(forecastEndDate)}`
-                  : 'TBD'
-              }
-              detail={isPlanning ? 'Forecast begins after the sprint starts' : 'Best to worst observed pace'}
+              value={forecastRangeValue}
+              detail={forecastRangeDetail}
             />
             <MetricCard
               label="Required Pace"
@@ -1379,7 +1550,7 @@ export function WeekAnalyticsPanel({
               : forecastStatus === 'done'
               ? 'The sprint has already burned down the remaining committed work.'
               : forecastStatus === 'stalled'
-                ? 'There is no recent delivery throughput yet, so the finish forecast is still indeterminate.'
+                ? 'No throughput yet. Finish forecasting appears after the sprint records completed work.'
                 : forecastStatus === 'on_track'
                   ? `At the current pace, the sprint projects to finish by ${formatForecastDate(projectedFinishDate)}.`
                   : `At the current pace, the sprint is trending past ${formatForecastDate(data.endDate)} and needs roughly ${formatMetricPerDay(requiredDailyPace, effectiveMode)} from here.`}
@@ -1419,16 +1590,22 @@ export function WeekAnalyticsPanel({
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
-              <SimpleSeriesChart
-                title="Created vs Resolved"
-                subtitle="Daily issue creation and resolution inside the sprint window"
-                xLabels={xLabels}
-                series={[
-                  { label: 'Created', values: issueInsights.createdResolvedByDay.map((day) => day.created) },
-                  { label: 'Resolved', values: issueInsights.createdResolvedByDay.map((day) => day.resolved) },
-                ]}
-                colors={['#0EA5E9', '#22C55E']}
-              />
+              {showEarlyFlowTrendMessage ? (
+                <div className="rounded-lg border border-border bg-border/20 p-4 text-sm text-muted">
+                  {flowTrendMessage}
+                </div>
+              ) : (
+                <SimpleSeriesChart
+                  title="Created vs Resolved"
+                  subtitle="Daily issue creation and resolution inside the sprint window"
+                  xLabels={xLabels}
+                  series={[
+                    { label: 'Created', values: issueInsights.createdResolvedByDay.map((day) => day.created) },
+                    { label: 'Resolved', values: issueInsights.createdResolvedByDay.map((day) => day.resolved) },
+                  ]}
+                  colors={['#0EA5E9', '#22C55E']}
+                />
+              )}
 
               <DistributionCard
                 title="State Mix"

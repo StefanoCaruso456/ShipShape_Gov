@@ -102,8 +102,8 @@ As of 2026-03-20:
 
 - implementation status: complete
 - verification status: passed
-- merge-to-main status: pending
-- production status: not live yet
+- merge-to-main status: complete
+- production status: pending deploy verification in this phase doc
 
 ## Key Touchpoints
 

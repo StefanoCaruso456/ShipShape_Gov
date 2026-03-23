@@ -230,7 +230,8 @@ export type FleetGraphSignalKind =
   | 'dependency_risk'
   | 'workload_concentration'
   | 'throughput_gap'
-  | 'staffing_pressure';
+  | 'staffing_pressure'
+  | FleetGraphProactiveTriggerKind;
 
 export interface FleetGraphDerivedSignal {
   kind: FleetGraphSignalKind;
@@ -279,7 +280,11 @@ export interface FleetGraphOnDemandFinding {
 
 export type FleetGraphAnswerMode = 'execution' | 'context' | 'launcher';
 
-export type FleetGraphFeedbackEventName = 'drawer_opened' | 'route_clicked';
+export type FleetGraphFeedbackEventName =
+  | 'drawer_opened'
+  | 'route_clicked'
+  | 'proactive_toast_shown'
+  | 'proactive_toast_clicked';
 
 export interface FleetGraphFeedbackSurfaceContext {
   route: string;
@@ -297,6 +302,16 @@ export interface FleetGraphFeedbackRouteAction {
   intent?: FleetGraphPageContextActionIntent;
 }
 
+export interface FleetGraphFeedbackFindingContext {
+  finding_id: string;
+  delivery_source: FleetGraphProactiveDeliverySource;
+  audience_role: FleetGraphProactiveAudienceRole;
+  audience_scope: FleetGraphProactiveAudienceScope;
+  delivery_reason?: string | null;
+  severity: FleetGraphSignalSeverity;
+  signal_kinds: string[];
+}
+
 export interface FleetGraphFeedbackEventRequest {
   event_name: FleetGraphFeedbackEventName;
   thread_id?: string | null;
@@ -307,6 +322,7 @@ export interface FleetGraphFeedbackEventRequest {
   latency_ms?: number | null;
   surface: FleetGraphFeedbackSurfaceContext;
   route_action?: FleetGraphFeedbackRouteAction | null;
+  finding_context?: FleetGraphFeedbackFindingContext | null;
 }
 
 export interface FleetGraphOnDemandReasoning {
@@ -562,10 +578,25 @@ export interface FleetGraphProactiveFinding {
   route: string;
   surface: FleetGraphViewSurface;
   tab: string | null;
+  audienceRole: FleetGraphProactiveAudienceRole;
+  audienceScope: FleetGraphProactiveAudienceScope;
+  deliverySource: FleetGraphProactiveDeliverySource;
+  deliveryReason: string | null;
   signalKinds: string[];
   lastDetectedAt: string;
   lastNotifiedAt: string;
 }
+
+export type FleetGraphProactiveAudienceRole =
+  | 'responsible_owner'
+  | 'issue_assignee'
+  | 'accountable'
+  | 'manager'
+  | 'team_member';
+
+export type FleetGraphProactiveAudienceScope = 'individual' | 'team';
+
+export type FleetGraphProactiveDeliverySource = 'sweep' | 'event';
 
 export type FleetGraphProactiveEventEntityType = 'issue' | 'sprint';
 

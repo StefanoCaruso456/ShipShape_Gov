@@ -193,6 +193,12 @@ function PersonSidebar({ person, people, isAdmin, onUpdateProperties, metricsVis
   const props = person.properties || {};
   const reportsTo = (props.reports_to as string) || null;
   const personUserId = (props.user_id as string) || null;
+  const [roleDraft, setRoleDraft] = useState(typeof props.role === 'string' ? props.role : '');
+  const [isSavingRole, setIsSavingRole] = useState(false);
+
+  useEffect(() => {
+    setRoleDraft(typeof props.role === 'string' ? props.role : '');
+  }, [props.role]);
 
   // Build people list for combobox, excluding the current person
   const comboboxPeople: Person[] = people
@@ -201,6 +207,26 @@ function PersonSidebar({ person, people, isAdmin, onUpdateProperties, metricsVis
 
   // Find supervisor name for read-only display
   const supervisor = reportsTo ? people.find(p => p.user_id === reportsTo) : null;
+
+  const saveRole = useCallback(async () => {
+    const normalizedRole = roleDraft.trim() || null;
+    const currentRole = typeof props.role === 'string' && props.role.trim().length > 0
+      ? props.role.trim()
+      : null;
+
+    if (normalizedRole === currentRole) {
+      setRoleDraft(normalizedRole ?? '');
+      return;
+    }
+
+    setIsSavingRole(true);
+    try {
+      await onUpdateProperties({ role: normalizedRole });
+      setRoleDraft(normalizedRole ?? '');
+    } finally {
+      setIsSavingRole(false);
+    }
+  }, [onUpdateProperties, props.role, roleDraft]);
 
   return (
     <div className="space-y-4 p-4">
@@ -219,10 +245,30 @@ function PersonSidebar({ person, people, isAdmin, onUpdateProperties, metricsVis
         </div>
       </PropertyRow>
 
-      <PropertyRow label="Role">
-        <div className="text-sm text-foreground">
-          {props.role || <span className="text-muted">Not set</span>}
-        </div>
+      <PropertyRow label="Role" tooltip="Job title or functional role for this person">
+        <input
+          type="text"
+          value={roleDraft}
+          onChange={(e) => setRoleDraft(e.target.value)}
+          onBlur={() => {
+            void saveRole();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              e.currentTarget.blur();
+            }
+
+            if (e.key === 'Escape') {
+              setRoleDraft(typeof props.role === 'string' ? props.role : '');
+              e.currentTarget.blur();
+            }
+          }}
+          placeholder="Add role..."
+          aria-label="Role"
+          disabled={isSavingRole}
+          className="w-full rounded bg-border px-2 py-1 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:cursor-wait disabled:opacity-60"
+        />
       </PropertyRow>
 
       <PropertyRow label="Reports To" tooltip="Official supervisor — determines performance evaluation authority">

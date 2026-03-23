@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-19T04:21:40.917Z",
+  "generatedAt": "2026-03-23T01:17:49.242Z",
   "langsmith": {
     "tracingEnabled": false,
     "apiKeyPresent": false,
@@ -21,7 +21,7 @@
       "app": {
         "status": 200,
         "reachable": true,
-        "contentType": "text/html"
+        "contentType": "text/html; charset=utf-8"
       },
       "health": {
         "status": 200,

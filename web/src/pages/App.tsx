@@ -18,7 +18,7 @@ import { programKeys } from '@/hooks/useProgramsQuery';
 import { useStandupStatusQuery } from '@/hooks/useStandupStatusQuery';
 import { useActionItemsQuery, actionItemsKeys } from '@/hooks/useActionItemsQuery';
 import { useTeamMembersQuery } from '@/hooks/useTeamMembersQuery';
-import { useMyWeekQuery } from '@/hooks/useMyWeekQuery';
+import { useAnalyticsSprintsQuery } from '@/hooks/useAnalyticsSprintsQuery';
 import { cn, getContrastTextColor } from '@/lib/cn';
 import { buildDocumentTree, DocumentTreeNode } from '@/lib/documentTree';
 import {
@@ -45,6 +45,7 @@ import { ActionItemsModal } from '@/components/ActionItemsModal';
 import { AccountabilityBanner } from '@/components/AccountabilityBanner';
 import { ProjectContextSidebar } from '@/components/sidebars/ProjectContextSidebar';
 import { FleetGraphOnDemandPanel } from '@/components/fleetgraph/FleetGraphOnDemandPanel';
+import { buildAnalyticsPath, parseAnalyticsView } from '@/lib/analytics-route';
 import type { FleetGraphProactiveFinding } from '@ship/shared';
 
 type Mode = 'docs' | 'issues' | 'projects' | 'programs' | 'sprints' | 'team' | 'settings' | 'dashboard' | 'analytics' | 'project-context';
@@ -93,7 +94,7 @@ export function AppLayout() {
   // Check if user needs to post a standup today
   const { data: standupStatus } = useStandupStatusQuery();
   const standupDue = standupStatus?.due ?? false;
-  const { data: myWeekData } = useMyWeekQuery();
+  const { data: analyticsSprintsData = [] } = useAnalyticsSprintsQuery();
 
   // Check if user has pending action items (accountability tasks)
   const { data: actionItemsData } = useActionItemsQuery();
@@ -273,31 +274,18 @@ export function AppLayout() {
   // Get current document type and ID for /documents/:id routes
   const { currentDocumentType, currentDocumentId, currentDocumentProjectId } = useCurrentDocument();
   const inlineWeekId = getInlineWeekIdFromPath(location.pathname);
-  const analyticsView = (new URLSearchParams(location.search).get('view') as AnalyticsView | null) ?? 'report';
+  const analyticsView = parseAnalyticsView(new URLSearchParams(location.search).get('view')) as AnalyticsView;
 
-  const analyticsSprints = useMemo<AnalyticsSidebarSprint[]>(() => {
-    if (!myWeekData?.projects) {
-      return [];
-    }
-
-    const seen = new Set<string>();
-    const nextSprints: AnalyticsSidebarSprint[] = [];
-
-    for (const project of myWeekData.projects) {
-      if (!project.sprint_id || seen.has(project.sprint_id)) {
-        continue;
-      }
-
-      seen.add(project.sprint_id);
-      nextSprints.push({
-        id: project.sprint_id,
-        title: project.title,
-        subtitle: [project.program_name, project.sprint_title].filter(Boolean).join(' • '),
-      });
-    }
-
-    return nextSprints.sort((left, right) => left.title.localeCompare(right.title));
-  }, [myWeekData?.projects]);
+  const analyticsSprints = useMemo<AnalyticsSidebarSprint[]>(
+    () => analyticsSprintsData.map((sprint) => ({
+      id: sprint.id,
+      title: sprint.title,
+      programName: sprint.programName,
+      sprintNumber: sprint.sprintNumber,
+      status: sprint.status,
+    })),
+    [analyticsSprintsData]
+  );
 
   const resolvePreferredAnalyticsSprintId = useCallback((): string | null => {
     if (inlineWeekId) {
@@ -312,12 +300,16 @@ export function AppLayout() {
   }, [analyticsSprints, currentDocumentId, currentDocumentType, inlineWeekId]);
 
   const activeAnalyticsSprintId = useMemo(() => {
+    if (location.pathname.startsWith('/analytics')) {
+      return new URLSearchParams(location.search).get('sprintId') ?? resolvePreferredAnalyticsSprintId();
+    }
+
     if (location.pathname.match(/^\/documents\/[0-9a-f-]{36}\/analytics(?:\/|$)/i)) {
       return currentDocumentType === 'sprint' ? currentDocumentId ?? null : null;
     }
 
     return inlineWeekId;
-  }, [currentDocumentId, currentDocumentType, inlineWeekId, location.pathname]);
+  }, [currentDocumentId, currentDocumentType, inlineWeekId, location.pathname, location.search, resolvePreferredAnalyticsSprintId]);
 
   // Determine active mode from path or document type
   const getActiveMode = (): Mode => {
@@ -357,6 +349,12 @@ export function AppLayout() {
   const isStandup = currentDocumentType === 'standup';
   const hideLeftSidebar = isMyWeekPage || isWeeklyDoc || isStandup;
 
+  useEffect(() => {
+    if (activeMode === 'analytics' && leftSidebarCollapsed) {
+      setLeftSidebarCollapsed(false);
+    }
+  }, [activeMode, leftSidebarCollapsed]);
+
   // Get the active document ID from URL - works for /documents/:id and legacy routes
   const getActiveDocumentId = (): string | undefined => {
     // For unified /documents/:id route
@@ -379,7 +377,8 @@ export function AppLayout() {
       case 'dashboard': navigate('/my-week'); break;
       case 'analytics': {
         const sprintId = resolvePreferredAnalyticsSprintId();
-        navigate(sprintId ? `/documents/${sprintId}/analytics` : '/my-week');
+        setLeftSidebarCollapsed(false);
+        navigate(sprintId ? buildAnalyticsPath(sprintId, analyticsView) : '/analytics');
         break;
       }
       case 'docs': navigate('/docs'); break;

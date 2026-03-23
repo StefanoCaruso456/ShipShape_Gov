@@ -10,6 +10,7 @@ import { DEMO_PROGRAM_TEMPLATES, DEMO_PROJECT_TEMPLATES } from './demoWorkspaceT
 import { buildIssuePlanningProperties, ensureIssuePlanningProperties } from './seedPlanningUtils.js';
 import { inferSeedIssueType } from './seedIssueTypes.js';
 import { createIssueTemplateContent, shouldPopulateIssueTemplate } from '../utils/issueContentTemplate.js';
+import { hasSprintPlanningSnapshot, persistSprintPlanningSnapshot } from '../utils/sprint-planning.js';
 
 const { Pool } = pg;
 
@@ -88,6 +89,13 @@ interface SeedIssueTemplate {
 
 const PAST_SPRINTS_TO_SEED = 6;
 const FUTURE_SPRINTS_TO_SEED = 3;
+
+function buildSprintSnapshotDate(workspaceSprintStartDate: Date, sprintNumber: number): Date {
+  const snapshotDate = new Date(workspaceSprintStartDate);
+  snapshotDate.setUTCHours(0, 0, 0, 0);
+  snapshotDate.setUTCDate(snapshotDate.getUTCDate() + (sprintNumber - 1) * 7);
+  return snapshotDate;
+}
 
 async function seed() {
   // Load secrets from SSM in production (must happen before Pool creation)
@@ -905,6 +913,34 @@ async function seed() {
       console.log(`✅ Created ${issuesCreated} issues`);
     } else {
       console.log('ℹ️  All issues already exist');
+    }
+
+    let sprintBaselinesCreated = 0;
+    for (const sprint of sprints) {
+      if (sprint.number > currentSprintNumber) {
+        continue;
+      }
+
+      const sprintPropertiesResult = await pool.query(
+        `SELECT properties
+         FROM documents
+         WHERE id = $1`,
+        [sprint.id]
+      );
+      const sprintProperties = sprintPropertiesResult.rows[0]?.properties as Record<string, unknown> | undefined;
+      if (hasSprintPlanningSnapshot(sprintProperties)) {
+        continue;
+      }
+
+      await persistSprintPlanningSnapshot(pool, sprint.id, sprintProperties, {
+        source: sprint.number < currentSprintNumber ? 'seeded_history' : 'captured_at_start',
+        snapshotTakenAt: buildSprintSnapshotDate(sprintStartDate, sprint.number),
+      });
+      sprintBaselinesCreated++;
+    }
+
+    if (sprintBaselinesCreated > 0) {
+      console.log(`✅ Created ${sprintBaselinesCreated} sprint planning baselines`);
     }
 
     // Create welcome/tutorial wiki document

@@ -7,10 +7,12 @@ import type {
   FleetGraphEvidenceToolName as SharedFleetGraphEvidenceToolName,
   FleetGraphQuestionSource as SharedFleetGraphQuestionSource,
   FleetGraphPageContext as SharedFleetGraphPageContext,
+  FleetGraphSignalKind as SharedFleetGraphSignalKind,
   FleetGraphQuestionTheme as SharedFleetGraphQuestionTheme,
   FleetGraphScrumSurface as SharedFleetGraphScrumSurface,
   FleetGraphScrumToolContext as SharedFleetGraphScrumToolContext,
   FleetGraphToolCallTrace as SharedFleetGraphToolCallTrace,
+  FleetGraphDerivedSignal as SharedFleetGraphDerivedSignal,
   FleetGraphViewEntityType,
 } from '@ship/shared';
 
@@ -276,28 +278,9 @@ export interface FleetGraphFetchedPayloads {
 
 export type FleetGraphSignalSeverity = 'info' | 'warning' | 'action';
 
-export type FleetGraphSignalKind =
-  | 'changes_requested_plan'
-  | 'changes_requested_review'
-  | 'low_recent_activity'
-  | 'missing_standup'
-  | 'no_completed_work'
-  | 'work_not_started'
-  | 'missing_review'
-  | 'scope_growth'
-  | 'blocked_work'
-  | 'dependency_risk'
-  | 'workload_concentration'
-  | 'throughput_gap'
-  | 'staffing_pressure';
+export type FleetGraphSignalKind = SharedFleetGraphSignalKind;
 
-export interface FleetGraphDerivedSignal {
-  kind: FleetGraphSignalKind;
-  severity: FleetGraphSignalSeverity;
-  summary: string;
-  evidence: string[];
-  dedupeKey: string;
-}
+export type FleetGraphDerivedSignal = SharedFleetGraphDerivedSignal;
 
 export interface FleetGraphDerivedMetrics {
   totalIssues: number;
@@ -501,5 +484,6 @@ export interface FleetGraphRunInput {
   activeView?: FleetGraphActiveViewContext | null;
   contextEntity?: FleetGraphEntityRef | null;
   prompt?: FleetGraphPromptInput | null;
+  injectedSignals?: FleetGraphDerivedSignal[];
   trace?: FleetGraphTraceMetadata;
 }

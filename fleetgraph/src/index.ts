@@ -20,6 +20,10 @@ export {
   type FleetGraphActionDefinition,
 } from './actions/catalog.js';
 export {
+  createFleetGraphDerivedSignalFromTriggerMatch,
+  evaluateFleetGraphProactiveEvent,
+} from './signals/evaluate-proactive-event.js';
+export {
   FleetGraphStateAnnotation,
   type FleetGraphState,
   type FleetGraphStateUpdate,

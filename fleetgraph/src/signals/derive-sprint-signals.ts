@@ -103,6 +103,17 @@ function highestSeverity(
   return 'none';
 }
 
+function severityRank(severity: FleetGraphDerivedSignal['severity']): number {
+  switch (severity) {
+    case 'action':
+      return 3;
+    case 'warning':
+      return 2;
+    case 'info':
+      return 1;
+  }
+}
+
 function average(values: number[]): number | null {
   if (values.length === 0) {
     return null;
@@ -462,5 +473,36 @@ export function deriveSprintSignals(
     shouldSurface: signals.length > 0,
     signals,
     metrics,
+  };
+}
+
+export function mergeDerivedSignals(
+  base: FleetGraphDerivedSignals,
+  injectedSignals: FleetGraphDerivedSignal[]
+): FleetGraphDerivedSignals {
+  if (injectedSignals.length === 0) {
+    return base;
+  }
+
+  const dedupedSignals = new Map<string, FleetGraphDerivedSignal>();
+
+  for (const signal of [...base.signals, ...injectedSignals]) {
+    const key = signal.dedupeKey || `${signal.kind}:${signal.summary}`;
+    const existing = dedupedSignals.get(key);
+
+    if (!existing || severityRank(signal.severity) >= severityRank(existing.severity)) {
+      dedupedSignals.set(key, signal);
+    }
+  }
+
+  const signals = [...dedupedSignals.values()];
+
+  return {
+    ...base,
+    severity: highestSeverity(signals),
+    reasons: signals.map((signal) => signal.summary),
+    summary: summarizeSignals(signals),
+    shouldSurface: signals.length > 0,
+    signals,
   };
 }

@@ -4,6 +4,7 @@ import type {
   FleetGraphAttempts,
   FleetGraphActor,
   FleetGraphDerivedSignals,
+  FleetGraphDerivedSignal,
   FleetGraphEntityRef,
   FleetGraphErrorState,
   FleetGraphFetchedPayloads,
@@ -75,6 +76,10 @@ export const FleetGraphStateAnnotation = Annotation.Root({
   prompt: Annotation<FleetGraphPromptInput | null>({
     reducer: replaceValue,
     default: () => null,
+  }),
+  injectedSignals: Annotation<FleetGraphDerivedSignal[]>({
+    reducer: replaceValue,
+    default: () => [],
   }),
   expandedScope: Annotation<FleetGraphScope>({
     reducer: replaceValue,

@@ -70,6 +70,11 @@ const MyWeekPage = lazy(async () => {
   return { default: module.MyWeekPage };
 });
 
+const AnalyticsPage = lazy(async () => {
+  const module = await import('@/pages/AnalyticsPage');
+  return { default: module.AnalyticsPage };
+});
+
 const DocumentsPage = lazy(async () => {
   const module = await import('@/pages/Documents');
   return { default: module.DocumentsPage };
@@ -345,6 +350,7 @@ function AppRoutes() {
         <Route index element={<Navigate to="/my-week" replace />} />
         <Route path="dashboard" element={<LazyRoute><DashboardPage /></LazyRoute>} />
         <Route path="my-week" element={<LazyRoute><MyWeekPage /></LazyRoute>} />
+        <Route path="analytics" element={<LazyRoute><AnalyticsPage /></LazyRoute>} />
         <Route path="docs" element={<LazyRoute><DocumentsPage /></LazyRoute>} />
         <Route path="docs/:id" element={<DocumentRedirect />} />
         <Route path="documents/:id/*" element={<LazyRoute><UnifiedDocumentPage /></LazyRoute>} />

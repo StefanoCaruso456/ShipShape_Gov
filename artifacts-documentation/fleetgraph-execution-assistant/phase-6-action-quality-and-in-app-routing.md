@@ -112,8 +112,8 @@ As of 2026-03-20:
 
 - implementation status: complete
 - verification status: passed
-- merge-to-main status: pending
-- production status: not live yet
+- merge-to-main status: complete
+- production status: pending deploy verification in this phase doc
 
 ## Key Touchpoints
 
@@ -134,10 +134,11 @@ That order is intentional. FleetGraph should first make better route decisions b
 
 ## Delivery Status
 
-Phase 6 is implemented on a stacked branch after Phase 5.
+Phase 6 is merged to `main`.
 
 That means:
 
 - the code is complete
 - targeted verification passed
-- merge and deploy still depend on the earlier stacked phase landing first
+- merge is complete
+- deploy verification is the remaining status step in this doc
