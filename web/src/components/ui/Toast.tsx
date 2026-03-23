@@ -6,16 +6,29 @@ interface ToastAction {
   onClick: () => void;
 }
 
+interface ToastOptions {
+  persist?: boolean;
+  dismissOnAction?: boolean;
+}
+
 interface Toast {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info';
-  duration?: number;
+  duration?: number | null;
   action?: ToastAction;
+  persist?: boolean;
+  dismissOnAction?: boolean;
 }
 
 interface ToastContextValue {
-  showToast: (message: string, type?: Toast['type'], duration?: number, action?: ToastAction) => void;
+  showToast: (
+    message: string,
+    type?: Toast['type'],
+    duration?: number | null,
+    action?: ToastAction,
+    options?: ToastOptions
+  ) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -31,12 +44,27 @@ export function useToast() {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((message: string, type: Toast['type'] = 'success', duration = 3000, action?: ToastAction) => {
-    const id = crypto.randomUUID();
-    // If there's an action (like undo), extend duration to give user time to click
-    const finalDuration = action ? Math.max(duration, 5000) : duration;
-    setToasts((prev) => [...prev, { id, message, type, duration: finalDuration, action }]);
-  }, []);
+  const showToast = useCallback(
+    (
+      message: string,
+      type: Toast['type'] = 'success',
+      duration: number | null = 3000,
+      action?: ToastAction,
+      options?: ToastOptions
+    ) => {
+      const id = crypto.randomUUID();
+      const persist = options?.persist ?? false;
+      const dismissOnAction = options?.dismissOnAction ?? true;
+      // If there's an action (like undo), extend duration to give user time to click.
+      const finalDuration =
+        persist || duration == null ? null : action ? Math.max(duration, 5000) : duration;
+      setToasts((prev) => [
+        ...prev,
+        { id, message, type, duration: finalDuration, action, persist, dismissOnAction },
+      ]);
+    },
+    []
+  );
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -56,13 +84,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   useEffect(() => {
-    const timer = setTimeout(onClose, toast.duration || 3000);
+    if (toast.persist || typeof toast.duration !== 'number') {
+      return undefined;
+    }
+
+    const timer = setTimeout(onClose, toast.duration);
     return () => clearTimeout(timer);
-  }, [toast.duration, onClose]);
+  }, [toast.duration, toast.persist, onClose]);
 
   const handleActionClick = () => {
     toast.action?.onClick();
-    onClose();
+    if (toast.dismissOnAction !== false) {
+      onClose();
+    }
   };
 
   return (
