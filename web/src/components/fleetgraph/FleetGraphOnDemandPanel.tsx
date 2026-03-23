@@ -472,18 +472,18 @@ function buildIssueSurfaceStarterPrompts(pageContext: FleetGraphPageContext | nu
   const staleOpen = getPageContextMetricNumber(pageContext, 'Stale open');
   const notStarted = getPageContextMetricNumber(pageContext, 'Not started');
   const inProgress = getPageContextMetricNumber(pageContext, 'In progress');
-  const riskCluster = getPageContextMetricValue(pageContext, 'Risk cluster');
 
   return dedupePrompts([
-    staleOpen && staleOpen > 0 ? 'Which issues are stale or stuck?' : null,
-    notStarted !== null && inProgress !== null && notStarted > inProgress
-      ? 'What should be triaged, moved, or cut?'
-      : null,
-    riskCluster ? `What is the risk inside ${riskCluster}?` : null,
     'Which issues need attention first?',
+    notStarted !== null && notStarted > 0
+      ? 'What, if anything, still needs triage on this tab?'
+      : null,
+    staleOpen && staleOpen > 0 ? 'Which issues are stale or stuck?' : null,
     'What is blocking delivery in this project?',
-    'Are there dependency risks in this issue set?',
-    'Which issue needs an owner follow-up today?',
+    'Where is delivery risk hitting the highest-value work?',
+    notStarted !== null && inProgress !== null && notStarted > inProgress
+      ? 'Which work should move out first if we need to de-risk delivery?'
+      : null,
   ]);
 }
 
@@ -552,6 +552,19 @@ function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
   }
 
   const question = turn.question.trim().toLowerCase();
+  if (question.includes('triage')) {
+    return 'status';
+  }
+  if (
+    question.includes('cut') ||
+    question.includes('defer') ||
+    question.includes('move out') ||
+    question.includes('reduce scope') ||
+    question.includes('drop') ||
+    question.includes('protect delivery')
+  ) {
+    return 'scope';
+  }
   if (
     question.includes('impact') ||
     question.includes('value') ||
@@ -567,14 +580,6 @@ function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
   }
   if (question.includes('block') || question.includes('dependency')) {
     return 'blockers';
-  }
-  if (
-    question.includes('cut') ||
-    question.includes('defer') ||
-    question.includes('move out') ||
-    question.includes('reduce scope')
-  ) {
-    return 'scope';
   }
   if (question.includes('stalled') || question.includes('stuck') || question.includes('not moving')) {
     return 'status';
@@ -607,14 +612,16 @@ function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
     .toLowerCase();
 
   if (
-    corpus.includes('impact') ||
-    corpus.includes('business value') ||
-    corpus.includes('roi') ||
-    corpus.includes('retention') ||
-    corpus.includes('acquisition') ||
-    corpus.includes('growth')
+    corpus.includes('scope') ||
+    corpus.includes('changed') ||
+    corpus.includes('added') ||
+    corpus.includes('cut') ||
+    corpus.includes('drift') ||
+    corpus.includes('cut candidate') ||
+    corpus.includes('move out') ||
+    corpus.includes('reduce scope')
   ) {
-    return 'impact';
+    return 'scope';
   }
 
   if (
@@ -627,13 +634,14 @@ function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
   }
 
   if (
-    corpus.includes('scope') ||
-    corpus.includes('changed') ||
-    corpus.includes('added') ||
-    corpus.includes('cut') ||
-    corpus.includes('drift')
+    corpus.includes('impact') ||
+    corpus.includes('business value') ||
+    corpus.includes('roi') ||
+    corpus.includes('retention') ||
+    corpus.includes('acquisition') ||
+    corpus.includes('growth')
   ) {
-    return 'scope';
+    return 'impact';
   }
 
   if (
@@ -664,7 +672,8 @@ function inferPromptTheme(turn: FleetGraphChatTurn): FleetGraphPromptTheme {
     corpus.includes('stale') ||
     corpus.includes('attention') ||
     corpus.includes('milestone') ||
-    corpus.includes('moving')
+    corpus.includes('moving') ||
+    corpus.includes('triage')
   ) {
     return 'status';
   }
@@ -719,9 +728,9 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
         if (surface === 'project_issues') {
           return [
             'Which exact issues are driving the risk?',
-            'Is this mostly scope, blockers, or not-started work?',
-            'Which week or issue cluster is least likely to finish?',
-            'What can we cut and still protect delivery?',
+            'Is the risk mostly stalled work, blockers, or too much untouched scope?',
+            'Which status cluster is carrying the most unfinished risk?',
+            'What can move out without hurting delivery?',
           ];
         }
 
@@ -776,9 +785,9 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
         if (surface === 'project_issues') {
           return [
             'Which work should move out first if we need to de-risk delivery?',
-            'Which planned work got displaced?',
+            'What can move out without hurting the highest-value work?',
+            'What, if anything, still needs triage on this tab?',
             'Is this change worth the delivery risk it adds?',
-            'Should this stay in sprint or move out?',
           ];
         }
 
@@ -793,8 +802,8 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
           return [
             'What has not moved recently?',
             'Which "in progress" issues are actually stalled?',
-            'Which week is carrying the most unfinished work?',
-            'What is the next milestone that matters?',
+            'What, if anything, still needs triage on this tab?',
+            'Which status cluster is carrying the most unfinished risk?',
           ];
         }
 
@@ -847,9 +856,9 @@ function getFollowUpPrompts(turn: FleetGraphChatTurn): string[] {
         if (surface === 'project_issues') {
           return [
             'Which issues need attention first?',
-            'What should be triaged, moved, or cut?',
+            'What, if anything, still needs triage on this tab?',
             'Are there dependency risks in this issue set?',
-            'Which issue needs an owner follow-up today?',
+            'Where is delivery risk hitting the highest-value work?',
           ];
         }
 

@@ -14,6 +14,7 @@ type ReasonAboutCurrentViewTargets = 'completeRun' | 'fallback';
 type FleetGraphCurrentViewAnswerMode = FleetGraphReasoning['answerMode'];
 type IssueSurfaceQuestionIntent =
   | 'attention'
+  | 'triage'
   | 'stalled'
   | 'cut'
   | 'value_risk'
@@ -121,6 +122,10 @@ function getIssueSurfaceQuestionIntent(question: string | null): IssueSurfaceQue
     ])
   ) {
     return 'cut';
+  }
+
+  if (questionIncludesAny(normalizedQuestion, ['triage'])) {
+    return 'triage';
   }
 
   if (
@@ -238,6 +243,10 @@ function getPreferredActionIntents(
     normalizedQuestion.includes('reduce scope')
   ) {
     return ['prioritize', 'follow_up', 'inspect'];
+  }
+
+  if (normalizedQuestion.includes('triage')) {
+    return ['prioritize', 'inspect', 'follow_up'];
   }
 
   if (
@@ -485,6 +494,18 @@ function buildRecommendedNextStep(
     }
   }
 
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'triage') {
+    const triageAction =
+      getFirstAction(pageContext, 'Open risk cluster') ??
+      getFirstAction(pageContext, 'Open highest-impact') ??
+      preferredAction;
+
+    return formatActionRecommendation(
+      triageAction,
+      'Then decide whether the untouched work needs clearer ownership, a same-day follow-up, or a scope cut before it pulls attention away from the highest-value work.'
+    );
+  }
+
   if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'attention') {
     const attentionAction =
       getFirstAction(pageContext, 'Follow up on blocker') ??
@@ -598,6 +619,18 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     }
 
     return `${summary} Start with the work that combines the strongest delivery risk and business importance on this tab.`;
+  }
+
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'triage') {
+    const notStarted = getMetricCount(pageContext, 'Not started');
+    const riskCluster = getMetricValue(pageContext, 'Risk cluster');
+    const highestImpactIssue = getMetricValue(pageContext, 'Highest impact issue');
+
+    if (notStarted && notStarted > 0) {
+      return `${riskCluster ?? 'The visible backlog'} is where triage pressure is building. ${pluralize(notStarted, 'issue')} ${notStarted === 1 ? 'is' : 'are'} still sitting in triage, backlog, or todo on this tab.${highestImpactIssue ? ` Protect ${highestImpactIssue} while you decide what should be clarified, moved, or cut first.` : ''}`;
+    }
+
+    return 'This tab does not show much untouched scope right now, so the better move is to focus on the active or blocked work already underway.';
   }
 
   if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'stalled') {
@@ -752,6 +785,8 @@ function buildWhyNow(
     switch (getIssueSurfaceQuestionIntent(question)) {
       case 'attention':
         return 'I ranked the visible issues using blockers, freshness, state, and business value on this tab so the first answer is an order of operations, not a generic summary.';
+      case 'triage':
+        return 'I treated triage as the untouched work on this tab, then used risk clustering and business value to decide what should be clarified, moved, or protected first.';
       case 'stalled':
         return 'I only treated active work as stalled when it is still in progress and either has a logged blocker or has gone stale on the current tab.';
       case 'risk':
@@ -782,6 +817,7 @@ function buildIssueSurfaceEvidence(
 ): string[] {
   const metricLabelsByIntent: Record<IssueSurfaceQuestionIntent, string[]> = {
     attention: ['Blocked issues', 'Stalled active', 'Highest impact issue', 'Business value', 'Risk cluster'],
+    triage: ['Visible issues', 'Not started', 'Risk cluster', 'Highest impact issue', 'Business value'],
     stalled: ['In progress', 'Stalled active', 'Blocked issues', 'Not started'],
     cut: ['Not started', 'Risk cluster', 'Highest impact issue', 'Business value'],
     value_risk: ['Highest impact issue', 'Highest impact project', 'Business value', 'Risk cluster', 'Not started'],
@@ -805,6 +841,7 @@ function buildIssueSurfaceEvidence(
         return getIssueItems(pageContext, { includeMarker: 'Blocker:' }).slice(0, 2);
       case 'stalled':
         return getIssueItems(pageContext, { includeMarker: 'Stalled in progress' }).slice(0, 2);
+      case 'triage':
       case 'cut':
         return getIssueItems(pageContext, { includeMarker: 'Cut candidate' }).slice(0, 2);
       case 'value_risk':
