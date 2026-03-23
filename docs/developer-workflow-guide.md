@@ -16,6 +16,17 @@ Ship follows a document-first approach where everything (issues, weeks, programs
 3. **Weeks** - Time-boxed iterations with goals and backlog planning
 4. **Documents** - Wiki pages, weekly plans, and retrospectives
 
+## Repo Delivery Rule
+
+Ship uses a mainline-sync workflow for both human and agent contributors:
+
+1. Finished or deployed work must be committed
+2. The commit must be pushed to GitHub
+3. A pull request must be opened
+4. The pull request must be merged to `main`
+
+Local-only branches, worktrees, or session state do not count as completed delivery. If a branch is stale, rebase or cherry-pick the work onto the latest `origin/main` before merging.
+
 ---
 
 ## Workflow 1: Issue Triage & Assignment

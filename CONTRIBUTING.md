@@ -8,6 +8,17 @@ We expect all contributors to be respectful and professional in their interactio
 
 ## How to Contribute
 
+### Mainline Sync Rule
+
+Ship does not treat local-only work as finished. If a change is accepted by the user or deployed to a shared environment, it must also be:
+
+1. Committed
+2. Pushed to GitHub
+3. Opened as a pull request
+4. Merged to `main`
+
+If the current branch is stale, rebase or cherry-pick the work onto the latest `origin/main` before opening the PR. If any step is blocked, call out the blocker explicitly instead of leaving the change only in a local branch or worktree.
+
 ### Reporting Issues
 
 If you find a bug or have a feature request:
@@ -35,6 +46,7 @@ If you find a bug or have a feature request:
 - Reference any related issues
 - Ensure CI checks pass
 - Be responsive to feedback
+- Do not deploy code that is not also on track to be merged into `main`
 
 ## Development Setup
 
