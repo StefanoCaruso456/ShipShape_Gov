@@ -818,6 +818,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         workspaceId: req.workspaceId!,
         issueId: newIssueId,
         actorId: req.userId ?? null,
+        actorWorkPersona: req.userWorkPersona ?? null,
         eventKind: 'issue_created',
         previous: {
           state: null,
@@ -1211,6 +1212,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
         workspaceId,
         issueId: id,
         actorId: userId,
+        actorWorkPersona: req.userWorkPersona ?? null,
         eventKind: 'issue_updated',
         previous: {
           state: currentProps.state || null,
@@ -1804,6 +1806,7 @@ router.post('/:id/iterations', authMiddleware, async (req: Request, res: Respons
       workspaceId,
       issueId,
       actorId: userId,
+      actorWorkPersona: req.userWorkPersona ?? null,
       iteration: {
         id: typeof iteration.id === 'string' ? iteration.id : null,
         status,

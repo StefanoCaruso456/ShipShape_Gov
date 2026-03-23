@@ -160,7 +160,7 @@ export function AppLayout() {
     }
 
     markFleetGraphFindingSeen(finding.id);
-    const toastCopy = buildFleetGraphProactiveFindingToastCopy(finding);
+    const toastCopy = buildFleetGraphProactiveFindingToastCopy(finding, user?.workPersona ?? null);
     void reportFleetGraphFeedback(
       buildFleetGraphProactiveFindingFeedback(finding, 'proactive_toast_shown')
     ).catch(() => {});
@@ -179,7 +179,7 @@ export function AppLayout() {
         },
       }
     );
-  }, [currentWorkspace, hasSeenFleetGraphFinding, markFleetGraphFindingSeen, navigate, showToast]);
+  }, [currentWorkspace, hasSeenFleetGraphFinding, markFleetGraphFindingSeen, navigate, showToast, user?.workPersona]);
 
   const handleFleetGraphFindingEvent = useCallback((event: { data: Record<string, unknown> }) => {
     const data = event.data as Partial<FleetGraphProactiveFinding>;
