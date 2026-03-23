@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { matchPath, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo } from "react";
+import { matchPath, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import type {
   FleetGraphActiveViewContext,
   FleetGraphIssueDependencySignal,
@@ -8,14 +8,14 @@ import type {
   FleetGraphPageContext,
   FleetGraphPageContextAction,
   FleetGraphPageContextActionIntent,
-} from '@ship/shared';
-import { useCurrentDocument } from '@/contexts/CurrentDocumentContext';
-import { useDocuments } from '@/contexts/DocumentsContext';
-import { useIssues } from '@/contexts/IssuesContext';
-import { usePrograms } from '@/contexts/ProgramsContext';
-import { useProjects } from '@/contexts/ProjectsContext';
-import { apiGet } from '@/lib/api';
-import type { DocumentResponse } from '@/lib/document-tabs';
+} from "@ship/shared";
+import { useCurrentDocument } from "@/contexts/CurrentDocumentContext";
+import { useDocuments } from "@/contexts/DocumentsContext";
+import { useIssues } from "@/contexts/IssuesContext";
+import { usePrograms } from "@/contexts/ProgramsContext";
+import { useProjects } from "@/contexts/ProjectsContext";
+import { apiGet } from "@/lib/api";
+import type { DocumentResponse } from "@/lib/document-tabs";
 import {
   getProgramId,
   getProgramTitle,
@@ -24,68 +24,99 @@ import {
   getSprintId,
   getSprintTitle,
   type Issue,
-} from '@/hooks/useIssuesQuery';
-import { useDashboardActionItems } from '@/hooks/useDashboardActionItems';
-import { useIssueDependencySignalsQuery } from '@/hooks/useIssueDependencySignalsQuery';
-import { useMyWeekQuery, type MyWeekResponse, type StandupSlot } from '@/hooks/useMyWeekQuery';
-import { useTeamMembersQuery } from '@/hooks/useTeamMembersQuery';
-import { useActiveWeeksQuery } from '@/hooks/useWeeksQuery';
+} from "@/hooks/useIssuesQuery";
+import { useDashboardActionItems } from "@/hooks/useDashboardActionItems";
+import { useIssueDependencySignalsQuery } from "@/hooks/useIssueDependencySignalsQuery";
+import {
+  useMyWeekQuery,
+  type MyWeekResponse,
+  type StandupSlot,
+} from "@/hooks/useMyWeekQuery";
+import { useTeamMembersQuery } from "@/hooks/useTeamMembersQuery";
+import { useActiveWeeksQuery } from "@/hooks/useWeeksQuery";
 
 type FleetGraphPageContextWithActions = FleetGraphPageContext & {
   actions?: FleetGraphPageContextAction[];
 };
 
-function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+function pluralize(
+  count: number,
+  singular: string,
+  plural = `${singular}s`,
+): string {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function buildMetrics(
-  metrics: Array<FleetGraphPageContext['metrics'][number] | null | undefined>
-): FleetGraphPageContext['metrics'] {
-  return metrics.filter((metric): metric is FleetGraphPageContext['metrics'][number] => Boolean(metric));
+  metrics: Array<FleetGraphPageContext["metrics"][number] | null | undefined>,
+): FleetGraphPageContext["metrics"] {
+  return metrics.filter(
+    (metric): metric is FleetGraphPageContext["metrics"][number] =>
+      Boolean(metric),
+  );
 }
 
 function buildItems(
-  items: Array<FleetGraphPageContext['items'][number] | null | undefined>,
-  limit = 4
-): FleetGraphPageContext['items'] {
-  return items.filter((item): item is FleetGraphPageContext['items'][number] => Boolean(item)).slice(0, limit);
+  items: Array<FleetGraphPageContext["items"][number] | null | undefined>,
+  limit = 4,
+): FleetGraphPageContext["items"] {
+  return items
+    .filter((item): item is FleetGraphPageContext["items"][number] =>
+      Boolean(item),
+    )
+    .slice(0, limit);
 }
 
 function buildActions(
-  actions: Array<NonNullable<FleetGraphPageContextWithActions['actions']>[number] | null | undefined>,
-  limit = 4
-): NonNullable<FleetGraphPageContextWithActions['actions']> {
+  actions: Array<
+    | NonNullable<FleetGraphPageContextWithActions["actions"]>[number]
+    | null
+    | undefined
+  >,
+  limit = 4,
+): NonNullable<FleetGraphPageContextWithActions["actions"]> {
   const seenRoutes = new Set<string>();
 
-  return actions.filter((action): action is NonNullable<FleetGraphPageContextWithActions['actions']>[number] => {
-    if (!action || seenRoutes.has(action.route)) {
-      return false;
-    }
+  return actions
+    .filter(
+      (
+        action,
+      ): action is NonNullable<
+        FleetGraphPageContextWithActions["actions"]
+      >[number] => {
+        if (!action || seenRoutes.has(action.route)) {
+          return false;
+        }
 
-    seenRoutes.add(action.route);
-    return true;
-  }).slice(0, limit);
+        seenRoutes.add(action.route);
+        return true;
+      },
+    )
+    .slice(0, limit);
 }
 
-function inferActionIntentFromLabel(label: string): FleetGraphPageContextActionIntent {
+function inferActionIntentFromLabel(
+  label: string,
+): FleetGraphPageContextActionIntent {
   if (/^Write\b/i.test(label)) {
-    return 'write';
+    return "write";
   }
 
   if (/^(Complete|Create)\b/i.test(label)) {
-    return 'complete';
+    return "complete";
   }
 
-  if (/^(Open highest-impact|Open top attention|Open risk cluster)\b/i.test(label)) {
-    return 'prioritize';
+  if (
+    /^(Open highest-impact|Open top attention|Open risk cluster)\b/i.test(label)
+  ) {
+    return "prioritize";
   }
 
   if (/follow-up|follow up/i.test(label)) {
-    return 'follow_up';
+    return "follow_up";
   }
 
-  return 'inspect';
+  return "inspect";
 }
 
 function createPageAction(
@@ -95,7 +126,7 @@ function createPageAction(
     intent?: FleetGraphPageContextActionIntent;
     reason?: string | null;
     owner?: string | null;
-  }
+  },
 ): FleetGraphPageContextAction {
   return {
     label,
@@ -108,13 +139,13 @@ function createPageAction(
 
 function appendRouteSearch(
   route: string,
-  params: Record<string, string | number | null | undefined>
+  params: Record<string, string | number | null | undefined>,
 ): string {
-  const [pathname, search = ''] = route.split('?');
+  const [pathname, search = ""] = route.split("?");
   const searchParams = new URLSearchParams(search);
 
   Object.entries(params).forEach(([key, value]) => {
-    if (value === null || value === undefined || value === '') {
+    if (value === null || value === undefined || value === "") {
       searchParams.delete(key);
       return;
     }
@@ -127,11 +158,11 @@ function appendRouteSearch(
 }
 
 function isDateToday(date: string): boolean {
-  return date === new Date().toISOString().split('T')[0];
+  return date === new Date().toISOString().split("T")[0];
 }
 
 function isDateInPast(date: string): boolean {
-  return date < new Date().toISOString().split('T')[0];
+  return date < new Date().toISOString().split("T")[0];
 }
 
 function isFridayOrLater(): boolean {
@@ -139,7 +170,10 @@ function isFridayOrLater(): boolean {
   return todayDay === 0 || todayDay >= 5;
 }
 
-function getStandupActionRoute(route: string, slot: StandupSlot | null): string | null {
+function getStandupActionRoute(
+  route: string,
+  slot: StandupSlot | null,
+): string | null {
   if (!slot) {
     return null;
   }
@@ -149,13 +183,13 @@ function getStandupActionRoute(route: string, slot: StandupSlot | null): string 
   }
 
   return appendRouteSearch(route, {
-    action: 'create-standup',
+    action: "create-standup",
     action_date: slot.date,
   });
 }
 
 type MyWeekProjectInsight = {
-  project: MyWeekResponse['projects'][number];
+  project: MyWeekResponse["projects"][number];
   needsAttention: boolean;
   hasFreshActivity: boolean;
   score: number;
@@ -166,68 +200,90 @@ type MyWeekProjectInsight = {
 };
 
 function formatShortUtcDate(value: string): string {
-  return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
   });
 }
 
-function getMyWeekProjectRoute(project: MyWeekResponse['projects'][number]): string {
-  return project.sprint_id ? `/documents/${project.sprint_id}/issues` : `/documents/${project.id}`;
+function getMyWeekProjectRoute(
+  project: MyWeekResponse["projects"][number],
+): string {
+  return project.sprint_id
+    ? `/documents/${project.sprint_id}/issues`
+    : `/documents/${project.id}`;
 }
 
 function buildMyWeekProjectInsight(
-  project: MyWeekResponse['projects'][number],
-  week: MyWeekResponse['week']
+  project: MyWeekResponse["projects"][number],
+  week: MyWeekResponse["week"],
 ): MyWeekProjectInsight {
   const route = getMyWeekProjectRoute(project);
-  const trackedIssues = Math.max(project.issue_counts.total - project.issue_counts.cancelled, 0);
-  const completedIssues = Math.min(project.issue_counts.completed, trackedIssues);
-  const activeIssues = project.issue_counts.in_progress + project.issue_counts.in_review;
-  const hasFreshActivity = project.activity.active_days > 0 || project.activity.updated_issue_count > 0;
+  const trackedIssues = Math.max(
+    project.issue_counts.total - project.issue_counts.cancelled,
+    0,
+  );
+  const completedIssues = Math.min(
+    project.issue_counts.completed,
+    trackedIssues,
+  );
+  const activeIssues =
+    project.issue_counts.in_progress + project.issue_counts.in_review;
+  const hasFreshActivity =
+    project.activity.active_days > 0 ||
+    project.activity.updated_issue_count > 0;
   const lastUpdateDetail = project.activity.last_issue_update_at
     ? `Last issue update ${formatShortUtcDate(project.activity.last_issue_update_at)}`
     : null;
 
   let needsAttention = false;
-  let statusLabel = 'Watching';
+  let statusLabel = "Watching";
   let score = 25;
   let summary = `${project.title} has scoped work, but it still needs a clearer next move.`;
 
   if (trackedIssues === 0) {
-    statusLabel = week.week_number > week.current_week_number ? 'Planning' : 'Unscoped';
+    statusLabel =
+      week.week_number > week.current_week_number ? "Planning" : "Unscoped";
     score = week.is_current ? 45 : 20;
     summary =
       week.week_number > week.current_week_number
         ? `${project.title} is assigned for Week ${week.week_number}, but no sprint issues are linked yet.`
         : `${project.title} is assigned this week, but no sprint issues are linked yet.`;
-  } else if (week.week_number < week.current_week_number && completedIssues < trackedIssues) {
+  } else if (
+    week.week_number < week.current_week_number &&
+    completedIssues < trackedIssues
+  ) {
     needsAttention = true;
-    statusLabel = 'Needs attention';
+    statusLabel = "Needs attention";
     score = 100 + (trackedIssues - completedIssues);
-    summary = `${project.title} still has ${pluralize(trackedIssues - completedIssues, 'incomplete issue')} from Week ${week.week_number}.`;
+    summary = `${project.title} still has ${pluralize(trackedIssues - completedIssues, "incomplete issue")} from Week ${week.week_number}.`;
   } else if (week.is_current && completedIssues === 0 && activeIssues === 0) {
     needsAttention = true;
-    statusLabel = 'Needs attention';
+    statusLabel = "Needs attention";
     score = 95 + trackedIssues;
-    summary = `${project.title} has ${pluralize(trackedIssues, 'tracked issue')} and none are started yet.`;
+    summary = `${project.title} has ${pluralize(trackedIssues, "tracked issue")} and none are started yet.`;
   } else if (week.is_current && !hasFreshActivity) {
     needsAttention = true;
-    statusLabel = 'Needs attention';
+    statusLabel = "Needs attention";
     score = 85 + Math.max(trackedIssues - completedIssues, 0);
     summary = `${project.title} has no visible issue movement this week.`;
-  } else if (week.is_current && activeIssues === 0 && completedIssues < trackedIssues) {
+  } else if (
+    week.is_current &&
+    activeIssues === 0 &&
+    completedIssues < trackedIssues
+  ) {
     needsAttention = true;
-    statusLabel = 'Needs attention';
+    statusLabel = "Needs attention";
     score = 75 + Math.max(trackedIssues - completedIssues, 0);
     summary = `${project.title} still has open work, but nothing is currently in progress or review.`;
   } else if (trackedIssues > 0 && completedIssues >= trackedIssues) {
-    statusLabel = 'On track';
+    statusLabel = "On track";
     score = 10;
     summary = `${project.title} already has all scoped issues completed for this week.`;
   } else if (activeIssues > 0 || hasFreshActivity) {
-    statusLabel = week.week_number > week.current_week_number ? 'Planning' : 'In flight';
+    statusLabel =
+      week.week_number > week.current_week_number ? "Planning" : "In flight";
     score = 30 + activeIssues + completedIssues;
     summary = `${project.title} has visible movement in the scoped week and is already in flight.`;
   }
@@ -237,21 +293,21 @@ function buildMyWeekProjectInsight(
     trackedIssues > 0 ? `${completedIssues}/${trackedIssues} complete` : null,
     trackedIssues > completedIssues
       ? activeIssues > 0
-        ? `${pluralize(activeIssues, 'issue')} active`
-        : 'No active issues'
+        ? `${pluralize(activeIssues, "issue")} active`
+        : "No active issues"
       : null,
     project.activity.active_days > 0
-      ? `${pluralize(project.activity.active_days, 'active day')} in scope`
+      ? `${pluralize(project.activity.active_days, "active day")} in scope`
       : trackedIssues > 0
         ? week.is_current
-          ? 'No issue movement this week'
+          ? "No issue movement this week"
           : `No issue movement in Week ${week.week_number}`
         : null,
     lastUpdateDetail,
     project.program_name ? `Program: ${project.program_name}` : null,
   ]
     .filter((value): value is string => Boolean(value))
-    .join(' • ');
+    .join(" • ");
 
   return {
     project,
@@ -261,13 +317,19 @@ function buildMyWeekProjectInsight(
     summary,
     detail,
     route,
-    actionLabel: project.sprint_title ? `Open ${project.title} sprint` : `Open ${project.title}`,
+    actionLabel: project.sprint_title
+      ? `Open ${project.title} sprint`
+      : `Open ${project.title}`,
   };
 }
 
-function buildGenericPageContext(route: string, title: string, summary: string): FleetGraphPageContext {
+function buildGenericPageContext(
+  route: string,
+  title: string,
+  summary: string,
+): FleetGraphPageContext {
   return {
-    kind: 'generic',
+    kind: "generic",
     route,
     title,
     summary,
@@ -279,11 +341,16 @@ function buildGenericPageContext(route: string, title: string, summary: string):
 
 function buildProgramsPageContext(
   route: string,
-  programs: ReturnType<typeof usePrograms>['programs']
+  programs: ReturnType<typeof usePrograms>["programs"],
 ): FleetGraphPageContext {
   const activePrograms = programs.filter((program) => !program.archived_at);
-  const totalIssues = activePrograms.reduce((sum, program) => sum + (program.issue_count ?? 0), 0);
-  const programsWithOwners = activePrograms.filter((program) => Boolean(program.owner)).length;
+  const totalIssues = activePrograms.reduce(
+    (sum, program) => sum + (program.issue_count ?? 0),
+    0,
+  );
+  const programsWithOwners = activePrograms.filter((program) =>
+    Boolean(program.owner),
+  ).length;
   const items = buildItems(
     [...activePrograms]
       .sort((left, right) => (right.issue_count ?? 0) - (left.issue_count ?? 0))
@@ -295,123 +362,472 @@ function buildProgramsPageContext(
           `${program.sprint_count ?? 0} weeks`,
         ]
           .filter(Boolean)
-          .join(' • '),
+          .join(" • "),
         route: `/documents/${program.id}`,
-      }))
+      })),
   );
 
   return {
-    kind: 'programs',
+    kind: "programs",
     route,
-    title: 'Programs',
+    title: "Programs",
     summary:
       activePrograms.length === 0
-        ? 'Programs is empty in this workspace right now.'
-        : `Programs shows ${pluralize(activePrograms.length, 'active program')}. ${items[0]?.label ?? 'The first program'} is one of the main places to drill into next.`,
+        ? "Programs is empty in this workspace right now."
+        : `Programs shows ${pluralize(activePrograms.length, "active program")}. ${items[0]?.label ?? "The first program"} is one of the main places to drill into next.`,
     emptyState: activePrograms.length === 0,
     metrics: buildMetrics([
-      { label: 'Active programs', value: String(activePrograms.length) },
-      { label: 'Programs with owner', value: String(programsWithOwners) },
-      { label: 'Tracked issues', value: String(totalIssues) },
+      { label: "Active programs", value: String(activePrograms.length) },
+      { label: "Programs with owner", value: String(programsWithOwners) },
+      { label: "Tracked issues", value: String(totalIssues) },
     ]),
     items,
   };
 }
 
-function buildProjectsPageContext(
+type ProjectsPageContextScope = {
+  title: string;
+  subject: string;
+  programId?: string | null;
+};
+
+type ProjectSurfaceInsight = {
+  project: ReturnType<typeof useProjects>["projects"][number];
+  route: string;
+  issuesRoute: string;
+  openIssues: number;
+  activeIssues: number;
+  waitingOnReviewIssues: number;
+  notStartedIssues: number;
+  staleOpenIssues: number;
+  addedAfterSprintStartIssues: number;
+  businessValueScore: number | null;
+  statusLabel: string;
+  needsAttention: boolean;
+  attentionScore: number;
+  summary: string;
+  detail: string;
+};
+
+function isOpenIssueForProjectsSurface(issue: Issue): boolean {
+  return issue.state !== "done" && issue.state !== "cancelled";
+}
+
+function isIssueInReview(issue: Issue): boolean {
+  return issue.state === "in_review";
+}
+
+function isIssueAddedAfterSprintStart(
+  issue: Issue,
+  activeWeekIds: Set<string>,
+  sprintStartTimestamp: number | null,
+): boolean {
+  if (!issue.created_at || sprintStartTimestamp === null) {
+    return false;
+  }
+
+  const sprintId = getSprintId(issue);
+  if (!sprintId || !activeWeekIds.has(sprintId)) {
+    return false;
+  }
+
+  const createdTimestamp = new Date(issue.created_at).getTime();
+  return (
+    Number.isFinite(createdTimestamp) && createdTimestamp > sprintStartTimestamp
+  );
+}
+
+function formatIssueCount(value: number, label: string): string {
+  return `${value} ${value === 1 ? label : `${label}s`}`;
+}
+
+function buildProjectSurfaceInsight(
+  project: ReturnType<typeof useProjects>["projects"][number],
+  projectIssues: Issue[],
+  activeWeekIds: Set<string>,
+  sprintStartTimestamp: number | null,
+): ProjectSurfaceInsight {
+  const route = `/documents/${project.id}`;
+  const issuesRoute = `/documents/${project.id}/issues`;
+  const openIssues = projectIssues.filter(isOpenIssueForProjectsSurface);
+  const activeIssues = openIssues.filter(isIssueActive).length;
+  const waitingOnReviewIssues = openIssues.filter(isIssueInReview).length;
+  const notStartedIssues = openIssues.filter(isIssueNotStarted).length;
+  const staleOpenIssues = openIssues.filter(isIssueStale).length;
+  const addedAfterSprintStartIssues = openIssues.filter((issue) =>
+    isIssueAddedAfterSprintStart(issue, activeWeekIds, sprintStartTimestamp),
+  ).length;
+  const openIssueCount = openIssues.length;
+  const businessValueScore = project.business_value_score;
+
+  let statusLabel = "In flight";
+  if (openIssueCount === 0) {
+    statusLabel = "Clear";
+  } else if (
+    waitingOnReviewIssues > 0 ||
+    addedAfterSprintStartIssues > 0 ||
+    staleOpenIssues > 0
+  ) {
+    statusLabel = "Needs attention";
+  } else if (notStartedIssues > activeIssues && activeIssues === 0) {
+    statusLabel = "Needs attention";
+  } else if (notStartedIssues > activeIssues) {
+    statusLabel = "Untouched scope";
+  }
+
+  const needsAttention =
+    openIssueCount > 0 &&
+    (waitingOnReviewIssues > 0 ||
+      addedAfterSprintStartIssues > 0 ||
+      staleOpenIssues > 0 ||
+      activeIssues === 0 ||
+      notStartedIssues > activeIssues);
+
+  let summary = `${project.title} is moving without a clear review or scope-change hotspot right now.`;
+  if (openIssueCount === 0) {
+    summary = `${project.title} does not show any open issues right now.`;
+  } else if (waitingOnReviewIssues > 0 && addedAfterSprintStartIssues > 0) {
+    summary = `${project.title} has ${formatIssueCount(openIssueCount, "open issue")}, ${formatIssueCount(waitingOnReviewIssues, "issue")} waiting on review, and ${formatIssueCount(addedAfterSprintStartIssues, "issue")} added after sprint start.`;
+  } else if (waitingOnReviewIssues > 0) {
+    summary = `${project.title} is waiting on review for ${formatIssueCount(waitingOnReviewIssues, "issue")}.`;
+  } else if (addedAfterSprintStartIssues > 0) {
+    summary = `${project.title} picked up ${formatIssueCount(addedAfterSprintStartIssues, "issue")} after sprint start.`;
+  } else if (staleOpenIssues > 0) {
+    summary = `${project.title} has ${formatIssueCount(staleOpenIssues, "stale open issue")} that have not moved recently.`;
+  } else if (activeIssues === 0) {
+    summary = `${project.title} still has ${formatIssueCount(openIssueCount, "open issue")}, but nothing is active or in review.`;
+  } else if (notStartedIssues > activeIssues) {
+    summary = `${project.title} still has more untouched scope than active movement right now.`;
+  }
+
+  const detail = [
+    statusLabel,
+    formatIssueCount(openIssueCount, "open issue"),
+    waitingOnReviewIssues > 0
+      ? `Waiting on review: ${waitingOnReviewIssues}`
+      : null,
+    addedAfterSprintStartIssues > 0
+      ? `Added after sprint start: ${addedAfterSprintStartIssues}`
+      : null,
+    notStartedIssues > 0 ? `Not started: ${notStartedIssues}` : null,
+    staleOpenIssues > 0 ? `Stale open: ${staleOpenIssues}` : null,
+    businessValueScore !== null
+      ? `Business value: ${businessValueScore}/100`
+      : null,
+    project.owner?.name ? `Owner: ${project.owner.name}` : "Owner: Unassigned",
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(" • ");
+
+  let attentionScore = openIssueCount * 2;
+  attentionScore += waitingOnReviewIssues * 14;
+  attentionScore += addedAfterSprintStartIssues * 12;
+  attentionScore += staleOpenIssues * 10;
+  attentionScore += notStartedIssues * 6;
+  attentionScore += activeIssues === 0 && openIssueCount > 0 ? 8 : 0;
+  attentionScore += project.owner ? 0 : 6;
+  attentionScore += Math.round((businessValueScore ?? 40) / 10);
+
+  return {
+    project,
+    route,
+    issuesRoute,
+    openIssues: openIssueCount,
+    activeIssues,
+    waitingOnReviewIssues,
+    notStartedIssues,
+    staleOpenIssues,
+    addedAfterSprintStartIssues,
+    businessValueScore,
+    statusLabel,
+    needsAttention,
+    attentionScore,
+    summary,
+    detail,
+  };
+}
+
+export function buildProjectsPageContext(
   route: string,
-  projects: ReturnType<typeof useProjects>['projects'],
-  search: string
-): FleetGraphPageContext {
+  projects: ReturnType<typeof useProjects>["projects"],
+  issues: Issue[],
+  activeWeeks: ReturnType<typeof useActiveWeeksQuery>["data"],
+  search: string,
+  scope: ProjectsPageContextScope = {
+    title: "Projects",
+    subject: "Projects",
+    programId: null,
+  },
+): FleetGraphPageContextWithActions {
   const searchParams = new URLSearchParams(search);
-  const statusFilter = searchParams.get('status') ?? '';
-  const visibleProjects = projects.filter((project) => {
-    if (statusFilter === 'archived') {
-      return project.inferred_status === 'archived';
+  const statusFilter = searchParams.get("status") ?? "";
+  const scopedProjects = projects.filter((project) => {
+    if (scope.programId && project.program_id !== scope.programId) {
+      return false;
+    }
+
+    if (statusFilter === "archived") {
+      return project.inferred_status === "archived";
     }
     if (!statusFilter) {
-      return project.inferred_status !== 'archived';
+      return project.inferred_status !== "archived";
     }
     return project.inferred_status === statusFilter;
   });
 
-  const activeCount = visibleProjects.filter((project) => project.inferred_status === 'active').length;
-  const ownerCount = visibleProjects.filter((project) => Boolean(project.owner)).length;
+  const activeWeekIds = new Set(
+    (activeWeeks?.weeks ?? []).map((week) => week.id),
+  );
+  const sprintStartTimestamp = activeWeeks?.sprint_start_date
+    ? new Date(activeWeeks.sprint_start_date).getTime()
+    : null;
+
+  const insights = scopedProjects
+    .map((project) =>
+      buildProjectSurfaceInsight(
+        project,
+        issues.filter((issue) => getProjectId(issue) === project.id),
+        activeWeekIds,
+        sprintStartTimestamp,
+      ),
+    )
+    .sort(
+      (left, right) =>
+        right.attentionScore - left.attentionScore ||
+        left.project.title.localeCompare(right.project.title),
+    );
+
+  const visibleProjects = insights.length;
+  const ownerCount = insights.filter((insight) =>
+    Boolean(insight.project.owner),
+  ).length;
+  const activeCount = insights.filter(
+    (insight) => insight.project.inferred_status === "active",
+  ).length;
+  const needsAttentionCount = insights.filter(
+    (insight) => insight.needsAttention,
+  ).length;
+  const totalOpenIssues = insights.reduce(
+    (sum, insight) => sum + insight.openIssues,
+    0,
+  );
+  const totalWaitingOnReview = insights.reduce(
+    (sum, insight) => sum + insight.waitingOnReviewIssues,
+    0,
+  );
+  const totalAddedAfterSprintStart = insights.reduce(
+    (sum, insight) => sum + insight.addedAfterSprintStartIssues,
+    0,
+  );
+  const topAttentionInsight = insights[0] ?? null;
+  const topReviewInsight =
+    insights
+      .filter((insight) => insight.waitingOnReviewIssues > 0)
+      .sort(
+        (left, right) =>
+          right.waitingOnReviewIssues - left.waitingOnReviewIssues ||
+          right.attentionScore - left.attentionScore,
+      )[0] ?? null;
+  const topScopeChangeInsight =
+    insights
+      .filter((insight) => insight.addedAfterSprintStartIssues > 0)
+      .sort(
+        (left, right) =>
+          right.addedAfterSprintStartIssues -
+            left.addedAfterSprintStartIssues ||
+          right.attentionScore - left.attentionScore,
+      )[0] ?? null;
+  const highestValueInsight =
+    [...insights].sort(
+      (left, right) =>
+        (right.businessValueScore ?? -1) - (left.businessValueScore ?? -1) ||
+        right.attentionScore - left.attentionScore,
+    )[0] ?? null;
+
+  const featuredInsights = [
+    topAttentionInsight,
+    topReviewInsight,
+    topScopeChangeInsight,
+    highestValueInsight,
+    ...insights,
+  ].filter((insight, index, collection): insight is ProjectSurfaceInsight => {
+    if (!insight) {
+      return false;
+    }
+
+    return (
+      collection.findIndex(
+        (candidate) => candidate?.project.id === insight.project.id,
+      ) === index
+    );
+  });
+
   const items = buildItems(
-    [...visibleProjects]
-      .sort((left, right) => (right.ice_score ?? 0) - (left.ice_score ?? 0))
-      .map((project) => ({
-        label: project.title,
-        detail: [
-          project.owner?.name ? `Owner: ${project.owner.name}` : null,
-          project.ice_score !== null ? `ICE ${project.ice_score}` : null,
-          `${project.issue_count} issues`,
-        ]
-          .filter(Boolean)
-          .join(' • '),
-        route: `/documents/${project.id}`,
-      }))
+    featuredInsights.map((insight) => ({
+      label: insight.project.title,
+      detail: insight.detail,
+      route: insight.issuesRoute,
+    })),
+    5,
   );
 
+  const summary = (() => {
+    if (visibleProjects === 0) {
+      return `${scope.subject} does not show any projects on this tab right now.`;
+    }
+
+    if (!topAttentionInsight) {
+      return `${scope.subject} shows ${pluralize(visibleProjects, "project")}, but FleetGraph does not see a standout attention hotspot from the current page snapshot.`;
+    }
+
+    return `${scope.subject} points first to ${topAttentionInsight.project.title}. It has ${formatIssueCount(topAttentionInsight.openIssues, "open issue")}${topAttentionInsight.waitingOnReviewIssues > 0 ? `, ${formatIssueCount(topAttentionInsight.waitingOnReviewIssues, "issue")} waiting on review` : ""}${topAttentionInsight.addedAfterSprintStartIssues > 0 ? `, and ${formatIssueCount(topAttentionInsight.addedAfterSprintStartIssues, "issue")} added after sprint start` : ""}.`;
+  })();
+
   return {
-    kind: 'projects',
+    kind: "projects",
     route,
-    title: 'Projects',
-    summary:
-      visibleProjects.length === 0
-        ? 'Projects is empty for the current workspace or filter.'
-        : `Projects shows ${pluralize(visibleProjects.length, 'project')}${statusFilter ? ` for the "${statusFilter}" filter` : ''}. ${items[0]?.label ?? 'The top project'} is a strong next place to inspect.`,
-    emptyState: visibleProjects.length === 0,
+    title: scope.title,
+    summary,
+    emptyState: visibleProjects === 0,
     metrics: buildMetrics([
-      { label: 'Visible projects', value: String(visibleProjects.length) },
-      { label: 'Active', value: String(activeCount) },
-      { label: 'With owner', value: String(ownerCount) },
+      { label: "Visible projects", value: String(visibleProjects) },
+      { label: "Active", value: String(activeCount) },
+      { label: "With owner", value: String(ownerCount) },
+      totalOpenIssues > 0
+        ? { label: "Open issues", value: String(totalOpenIssues) }
+        : null,
+      needsAttentionCount > 0
+        ? { label: "Needs attention", value: String(needsAttentionCount) }
+        : null,
+      totalWaitingOnReview > 0
+        ? {
+            label: "Waiting on review",
+            value: formatIssueCount(totalWaitingOnReview, "issue"),
+          }
+        : null,
+      totalAddedAfterSprintStart > 0
+        ? {
+            label: "Added after sprint start",
+            value: formatIssueCount(totalAddedAfterSprintStart, "issue"),
+          }
+        : null,
+      topAttentionInsight
+        ? {
+            label: "Top attention project",
+            value: topAttentionInsight.project.title,
+          }
+        : null,
+      highestValueInsight
+        ? {
+            label: "Highest value project",
+            value: highestValueInsight.project.title,
+          }
+        : null,
     ]),
     items,
+    actions: buildActions([
+      topAttentionInsight
+        ? createPageAction(
+            `Open top attention ${topAttentionInsight.project.title}`,
+            topAttentionInsight.issuesRoute,
+            {
+              intent: "prioritize",
+              reason: topAttentionInsight.summary,
+              owner: topAttentionInsight.project.owner?.name ?? null,
+            },
+          )
+        : null,
+      topReviewInsight
+        ? createPageAction(
+            `Open review queue ${topReviewInsight.project.title}`,
+            appendRouteSearch(topReviewInsight.issuesRoute, {
+              fleetgraph_focus: "review",
+            }),
+            {
+              intent: "follow_up",
+              reason: topReviewInsight.summary,
+              owner: topReviewInsight.project.owner?.name ?? null,
+            },
+          )
+        : null,
+      topScopeChangeInsight
+        ? createPageAction(
+            `Open scope change ${topScopeChangeInsight.project.title}`,
+            appendRouteSearch(topScopeChangeInsight.issuesRoute, {
+              fleetgraph_focus: "scope_change",
+            }),
+            {
+              intent: "prioritize",
+              reason: topScopeChangeInsight.summary,
+              owner: topScopeChangeInsight.project.owner?.name ?? null,
+            },
+          )
+        : null,
+      highestValueInsight
+        ? createPageAction(
+            `Open highest-value ${highestValueInsight.project.title}`,
+            highestValueInsight.route,
+            {
+              intent: "inspect",
+              reason:
+                highestValueInsight.businessValueScore !== null
+                  ? `${highestValueInsight.project.title} carries the strongest business value signal in this project list at ${highestValueInsight.businessValueScore}/100.`
+                  : `${highestValueInsight.project.title} is one of the strongest value candidates in this project list.`,
+              owner: highestValueInsight.project.owner?.name ?? null,
+            },
+          )
+        : null,
+    ]),
   };
 }
 
 function buildIssuesPageContext(
   route: string,
-  issues: ReturnType<typeof useIssues>['issues'],
-  search: string
+  issues: ReturnType<typeof useIssues>["issues"],
+  search: string,
 ): FleetGraphPageContext {
   const searchParams = new URLSearchParams(search);
-  const stateFilter = searchParams.get('state') ?? '';
+  const stateFilter = searchParams.get("state") ?? "";
   const visibleIssues = stateFilter
     ? issues.filter((issue) => issue.state === stateFilter)
     : issues;
-  const inProgressCount = visibleIssues.filter((issue) => issue.state === 'in_progress').length;
-  const completedCount = visibleIssues.filter((issue) => issue.state === 'done').length;
+  const inProgressCount = visibleIssues.filter(
+    (issue) => issue.state === "in_progress",
+  ).length;
+  const completedCount = visibleIssues.filter(
+    (issue) => issue.state === "done",
+  ).length;
   const items = buildItems(
     [...visibleIssues]
       .sort((left, right) => right.ticket_number - left.ticket_number)
       .map((issue) => ({
-        label: issue.display_id ? `${issue.display_id} ${issue.title}` : issue.title,
+        label: issue.display_id
+          ? `${issue.display_id} ${issue.title}`
+          : issue.title,
         detail: [
           `State: ${issue.state}`,
           issue.priority ? `Priority: ${issue.priority}` : null,
           getProjectTitle(issue) ? `Project: ${getProjectTitle(issue)}` : null,
         ]
           .filter(Boolean)
-          .join(' • '),
+          .join(" • "),
         route: `/documents/${issue.id}`,
-      }))
+      })),
   );
 
   return {
-    kind: 'issues',
+    kind: "issues",
     route,
-    title: 'Issues',
+    title: "Issues",
     summary:
       visibleIssues.length === 0
-        ? 'Issues is empty for the current workspace or filter.'
-        : `Issues shows ${pluralize(visibleIssues.length, 'issue')}${stateFilter ? ` in the "${stateFilter}" state` : ''}. ${items[0]?.label ?? 'The latest issue'} is one of the first places to inspect.`,
+        ? "Issues is empty for the current workspace or filter."
+        : `Issues shows ${pluralize(visibleIssues.length, "issue")}${stateFilter ? ` in the "${stateFilter}" state` : ""}. ${items[0]?.label ?? "The latest issue"} is one of the first places to inspect.`,
     emptyState: visibleIssues.length === 0,
     metrics: buildMetrics([
-      { label: 'Visible issues', value: String(visibleIssues.length) },
-      { label: 'In progress', value: String(inProgressCount) },
-      { label: 'Completed', value: String(completedCount) },
+      { label: "Visible issues", value: String(visibleIssues.length) },
+      { label: "In progress", value: String(inProgressCount) },
+      { label: "Completed", value: String(completedCount) },
     ]),
     items,
   };
@@ -419,43 +835,46 @@ function buildIssuesPageContext(
 
 function buildDocumentsPageContext(
   route: string,
-  documents: ReturnType<typeof useDocuments>['documents']
+  documents: ReturnType<typeof useDocuments>["documents"],
 ): FleetGraphPageContext {
-  const privateCount = documents.filter((document) => document.visibility === 'private').length;
+  const privateCount = documents.filter(
+    (document) => document.visibility === "private",
+  ).length;
   const workspaceCount = documents.length - privateCount;
   const items = buildItems(
     [...documents]
       .sort(
         (left, right) =>
-          new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime()
+          new Date(right.updated_at).getTime() -
+          new Date(left.updated_at).getTime(),
       )
       .map((document) => ({
         label: document.title,
-        detail: `${document.visibility === 'private' ? 'Private' : 'Workspace'} ${document.document_type}`,
+        detail: `${document.visibility === "private" ? "Private" : "Workspace"} ${document.document_type}`,
         route: `/documents/${document.id}`,
-      }))
+      })),
   );
 
   return {
-    kind: 'documents',
+    kind: "documents",
     route,
-    title: 'Documents',
+    title: "Documents",
     summary:
       documents.length === 0
-        ? 'Documents is empty in this workspace right now.'
-        : `Documents shows ${pluralize(documents.length, 'document')}. ${items[0]?.label ?? 'The latest document'} is the freshest item on this page.`,
+        ? "Documents is empty in this workspace right now."
+        : `Documents shows ${pluralize(documents.length, "document")}. ${items[0]?.label ?? "The latest document"} is the freshest item on this page.`,
     emptyState: documents.length === 0,
     metrics: buildMetrics([
-      { label: 'Documents', value: String(documents.length) },
-      { label: 'Workspace docs', value: String(workspaceCount) },
-      { label: 'Private docs', value: String(privateCount) },
+      { label: "Documents", value: String(documents.length) },
+      { label: "Workspace docs", value: String(workspaceCount) },
+      { label: "Private docs", value: String(privateCount) },
     ]),
     items,
   };
 }
 
 type IssueSurfaceScope = {
-  type: 'program' | 'project';
+  type: "program" | "project";
   id: string;
   title: string;
 };
@@ -470,7 +889,7 @@ type IssueSurfaceBucket = {
   active: number;
 };
 
-type IssueSurfaceProject = ReturnType<typeof useProjects>['projects'][number];
+type IssueSurfaceProject = ReturnType<typeof useProjects>["projects"][number];
 
 type ScoredIssueSurfaceIssue = {
   issue: Issue;
@@ -491,35 +910,39 @@ type BlockedIssueSurfaceIssue = ScoredIssueSurfaceIssue & {
 
 function getPriorityRank(priority: string | null | undefined): number {
   switch (priority) {
-    case 'urgent':
+    case "urgent":
       return 0;
-    case 'high':
+    case "high":
       return 1;
-    case 'medium':
+    case "medium":
       return 2;
-    case 'low':
+    case "low":
       return 3;
     default:
       return 4;
   }
 }
 
-function getIssuePriorityAttentionWeight(priority: string | null | undefined): number {
+function getIssuePriorityAttentionWeight(
+  priority: string | null | undefined,
+): number {
   switch (priority) {
-    case 'urgent':
+    case "urgent":
       return 28;
-    case 'high':
+    case "high":
       return 22;
-    case 'medium':
+    case "medium":
       return 14;
-    case 'low':
+    case "low":
       return 8;
     default:
       return 4;
   }
 }
 
-function formatRelativeIssueUpdate(updatedAt: string | undefined): string | null {
+function formatRelativeIssueUpdate(
+  updatedAt: string | undefined,
+): string | null {
   if (!updatedAt) {
     return null;
   }
@@ -541,10 +964,10 @@ function formatRelativeIssueUpdate(updatedAt: string | undefined): string | null
 
 function formatIssueStateLabel(state: string): string {
   return state
-    .split('_')
+    .split("_")
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
+    .join(" ");
 }
 
 function formatBlockerAgeDays(days: number | null): string | null {
@@ -553,18 +976,20 @@ function formatBlockerAgeDays(days: number | null): string | null {
   }
 
   if (days <= 0) {
-    return 'Blocked today';
+    return "Blocked today";
   }
 
-  return `Blocked ${pluralize(days, 'day')}`;
+  return `Blocked ${pluralize(days, "day")}`;
 }
 
 function buildBlockedIssueDetail(
-  blockedIssue: BlockedIssueSurfaceIssue
+  blockedIssue: BlockedIssueSurfaceIssue,
 ): string {
   return [
     formatBlockerAgeDays(blockedIssue.dependencySignal.blockerAgeDays),
-    blockedIssue.issue.assignee_name ? `Owner: ${blockedIssue.issue.assignee_name}` : null,
+    blockedIssue.issue.assignee_name
+      ? `Owner: ${blockedIssue.issue.assignee_name}`
+      : null,
     blockedIssue.dependencySignal.blockerLoggedBy
       ? `Logged by: ${blockedIssue.dependencySignal.blockerLoggedBy}`
       : null,
@@ -573,19 +998,27 @@ function buildBlockedIssueDetail(
       : null,
   ]
     .filter(Boolean)
-    .join(' • ');
+    .join(" • ");
 }
 
 function isIssueActive(issue: Issue): boolean {
-  return issue.state === 'in_progress' || issue.state === 'in_review';
+  return issue.state === "in_progress" || issue.state === "in_review";
 }
 
 function isIssueNotStarted(issue: Issue): boolean {
-  return issue.state === 'triage' || issue.state === 'backlog' || issue.state === 'todo';
+  return (
+    issue.state === "triage" ||
+    issue.state === "backlog" ||
+    issue.state === "todo"
+  );
 }
 
 function isIssueStale(issue: Issue): boolean {
-  if (!issue.updated_at || issue.state === 'done' || issue.state === 'cancelled') {
+  if (
+    !issue.updated_at ||
+    issue.state === "done" ||
+    issue.state === "cancelled"
+  ) {
     return false;
   }
 
@@ -593,16 +1026,18 @@ function isIssueStale(issue: Issue): boolean {
   return diffMs >= 1000 * 60 * 60 * 24 * 3;
 }
 
-function getProjectBusinessValueScore(project: IssueSurfaceProject | null): number | null {
+function getProjectBusinessValueScore(
+  project: IssueSurfaceProject | null,
+): number | null {
   if (!project) {
     return null;
   }
 
-  if (typeof project.business_value_score === 'number') {
+  if (typeof project.business_value_score === "number") {
     return project.business_value_score;
   }
 
-  if (typeof project.ice_score === 'number') {
+  if (typeof project.ice_score === "number") {
     return Math.round((project.ice_score / 125) * 100);
   }
 
@@ -610,146 +1045,179 @@ function getProjectBusinessValueScore(project: IssueSurfaceProject | null): numb
 }
 
 function formatIssueWeekDetail(issue: Issue): string {
-  return getSprintTitle(issue) ? `Week: ${getSprintTitle(issue)}` : 'Backlog';
+  return getSprintTitle(issue) ? `Week: ${getSprintTitle(issue)}` : "Backlog";
 }
 
-function formatIssueBusinessValueDetail(scoredIssue: ScoredIssueSurfaceIssue): string | null {
+function formatIssueBusinessValueDetail(
+  scoredIssue: ScoredIssueSurfaceIssue,
+): string | null {
   if (scoredIssue.businessValueScore !== null) {
     return `Business value: ${scoredIssue.businessValueScore}/100`;
   }
 
-  if (typeof scoredIssue.project?.ice_score === 'number') {
+  if (typeof scoredIssue.project?.ice_score === "number") {
     return `ICE fallback: ${scoredIssue.project.ice_score}/125`;
   }
 
   return null;
 }
 
-function issueMatchesBucket(issue: Issue, focusBucket: IssueSurfaceBucket | null): boolean {
+function issueMatchesBucket(
+  issue: Issue,
+  focusBucket: IssueSurfaceBucket | null,
+): boolean {
   if (!focusBucket) {
     return false;
   }
 
   return (
     (focusBucket.id !== null && focusBucket.id === getSprintId(issue)) ||
-    focusBucket.title === (getSprintTitle(issue) ?? 'Backlog')
+    focusBucket.title === (getSprintTitle(issue) ?? "Backlog")
   );
 }
 
 function buildIssueRiskDescriptor(
   scoredIssue: ScoredIssueSurfaceIssue,
   dependencySignal: FleetGraphIssueDependencySignal | null,
-  focusBucket: IssueSurfaceBucket | null
+  focusBucket: IssueSurfaceBucket | null,
 ): string {
   if (dependencySignal?.hasUnresolvedBlocker) {
     return dependencySignal.blockerAgeDays !== null
-      ? `blocked for ${pluralize(dependencySignal.blockerAgeDays, 'day')}`
-      : 'blocked by a logged dependency';
+      ? `blocked for ${pluralize(dependencySignal.blockerAgeDays, "day")}`
+      : "blocked by a logged dependency";
   }
 
   if (isIssueActive(scoredIssue.issue) && isIssueStale(scoredIssue.issue)) {
-    return 'stalled in progress';
+    return "stalled in progress";
   }
 
-  if (isIssueNotStarted(scoredIssue.issue) && issueMatchesBucket(scoredIssue.issue, focusBucket)) {
-    return `not started inside ${focusBucket?.title ?? 'the main risk cluster'}`;
+  if (
+    isIssueNotStarted(scoredIssue.issue) &&
+    issueMatchesBucket(scoredIssue.issue, focusBucket)
+  ) {
+    return `not started inside ${focusBucket?.title ?? "the main risk cluster"}`;
   }
 
   if (isIssueNotStarted(scoredIssue.issue)) {
-    return 'not started yet';
+    return "not started yet";
   }
 
   if (isIssueStale(scoredIssue.issue)) {
-    return 'stale open work';
+    return "stale open work";
   }
 
   if (isIssueActive(scoredIssue.issue)) {
-    return 'active and moving';
+    return "active and moving";
   }
 
-  return 'open but not yet at the top of the risk stack';
+  return "open but not yet at the top of the risk stack";
 }
 
 function buildHighestImpactIssueDetail(
   scoredIssue: ScoredIssueSurfaceIssue,
   dependencySignal: FleetGraphIssueDependencySignal | null,
-  focusBucket: IssueSurfaceBucket | null
+  focusBucket: IssueSurfaceBucket | null,
 ): string {
   return [
-    'Highest impact',
+    "Highest impact",
     `State: ${formatIssueStateLabel(scoredIssue.issue.state)}`,
     formatIssueWeekDetail(scoredIssue.issue),
     formatIssueBusinessValueDetail(scoredIssue),
-    scoredIssue.businessDrivers ? `Drivers: ${scoredIssue.businessDrivers}` : null,
+    scoredIssue.businessDrivers
+      ? `Drivers: ${scoredIssue.businessDrivers}`
+      : null,
     `Risk: ${buildIssueRiskDescriptor(scoredIssue, dependencySignal, focusBucket)}`,
   ]
     .filter(Boolean)
-    .join(' • ');
+    .join(" • ");
 }
 
-function buildStalledIssueDetail(stalledIssue: DecoratedIssueSurfaceIssue): string {
+function buildStalledIssueDetail(
+  stalledIssue: DecoratedIssueSurfaceIssue,
+): string {
   const blockerAgeDays = stalledIssue.dependencySignal?.blockerAgeDays ?? null;
 
   return [
-    'Stalled in progress',
+    "Stalled in progress",
     `State: ${formatIssueStateLabel(stalledIssue.issue.state)}`,
     formatIssueWeekDetail(stalledIssue.issue),
-    stalledIssue.issue.assignee_name ? `Owner: ${stalledIssue.issue.assignee_name}` : 'Owner unclear',
+    stalledIssue.issue.assignee_name
+      ? `Owner: ${stalledIssue.issue.assignee_name}`
+      : "Owner unclear",
     blockerAgeDays !== null
-      ? `Blocked ${pluralize(blockerAgeDays, 'day')}`
+      ? `Blocked ${pluralize(blockerAgeDays, "day")}`
       : formatRelativeIssueUpdate(stalledIssue.issue.updated_at),
     stalledIssue.dependencySignal?.blockerSummary
       ? `Blocker: ${stalledIssue.dependencySignal.blockerSummary}`
       : null,
   ]
     .filter(Boolean)
-    .join(' • ');
+    .join(" • ");
 }
 
-function buildCutCandidateDetail(cutCandidate: DecoratedIssueSurfaceIssue): string {
+function buildCutCandidateDetail(
+  cutCandidate: DecoratedIssueSurfaceIssue,
+): string {
   return [
-    'Cut candidate',
+    "Cut candidate",
     `State: ${formatIssueStateLabel(cutCandidate.issue.state)}`,
     formatIssueWeekDetail(cutCandidate.issue),
     formatIssueBusinessValueDetail(cutCandidate),
-    'Not started and safer to move out than the active or higher-value work on this tab',
+    "Not started and safer to move out than the active or higher-value work on this tab",
   ]
     .filter(Boolean)
-    .join(' • ');
+    .join(" • ");
 }
 
-function describeProjectBusinessDrivers(project: IssueSurfaceProject | null): string | null {
+function describeProjectBusinessDrivers(
+  project: IssueSurfaceProject | null,
+): string | null {
   if (!project) {
     return null;
   }
 
   const scoredDrivers = [
-    { label: 'ROI', value: project.roi },
-    { label: 'Retention', value: project.retention },
-    { label: 'Acquisition', value: project.acquisition },
-    { label: 'Growth', value: project.growth },
+    { label: "ROI", value: project.roi },
+    { label: "Retention", value: project.retention },
+    { label: "Acquisition", value: project.acquisition },
+    { label: "Growth", value: project.growth },
   ]
-    .filter((driver): driver is { label: string; value: number } => typeof driver.value === 'number')
-    .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label));
+    .filter(
+      (driver): driver is { label: string; value: number } =>
+        typeof driver.value === "number",
+    )
+    .sort(
+      (left, right) =>
+        right.value - left.value || left.label.localeCompare(right.label),
+    );
 
   if (scoredDrivers.length === 0) {
-    return typeof project.ice_score === 'number' ? `ICE fallback ${project.ice_score}/125` : null;
+    return typeof project.ice_score === "number"
+      ? `ICE fallback ${project.ice_score}/125`
+      : null;
   }
 
   return scoredDrivers
     .slice(0, 2)
     .map((driver) => `${driver.label} ${driver.value}/5`)
-    .join(' + ');
+    .join(" + ");
 }
 
-function computeIssueExecutionAttentionScore(issue: Issue, focusBucket: IssueSurfaceBucket | null): number {
+function computeIssueExecutionAttentionScore(
+  issue: Issue,
+  focusBucket: IssueSurfaceBucket | null,
+): number {
   let score = getIssuePriorityAttentionWeight(issue.priority);
 
-  if (issue.state === 'triage' || issue.state === 'backlog' || issue.state === 'todo') {
+  if (
+    issue.state === "triage" ||
+    issue.state === "backlog" ||
+    issue.state === "todo"
+  ) {
     score += 16;
   }
 
-  if (issue.state === 'in_progress' || issue.state === 'in_review') {
+  if (issue.state === "in_progress" || issue.state === "in_review") {
     score += 8;
   }
 
@@ -763,7 +1231,11 @@ function computeIssueExecutionAttentionScore(issue: Issue, focusBucket: IssueSur
 
   const sprintId = getSprintId(issue);
   const sprintTitle = getSprintTitle(issue);
-  if (focusBucket && ((focusBucket.id && focusBucket.id === sprintId) || focusBucket.title === sprintTitle)) {
+  if (
+    focusBucket &&
+    ((focusBucket.id && focusBucket.id === sprintId) ||
+      focusBucket.title === sprintTitle)
+  ) {
     score += 10;
   }
 
@@ -772,7 +1244,9 @@ function computeIssueExecutionAttentionScore(issue: Issue, focusBucket: IssueSur
 
 function getIssueSurfaceScopeIssueFilter(scope: IssueSurfaceScope) {
   return (issue: Issue) =>
-    scope.type === 'program' ? getProgramId(issue) === scope.id : getProjectId(issue) === scope.id;
+    scope.type === "program"
+      ? getProgramId(issue) === scope.id
+      : getProjectId(issue) === scope.id;
 }
 
 export function buildIssueSurfacePageContext(
@@ -780,10 +1254,11 @@ export function buildIssueSurfacePageContext(
   scope: IssueSurfaceScope,
   scopedIssues: Issue[],
   projects: IssueSurfaceProject[],
-  dependencySignals: FleetGraphIssueDependencySignalsResponse | null = null
+  dependencySignals: FleetGraphIssueDependencySignalsResponse | null = null,
 ): FleetGraphPageContextWithActions {
   const visibleIssues = [...scopedIssues].sort((left, right) => {
-    const priorityDelta = getPriorityRank(left.priority) - getPriorityRank(right.priority);
+    const priorityDelta =
+      getPriorityRank(left.priority) - getPriorityRank(right.priority);
     if (priorityDelta !== 0) {
       return priorityDelta;
     }
@@ -791,19 +1266,26 @@ export function buildIssueSurfacePageContext(
     return right.ticket_number - left.ticket_number;
   });
   const openIssues = visibleIssues.filter(
-    (issue) => issue.state !== 'done' && issue.state !== 'cancelled'
+    (issue) => issue.state !== "done" && issue.state !== "cancelled",
   );
-  const inProgressCount = visibleIssues.filter((issue) => issue.state === 'in_progress').length;
-  const inReviewCount = visibleIssues.filter((issue) => issue.state === 'in_review').length;
-  const notStartedIssues = visibleIssues.filter((issue) =>
-    issue.state === 'triage' || issue.state === 'backlog' || issue.state === 'todo'
+  const inProgressCount = visibleIssues.filter(
+    (issue) => issue.state === "in_progress",
+  ).length;
+  const inReviewCount = visibleIssues.filter(
+    (issue) => issue.state === "in_review",
+  ).length;
+  const notStartedIssues = visibleIssues.filter(
+    (issue) =>
+      issue.state === "triage" ||
+      issue.state === "backlog" ||
+      issue.state === "todo",
   );
   const staleOpenIssues = openIssues.filter(isIssueStale);
 
   const sprintBuckets = new Map<string, IssueSurfaceBucket>();
   for (const issue of openIssues) {
     const sprintId = getSprintId(issue);
-    const sprintTitle = getSprintTitle(issue) ?? 'Backlog';
+    const sprintTitle = getSprintTitle(issue) ?? "Backlog";
     const key = sprintId ?? `backlog:${sprintTitle}`;
     const existing = sprintBuckets.get(key) ?? {
       id: sprintId,
@@ -817,10 +1299,14 @@ export function buildIssueSurfacePageContext(
 
     existing.total += 1;
     existing.open += 1;
-    if (issue.state === 'in_progress' || issue.state === 'in_review') {
+    if (issue.state === "in_progress" || issue.state === "in_review") {
       existing.active += 1;
     }
-    if (issue.state === 'triage' || issue.state === 'backlog' || issue.state === 'todo') {
+    if (
+      issue.state === "triage" ||
+      issue.state === "backlog" ||
+      issue.state === "todo"
+    ) {
       existing.notStarted += 1;
     }
 
@@ -844,7 +1330,8 @@ export function buildIssueSurfacePageContext(
       return staleDelta;
     }
 
-    const priorityDelta = getPriorityRank(left.priority) - getPriorityRank(right.priority);
+    const priorityDelta =
+      getPriorityRank(left.priority) - getPriorityRank(right.priority);
     if (priorityDelta !== 0) {
       return priorityDelta;
     }
@@ -852,12 +1339,17 @@ export function buildIssueSurfacePageContext(
     return right.ticket_number - left.ticket_number;
   });
 
-  const projectById = new Map(projects.map((project) => [project.id, project] as const));
+  const projectById = new Map(
+    projects.map((project) => [project.id, project] as const),
+  );
   const scoredOpenIssues = openIssues
     .map((issue): ScoredIssueSurfaceIssue => {
-      const project = projectById.get(getProjectId(issue) ?? '') ?? null;
+      const project = projectById.get(getProjectId(issue) ?? "") ?? null;
       const businessValueScore = getProjectBusinessValueScore(project);
-      const executionAttentionScore = computeIssueExecutionAttentionScore(issue, focusBucket);
+      const executionAttentionScore = computeIssueExecutionAttentionScore(
+        issue,
+        focusBucket,
+      );
 
       return {
         issue,
@@ -868,7 +1360,9 @@ export function buildIssueSurfacePageContext(
         combinedAttentionScore:
           businessValueScore === null
             ? executionAttentionScore
-            : Math.round(executionAttentionScore * 0.6 + businessValueScore * 0.4),
+            : Math.round(
+                executionAttentionScore * 0.6 + businessValueScore * 0.4,
+              ),
       };
     })
     .sort((left, right) => {
@@ -876,8 +1370,12 @@ export function buildIssueSurfacePageContext(
         return right.combinedAttentionScore - left.combinedAttentionScore;
       }
 
-      if ((right.businessValueScore ?? -1) !== (left.businessValueScore ?? -1)) {
-        return (right.businessValueScore ?? -1) - (left.businessValueScore ?? -1);
+      if (
+        (right.businessValueScore ?? -1) !== (left.businessValueScore ?? -1)
+      ) {
+        return (
+          (right.businessValueScore ?? -1) - (left.businessValueScore ?? -1)
+        );
       }
 
       return right.issue.ticket_number - left.issue.ticket_number;
@@ -885,8 +1383,12 @@ export function buildIssueSurfacePageContext(
 
   const topImpactIssue =
     [...scoredOpenIssues].sort((left, right) => {
-      if ((right.businessValueScore ?? -1) !== (left.businessValueScore ?? -1)) {
-        return (right.businessValueScore ?? -1) - (left.businessValueScore ?? -1);
+      if (
+        (right.businessValueScore ?? -1) !== (left.businessValueScore ?? -1)
+      ) {
+        return (
+          (right.businessValueScore ?? -1) - (left.businessValueScore ?? -1)
+        );
       }
 
       if (right.executionAttentionScore !== left.executionAttentionScore) {
@@ -898,15 +1400,21 @@ export function buildIssueSurfacePageContext(
 
   const topAttentionIssue = scoredOpenIssues[0] ?? null;
   const dependencySignalsByIssueId = new Map(
-    (dependencySignals?.issues ?? []).map((signal) => [signal.issueId, signal] as const)
+    (dependencySignals?.issues ?? []).map(
+      (signal) => [signal.issueId, signal] as const,
+    ),
   );
-  const decoratedOpenIssues: DecoratedIssueSurfaceIssue[] = scoredOpenIssues.map((scoredIssue) => ({
-    ...scoredIssue,
-    dependencySignal: dependencySignalsByIssueId.get(scoredIssue.issue.id) ?? null,
-  }));
+  const decoratedOpenIssues: DecoratedIssueSurfaceIssue[] =
+    scoredOpenIssues.map((scoredIssue) => ({
+      ...scoredIssue,
+      dependencySignal:
+        dependencySignalsByIssueId.get(scoredIssue.issue.id) ?? null,
+    }));
   const blockedIssues = scoredOpenIssues
     .map((scoredIssue) => {
-      const dependencySignal = dependencySignalsByIssueId.get(scoredIssue.issue.id);
+      const dependencySignal = dependencySignalsByIssueId.get(
+        scoredIssue.issue.id,
+      );
       if (!dependencySignal?.hasUnresolvedBlocker) {
         return null;
       }
@@ -918,8 +1426,14 @@ export function buildIssueSurfacePageContext(
     })
     .filter((issue): issue is BlockedIssueSurfaceIssue => Boolean(issue))
     .sort((left, right) => {
-      if ((right.dependencySignal.blockerAgeDays ?? -1) !== (left.dependencySignal.blockerAgeDays ?? -1)) {
-        return (right.dependencySignal.blockerAgeDays ?? -1) - (left.dependencySignal.blockerAgeDays ?? -1);
+      if (
+        (right.dependencySignal.blockerAgeDays ?? -1) !==
+        (left.dependencySignal.blockerAgeDays ?? -1)
+      ) {
+        return (
+          (right.dependencySignal.blockerAgeDays ?? -1) -
+          (left.dependencySignal.blockerAgeDays ?? -1)
+        );
       }
 
       if (right.executionAttentionScore !== left.executionAttentionScore) {
@@ -928,26 +1442,46 @@ export function buildIssueSurfacePageContext(
 
       return right.issue.ticket_number - left.issue.ticket_number;
     });
-  const staleBlockedIssues = blockedIssues.filter((issue) => issue.dependencySignal.isStale);
+  const staleBlockedIssues = blockedIssues.filter(
+    (issue) => issue.dependencySignal.isStale,
+  );
   const topBlockedIssue = blockedIssues[0] ?? null;
-  const oldestBlockedAgeDays = dependencySignals?.summary.oldestUnresolvedBlockerDays ?? null;
+  const oldestBlockedAgeDays =
+    dependencySignals?.summary.oldestUnresolvedBlockerDays ?? null;
   const stalledActiveIssues = decoratedOpenIssues
-    .filter((scoredIssue) =>
-      isIssueActive(scoredIssue.issue) &&
-      (Boolean(scoredIssue.dependencySignal?.hasUnresolvedBlocker) || isIssueStale(scoredIssue.issue))
+    .filter(
+      (scoredIssue) =>
+        isIssueActive(scoredIssue.issue) &&
+        (Boolean(scoredIssue.dependencySignal?.hasUnresolvedBlocker) ||
+          isIssueStale(scoredIssue.issue)),
     )
     .sort((left, right) => {
-      if (Number(Boolean(right.dependencySignal?.hasUnresolvedBlocker)) !== Number(Boolean(left.dependencySignal?.hasUnresolvedBlocker))) {
-        return Number(Boolean(right.dependencySignal?.hasUnresolvedBlocker))
-          - Number(Boolean(left.dependencySignal?.hasUnresolvedBlocker));
+      if (
+        Number(Boolean(right.dependencySignal?.hasUnresolvedBlocker)) !==
+        Number(Boolean(left.dependencySignal?.hasUnresolvedBlocker))
+      ) {
+        return (
+          Number(Boolean(right.dependencySignal?.hasUnresolvedBlocker)) -
+          Number(Boolean(left.dependencySignal?.hasUnresolvedBlocker))
+        );
       }
 
-      if ((right.dependencySignal?.blockerAgeDays ?? -1) !== (left.dependencySignal?.blockerAgeDays ?? -1)) {
-        return (right.dependencySignal?.blockerAgeDays ?? -1) - (left.dependencySignal?.blockerAgeDays ?? -1);
+      if (
+        (right.dependencySignal?.blockerAgeDays ?? -1) !==
+        (left.dependencySignal?.blockerAgeDays ?? -1)
+      ) {
+        return (
+          (right.dependencySignal?.blockerAgeDays ?? -1) -
+          (left.dependencySignal?.blockerAgeDays ?? -1)
+        );
       }
 
-      if (Number(isIssueStale(right.issue)) !== Number(isIssueStale(left.issue))) {
-        return Number(isIssueStale(right.issue)) - Number(isIssueStale(left.issue));
+      if (
+        Number(isIssueStale(right.issue)) !== Number(isIssueStale(left.issue))
+      ) {
+        return (
+          Number(isIssueStale(right.issue)) - Number(isIssueStale(left.issue))
+        );
       }
 
       if (right.combinedAttentionScore !== left.combinedAttentionScore) {
@@ -957,9 +1491,15 @@ export function buildIssueSurfacePageContext(
       return right.issue.ticket_number - left.issue.ticket_number;
     });
   const topStalledIssue =
-    stalledActiveIssues.find((issue) => issue.issue.id !== topBlockedIssue?.issue.id) ?? null;
+    stalledActiveIssues.find(
+      (issue) => issue.issue.id !== topBlockedIssue?.issue.id,
+    ) ?? null;
   const cutCandidateIssues = decoratedOpenIssues
-    .filter((scoredIssue) => isIssueNotStarted(scoredIssue.issue) && !scoredIssue.dependencySignal?.hasUnresolvedBlocker)
+    .filter(
+      (scoredIssue) =>
+        isIssueNotStarted(scoredIssue.issue) &&
+        !scoredIssue.dependencySignal?.hasUnresolvedBlocker,
+    )
     .sort((left, right) => {
       const leftBacklog = Number(getSprintId(left.issue) === null);
       const rightBacklog = Number(getSprintId(right.issue) === null);
@@ -973,13 +1513,19 @@ export function buildIssueSurfacePageContext(
         return leftBusinessValue - rightBusinessValue;
       }
 
-      const priorityDelta = getPriorityRank(right.issue.priority) - getPriorityRank(left.issue.priority);
+      const priorityDelta =
+        getPriorityRank(right.issue.priority) -
+        getPriorityRank(left.issue.priority);
       if (priorityDelta !== 0) {
         return priorityDelta;
       }
 
-      if (Number(isIssueStale(right.issue)) !== Number(isIssueStale(left.issue))) {
-        return Number(isIssueStale(right.issue)) - Number(isIssueStale(left.issue));
+      if (
+        Number(isIssueStale(right.issue)) !== Number(isIssueStale(left.issue))
+      ) {
+        return (
+          Number(isIssueStale(right.issue)) - Number(isIssueStale(left.issue))
+        );
       }
 
       return left.issue.ticket_number - right.issue.ticket_number;
@@ -989,8 +1535,10 @@ export function buildIssueSurfacePageContext(
       (issue) =>
         issue.issue.id !== topBlockedIssue?.issue.id &&
         issue.issue.id !== topStalledIssue?.issue.id &&
-        issue.issue.id !== topImpactIssue?.issue.id
-    ) ?? cutCandidateIssues[0] ?? null;
+        issue.issue.id !== topImpactIssue?.issue.id,
+    ) ??
+    cutCandidateIssues[0] ??
+    null;
 
   const summary = (() => {
     if (visibleIssues.length === 0) {
@@ -1002,33 +1550,37 @@ export function buildIssueSurfacePageContext(
     }
 
     if (topBlockedIssue) {
-      const displayId = topBlockedIssue.issue.display_id ?? `#${topBlockedIssue.issue.ticket_number}`;
+      const displayId =
+        topBlockedIssue.issue.display_id ??
+        `#${topBlockedIssue.issue.ticket_number}`;
       const blockerAge =
         topBlockedIssue.dependencySignal.blockerAgeDays !== null
-          ? `${pluralize(topBlockedIssue.dependencySignal.blockerAgeDays, 'day')}`
+          ? `${pluralize(topBlockedIssue.dependencySignal.blockerAgeDays, "day")}`
           : null;
 
-      return `${scope.title} has explicit blocker evidence on this issues surface. ${displayId} is currently blocked${blockerAge ? ` and has been sitting for ${blockerAge}` : ''}${topBlockedIssue.issue.assignee_name ? ` under ${topBlockedIssue.issue.assignee_name}` : ''}.${staleBlockedIssues.length > 1 ? ` ${pluralize(staleBlockedIssues.length, 'blocked issue')} have been stuck for at least 3 days.` : ''}`;
+      return `${scope.title} has explicit blocker evidence on this issues surface. ${displayId} is currently blocked${blockerAge ? ` and has been sitting for ${blockerAge}` : ""}${topBlockedIssue.issue.assignee_name ? ` under ${topBlockedIssue.issue.assignee_name}` : ""}.${staleBlockedIssues.length > 1 ? ` ${pluralize(staleBlockedIssues.length, "blocked issue")} have been stuck for at least 3 days.` : ""}`;
     }
 
     if (topStalledIssue) {
-      const displayId = topStalledIssue.issue.display_id ?? `#${topStalledIssue.issue.ticket_number}`;
-      return `${scope.title} has active work that looks stalled on this issues surface. ${displayId} is still ${formatIssueStateLabel(topStalledIssue.issue.state).toLowerCase()}${topStalledIssue.issue.assignee_name ? ` under ${topStalledIssue.issue.assignee_name}` : ''}${isIssueStale(topStalledIssue.issue) ? ' and has gone stale' : ''}.${notStartedIssues.length > 0 ? ` ${pluralize(notStartedIssues.length, 'visible issue')} are still not started behind it.` : ''}`;
+      const displayId =
+        topStalledIssue.issue.display_id ??
+        `#${topStalledIssue.issue.ticket_number}`;
+      return `${scope.title} has active work that looks stalled on this issues surface. ${displayId} is still ${formatIssueStateLabel(topStalledIssue.issue.state).toLowerCase()}${topStalledIssue.issue.assignee_name ? ` under ${topStalledIssue.issue.assignee_name}` : ""}${isIssueStale(topStalledIssue.issue) ? " and has gone stale" : ""}.${notStartedIssues.length > 0 ? ` ${pluralize(notStartedIssues.length, "visible issue")} are still not started behind it.` : ""}`;
     }
 
     if (staleOpenIssues.length > 0) {
-      return `${scope.title} has visible delivery risk from stale work. ${pluralize(staleOpenIssues.length, 'open issue')} have not moved in at least 3 days${focusBucket ? `, and ${focusBucket.title} is carrying the heaviest open cluster.` : '.'}`;
+      return `${scope.title} has visible delivery risk from stale work. ${pluralize(staleOpenIssues.length, "open issue")} have not moved in at least 3 days${focusBucket ? `, and ${focusBucket.title} is carrying the heaviest open cluster.` : "."}`;
     }
 
     if (notStartedIssues.length > inProgressCount + inReviewCount) {
-      return `${scope.title} does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet. ${pluralize(notStartedIssues.length, 'visible issue')} are still sitting in triage, backlog, or todo${focusBucket ? `, led by ${focusBucket.title}.` : '.'}`;
+      return `${scope.title} does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet. ${pluralize(notStartedIssues.length, "visible issue")} are still sitting in triage, backlog, or todo${focusBucket ? `, led by ${focusBucket.title}.` : "."}`;
     }
 
     if (focusBucket && focusBucket.notStarted > 0) {
-      return `${scope.title} has active delivery work, but ${focusBucket.title} carries the biggest risk cluster with ${pluralize(focusBucket.open, 'open issue')} and ${pluralize(focusBucket.notStarted, 'issue')} still not started.${topImpactIssue?.issue.display_id ? ` The highest-value visible issue is ${topImpactIssue.issue.display_id}.` : ''}`;
+      return `${scope.title} has active delivery work, but ${focusBucket.title} carries the biggest risk cluster with ${pluralize(focusBucket.open, "open issue")} and ${pluralize(focusBucket.notStarted, "issue")} still not started.${topImpactIssue?.issue.display_id ? ` The highest-value visible issue is ${topImpactIssue.issue.display_id}.` : ""}`;
     }
 
-    return `${scope.title} shows active movement on this issues surface. ${pluralize(inProgressCount + inReviewCount, 'issue')} are already in progress or review, so the main question is scope balance rather than a visible blocker.${topImpactIssue?.issue.display_id ? ` The highest-value visible issue is ${topImpactIssue.issue.display_id}.` : ''}`;
+    return `${scope.title} shows active movement on this issues surface. ${pluralize(inProgressCount + inReviewCount, "issue")} are already in progress or review, so the main question is scope balance rather than a visible blocker.${topImpactIssue?.issue.display_id ? ` The highest-value visible issue is ${topImpactIssue.issue.display_id}.` : ""}`;
   })();
   const topImpactActionReason = topImpactIssue
     ? [
@@ -1036,36 +1588,42 @@ export function buildIssueSurfacePageContext(
         topImpactIssue.businessValueScore !== null
           ? `Business value ${topImpactIssue.businessValueScore}/100.`
           : null,
-        topImpactIssue.businessDrivers ? `${topImpactIssue.businessDrivers}.` : null,
+        topImpactIssue.businessDrivers
+          ? `${topImpactIssue.businessDrivers}.`
+          : null,
         `Current risk: ${buildIssueRiskDescriptor(
           topImpactIssue,
           dependencySignalsByIssueId.get(topImpactIssue.issue.id) ?? null,
-          focusBucket
+          focusBucket,
         )}.`,
       ]
         .filter(Boolean)
-        .join(' ')
+        .join(" ")
     : null;
   const focusBucketActionReason = focusBucket
-    ? `${focusBucket.title} holds ${pluralize(focusBucket.open, 'open issue')} with ${pluralize(focusBucket.notStarted, 'issue')} still not started.`
+    ? `${focusBucket.title} holds ${pluralize(focusBucket.open, "open issue")} with ${pluralize(focusBucket.notStarted, "issue")} still not started.`
     : null;
   const blockerActionReason = topBlockedIssue
     ? [
         topBlockedIssue.dependencySignal.blockerAgeDays !== null
-          ? `${topBlockedIssue.issue.display_id ?? `#${topBlockedIssue.issue.ticket_number}`} has been blocked for ${pluralize(topBlockedIssue.dependencySignal.blockerAgeDays, 'day')}.`
+          ? `${topBlockedIssue.issue.display_id ?? `#${topBlockedIssue.issue.ticket_number}`} has been blocked for ${pluralize(topBlockedIssue.dependencySignal.blockerAgeDays, "day")}.`
           : `${topBlockedIssue.issue.display_id ?? `#${topBlockedIssue.issue.ticket_number}`} has an active blocker logged in its latest iteration.`,
-        topBlockedIssue.issue.assignee_name ? `Owner: ${topBlockedIssue.issue.assignee_name}.` : null,
+        topBlockedIssue.issue.assignee_name
+          ? `Owner: ${topBlockedIssue.issue.assignee_name}.`
+          : null,
         topBlockedIssue.dependencySignal.blockerSummary
           ? `Blocker: ${topBlockedIssue.dependencySignal.blockerSummary}`
           : null,
       ]
         .filter(Boolean)
-        .join(' ')
+        .join(" ")
     : null;
   const stalledActionReason = topStalledIssue
     ? [
         `${topStalledIssue.issue.display_id ?? `#${topStalledIssue.issue.ticket_number}`} looks stalled while still ${formatIssueStateLabel(topStalledIssue.issue.state).toLowerCase()}.`,
-        topStalledIssue.issue.assignee_name ? `Owner: ${topStalledIssue.issue.assignee_name}.` : 'Owner is still unclear.',
+        topStalledIssue.issue.assignee_name
+          ? `Owner: ${topStalledIssue.issue.assignee_name}.`
+          : "Owner is still unclear.",
         formatRelativeIssueUpdate(topStalledIssue.issue.updated_at)
           ? `${formatRelativeIssueUpdate(topStalledIssue.issue.updated_at)}.`
           : null,
@@ -1074,208 +1632,252 @@ export function buildIssueSurfacePageContext(
           : null,
       ]
         .filter(Boolean)
-        .join(' ')
+        .join(" ")
     : null;
   const cutCandidateActionReason = topCutCandidate
     ? [
         `${topCutCandidate.issue.display_id ?? `#${topCutCandidate.issue.ticket_number}`} is not started yet.`,
-        formatIssueBusinessValueDetail(topCutCandidate)?.replace(':', '') ?? null,
-        'Safer to move out than the active or higher-value work on this tab.',
-        topImpactIssue?.issue.display_id ? `Keeps ${topImpactIssue.issue.display_id} protected.` : null,
+        formatIssueBusinessValueDetail(topCutCandidate)?.replace(":", "") ??
+          null,
+        "Safer to move out than the active or higher-value work on this tab.",
+        topImpactIssue?.issue.display_id
+          ? `Keeps ${topImpactIssue.issue.display_id} protected.`
+          : null,
       ]
         .filter(Boolean)
-        .join(' ')
+        .join(" ")
     : null;
   const topAdditionalAttentionIssues = topAttentionIssues.filter(
     (issue) =>
       issue.id !== topImpactIssue?.issue.id &&
       issue.id !== topBlockedIssue?.issue.id &&
       issue.id !== topStalledIssue?.issue.id &&
-      issue.id !== topCutCandidate?.issue.id
+      issue.id !== topCutCandidate?.issue.id,
   );
 
   return {
-    kind: 'issue_surface',
+    kind: "issue_surface",
     route,
     title: `${scope.title} Issues`,
     summary,
     emptyState: visibleIssues.length === 0,
     metrics: buildMetrics([
-      { label: 'Visible issues', value: String(visibleIssues.length) },
-      blockedIssues.length > 0 ? { label: 'Blocked issues', value: String(blockedIssues.length) } : null,
-      staleBlockedIssues.length > 0 ? { label: 'Stale blockers', value: String(staleBlockedIssues.length) } : null,
-      oldestBlockedAgeDays !== null ? { label: 'Oldest blocker', value: `${pluralize(oldestBlockedAgeDays, 'day')}` } : null,
-      stalledActiveIssues.length > 0 ? { label: 'Stalled active', value: String(stalledActiveIssues.length) } : null,
-      { label: 'Not started', value: String(notStartedIssues.length) },
-      { label: 'In progress', value: String(inProgressCount) },
-      staleOpenIssues.length > 0 ? { label: 'Stale open', value: String(staleOpenIssues.length) } : null,
-      focusBucket ? { label: 'Risk cluster', value: focusBucket.title } : null,
+      { label: "Visible issues", value: String(visibleIssues.length) },
+      blockedIssues.length > 0
+        ? { label: "Blocked issues", value: String(blockedIssues.length) }
+        : null,
+      staleBlockedIssues.length > 0
+        ? { label: "Stale blockers", value: String(staleBlockedIssues.length) }
+        : null,
+      oldestBlockedAgeDays !== null
+        ? {
+            label: "Oldest blocker",
+            value: `${pluralize(oldestBlockedAgeDays, "day")}`,
+          }
+        : null,
+      stalledActiveIssues.length > 0
+        ? { label: "Stalled active", value: String(stalledActiveIssues.length) }
+        : null,
+      { label: "Not started", value: String(notStartedIssues.length) },
+      { label: "In progress", value: String(inProgressCount) },
+      staleOpenIssues.length > 0
+        ? { label: "Stale open", value: String(staleOpenIssues.length) }
+        : null,
+      focusBucket ? { label: "Risk cluster", value: focusBucket.title } : null,
       topImpactIssue?.issue.display_id
-        ? { label: 'Highest impact issue', value: topImpactIssue.issue.display_id }
+        ? {
+            label: "Highest impact issue",
+            value: topImpactIssue.issue.display_id,
+          }
         : null,
       topImpactIssue?.project?.title
-        ? { label: 'Highest impact project', value: topImpactIssue.project.title }
+        ? {
+            label: "Highest impact project",
+            value: topImpactIssue.project.title,
+          }
         : null,
-      topImpactIssue?.businessValueScore !== null && topImpactIssue?.businessValueScore !== undefined
-        ? { label: 'Business value', value: `${topImpactIssue.businessValueScore}/100` }
+      topImpactIssue?.businessValueScore !== null &&
+      topImpactIssue?.businessValueScore !== undefined
+        ? {
+            label: "Business value",
+            value: `${topImpactIssue.businessValueScore}/100`,
+          }
         : null,
     ]),
-    items: buildItems([
-      topBlockedIssue
-        ? {
-            label: topBlockedIssue.issue.display_id
-              ? `${topBlockedIssue.issue.display_id} ${topBlockedIssue.issue.title}`
-              : topBlockedIssue.issue.title,
-            detail: buildBlockedIssueDetail(topBlockedIssue),
-            route: `/documents/${topBlockedIssue.issue.id}`,
-          }
-        : null,
-      topStalledIssue
-        ? {
-            label: topStalledIssue.issue.display_id
-              ? `${topStalledIssue.issue.display_id} ${topStalledIssue.issue.title}`
-              : topStalledIssue.issue.title,
-            detail: buildStalledIssueDetail(topStalledIssue),
-            route: `/documents/${topStalledIssue.issue.id}`,
-          }
-        : null,
-      topImpactIssue
-        && topImpactIssue.issue.id !== topBlockedIssue?.issue.id
-        && topImpactIssue.issue.id !== topStalledIssue?.issue.id
-        ? {
-            label: topImpactIssue.issue.display_id
-              ? `${topImpactIssue.issue.display_id} ${topImpactIssue.issue.title}`
-              : topImpactIssue.issue.title,
-            detail: buildHighestImpactIssueDetail(
-              topImpactIssue,
-              dependencySignalsByIssueId.get(topImpactIssue.issue.id) ?? null,
-              focusBucket
-            ),
-            route: `/documents/${topImpactIssue.issue.id}`,
-          }
-        : null,
-      topCutCandidate
-        ? {
-            label: topCutCandidate.issue.display_id
-              ? `${topCutCandidate.issue.display_id} ${topCutCandidate.issue.title}`
-              : topCutCandidate.issue.title,
-            detail: buildCutCandidateDetail(topCutCandidate),
-            route: `/documents/${topCutCandidate.issue.id}`,
-          }
-        : null,
-      focusBucket
-        ? {
-            label: focusBucket.title,
-            detail: `${pluralize(focusBucket.open, 'open issue')} • ${pluralize(focusBucket.active, 'issue')} active • ${pluralize(focusBucket.notStarted, 'issue')} not started`,
-            route: focusBucket.route,
-          }
-        : null,
-      ...topAdditionalAttentionIssues
-        .slice(0, 2)
-        .map((issue) => ({
-        label: issue.display_id ? `${issue.display_id} ${issue.title}` : issue.title,
-        detail: [
-          `State: ${issue.state}`,
-          getSprintTitle(issue) ? `Week: ${getSprintTitle(issue)}` : 'Backlog',
-          issue.assignee_name ? `Owner: ${issue.assignee_name}` : null,
-          formatRelativeIssueUpdate(issue.updated_at),
-        ]
-          .filter(Boolean)
-          .join(' • '),
-        route: `/documents/${issue.id}`,
+    items: buildItems(
+      [
+        topBlockedIssue
+          ? {
+              label: topBlockedIssue.issue.display_id
+                ? `${topBlockedIssue.issue.display_id} ${topBlockedIssue.issue.title}`
+                : topBlockedIssue.issue.title,
+              detail: buildBlockedIssueDetail(topBlockedIssue),
+              route: `/documents/${topBlockedIssue.issue.id}`,
+            }
+          : null,
+        topStalledIssue
+          ? {
+              label: topStalledIssue.issue.display_id
+                ? `${topStalledIssue.issue.display_id} ${topStalledIssue.issue.title}`
+                : topStalledIssue.issue.title,
+              detail: buildStalledIssueDetail(topStalledIssue),
+              route: `/documents/${topStalledIssue.issue.id}`,
+            }
+          : null,
+        topImpactIssue &&
+        topImpactIssue.issue.id !== topBlockedIssue?.issue.id &&
+        topImpactIssue.issue.id !== topStalledIssue?.issue.id
+          ? {
+              label: topImpactIssue.issue.display_id
+                ? `${topImpactIssue.issue.display_id} ${topImpactIssue.issue.title}`
+                : topImpactIssue.issue.title,
+              detail: buildHighestImpactIssueDetail(
+                topImpactIssue,
+                dependencySignalsByIssueId.get(topImpactIssue.issue.id) ?? null,
+                focusBucket,
+              ),
+              route: `/documents/${topImpactIssue.issue.id}`,
+            }
+          : null,
+        topCutCandidate
+          ? {
+              label: topCutCandidate.issue.display_id
+                ? `${topCutCandidate.issue.display_id} ${topCutCandidate.issue.title}`
+                : topCutCandidate.issue.title,
+              detail: buildCutCandidateDetail(topCutCandidate),
+              route: `/documents/${topCutCandidate.issue.id}`,
+            }
+          : null,
+        focusBucket
+          ? {
+              label: focusBucket.title,
+              detail: `${pluralize(focusBucket.open, "open issue")} • ${pluralize(focusBucket.active, "issue")} active • ${pluralize(focusBucket.notStarted, "issue")} not started`,
+              route: focusBucket.route,
+            }
+          : null,
+        ...topAdditionalAttentionIssues.slice(0, 2).map((issue) => ({
+          label: issue.display_id
+            ? `${issue.display_id} ${issue.title}`
+            : issue.title,
+          detail: [
+            `State: ${issue.state}`,
+            getSprintTitle(issue)
+              ? `Week: ${getSprintTitle(issue)}`
+              : "Backlog",
+            issue.assignee_name ? `Owner: ${issue.assignee_name}` : null,
+            formatRelativeIssueUpdate(issue.updated_at),
+          ]
+            .filter(Boolean)
+            .join(" • "),
+          route: `/documents/${issue.id}`,
         })),
-    ], 6),
-    actions: buildActions([
-      topBlockedIssue
-        ? createPageAction(
-            `Follow up on blocker ${topBlockedIssue.issue.display_id ?? `#${topBlockedIssue.issue.ticket_number}`}`,
-            `/documents/${topBlockedIssue.issue.id}`,
+      ],
+      6,
+    ),
+    actions: buildActions(
+      [
+        topBlockedIssue
+          ? createPageAction(
+              `Follow up on blocker ${topBlockedIssue.issue.display_id ?? `#${topBlockedIssue.issue.ticket_number}`}`,
+              `/documents/${topBlockedIssue.issue.id}`,
+              {
+                intent: "follow_up",
+                reason: blockerActionReason,
+                owner: topBlockedIssue.issue.assignee_name,
+              },
+            )
+          : null,
+        topStalledIssue
+          ? createPageAction(
+              `Follow up on stalled ${topStalledIssue.issue.display_id ?? `#${topStalledIssue.issue.ticket_number}`}`,
+              `/documents/${topStalledIssue.issue.id}`,
+              {
+                intent: "follow_up",
+                reason: stalledActionReason,
+                owner: topStalledIssue.issue.assignee_name,
+              },
+            )
+          : null,
+        topCutCandidate
+          ? createPageAction(
+              `Review cut candidate ${topCutCandidate.issue.display_id ?? `#${topCutCandidate.issue.ticket_number}`}`,
+              `/documents/${topCutCandidate.issue.id}`,
+              {
+                intent: "prioritize",
+                reason: cutCandidateActionReason,
+                owner: topCutCandidate.issue.assignee_name,
+              },
+            )
+          : null,
+        topImpactIssue
+          ? createPageAction(
+              `Open highest-impact ${topImpactIssue.issue.display_id ?? `#${topImpactIssue.issue.ticket_number}`}`,
+              `/documents/${topImpactIssue.issue.id}`,
+              {
+                intent: "prioritize",
+                reason: topImpactActionReason,
+                owner: topImpactIssue.issue.assignee_name,
+              },
+            )
+          : null,
+        focusBucket?.route
+          ? createPageAction(
+              `Open risk cluster ${focusBucket.title}`,
+              focusBucket.route,
+              {
+                intent: "prioritize",
+                reason: focusBucketActionReason,
+              },
+            )
+          : null,
+        ...topAdditionalAttentionIssues.slice(0, 2).map((issue) =>
+          createPageAction(
+            `Open ${issue.display_id ?? `#${issue.ticket_number}`}`,
+            `/documents/${issue.id}`,
             {
-              intent: 'follow_up',
-              reason: blockerActionReason,
-              owner: topBlockedIssue.issue.assignee_name,
-            }
-          )
-        : null,
-      topStalledIssue
-        ? createPageAction(
-            `Follow up on stalled ${topStalledIssue.issue.display_id ?? `#${topStalledIssue.issue.ticket_number}`}`,
-            `/documents/${topStalledIssue.issue.id}`,
-            {
-              intent: 'follow_up',
-              reason: stalledActionReason,
-              owner: topStalledIssue.issue.assignee_name,
-            }
-          )
-        : null,
-      topCutCandidate
-        ? createPageAction(
-            `Review cut candidate ${topCutCandidate.issue.display_id ?? `#${topCutCandidate.issue.ticket_number}`}`,
-            `/documents/${topCutCandidate.issue.id}`,
-            {
-              intent: 'prioritize',
-              reason: cutCandidateActionReason,
-              owner: topCutCandidate.issue.assignee_name,
-            }
-          )
-        : null,
-      topImpactIssue
-        ? createPageAction(
-            `Open highest-impact ${topImpactIssue.issue.display_id ?? `#${topImpactIssue.issue.ticket_number}`}`,
-            `/documents/${topImpactIssue.issue.id}`,
-            {
-              intent: 'prioritize',
-              reason: topImpactActionReason,
-              owner: topImpactIssue.issue.assignee_name,
-            }
-          )
-        : null,
-      focusBucket?.route
-        ? createPageAction(`Open risk cluster ${focusBucket.title}`, focusBucket.route, {
-            intent: 'prioritize',
-            reason: focusBucketActionReason,
-          })
-        : null,
-      ...topAdditionalAttentionIssues
-        .slice(0, 2)
-        .map((issue) =>
-          createPageAction(`Open ${issue.display_id ?? `#${issue.ticket_number}`}`, `/documents/${issue.id}`, {
-            intent:
-              isIssueStale(issue) || !issue.assignee_id
-                ? 'follow_up'
-                : 'inspect',
-            reason: [
-              `State: ${issue.state}.`,
-              getSprintTitle(issue) ? `${getSprintTitle(issue)}.` : null,
-              issue.assignee_name ? `Owner: ${issue.assignee_name}.` : 'Owner is still unclear.',
-              formatRelativeIssueUpdate(issue.updated_at)
-                ? `${formatRelativeIssueUpdate(issue.updated_at)}.`
-                : null,
-            ]
-              .filter(Boolean)
-              .join(' '),
-            owner: issue.assignee_name,
-          })
+              intent:
+                isIssueStale(issue) || !issue.assignee_id
+                  ? "follow_up"
+                  : "inspect",
+              reason: [
+                `State: ${issue.state}.`,
+                getSprintTitle(issue) ? `${getSprintTitle(issue)}.` : null,
+                issue.assignee_name
+                  ? `Owner: ${issue.assignee_name}.`
+                  : "Owner is still unclear.",
+                formatRelativeIssueUpdate(issue.updated_at)
+                  ? `${formatRelativeIssueUpdate(issue.updated_at)}.`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" "),
+              owner: issue.assignee_name,
+            },
+          ),
         ),
-    ], 6),
+      ],
+      6,
+    ),
   };
 }
 
 function buildDashboardPageContext(
   route: string,
   view: string | null,
-  activeWeeks: ReturnType<typeof useActiveWeeksQuery>['data'],
-  projects: ReturnType<typeof useProjects>['projects'],
-  actionItems: ReturnType<typeof useDashboardActionItems>['data']
+  activeWeeks: ReturnType<typeof useActiveWeeksQuery>["data"],
+  projects: ReturnType<typeof useProjects>["projects"],
+  actionItems: ReturnType<typeof useDashboardActionItems>["data"],
 ): FleetGraphPageContext {
   const weeks = activeWeeks?.weeks ?? [];
   const actions = actionItems?.action_items ?? [];
   const activeProjects = projects.filter((project) => !project.archived_at);
-  const overdueCount = actions.filter((item) => item.urgency === 'overdue').length;
+  const overdueCount = actions.filter(
+    (item) => item.urgency === "overdue",
+  ).length;
   const items = buildItems(
     overdueCount > 0
       ? actions
-          .filter((item) => item.urgency === 'overdue')
+          .filter((item) => item.urgency === "overdue")
           .map((item) => ({
             label: `${item.program_name} Week ${item.sprint_number}`,
             detail: item.message,
@@ -1285,22 +1887,23 @@ function buildDashboardPageContext(
           label: week.name,
           detail: `${week.program_name} • ${week.days_remaining} days remaining`,
           route: `/documents/${week.id}`,
-        }))
+        })),
   );
 
   return {
-    kind: 'dashboard',
+    kind: "dashboard",
     route,
-    title: view === 'overview' ? 'Dashboard' : 'My Work',
+    title: view === "overview" ? "Dashboard" : "My Work",
     summary:
       overdueCount > 0
-        ? `Dashboard is surfacing ${pluralize(overdueCount, 'overdue action item')} right now.`
-        : `Dashboard shows ${pluralize(weeks.length, 'active week')} and ${pluralize(activeProjects.length, 'active project')}.`,
-    emptyState: weeks.length === 0 && activeProjects.length === 0 && actions.length === 0,
+        ? `Dashboard is surfacing ${pluralize(overdueCount, "overdue action item")} right now.`
+        : `Dashboard shows ${pluralize(weeks.length, "active week")} and ${pluralize(activeProjects.length, "active project")}.`,
+    emptyState:
+      weeks.length === 0 && activeProjects.length === 0 && actions.length === 0,
     metrics: buildMetrics([
-      { label: 'Active weeks', value: String(weeks.length) },
-      { label: 'Active projects', value: String(activeProjects.length) },
-      { label: 'Action items', value: String(actions.length) },
+      { label: "Active weeks", value: String(weeks.length) },
+      { label: "Active projects", value: String(activeProjects.length) },
+      { label: "Action items", value: String(actions.length) },
     ]),
     items,
   };
@@ -1308,29 +1911,29 @@ function buildDashboardPageContext(
 
 function buildTeamDirectoryPageContext(
   route: string,
-  people: NonNullable<ReturnType<typeof useTeamMembersQuery>['data']>
+  people: NonNullable<ReturnType<typeof useTeamMembersQuery>["data"]>,
 ): FleetGraphPageContext {
   const pendingCount = people.filter((person) => person.isPending).length;
   const items = buildItems(
     people.map((person) => ({
       label: person.name,
-      detail: person.email ?? (person.isPending ? 'Pending invite' : null),
+      detail: person.email ?? (person.isPending ? "Pending invite" : null),
       route: `/team/${person.id}`,
-    }))
+    })),
   );
 
   return {
-    kind: 'team_directory',
+    kind: "team_directory",
     route,
-    title: 'Team Directory',
+    title: "Team Directory",
     summary:
       people.length === 0
-        ? 'Team Directory is empty in this workspace right now.'
-        : `Team Directory shows ${pluralize(people.length, 'team member')}. ${pendingCount > 0 ? `${pluralize(pendingCount, 'invite')} are still pending.` : 'Everyone shown here is already in the workspace.'}`,
+        ? "Team Directory is empty in this workspace right now."
+        : `Team Directory shows ${pluralize(people.length, "team member")}. ${pendingCount > 0 ? `${pluralize(pendingCount, "invite")} are still pending.` : "Everyone shown here is already in the workspace."}`,
     emptyState: people.length === 0,
     metrics: buildMetrics([
-      { label: 'Team members', value: String(people.length) },
-      { label: 'Pending invites', value: String(pendingCount) },
+      { label: "Team members", value: String(people.length) },
+      { label: "Pending invites", value: String(pendingCount) },
     ]),
     items,
   };
@@ -1338,14 +1941,15 @@ function buildTeamDirectoryPageContext(
 
 function buildPersonPageContext(
   route: string,
-  person: { id: string; name: string; email?: string } | null
+  person: { id: string; name: string; email?: string } | null,
 ): FleetGraphPageContext {
   if (!person) {
     return {
-      kind: 'person',
+      kind: "person",
       route,
-      title: 'Person',
-      summary: 'This person page is loading or the person is not available in the current workspace.',
+      title: "Person",
+      summary:
+        "This person page is loading or the person is not available in the current workspace.",
       emptyState: true,
       metrics: [],
       items: [],
@@ -1353,13 +1957,13 @@ function buildPersonPageContext(
   }
 
   return {
-    kind: 'person',
+    kind: "person",
     route,
     title: person.name,
     summary: `${person.name}'s profile is open on this page.`,
     emptyState: false,
     metrics: buildMetrics([
-      person.email ? { label: 'Email', value: person.email } : null,
+      person.email ? { label: "Email", value: person.email } : null,
     ]),
     items: [],
   };
@@ -1368,19 +1972,21 @@ function buildPersonPageContext(
 export function buildMyWeekPageContext(
   route: string,
   activeView: FleetGraphActiveViewContext | null,
-  myWeek: MyWeekResponse | undefined
+  myWeek: MyWeekResponse | undefined,
 ): FleetGraphPageContextWithActions {
   if (!myWeek) {
     return {
-      kind: 'my_week',
+      kind: "my_week",
       route,
-      title: 'My Week',
+      title: "My Week",
       summary: activeView?.projectId
-        ? 'My Week is currently narrowed to a single project, so FleetGraph can reason about both this page and the linked weekly work.'
-        : 'My Week is the current weekly planning and execution surface for your work.',
+        ? "My Week is currently narrowed to a single project, so FleetGraph can reason about both this page and the linked weekly work."
+        : "My Week is the current weekly planning and execution surface for your work.",
       emptyState: false,
       metrics: buildMetrics([
-        activeView?.projectId ? { label: 'Single project scope', value: 'Yes' } : null,
+        activeView?.projectId
+          ? { label: "Single project scope", value: "Yes" }
+          : null,
       ]),
       items: [],
     };
@@ -1391,13 +1997,26 @@ export function buildMyWeekPageContext(
   const scopedProject =
     projects.find((project) => project.id === activeView?.projectId) ??
     (projects.length === 1 ? projects[0] : null);
-  const projectInsights = (isScopedToSingleProject && scopedProject ? [scopedProject] : projects)
+  const projectInsights = (
+    isScopedToSingleProject && scopedProject ? [scopedProject] : projects
+  )
     .map((project) => buildMyWeekProjectInsight(project, week))
-    .sort((left, right) => right.score - left.score || left.project.title.localeCompare(right.project.title));
-  const relevantStandupSlots = standups.filter((slot) => !(!isDateInPast(slot.date) && !isDateToday(slot.date)));
-  const loggedStandupCount = relevantStandupSlots.filter((slot) => Boolean(slot.standup)).length;
-  const missingPastStandups = standups.filter((slot) => !slot.standup && isDateInPast(slot.date)).length;
-  const todayStandupSlot = standups.find((slot) => isDateToday(slot.date)) ?? null;
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        left.project.title.localeCompare(right.project.title),
+    );
+  const relevantStandupSlots = standups.filter(
+    (slot) => !(!isDateInPast(slot.date) && !isDateToday(slot.date)),
+  );
+  const loggedStandupCount = relevantStandupSlots.filter((slot) =>
+    Boolean(slot.standup),
+  ).length;
+  const missingPastStandups = standups.filter(
+    (slot) => !slot.standup && isDateInPast(slot.date),
+  ).length;
+  const todayStandupSlot =
+    standups.find((slot) => isDateToday(slot.date)) ?? null;
   const lastLoggedStandup =
     [...standups]
       .filter((slot) => Boolean(slot.standup))
@@ -1416,57 +2035,62 @@ export function buildMyWeekPageContext(
     ? previous_retro.id
       ? `/documents/${previous_retro.id}`
       : appendRouteSearch(route, {
-          action: 'create-retro',
+          action: "create-retro",
           action_week_number: previous_retro.week_number,
         })
     : null;
   const planItemCount = plan?.items?.length ?? 0;
   const retroItemCount = retro?.items?.length ?? 0;
   const standupMetricValue =
-    relevantStandupSlots.length > 0 ? `${loggedStandupCount}/${relevantStandupSlots.length}` : '0';
+    relevantStandupSlots.length > 0
+      ? `${loggedStandupCount}/${relevantStandupSlots.length}`
+      : "0";
 
   const planStatus = (() => {
     if (!plan) {
       return {
-        metric: planIsDue ? 'Missing' : 'Not started',
+        metric: planIsDue ? "Missing" : "Not started",
         detail: planIsDue
           ? `No weekly plan exists for Week ${week.week_number}, and it should be in flight now.`
           : `No weekly plan exists for Week ${week.week_number} yet.`,
-        route: appendRouteSearch(route, { action: 'create-plan', action_week_number: null }),
-        actionLabel: 'Create plan',
+        route: appendRouteSearch(route, {
+          action: "create-plan",
+          action_week_number: null,
+        }),
+        actionLabel: "Create plan",
         needsAttention: planIsDue,
       };
     }
 
     if (plan.submitted_at) {
       return {
-        metric: 'Submitted',
-        detail: `Weekly plan is submitted with ${pluralize(planItemCount, 'item')}.`,
+        metric: "Submitted",
+        detail: `Weekly plan is submitted with ${pluralize(planItemCount, "item")}.`,
         route: `/documents/${plan.id}`,
-        actionLabel: 'Open plan',
+        actionLabel: "Open plan",
         needsAttention: false,
       };
     }
 
     if (planItemCount > 0) {
       return {
-        metric: 'Unsubmitted',
+        metric: "Unsubmitted",
         detail: planIsDue
-          ? `Weekly plan has ${pluralize(planItemCount, 'item')} but is still unsubmitted.`
-          : `Weekly plan has ${pluralize(planItemCount, 'item')} and is still in draft.`,
+          ? `Weekly plan has ${pluralize(planItemCount, "item")} but is still unsubmitted.`
+          : `Weekly plan has ${pluralize(planItemCount, "item")} and is still in draft.`,
         route: `/documents/${plan.id}`,
-        actionLabel: 'Open plan',
+        actionLabel: "Open plan",
         needsAttention: planIsDue,
       };
     }
 
     return {
-      metric: planIsDue ? 'Due today' : 'Blank',
+      metric: planIsDue ? "Due today" : "Blank",
       detail: planIsDue
-        ? 'Weekly plan exists, but it is still blank and unsubmitted.'
-        : 'Weekly plan exists, but it is still blank.',
+        ? "Weekly plan exists, but it is still blank and unsubmitted."
+        : "Weekly plan exists, but it is still blank.",
       route: `/documents/${plan.id}`,
-      actionLabel: 'Open plan',
+      actionLabel: "Open plan",
       needsAttention: planIsDue,
     };
   })();
@@ -1474,45 +2098,48 @@ export function buildMyWeekPageContext(
   const retroStatus = (() => {
     if (!retro) {
       return {
-        metric: retroIsDue ? 'Missing' : 'Not started',
+        metric: retroIsDue ? "Missing" : "Not started",
         detail: retroIsDue
           ? `No weekly retro exists for Week ${week.week_number}, and review follow-up is due.`
           : `No weekly retro exists for Week ${week.week_number} yet.`,
-        route: appendRouteSearch(route, { action: 'create-retro', action_week_number: null }),
-        actionLabel: 'Create retro',
+        route: appendRouteSearch(route, {
+          action: "create-retro",
+          action_week_number: null,
+        }),
+        actionLabel: "Create retro",
         needsAttention: retroIsDue,
       };
     }
 
     if (retro.submitted_at) {
       return {
-        metric: 'Submitted',
-        detail: `Weekly retro is submitted with ${pluralize(retroItemCount, 'item')}.`,
+        metric: "Submitted",
+        detail: `Weekly retro is submitted with ${pluralize(retroItemCount, "item")}.`,
         route: `/documents/${retro.id}`,
-        actionLabel: 'Open retro',
+        actionLabel: "Open retro",
         needsAttention: false,
       };
     }
 
     if (retroItemCount > 0) {
       return {
-        metric: 'Unsubmitted',
+        metric: "Unsubmitted",
         detail: retroIsDue
-          ? `Weekly retro has ${pluralize(retroItemCount, 'item')} but is still unsubmitted.`
-          : `Weekly retro has ${pluralize(retroItemCount, 'item')} and is still in draft.`,
+          ? `Weekly retro has ${pluralize(retroItemCount, "item")} but is still unsubmitted.`
+          : `Weekly retro has ${pluralize(retroItemCount, "item")} and is still in draft.`,
         route: `/documents/${retro.id}`,
-        actionLabel: 'Open retro',
+        actionLabel: "Open retro",
         needsAttention: retroIsDue,
       };
     }
 
     return {
-      metric: retroIsDue ? 'Due today' : 'Blank',
+      metric: retroIsDue ? "Due today" : "Blank",
       detail: retroIsDue
-        ? 'Weekly retro exists, but it is still blank and unsubmitted.'
-        : 'Weekly retro exists, but it is still blank.',
+        ? "Weekly retro exists, but it is still blank and unsubmitted."
+        : "Weekly retro exists, but it is still blank.",
       route: `/documents/${retro.id}`,
-      actionLabel: 'Open retro',
+      actionLabel: "Open retro",
       needsAttention: retroIsDue,
     };
   })();
@@ -1520,70 +2147,73 @@ export function buildMyWeekPageContext(
   const standupStatus = (() => {
     if (todayStandupSlot?.standup) {
       return {
-        metric: 'Up to date',
+        metric: "Up to date",
         detail: `Today’s update is logged. ${loggedStandupCount}/${Math.max(relevantStandupSlots.length, 1)} in-scope updates are posted.`,
         route: `/documents/${todayStandupSlot.standup.id}`,
-        actionLabel: 'Open today update',
+        actionLabel: "Open today update",
         needsAttention: false,
       };
     }
 
     if (todayStandupSlot && !todayStandupSlot.standup) {
       return {
-        metric: 'Missing today',
+        metric: "Missing today",
         detail:
           missingPastStandups > 0
-            ? `Today’s update is still missing, and ${pluralize(missingPastStandups, 'earlier update')} are also missing.`
-            : 'Today’s update is still missing.',
+            ? `Today’s update is still missing, and ${pluralize(missingPastStandups, "earlier update")} are also missing.`
+            : "Today’s update is still missing.",
         route: getStandupActionRoute(route, todayStandupSlot),
-        actionLabel: 'Write today update',
+        actionLabel: "Write today update",
         needsAttention: true,
       };
     }
 
     if (missingPastStandups > 0) {
-      const oldestMissingSlot = standups.find((slot) => !slot.standup && isDateInPast(slot.date)) ?? null;
+      const oldestMissingSlot =
+        standups.find((slot) => !slot.standup && isDateInPast(slot.date)) ??
+        null;
 
       return {
-        metric: 'Missing updates',
-        detail: `${pluralize(missingPastStandups, 'daily update')} are still missing for this week.`,
+        metric: "Missing updates",
+        detail: `${pluralize(missingPastStandups, "daily update")} are still missing for this week.`,
         route: getStandupActionRoute(route, oldestMissingSlot),
-        actionLabel: 'Write update',
+        actionLabel: "Write update",
         needsAttention: true,
       };
     }
 
     if (lastLoggedStandup?.standup) {
       return {
-        metric: 'Logged',
+        metric: "Logged",
         detail: `Latest daily update was posted on ${lastLoggedStandup.day}.`,
         route: `/documents/${lastLoggedStandup.standup.id}`,
-        actionLabel: 'Open latest update',
+        actionLabel: "Open latest update",
         needsAttention: false,
       };
     }
 
-    const firstAvailableStandupSlot = relevantStandupSlots[0] ?? standups[0] ?? null;
+    const firstAvailableStandupSlot =
+      relevantStandupSlots[0] ?? standups[0] ?? null;
 
     return {
-      metric: 'Not started',
-      detail: 'No daily updates have been logged for this week yet.',
+      metric: "Not started",
+      detail: "No daily updates have been logged for this week yet.",
       route: getStandupActionRoute(route, firstAvailableStandupSlot),
-      actionLabel: firstAvailableStandupSlot ? 'Write first update' : null,
+      actionLabel: firstAvailableStandupSlot ? "Write first update" : null,
       needsAttention: relevantStandupSlots.length > 0,
     };
   })();
 
   const workflowStage =
     week.week_number > week.current_week_number
-      ? 'Planning'
+      ? "Planning"
       : showPreviousRetroNudge || retroStatus.needsAttention
-        ? 'Review'
+        ? "Review"
         : planStatus.needsAttention
-          ? 'Planning'
+          ? "Planning"
           : week.is_current
-            ? 'Execution'
-            : 'Review';
+            ? "Execution"
+            : "Review";
 
   const attentionSignals = [
     planStatus.needsAttention ? planStatus.detail : null,
@@ -1595,116 +2225,143 @@ export function buildMyWeekPageContext(
       : null,
     retroStatus.needsAttention ? retroStatus.detail : null,
   ].filter((signal): signal is string => Boolean(signal));
-  const attentionProjectInsights = projectInsights.filter((project) => project.needsAttention);
-  const freshProjectCount = projectInsights.filter((project) => project.hasFreshActivity).length;
-  const topProjectInsight = attentionProjectInsights[0] ?? projectInsights[0] ?? null;
+  const attentionProjectInsights = projectInsights.filter(
+    (project) => project.needsAttention,
+  );
+  const freshProjectCount = projectInsights.filter(
+    (project) => project.hasFreshActivity,
+  ).length;
+  const topProjectInsight =
+    attentionProjectInsights[0] ?? projectInsights[0] ?? null;
 
   const projectSummary =
     projects.length === 0
-      ? 'My Week has no assigned projects in scope right now.'
+      ? "My Week has no assigned projects in scope right now."
       : isScopedToSingleProject && scopedProject
         ? `My Week is narrowed to ${scopedProject.title}.`
-        : `My Week covers ${pluralize(projects.length, 'assigned project')}.`;
-  const steadyStateSummary =
-    `${planStatus.detail} ${retroStatus.detail} ${standupStatus.detail}`;
+        : `My Week covers ${pluralize(projects.length, "assigned project")}.`;
+  const steadyStateSummary = `${planStatus.detail} ${retroStatus.detail} ${standupStatus.detail}`;
   const topProjectSummary = topProjectInsight?.summary ?? null;
   const projectSignalMetricValue =
     projectInsights.length === 0
-      ? 'No project scope'
+      ? "No project scope"
       : isScopedToSingleProject && projectInsights[0]
         ? projectInsights[0].needsAttention
-          ? 'Needs attention'
+          ? "Needs attention"
           : projectInsights[0].hasFreshActivity
-            ? 'Fresh activity'
-            : 'In scope'
+            ? "Fresh activity"
+            : "In scope"
         : attentionProjectInsights.length > 0
           ? `${attentionProjectInsights.length}/${projectInsights.length} flagged`
           : `${freshProjectCount}/${projectInsights.length} fresh`;
 
   return {
-    kind: 'my_week',
+    kind: "my_week",
     route,
-    title: 'My Week',
+    title: "My Week",
     summary:
       attentionSignals.length > 0 || topProjectSummary
-        ? `${projectSummary} ${topProjectSummary ? `${topProjectSummary} ` : ''}${attentionSignals.length > 0 ? `Right now, ${attentionSignals.slice(0, 3).join(' ')}` : ''}`.trim()
+        ? `${projectSummary} ${topProjectSummary ? `${topProjectSummary} ` : ""}${attentionSignals.length > 0 ? `Right now, ${attentionSignals.slice(0, 3).join(" ")}` : ""}`.trim()
         : `${projectSummary} ${steadyStateSummary}`,
     emptyState: false,
     metrics: buildMetrics([
-      { label: 'Workflow stage', value: workflowStage },
-      { label: 'Project signals', value: projectSignalMetricValue },
-      { label: 'Weekly plan', value: planStatus.metric },
-      { label: 'Weekly retro', value: retroStatus.metric },
-      { label: 'Daily updates', value: standupMetricValue },
-      activeView?.projectId ? { label: 'Single project scope', value: 'Yes' } : null,
+      { label: "Workflow stage", value: workflowStage },
+      { label: "Project signals", value: projectSignalMetricValue },
+      { label: "Weekly plan", value: planStatus.metric },
+      { label: "Weekly retro", value: retroStatus.metric },
+      { label: "Daily updates", value: standupMetricValue },
+      activeView?.projectId
+        ? { label: "Single project scope", value: "Yes" }
+        : null,
     ]),
-    items: buildItems([
-      { label: 'Weekly plan', detail: planStatus.detail, route: planStatus.route },
-      showPreviousRetroNudge && previous_retro
-        ? {
-            label: `Week ${previous_retro.week_number} retro`,
-            detail: previous_retro.id
-              ? 'Last week’s retro is still open and needs input.'
-              : 'Last week’s retro has not been created yet.',
-            route: previousRetroRoute,
-          }
-        : {
-            label: 'Weekly retro',
-            detail: retroStatus.detail,
-            route: retroStatus.route,
-          },
-      { label: 'Daily updates', detail: standupStatus.detail, route: standupStatus.route },
-      ...projectInsights.slice(0, isScopedToSingleProject ? 1 : 2).map((projectInsight) => ({
-        label: projectInsight.project.title,
-        detail: projectInsight.detail,
-        route: projectInsight.route,
-      })),
-    ], isScopedToSingleProject ? 4 : 5),
+    items: buildItems(
+      [
+        {
+          label: "Weekly plan",
+          detail: planStatus.detail,
+          route: planStatus.route,
+        },
+        showPreviousRetroNudge && previous_retro
+          ? {
+              label: `Week ${previous_retro.week_number} retro`,
+              detail: previous_retro.id
+                ? "Last week’s retro is still open and needs input."
+                : "Last week’s retro has not been created yet.",
+              route: previousRetroRoute,
+            }
+          : {
+              label: "Weekly retro",
+              detail: retroStatus.detail,
+              route: retroStatus.route,
+            },
+        {
+          label: "Daily updates",
+          detail: standupStatus.detail,
+          route: standupStatus.route,
+        },
+        ...projectInsights
+          .slice(0, isScopedToSingleProject ? 1 : 2)
+          .map((projectInsight) => ({
+            label: projectInsight.project.title,
+            detail: projectInsight.detail,
+            route: projectInsight.route,
+          })),
+      ],
+      isScopedToSingleProject ? 4 : 5,
+    ),
     actions: buildActions([
       ...attentionProjectInsights
         .slice(0, isScopedToSingleProject ? 1 : 2)
         .map((projectInsight) =>
           createPageAction(projectInsight.actionLabel, projectInsight.route, {
-            intent: projectInsight.needsAttention ? 'follow_up' : 'inspect',
+            intent: projectInsight.needsAttention ? "follow_up" : "inspect",
             reason: projectInsight.detail,
-          })
+          }),
         ),
       standupStatus.route && standupStatus.actionLabel
         ? createPageAction(standupStatus.actionLabel, standupStatus.route, {
-            intent: standupStatus.actionLabel.startsWith('Write') ? 'write' : 'inspect',
+            intent: standupStatus.actionLabel.startsWith("Write")
+              ? "write"
+              : "inspect",
             reason: standupStatus.detail,
           })
         : null,
       planStatus.route && planStatus.actionLabel
         ? createPageAction(planStatus.actionLabel, planStatus.route, {
-            intent: planStatus.actionLabel.startsWith('Complete') ? 'complete' : 'inspect',
+            intent: planStatus.actionLabel.startsWith("Complete")
+              ? "complete"
+              : "inspect",
             reason: planStatus.detail,
           })
         : null,
       previousRetroRoute && showPreviousRetroNudge
         ? createPageAction(
-            previous_retro?.id ? 'Complete last retro' : 'Create last retro',
+            previous_retro?.id ? "Complete last retro" : "Create last retro",
             previousRetroRoute,
             {
-              intent: 'complete',
+              intent: "complete",
               reason: previous_retro?.id
                 ? `Week ${previous_retro.week_number} retro is still open and needs to be closed out.`
                 : `Week ${previous_retro?.week_number} retro still needs to be created.`,
-            }
+            },
           )
         : null,
       retroStatus.route && retroStatus.actionLabel
         ? createPageAction(retroStatus.actionLabel, retroStatus.route, {
-            intent: retroStatus.actionLabel.startsWith('Complete') ? 'complete' : 'inspect',
+            intent: retroStatus.actionLabel.startsWith("Complete")
+              ? "complete"
+              : "inspect",
             reason: retroStatus.detail,
           })
         : null,
-      ...projectInsights.slice(0, isScopedToSingleProject ? 1 : 2).map((projectInsight) =>
-        createPageAction(projectInsight.actionLabel, projectInsight.route, {
-          intent: projectInsight.needsAttention ? 'follow_up' : 'inspect',
-          reason: projectInsight.detail,
-        })
-      ),
+      ...projectInsights
+        .slice(0, isScopedToSingleProject ? 1 : 2)
+        .map((projectInsight) =>
+          createPageAction(projectInsight.actionLabel, projectInsight.route, {
+            intent: projectInsight.needsAttention ? "follow_up" : "inspect",
+            reason: projectInsight.detail,
+          }),
+        ),
     ]),
   };
 }
@@ -1713,11 +2370,12 @@ function buildDocumentPageContext(
   route: string,
   document: DocumentResponse,
   activeView: FleetGraphActiveViewContext | null,
-  programs: ReturnType<typeof usePrograms>['programs'],
-  projects: ReturnType<typeof useProjects>['projects'],
-  issues: ReturnType<typeof useIssues>['issues'],
-  people: NonNullable<ReturnType<typeof useTeamMembersQuery>['data']>,
-  dependencySignals: FleetGraphIssueDependencySignalsResponse | null
+  programs: ReturnType<typeof usePrograms>["programs"],
+  projects: ReturnType<typeof useProjects>["projects"],
+  issues: ReturnType<typeof useIssues>["issues"],
+  people: NonNullable<ReturnType<typeof useTeamMembersQuery>["data"]>,
+  dependencySignals: FleetGraphIssueDependencySignalsResponse | null,
+  activeWeeks: ReturnType<typeof useActiveWeeksQuery>["data"],
 ): FleetGraphPageContext {
   const program = programs.find((candidate) => candidate.id === document.id);
   const project = projects.find((candidate) => candidate.id === document.id);
@@ -1725,98 +2383,133 @@ function buildDocumentPageContext(
   const person = people.find((candidate) => candidate.id === document.id);
   const tabLabel = activeView?.tab ? `Tab: ${activeView.tab}` : null;
 
-  if (activeView?.tab === 'issues' && document.document_type === 'program') {
+  if (activeView?.tab === "issues" && document.document_type === "program") {
     return buildIssueSurfacePageContext(
       route,
       {
-        type: 'program',
+        type: "program",
         id: document.id,
         title: document.title,
       },
-      issues.filter(getIssueSurfaceScopeIssueFilter({
-        type: 'program',
-        id: document.id,
-        title: document.title,
-      })),
+      issues.filter(
+        getIssueSurfaceScopeIssueFilter({
+          type: "program",
+          id: document.id,
+          title: document.title,
+        }),
+      ),
       projects,
-      dependencySignals
+      dependencySignals,
     );
   }
 
-  if (activeView?.tab === 'issues' && document.document_type === 'project') {
+  if (activeView?.tab === "issues" && document.document_type === "project") {
     return buildIssueSurfacePageContext(
       route,
       {
-        type: 'project',
+        type: "project",
         id: document.id,
         title: document.title,
       },
-      issues.filter(getIssueSurfaceScopeIssueFilter({
-        type: 'project',
-        id: document.id,
-        title: document.title,
-      })),
+      issues.filter(
+        getIssueSurfaceScopeIssueFilter({
+          type: "project",
+          id: document.id,
+          title: document.title,
+        }),
+      ),
       projects,
-      dependencySignals
+      dependencySignals,
     );
   }
 
-  if (document.document_type === 'program') {
+  if (document.document_type === "program") {
+    if (activeView?.tab === "projects") {
+      return buildProjectsPageContext(
+        route,
+        projects,
+        issues,
+        activeWeeks,
+        "",
+        {
+          title: `${document.title} Projects`,
+          subject: document.title,
+          programId: document.id,
+        },
+      );
+    }
+
     return {
-      kind: 'document',
+      kind: "document",
       route,
       title: document.title,
-      summary: `${document.title} is the current program document.${program ? ` It tracks ${program.issue_count ?? 0} issues across ${program.sprint_count ?? 0} weeks.` : ''}`,
+      summary: `${document.title} is the current program document.${program ? ` It tracks ${program.issue_count ?? 0} issues across ${program.sprint_count ?? 0} weeks.` : ""}`,
       emptyState: false,
       metrics: buildMetrics([
-        program ? { label: 'Issues', value: String(program.issue_count ?? 0) } : null,
-        program ? { label: 'Weeks', value: String(program.sprint_count ?? 0) } : null,
-        program?.owner?.name ? { label: 'Owner', value: program.owner.name } : null,
+        program
+          ? { label: "Issues", value: String(program.issue_count ?? 0) }
+          : null,
+        program
+          ? { label: "Weeks", value: String(program.sprint_count ?? 0) }
+          : null,
+        program?.owner?.name
+          ? { label: "Owner", value: program.owner.name }
+          : null,
       ]),
-      items: buildItems([
-        tabLabel ? { label: tabLabel } : null,
-      ]),
+      items: buildItems([tabLabel ? { label: tabLabel } : null]),
     };
   }
 
-  if (document.document_type === 'project') {
+  if (document.document_type === "project") {
     return {
-      kind: 'document',
+      kind: "document",
       route,
       title: document.title,
-      summary: `${document.title} is the current project document.${project ? ` It is showing ${project.issue_count} issues and ${project.sprint_count} weeks.` : ''}`,
+      summary: `${document.title} is the current project document.${project ? ` It is showing ${project.issue_count} issues and ${project.sprint_count} weeks.` : ""}`,
       emptyState: false,
       metrics: buildMetrics([
-        project ? { label: 'Issues', value: String(project.issue_count) } : null,
-        project ? { label: 'Weeks', value: String(project.sprint_count) } : null,
-        project?.owner?.name ? { label: 'Owner', value: project.owner.name } : null,
+        project
+          ? { label: "Issues", value: String(project.issue_count) }
+          : null,
+        project
+          ? { label: "Weeks", value: String(project.sprint_count) }
+          : null,
+        project?.owner?.name
+          ? { label: "Owner", value: project.owner.name }
+          : null,
       ]),
-      items: buildItems([
-        tabLabel ? { label: tabLabel } : null,
-      ]),
+      items: buildItems([tabLabel ? { label: tabLabel } : null]),
     };
   }
 
-  if (document.document_type === 'issue' && issue) {
+  if (document.document_type === "issue" && issue) {
     return {
-      kind: 'document',
+      kind: "document",
       route,
-      title: issue.display_id ? `${issue.display_id} ${issue.title}` : issue.title,
+      title: issue.display_id
+        ? `${issue.display_id} ${issue.title}`
+        : issue.title,
       summary: `${issue.title} is the current issue document. It is currently ${issue.state}.`,
       emptyState: false,
       metrics: buildMetrics([
-        { label: 'State', value: issue.state },
-        issue.priority ? { label: 'Priority', value: issue.priority } : null,
-        getProjectTitle(issue) ? { label: 'Project', value: getProjectTitle(issue) as string } : null,
+        { label: "State", value: issue.state },
+        issue.priority ? { label: "Priority", value: issue.priority } : null,
+        getProjectTitle(issue)
+          ? { label: "Project", value: getProjectTitle(issue) as string }
+          : null,
       ]),
       items: buildItems([
-        getProgramTitle(issue) ? { label: 'Program', detail: getProgramTitle(issue) } : null,
-        getSprintTitle(issue) ? { label: 'Week', detail: getSprintTitle(issue) } : null,
+        getProgramTitle(issue)
+          ? { label: "Program", detail: getProgramTitle(issue) }
+          : null,
+        getSprintTitle(issue)
+          ? { label: "Week", detail: getSprintTitle(issue) }
+          : null,
       ]),
     };
   }
 
-  if (document.document_type === 'person' || person) {
+  if (document.document_type === "person" || person) {
     return buildPersonPageContext(route, {
       id: person?.id ?? document.id,
       name: person?.name ?? document.title,
@@ -1825,48 +2518,53 @@ function buildDocumentPageContext(
   }
 
   return {
-    kind: 'document',
+    kind: "document",
     route,
     title: document.title,
     summary: `${document.title} is the current ${document.document_type} document.`,
     emptyState: false,
     metrics: buildMetrics([
-      tabLabel ? { label: 'Surface', value: activeView?.surface === 'my_week' ? 'My Week' : 'Document' } : null,
-      tabLabel ? { label: 'Tab', value: activeView?.tab ?? 'overview' } : null,
+      tabLabel
+        ? {
+            label: "Surface",
+            value: activeView?.surface === "my_week" ? "My Week" : "Document",
+          }
+        : null,
+      tabLabel ? { label: "Tab", value: activeView?.tab ?? "overview" } : null,
     ]),
     items: [],
   };
 }
 
 function getFallbackTitle(pathname: string): string {
-  if (pathname.startsWith('/team/status')) {
-    return 'Status Overview';
+  if (pathname.startsWith("/team/status")) {
+    return "Status Overview";
   }
-  if (pathname.startsWith('/team/reviews')) {
-    return 'Reviews';
+  if (pathname.startsWith("/team/reviews")) {
+    return "Reviews";
   }
-  if (pathname.startsWith('/team/org-chart')) {
-    return 'Org Chart';
+  if (pathname.startsWith("/team/org-chart")) {
+    return "Org Chart";
   }
-  if (pathname.startsWith('/team/allocation')) {
-    return 'Team Allocation';
+  if (pathname.startsWith("/team/allocation")) {
+    return "Team Allocation";
   }
-  if (pathname.startsWith('/settings/conversions')) {
-    return 'Converted Documents';
+  if (pathname.startsWith("/settings/conversions")) {
+    return "Converted Documents";
   }
-  if (pathname.startsWith('/settings')) {
-    return 'Workspace Settings';
+  if (pathname.startsWith("/settings")) {
+    return "Workspace Settings";
   }
 
-  const lastSegment = pathname.split('/').filter(Boolean).pop() ?? 'workspace';
+  const lastSegment = pathname.split("/").filter(Boolean).pop() ?? "workspace";
   return lastSegment
-    .split('-')
+    .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
+    .join(" ");
 }
 
 export function useFleetGraphPageContext(
-  activeView: FleetGraphActiveViewContext | null
+  activeView: FleetGraphActiveViewContext | null,
 ): FleetGraphPageContextWithActions | null {
   const location = useLocation();
   const { currentDocumentId } = useCurrentDocument();
@@ -1878,11 +2576,11 @@ export function useFleetGraphPageContext(
   const activeWeeksQuery = useActiveWeeksQuery();
   const dashboardActionItemsQuery = useDashboardActionItems();
   const myWeekNumber = useMemo(() => {
-    if (location.pathname !== '/my-week') {
+    if (location.pathname !== "/my-week") {
       return undefined;
     }
 
-    const value = new URLSearchParams(location.search).get('week_number');
+    const value = new URLSearchParams(location.search).get("week_number");
     if (!value) {
       return undefined;
     }
@@ -1891,26 +2589,30 @@ export function useFleetGraphPageContext(
     return Number.isNaN(parsed) ? undefined : parsed;
   }, [location.pathname, location.search]);
   const myWeekQuery = useMyWeekQuery(myWeekNumber, {
-    enabled: location.pathname === '/my-week',
+    enabled: location.pathname === "/my-week",
   });
 
   const route = `${location.pathname}${location.search}`;
-  const routeDocumentMatch = matchPath('/documents/:id/*', location.pathname)
-    ?? matchPath('/documents/:id', location.pathname);
-  const teamPersonMatch = matchPath('/team/:id', location.pathname);
-  const routeDocumentId = routeDocumentMatch?.params.id ?? currentDocumentId ?? null;
+  const routeDocumentMatch =
+    matchPath("/documents/:id/*", location.pathname) ??
+    matchPath("/documents/:id", location.pathname);
+  const teamPersonMatch = matchPath("/team/:id", location.pathname);
+  const routeDocumentId =
+    routeDocumentMatch?.params.id ?? currentDocumentId ?? null;
   const shouldLoadRouteDocument = Boolean(routeDocumentId);
 
   const currentDocumentQuery = useQuery<DocumentResponse>({
-    queryKey: ['document', routeDocumentId],
+    queryKey: ["document", routeDocumentId],
     queryFn: async () => {
       if (!routeDocumentId) {
-        throw new Error('FleetGraph current document context requires a document id');
+        throw new Error(
+          "FleetGraph current document context requires a document id",
+        );
       }
 
       const response = await apiGet(`/api/documents/${routeDocumentId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch FleetGraph current document context');
+        throw new Error("Failed to fetch FleetGraph current document context");
       }
       return response.json();
     },
@@ -1918,11 +2620,14 @@ export function useFleetGraphPageContext(
     staleTime: 1000 * 60 * 5,
   });
   const issueSurfaceDependencyTarget = useMemo(() => {
-    if (activeView?.tab !== 'issues' || !currentDocumentQuery.data) {
+    if (activeView?.tab !== "issues" || !currentDocumentQuery.data) {
       return null;
     }
 
-    if (currentDocumentQuery.data.document_type !== 'program' && currentDocumentQuery.data.document_type !== 'project') {
+    if (
+      currentDocumentQuery.data.document_type !== "program" &&
+      currentDocumentQuery.data.document_type !== "project"
+    ) {
       return null;
     }
 
@@ -1944,64 +2649,70 @@ export function useFleetGraphPageContext(
   }, [activeView?.tab, currentDocumentQuery.data, issues]);
   const issueDependencySignalsQuery = useIssueDependencySignalsQuery(
     issueSurfaceDependencyTarget?.issueIds ?? [],
-    Boolean(issueSurfaceDependencyTarget)
+    Boolean(issueSurfaceDependencyTarget),
   );
 
   return useMemo(() => {
-    if (location.pathname === '/programs') {
+    if (location.pathname === "/programs") {
       return buildProgramsPageContext(route, programs);
     }
 
-    if (location.pathname === '/projects') {
-      return buildProjectsPageContext(route, projects, location.search);
+    if (location.pathname === "/projects") {
+      return buildProjectsPageContext(
+        route,
+        projects,
+        issues,
+        activeWeeksQuery.data,
+        location.search,
+      );
     }
 
-    if (location.pathname === '/issues') {
+    if (location.pathname === "/issues") {
       return buildIssuesPageContext(route, issues, location.search);
     }
 
-    if (location.pathname === '/docs') {
+    if (location.pathname === "/docs") {
       return buildDocumentsPageContext(route, documents);
     }
 
-    if (location.pathname === '/dashboard') {
-      const dashboardView = new URLSearchParams(location.search).get('view');
+    if (location.pathname === "/dashboard") {
+      const dashboardView = new URLSearchParams(location.search).get("view");
       return buildDashboardPageContext(
         route,
         dashboardView,
         activeWeeksQuery.data,
         projects,
-        dashboardActionItemsQuery.data
+        dashboardActionItemsQuery.data,
       );
     }
 
-    if (location.pathname === '/team/directory') {
+    if (location.pathname === "/team/directory") {
       return buildTeamDirectoryPageContext(route, teamMembersQuery.data ?? []);
     }
 
-    if (location.pathname === '/my-week') {
+    if (location.pathname === "/my-week") {
       return buildMyWeekPageContext(route, activeView, myWeekQuery.data);
     }
 
     if (
-      location.pathname === '/team/status' ||
-      location.pathname === '/team/reviews' ||
-      location.pathname === '/team/org-chart' ||
-      location.pathname === '/team/allocation' ||
-      location.pathname === '/settings' ||
-      location.pathname === '/settings/conversions'
+      location.pathname === "/team/status" ||
+      location.pathname === "/team/reviews" ||
+      location.pathname === "/team/org-chart" ||
+      location.pathname === "/team/allocation" ||
+      location.pathname === "/settings" ||
+      location.pathname === "/settings/conversions"
     ) {
       const title = getFallbackTitle(location.pathname);
       return buildGenericPageContext(
         route,
         title,
-        `${title} is the current page. FleetGraph can use this surface as lightweight context, but there is no single sprint or document bound to it.`
+        `${title} is the current page. FleetGraph can use this surface as lightweight context, but there is no single sprint or document bound to it.`,
       );
     }
 
     if (teamPersonMatch) {
       const person = (teamMembersQuery.data ?? []).find(
-        (candidate) => candidate.id === teamPersonMatch.params.id
+        (candidate) => candidate.id === teamPersonMatch.params.id,
       );
       return buildPersonPageContext(route, person ?? null);
     }
@@ -2015,7 +2726,8 @@ export function useFleetGraphPageContext(
         projects,
         issues,
         teamMembersQuery.data ?? [],
-        issueDependencySignalsQuery.data ?? null
+        issueDependencySignalsQuery.data ?? null,
+        activeWeeksQuery.data,
       );
     }
 
@@ -2023,7 +2735,7 @@ export function useFleetGraphPageContext(
     return buildGenericPageContext(
       route,
       title,
-      `${title} is the current page. FleetGraph can use this surface as lightweight navigation context even when there is no single sprint in scope.`
+      `${title} is the current page. FleetGraph can use this surface as lightweight navigation context even when there is no single sprint in scope.`,
     );
   }, [
     activeView,
