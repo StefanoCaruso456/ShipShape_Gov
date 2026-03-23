@@ -324,26 +324,44 @@ function describePersonaFollowUp(
     return `${personaLabel} support`;
   }
 
+  if (finding.audienceRole === 'issue_assignee') {
+    return `${personaLabel} issue follow-up`;
+  }
+
   return `${personaLabel} follow-up`;
+}
+
+function getFleetGraphProactiveFindingToastPrefix(
+  finding: FleetGraphProactiveFinding
+): string {
+  if (finding.audienceRole === 'accountable' || finding.audienceRole === 'manager') {
+    return 'FleetGraph escalated';
+  }
+
+  if (finding.audienceScope === 'team' || finding.audienceRole === 'team_member') {
+    return 'FleetGraph shared';
+  }
+
+  return finding.severity === 'action'
+    ? 'FleetGraph flagged'
+    : finding.severity === 'warning'
+      ? 'FleetGraph noticed'
+      : 'FleetGraph surfaced';
 }
 
 export function buildFleetGraphProactiveFindingToastCopy(
   finding: FleetGraphProactiveFinding,
   workPersona?: WorkPersona | null
-): { message: string; actionLabel: string } {
+): { message: string; actionLabel: string; toastType: 'info' } {
   const title = finding.title ?? 'Current week';
-  const prefix =
-    finding.audienceRole === 'accountable'
-      ? 'FleetGraph escalated'
-      : finding.severity === 'action'
-        ? 'FleetGraph flagged'
-        : finding.severity === 'warning'
-          ? 'FleetGraph noticed'
-          : 'FleetGraph surfaced';
+  const prefix = getFleetGraphProactiveFindingToastPrefix(finding);
   const personaLead = workPersona ? describePersonaFollowUp(workPersona, finding) : null;
   const headline = personaLead ?? title;
   const deliveryReason =
-    finding.audienceRole === 'accountable' &&
+    (finding.audienceRole === 'accountable' ||
+      finding.audienceRole === 'manager' ||
+      finding.audienceRole === 'team_member' ||
+      finding.audienceScope === 'team') &&
     typeof finding.deliveryReason === 'string' &&
     finding.deliveryReason.trim().length > 0
       ? ` ${finding.deliveryReason.trim()}`
@@ -352,6 +370,7 @@ export function buildFleetGraphProactiveFindingToastCopy(
   return {
     message: `${prefix} ${headline}: ${finding.summary}${deliveryReason}`,
     actionLabel: getFleetGraphProactiveActionLabel(finding),
+    toastType: 'info',
   };
 }
 
