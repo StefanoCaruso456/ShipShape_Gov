@@ -54,8 +54,8 @@ describe('Auth API', () => {
 
     // Create test user with password
     const userResult = await pool.query(
-      `INSERT INTO users (email, password_hash, name)
-       VALUES ($1, $2, 'Auth Test User')
+      `INSERT INTO users (email, password_hash, name, work_persona)
+       VALUES ($1, $2, 'Auth Test User', 'engineer')
        RETURNING id`,
       [testEmail, passwordHash]
     )
@@ -138,6 +138,7 @@ describe('Auth API', () => {
       expect(res.body.data.user).toBeDefined()
       expect(res.body.data.user.email).toBe(testEmail)
       expect(res.body.data.user.id).toBe(testUserId)
+      expect(res.body.data.user.workPersona).toBe('engineer')
       expect(res.body.data.currentWorkspace).toBeDefined()
       expect(res.body.data.workspaces).toBeInstanceOf(Array)
 
@@ -271,6 +272,7 @@ describe('Auth API', () => {
       expect(res.body.data.user).toBeDefined()
       expect(res.body.data.user.email).toBe(testEmail)
       expect(res.body.data.user.id).toBe(testUserId)
+      expect(res.body.data.user.workPersona).toBe('engineer')
       expect(res.body.data.currentWorkspace).toBeDefined()
       expect(res.body.data.workspaces).toBeInstanceOf(Array)
     })

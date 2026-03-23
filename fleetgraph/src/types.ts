@@ -12,6 +12,7 @@ import type {
   FleetGraphScrumToolContext as SharedFleetGraphScrumToolContext,
   FleetGraphToolCallTrace as SharedFleetGraphToolCallTrace,
   FleetGraphViewEntityType,
+  WorkPersona,
 } from '@ship/shared';
 
 export type FleetGraphPageContext = SharedFleetGraphPageContext;
@@ -46,6 +47,7 @@ export interface FleetGraphActor {
   id: string | null;
   kind: FleetGraphActorKind;
   role: string | null;
+  workPersona: WorkPersona | null;
 }
 
 export interface FleetGraphEntityRef {

@@ -236,9 +236,9 @@ Enhance the issue sidebar and editor with:
 
 ### 2. Sprint / Week analytics surface
 
-Add a dedicated `Analytics` tab to the sprint surface with dashboard views for:
+Add a dedicated `Analytics` tab to the sprint surface and a first-class `/analytics` left-rail mode with dashboard views for:
 
-- reachable from the unified week document route: `/documents/:documentId/weeks/:weekId`
+- reachable from `/analytics?sprintId=:sprintId` using recent historical weeks and from the unified week document route `/documents/:sprintId/analytics`
 
 - `Sprint Report`
   - burn-down
@@ -246,10 +246,10 @@ Add a dedicated `Analytics` tab to the sprint surface with dashboard views for:
   - commitment summary
   - scope-change summary
 - `Velocity`
-  - six-week completed vs committed trend
+  - recent completed vs committed trend with dynamic history-window labels
   - average delivered work
   - commitment reliability
-  - current scope vs recent team velocity
+  - current scope and commitment deltas vs recent delivered work
 - `Forecast`
   - projected sprint finish
   - forecast range
@@ -268,6 +268,12 @@ Add a dedicated `Analytics` tab to the sprint surface with dashboard views for:
   - acceptance criteria coverage
   - assignee coverage
   - issue-type coverage
+
+Trust pass requirements for this surface:
+
+- never label a metric as `6-week` when the available history window is smaller
+- explain when throughput is still zero and a forecast is intentionally indeterminate
+- keep the left-rail week list grouped and scannable instead of repeating flat sprint rows
 
 ### 3. Burn chart behavior
 

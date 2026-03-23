@@ -35,6 +35,7 @@ export async function initializeProactiveContextNode(
         id: null,
         kind: 'service',
         role: 'fleetgraph',
+        workPersona: null,
       },
       handoff: createHandoff(
         'initializeProactiveContext',

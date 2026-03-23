@@ -1,3 +1,5 @@
+import type { WorkPersona } from '@ship/shared';
+
 // In development, Vite proxy handles /api routes (see vite.config.ts)
 // In production, use VITE_API_URL or relative URLs
 export const API_URL = import.meta.env.VITE_API_URL ?? '';
@@ -299,6 +301,7 @@ export interface UserInfo {
   id: string;
   email: string;
   name: string;
+  workPersona: WorkPersona | null;
   isSuperAdmin: boolean;
 }
 

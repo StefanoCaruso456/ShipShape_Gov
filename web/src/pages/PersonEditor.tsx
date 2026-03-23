@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { WORK_PERSONA_LABELS, WORK_PERSONAS, type WorkPersona } from '@ship/shared';
 import { Editor } from '@/components/Editor';
 import { useAuth } from '@/hooks/useAuth';
 import { useDocuments } from '@/contexts/DocumentsContext';
@@ -19,6 +20,7 @@ interface PersonDocument {
   properties?: {
     email?: string | null;
     role?: string | null;
+    work_persona?: WorkPersona | null;
     reports_to?: string | null;
     user_id?: string | null;
     [key: string]: unknown;
@@ -174,6 +176,7 @@ export function PersonEditorPage() {
           }}
           metricsVisible={metricsVisible}
           sprintMetrics={sprintMetrics}
+          currentUserId={user?.id ?? null}
         />
       }
     />
@@ -184,15 +187,26 @@ interface PersonSidebarProps {
   person: PersonDocument;
   people: { id: string; user_id: string; name: string; email?: string }[];
   isAdmin: boolean;
+  currentUserId: string | null;
   onUpdateProperties: (updates: Record<string, unknown>) => Promise<void>;
   metricsVisible: boolean;
   sprintMetrics: SprintMetricsResponse | null;
 }
 
-function PersonSidebar({ person, people, isAdmin, onUpdateProperties, metricsVisible, sprintMetrics }: PersonSidebarProps) {
+function PersonSidebar({
+  person,
+  people,
+  isAdmin,
+  currentUserId,
+  onUpdateProperties,
+  metricsVisible,
+  sprintMetrics,
+}: PersonSidebarProps) {
   const props = person.properties || {};
   const reportsTo = (props.reports_to as string) || null;
   const personUserId = (props.user_id as string) || null;
+  const workPersona = (props.work_persona as WorkPersona | null | undefined) ?? null;
+  const canEditWorkPersona = isAdmin || (personUserId !== null && personUserId === currentUserId);
 
   // Build people list for combobox, excluding the current person
   const comboboxPeople: Person[] = people
@@ -219,11 +233,36 @@ function PersonSidebar({ person, people, isAdmin, onUpdateProperties, metricsVis
         </div>
       </PropertyRow>
 
-      <PropertyRow label="Role">
-        <div className="text-sm text-foreground">
-          {props.role || <span className="text-muted">Not set</span>}
-        </div>
+      <PropertyRow label="Work Persona">
+        {canEditWorkPersona ? (
+          <select
+            className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm text-foreground outline-none focus:border-ring"
+            value={workPersona ?? ''}
+            onChange={(event) =>
+              onUpdateProperties({
+                work_persona: event.target.value ? event.target.value : null,
+              })
+            }
+          >
+            <option value="">Not set</option>
+            {WORK_PERSONAS.map((persona) => (
+              <option key={persona} value={persona}>
+                {WORK_PERSONA_LABELS[persona]}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="text-sm text-foreground">
+            {workPersona ? WORK_PERSONA_LABELS[workPersona] : <span className="text-muted">Not set</span>}
+          </div>
+        )}
       </PropertyRow>
+
+      {props.role && (
+        <PropertyRow label="Legacy Role">
+          <div className="text-sm text-foreground">{props.role}</div>
+        </PropertyRow>
+      )}
 
       <PropertyRow label="Reports To" tooltip="Official supervisor — determines performance evaluation authority">
         {isAdmin ? (
