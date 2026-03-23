@@ -283,46 +283,66 @@ The MVP use cases below are intentionally limited to the paths that are implemen
 
 ## Graph Diagram
 
+The diagram below matches the current compiled graph in [graph.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/fleetgraph/src/graph.ts).
+
 ```mermaid
 flowchart TD
-  A[Trigger]
-  B[Supervisor]
-  C{Mode}
-  D[Initialize Proactive Context]
-  E[Initialize On-Demand Context]
-  F[Resolve Context]
-  G[Fetch Ship Data in Parallel]
-  H[Derive Signals]
-  I[Reason About Sprint]
-  J{Outcome}
-  K[Quiet Exit]
-  L[Surface Finding]
-  M[Propose Action]
-  N{Human Approval}
-  O[Execute Action]
-  P[Persist Dismiss or Snooze Memory]
-  Q[Fallback]
+  START([START]) --> supervisorEntry["supervisorEntry"]
 
-  A --> B
-  B --> C
-  C -->|Proactive| D
-  C -->|On-demand| E
-  D --> F
-  E --> F
-  F --> G
-  G --> H
-  H --> I
-  I --> J
-  J -->|No issue| K
-  J -->|Finding only| L
-  J -->|Action needed| M
-  M --> N
-  N -->|Approve| O
-  N -->|Dismiss or snooze| P
-  F --> Q
-  G --> Q
-  I --> Q
-  O --> Q
+  supervisorEntry -->|"mode = proactive"| initializeProactiveContext["initializeProactiveContext"]
+  supervisorEntry -->|"mode = on_demand"| initializeOnDemandContext["initializeOnDemandContext"]
+  supervisorEntry -->|"guard or validation failure"| fallback["fallback"]
+
+  initializeProactiveContext -->|"context ready"| resolveContext["resolveContext"]
+  initializeProactiveContext -->|"failure"| fallback
+
+  initializeOnDemandContext -->|"active view accepted"| resolveContext
+  initializeOnDemandContext -->|"failure"| fallback
+
+  resolveContext -->|"expandedScope.weekId"| fetchSprintContext["fetchSprintContext"]
+  resolveContext -->|"expandedScope.projectId or personId"| resolveWeekScope["resolveWeekScope"]
+  resolveContext -->|"pageContext without sprint scope"| reasonAboutCurrentView["reasonAboutCurrentView"]
+  resolveContext -->|"no additional scope to resolve"| completeRun["completeRun"]
+  resolveContext -->|"failure"| fallback
+
+  resolveWeekScope -->|"resolved weekId"| fetchSprintContext
+  resolveWeekScope -->|"pageContext fallback"| reasonAboutCurrentView
+  resolveWeekScope -->|"no resolvable sprint scope"| completeRun
+  resolveWeekScope -->|"failure"| fallback
+
+  fetchSprintContext -->|"sprint evidence fetched"| deriveSprintSignals["deriveSprintSignals"]
+  fetchSprintContext -->|"context incomplete or early exit"| completeRun
+  fetchSprintContext -->|"failure"| fallback
+
+  deriveSprintSignals -->|"shouldSurface = true"| recordSignalFinding["recordSignalFinding"]
+  deriveSprintSignals -->|"shouldSurface = false and mode = on_demand"| reasonAboutSprint["reasonAboutSprint"]
+  deriveSprintSignals -->|"shouldSurface = false and mode = proactive"| completeRun
+  deriveSprintSignals -->|"failure"| fallback
+
+  recordSignalFinding -->|"mode = on_demand"| reasonAboutSprint
+  recordSignalFinding -->|"mode = proactive"| completeRun
+  recordSignalFinding -->|"failure"| fallback
+
+  reasonAboutCurrentView -->|"current-view answer ready"| completeRun
+  reasonAboutCurrentView -->|"failure"| fallback
+
+  reasonAboutSprint -->|"mode = on_demand"| proposeSprintAction["proposeSprintAction"]
+  reasonAboutSprint -->|"proactive or reasoning skipped"| completeRun
+  reasonAboutSprint -->|"failure"| fallback
+
+  proposeSprintAction -->|"proposal created"| humanApprovalGate["humanApprovalGate"]
+  proposeSprintAction -->|"no proposal, suppressed by memory, or missing required scope"| completeRun
+  proposeSprintAction -->|"failure"| fallback
+
+  humanApprovalGate -->|"approve"| executeProposedAction["executeProposedAction"]
+  humanApprovalGate -->|"dismiss or snooze"| completeRun
+  humanApprovalGate -->|"failure"| fallback
+
+  executeProposedAction -->|"action result recorded"| completeRun
+  executeProposedAction -->|"failure"| fallback
+
+  completeRun --> END([END])
+  fallback --> END
 ```
 
 Useful flow diagrams:
@@ -334,40 +354,46 @@ Useful flow diagrams:
 
 ## Graph Outline
 
-### Node Types
+### Exact node inventory
 
-| Node Type | MVP role |
-|---|---|
-| Context nodes | establish mode, actor, workspace, current entity, and Active View Context |
-| Fetch nodes | pull sprint, issue, activity, accountability, and people data from Ship |
-| Reasoning nodes | analyze relationships, gaps, risk, and relevance |
-| Conditional edges | separate quiet runs from problem-detected runs and action-proposal runs |
-| Action nodes | prepare a draft escalation or follow-up recommendation |
-| Human-in-the-loop gate | pause before any consequential action |
-| Error / fallback nodes | handle missing context, API failure, and invalid run state |
+| Node | Phase | Current purpose | Possible next nodes |
+|---|---|---|---|
+| `supervisorEntry` | control | Choose the proactive or on-demand entry path | `initializeProactiveContext`, `initializeOnDemandContext`, `fallback` |
+| `initializeProactiveContext` | context | Normalize a service-driven proactive run before shared graph work begins | `resolveContext`, `fallback` |
+| `initializeOnDemandContext` | context | Validate typed Active View Context and page context from the UI | `resolveContext`, `fallback` |
+| `resolveContext` | context | Expand `contextEntity` into `expandedScope` and choose sprint fetch, week lookup, current-view reasoning, or early completion | `fetchSprintContext`, `resolveWeekScope`, `reasonAboutCurrentView`, `completeRun`, `fallback` |
+| `resolveWeekScope` | context | Resolve project or My Week scope into the current sprint when possible | `fetchSprintContext`, `reasonAboutCurrentView`, `completeRun`, `fallback` |
+| `fetchSprintContext` | fetch | Fetch sprint entity, supporting context, activity, accountability, and planning evidence in parallel | `deriveSprintSignals`, `completeRun`, `fallback` |
+| `deriveSprintSignals` | signals | Compute deterministic sprint-risk signals and merge injected proactive signals | `recordSignalFinding`, `reasonAboutSprint`, `completeRun`, `fallback` |
+| `recordSignalFinding` | signals | Attach a surfaced finding summary before proactive output or on-demand reasoning continues | `reasonAboutSprint`, `completeRun`, `fallback` |
+| `reasonAboutCurrentView` | reasoning | Answer directly from current-page context when there is no sprint scope to fetch | `completeRun`, `fallback` |
+| `reasonAboutSprint` | reasoning | Build a grounded sprint explanation from fetched Ship evidence and derived signals | `proposeSprintAction`, `completeRun`, `fallback` |
+| `proposeSprintAction` | action | Draft a bounded follow-up action and suppress duplicates from stored human decisions | `humanApprovalGate`, `completeRun`, `fallback` |
+| `humanApprovalGate` | hitl | Pause for approve / dismiss / snooze and record the human decision on resume | `executeProposedAction`, `completeRun`, `fallback` |
+| `executeProposedAction` | action | Execute the approved bounded action and record the outcome | `completeRun`, `fallback` |
+| `completeRun` | control | Finalize `status`, `terminalOutcome`, `lastNode`, `nodeHistory`, and trace metadata | `END` |
+| `fallback` | control | Exit safely on invalid state, missing data, or runtime failure | `END` |
 
-### MVP graph nodes
+### Exact branching behavior
 
-| Node | Purpose |
-|---|---|
-| `supervisorEntry` | choose proactive vs on-demand entry path |
-| `initializeProactiveContext` | initialize service-driven run context |
-| `initializeOnDemandContext` | validate Active View Context from the UI |
-| `resolveContext` | expand the current scope |
-| `fetchEntityContext` | load the current sprint or issue context |
-| `fetchActivitySignals` | load recent activity |
-| `fetchAccountabilitySignals` | load review and accountability state |
-| `fetchPeopleRoles` | load owner / accountable relationships |
-| `deriveSignals` | compute deterministic sprint-risk signals |
-| `reasonAboutState` | explain why the sprint is at risk |
-| `prepareAction` | draft escalation or follow-up recommendation |
-| `humanGate` | wait for approval before acting |
-| `executeAction` | execute the approved action |
-| `fallback` | fail safely |
-
-### Branching conditions
-
-The graph must produce visibly different execution paths.
+- `resolveContext` is the first major branch point:
+  - week scope goes to `fetchSprintContext`
+  - project or person scope goes to `resolveWeekScope`
+  - page-only context goes to `reasonAboutCurrentView`
+  - missing scope exits through `completeRun`
+- `resolveWeekScope` only fetches sprint evidence when it can resolve a concrete `weekId`; otherwise it falls back to page reasoning or exits cleanly.
+- `deriveSprintSignals` creates the first visibly different proactive vs on-demand paths:
+  - surfaced signals go to `recordSignalFinding`
+  - quiet on-demand runs still go to `reasonAboutSprint`
+  - quiet proactive runs end at `completeRun`
+- `recordSignalFinding` also splits by mode:
+  - on-demand continues to `reasonAboutSprint`
+  - proactive exits through `completeRun` because the finding is already enough for downstream delivery
+- `proposeSprintAction` only enters HITL when a bounded action exists and is not suppressed by memory.
+- `humanApprovalGate` is the explicit pause / resume boundary:
+  - approve resumes into `executeProposedAction`
+  - dismiss or snooze completes without mutation
+- Every node with a guarded failure path can route to `fallback`.
 
 At minimum, MVP branching should support:
 
@@ -448,20 +474,32 @@ Ship remains the source of truth. FleetGraph should not read the database direct
 
 ## Test Cases
 
-The table below maps each MVP use case to the exact test state, expected output, and trace evidence.
+The table below maps each MVP use case to the strongest trace proof currently captured in the repo.
 
-| Use case | Ship state that triggers the agent | Expected detection or output | LangSmith trace |
-|---|---|---|---|
-| Stable sprint check from the current sprint tab | Active sprint `Week 14` on the current sprint tab, recent activity visible, `3/9` issues complete, `3` in progress, and no warning signals derived | Quiet on-demand path with a stable explanation and no proposed action | [Quiet shared trace](https://smith.langchain.com/public/8c5e90a5-3299-47ab-90d5-c7a16583ea13/r) |
-| Explain why an active sprint is at risk | Active sprint `Week 14` with no standups logged for the sprint and warning-level derived signals | Grounded risk explanation from the current sprint view with the missing-standup signal called out | [Flagged shared trace](https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r) |
-| Propose a follow-up and pause for approval | Same missing-standup sprint state, but action memory allows a new draft follow-up to be proposed | `waiting_on_human` outcome with a draft follow-up comment and approve / dismiss / snooze options | [HITL run](https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee2-b2ed-74eb-a463-70482d76af12?poll=true) and [local evidence](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/hitl-run.json) |
-| Remember a human dismissal and stop repeating the same draft | Same risky sprint after the human dismisses the draft follow-up and the graph is resumed on the saved thread | Completed run with `action_dismissed`, stored memory, and no executed mutation | [Resume run](https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee2-d1ce-706e-9dbb-e313189af39a?poll=true) and [local evidence](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/resume-run.json) |
-| Surface sprint drift without being asked | Manual or scheduled proactive sweep processes the same warning-level sprint state with no standups logged | Proactive sweep stores a warning finding for the sprint and targets it for push delivery | [Flagged shared trace for the same sprint-risk state](https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r) and [proactive evidence](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/proactive-run.json) |
+| # | Ship State | Expected Output | Trace Link |
+|---:|---|---|---|
+| 1 | Active sprint `Week 14` on the issues tab, recent activity visible, `3/9` issues complete, `3` in progress, and no warning signals derived | Quiet on-demand explanation with no proposed action | [Quiet shared trace](https://smith.langchain.com/public/8c5e90a5-3299-47ab-90d5-c7a16583ea13/r)<br>[quiet-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/quiet-run.json) |
+| 2 | Active sprint `Week 14` with no standups logged and warning-level deterministic signals | Grounded risk explanation from the sprint view with a recorded warning finding | [Flagged shared trace](https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r)<br>[flagged-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/flagged-run.json) |
+| 3 | Same risky sprint state, but action memory allows a fresh follow-up draft to be proposed | `waiting_on_human` outcome with a drafted follow-up comment and approve / dismiss / snooze controls | [HITL LangSmith run](https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee2-b2ed-74eb-a463-70482d76af12?poll=true)<br>[hitl-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/hitl-run.json) |
+| 4 | Same risky sprint after the human dismisses the proposed follow-up and the saved thread is resumed | Completed run with `action_dismissed`, stored dismissal memory, and no executed mutation | [Resume LangSmith run](https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee2-d1ce-706e-9dbb-e313189af39a?poll=true)<br>[resume-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/resume-run.json) |
+| 5 | Manual or scheduled proactive sweep processes the same warning-level sprint state | Proactive run persists a warning finding for the sprint and prepares downstream delivery data for push-style output | [proactive-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/proactive-run.json)<br>[Flagged shared trace for the same sprint-risk reasoning state](https://smith.langchain.com/public/9f059196-346f-492d-8672-27d4400cf48b/r) |
 
 Notes:
 
-- The proactive row intentionally reuses the flagged sprint trace because proactive and on-demand mode run through the same graph; the difference is the trigger, not the graph state being analyzed.
-- The HITL and resume rows use exact LangSmith run URLs reconstructed from the captured run IDs in the local evidence bundle because only the quiet and flagged runs were persisted with public share URLs.
+- Rows `1` and `2` use public shared LangSmith traces plus exported run snapshots.
+- Rows `3` and `4` use the exact LangSmith run URLs plus exported run snapshots because the current captured bundle did not persist public share URLs for HITL and resume.
+- Row `5` intentionally uses two artifacts:
+  - [proactive-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/proactive-run.json) proves the proactive trigger and persisted finding output
+  - the flagged shared trace proves the exact sprint-risk reasoning path for that same state, because proactive and on-demand converge on the same shared graph after entry routing
+- The current evidence bundle is summarized in [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md).
+- If `LANGCHAIN_TRACING_V2`, `LANGCHAIN_API_KEY`, and `FLEETGRAPH_LANGSMITH_SHARE_TRACES=true` are set during a fresh evidence run, [collect-fleetgraph-evidence.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.ts) can backfill public share URLs for HITL and resume as well.
+
+Current verification for this repo state:
+
+- `pnpm --filter @ship/fleetgraph test` passed
+- `pnpm --filter @ship/web test -- src/lib/fleetgraph.test.ts src/pages/Dashboard.test.tsx src/components/fleetgraph/FleetGraphOnDemandPanel.test.tsx src/hooks/useFleetGraphPageContext.test.ts` passed
+- `pnpm --filter @ship/fleetgraph build`, `pnpm --filter @ship/web build`, and `pnpm --filter @ship/api build` passed
+- `pnpm fleetgraph:verify-requirements` passed and refreshed the requirement audit
 
 ## Observability
 
@@ -494,40 +532,48 @@ Current evidence status:
 
 ## Cost Analysis
 
-FleetGraph cost is mostly driven by model-backed reasoning, not by the deterministic sweep and routing logic. The repo already gives us the planning inputs we need:
+Exact development and testing costs should be backfilled from LangSmith trace costs, not estimated by hand. The table below matches the submission template and is ready to fill once you send the trace samples.
 
-- pricing: `$5 / 1M input tokens` and `$25 / 1M output tokens` for the Claude Opus 4.5 Bedrock path, kept configurable in [`scripts/sync-ai-telemetry-ssm.sh`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/sync-ai-telemetry-ssm.sh)
-- proactive reasoning budget: `6k-10k` input tokens and `500-1.2k` output tokens from [`PRESEARCH.md`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/PRESEARCH.md)
-- on-demand scoped analysis budget: `8k-15k` input tokens and `800-1.5k` output tokens from [`PRESEARCH.md`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/PRESEARCH.md)
-- quiet exits and rules-only sweeps cost `0` model tokens
+### Development and Testing Costs
 
-Using those assumptions, approximate per-run LLM cost is:
+| Item | Amount |
+|---|---|
+| Claude API - input tokens | `TBD from LangSmith development traces` |
+| Claude API - output tokens | `TBD from LangSmith development traces` |
+| Total invocations during development | `TBD from LangSmith development traces` |
+| Total development spend | `TBD from LangSmith development traces` |
 
-- proactive reasoning run: `$0.0425-$0.0800` per run, midpoint `~$0.0613`
-- on-demand analysis run: `$0.0600-$0.1125` per run, midpoint `~$0.0863`
+### Production Cost Projections
 
-For daily planning, the hybrid trigger model means the worker may sweep every 5 minutes, but only suspicious scopes should reach Claude. A practical budgeting assumption is:
+These first-pass production ranges are still planning estimates. They use the current Bedrock pricing and token budgets already documented in [PRESEARCH.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/PRESEARCH.md). Once we have a few representative LangSmith traces with measured cost, we should replace the ranges below with empirical averages.
 
-- proactive: about `1` model-backed run per active workspace per day
-- on-demand: about `4` successful analyses per active user per month, or `0.13` per user per day
+| 100 Users | 1,000 Users | 10,000 Users |
+|---|---|---|
+| `$24-$45/month` | `$240-$450/month` | `$2,400-$4,500/month` |
 
-Using the repo’s existing light-usage assumption of `4` successful analyses per active user per month, on-demand monthly projections are:
+Assumptions:
 
-| Active users | Monthly analyses | Estimated monthly cost |
-| --- | ---: | ---: |
-| 100 | 400 | `$24.00-$45.00` |
-| 1,000 | 4,000 | `$240.00-$450.00` |
-| 10,000 | 40,000 | `$2,400.00-$4,500.00` |
+- Proactive runs per project per day: near `0` on average for model-backed runs; the worker may sweep every 5 minutes, but only suspicious scopes escalate beyond deterministic rules
+- On-demand invocations per user per day: about `0.13`, based on `4` successful analyses per active user per month
+- Average tokens per invocation: proactive `6k-10k` input + `500-1.2k` output; on-demand `8k-15k` input + `800-1.5k` output
+- Cost per run: proactive `$0.0425-$0.0800`; on-demand `$0.0600-$0.1125`
+- Estimated runs per day: the table above currently models the on-demand-dominant spend because proactive cost scales with suspicious workspaces and scopes, not raw user count
 
-Development and testing spend are tracked separately from graph inference cost:
+Current pricing inputs:
 
-- coding-agent usage is not part of graph run cost
-- provider invoices remain the source of truth for actual spend
-- shared traces and telemetry are already in place, so run counts and token usage can be audited before submission
+- Claude Opus 4.5 Bedrock pricing: `$5 / 1M` input tokens and `$25 / 1M` output tokens, kept configurable in [sync-ai-telemetry-ssm.sh](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/sync-ai-telemetry-ssm.sh)
+- Quiet exits and rules-only sweeps cost `$0` model tokens
+
+LangSmith backfill plan:
+
+- collect a few representative on-demand and proactive traces with visible token and cost totals
+- sum those traces for the development / testing table above
+- replace the projection row if the observed average per-run cost differs materially from the current planning ranges
 
 ## Current status
 
 - `PRESEARCH.md` completed
-- `FLEETGRAPH.md` completed for MVP scope, graph outline, and test-case documentation
+- `FLEETGRAPH.md` completed for MVP scope, exact graph outline, and evidence-linked test-case documentation
 - shared LangSmith traces captured for quiet and flagged paths
 - deployed FleetGraph routes verified as mounted
+- development / testing cost rows are ready for LangSmith backfill once final trace samples are provided
