@@ -167,7 +167,7 @@ export function AppLayout() {
 
     showToast(
       toastCopy.message,
-      finding.severity === 'action' ? 'error' : 'info',
+      toastCopy.toastType,
       7000,
       {
         label: toastCopy.actionLabel,

@@ -398,6 +398,7 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
     expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
       message: 'FleetGraph noticed Week 12: A blocker was logged on a critical issue.',
       actionLabel: 'Open Issue',
+      toastType: 'info',
     });
   });
 
@@ -417,15 +418,18 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
       audienceRole: 'manager',
       audienceScope: 'individual',
       deliverySource: 'event',
-      deliveryReason: 'test fixture',
+      deliveryReason:
+        'Escalated to you as the owner manager because follow-up support is needed after approval feedback.',
       signalKinds: ['changes_requested_review'],
       lastDetectedAt: '2026-03-22T10:00:00.000Z',
       lastNotifiedAt: '2026-03-22T10:00:00.000Z',
     };
 
     expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
-      message: 'FleetGraph flagged Week 13: Review follow-up is overdue.',
+      message:
+        'FleetGraph escalated Week 13: Review follow-up is overdue. Escalated to you as the owner manager because follow-up support is needed after approval feedback.',
       actionLabel: 'Open Review',
+      toastType: 'info',
     });
   });
 
@@ -452,8 +456,9 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
     };
 
     expect(buildFleetGraphProactiveFindingToastCopy(finding, 'engineer')).toEqual({
-      message: 'FleetGraph noticed engineering follow-up: An issue was reopened after completion.',
+      message: 'FleetGraph noticed engineering issue follow-up: An issue was reopened after completion.',
       actionLabel: 'Open Issue',
+      toastType: 'info',
     });
   });
 
@@ -484,6 +489,38 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
       message:
         'FleetGraph escalated Week 15: Scope growth needs a tradeoff decision. Escalated to you as accountable because this risk may need a tradeoff or unblock decision.',
       actionLabel: 'Open Issues',
+      toastType: 'info',
+    });
+  });
+
+  it('uses shared blue-toast copy for sprint-team recipients', () => {
+    const finding: FleetGraphProactiveFinding = {
+      id: 'finding-5',
+      workspaceId: 'workspace-1',
+      weekId: 'week-5',
+      projectId: 'project-5',
+      programId: null,
+      title: 'Week 16',
+      summary: 'A blocker on shared work needs team coordination.',
+      severity: 'warning',
+      route: '/documents/week-5/issues',
+      surface: 'document',
+      tab: 'issues',
+      audienceRole: 'team_member',
+      audienceScope: 'team',
+      deliverySource: 'event',
+      deliveryReason:
+        'Shared with the sprint team because this affects shared sprint coordination or commitments.',
+      signalKinds: ['issue_blocker_logged'],
+      lastDetectedAt: '2026-03-22T10:00:00.000Z',
+      lastNotifiedAt: '2026-03-22T10:00:00.000Z',
+    };
+
+    expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
+      message:
+        'FleetGraph shared Week 16: A blocker on shared work needs team coordination. Shared with the sprint team because this affects shared sprint coordination or commitments.',
+      actionLabel: 'Open Issues',
+      toastType: 'info',
     });
   });
 });

@@ -186,7 +186,7 @@ That means:
 - current MVP implementation uses:
   - an env-gated proactive worker in the API process
   - a manual `/api/fleetgraph/proactive/run` sweep route for objective verification
-  - the same graph and deterministic signal path used by on-demand mode
+  - the same graph and shared signal/finding pipeline used by on-demand mode
 
 ### Tradeoffs
 
@@ -508,7 +508,7 @@ The links below were supplied after the original evidence bundle and were verifi
 Additional note:
 
 - the week trace link above was supplied twice in the most recent update, so it is documented once here as a single unique trace
-- all four recent public traces above are on-demand deterministic/current-view or quiet runs, so they do not add billable LLM token or cost totals to the captured evidence bundle
+- all four recent public traces above were captured before `6fe2ea5` moved all on-demand turns to model-backed current-view reasoning, so they remain valid historical graph-path proof but not current live cost proof
 
 Current verification for this repo state:
 
@@ -547,15 +547,16 @@ Current evidence status:
 - two shared LangSmith traces are already captured
 - HITL and resume evidence are captured locally and tied to exact LangSmith run IDs
 - public FleetGraph routes are verified as mounted in the deployed environment
+- current shipped on-demand runs now emit `fleetgraph.current_view.model` child runs with `usage_metadata` and `total_cost` when the reasoner is configured
 
 ## Cost Analysis
 
 FleetGraph currently has two cost classes:
 
-- deterministic graph runs, which do not call a model and therefore consume `0` tokens and `$0` API spend
-- OpenAI-backed sprint reasoning calls, which emit LangSmith `llm` child runs with token and cost metadata
+- historical deterministic evidence rows already exported into the repo, which consume `0` tokens and `$0` API spend
+- current shipped OpenAI-backed reasoning calls for both sprint reasoning and current-view reasoning, which emit LangSmith `llm` child runs with token and cost metadata
 
-The current exported FleetGraph evidence bundle is entirely deterministic, so the measured FleetGraph totals below are all zero. This is why current-view issue traces in LangSmith can show blank cost and `0` tokens: those runs never invoked the model.
+The current checked-in FleetGraph evidence bundle is historical and deterministic, so the measured totals below are all zero. That bundle predates `6fe2ea5`, which moved all on-demand turns to model-backed current-view reasoning. The zero-cost table below therefore describes the exported proof bundle in the repo, not the current live runtime behavior after that change.
 
 ### OpenAI Pricing and Formulas
 
@@ -577,7 +578,7 @@ estimated_cost_usd =
   (billable_output_tokens / 1_000_000 * 1.60)
 ```
 
-Current LangSmith child-run payload for model-backed sprint reasoning:
+Current LangSmith child-run payload for model-backed sprint and current-view reasoning:
 
 - `usage_metadata.input_tokens`
 - `usage_metadata.output_tokens`
@@ -619,9 +620,9 @@ Evidence bundle: [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/au
 
 Current production interpretation:
 
-- current-view issue guidance, quiet paths, HITL-only pauses, resume flows, and rules-only sweeps cost `$0` while they remain deterministic
-- only model-backed sprint reasoning creates billable FleetGraph OpenAI usage today
-- a representative monthly estimate should be based on actual LangSmith `llm` child runs from the sprint reasoner, not on deterministic current-view traces
+- historical current-view traces in the repo cost `$0` because they were captured before the latest on-demand model rollout
+- current shipped on-demand turns should no longer be assumed to cost `$0`; fresh post-`6fe2ea5` traces should show billable `fleetgraph.current_view.model` usage
+- proactive sweeps and resume-only paths may still stay cheaper or deterministic depending on whether they enter model-backed reasoning, so monthly estimates should be based on fresh LangSmith child runs rather than the older exported bundle
 
 Current monthly formula once those billable sprint traces exist:
 
@@ -641,4 +642,4 @@ Until a representative billable FleetGraph sprint-reasoning trace bundle is capt
 - shared LangSmith traces captured for quiet and flagged paths
 - deployed FleetGraph routes verified as mounted
 - FleetGraph OpenAI pricing formulas are documented
-- captured FleetGraph evidence bundle totals are documented as `0` tokens / `$0` spend because the current exported traces are deterministic
+- historical FleetGraph evidence bundle totals are documented as `0` tokens / `$0` spend, and the doc now distinguishes that older exported bundle from the current model-backed on-demand runtime
