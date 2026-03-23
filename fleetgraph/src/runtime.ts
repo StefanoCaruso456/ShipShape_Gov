@@ -230,12 +230,16 @@ export function createFleetGraphRunnableConfig(
   options: {
     threadId?: string;
     checkpointNamespace?: string;
+    runName?: string;
     tags?: string[];
+    metadata?: Record<string, unknown>;
     callbacks?: RunnableConfig['callbacks'];
   } = {}
 ): RunnableConfig {
   return {
+    runName: options.runName,
     tags: options.tags,
+    metadata: options.metadata,
     callbacks: options.callbacks,
     configurable: {
       runtime,

@@ -52,6 +52,10 @@ describe('FleetGraph proactive finding persistence', () => {
       projectId: null,
       programId: null,
       targetUserId: userId,
+      audienceRole: 'responsible_owner',
+      audienceScope: 'individual',
+      deliverySource: 'sweep',
+      deliveryReason: 'Sent to you because you own the sprint or workstream that needs follow-up.',
       title: 'Week Test',
       summary: 'FleetGraph detected sprint drift.',
       severity: 'action',
@@ -75,6 +79,10 @@ describe('FleetGraph proactive finding persistence', () => {
       projectId: null,
       programId: null,
       targetUserId: userId,
+      audienceRole: 'responsible_owner',
+      audienceScope: 'individual',
+      deliverySource: 'sweep',
+      deliveryReason: 'Sent to you because you own the sprint or workstream that needs follow-up.',
       title: 'Week Test',
       summary: 'FleetGraph detected sprint drift.',
       severity: 'action',
@@ -100,6 +108,7 @@ describe('FleetGraph proactive finding persistence', () => {
 
     expect(findings).toHaveLength(1);
     expect(findings[0]?.weekId).toBe(weekId);
+    expect(findings[0]?.audienceRole).toBe('responsible_owner');
     expect(findings[0]?.signalKinds).toEqual(['missing_standup', 'work_not_started']);
   });
 

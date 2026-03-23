@@ -494,14 +494,36 @@ Current evidence status:
 
 ## Cost Analysis
 
-This section will be completed in the final submission.
+FleetGraph cost is mostly driven by model-backed reasoning, not by the deterministic sweep and routing logic. The repo already gives us the planning inputs we need:
 
-It will include:
+- pricing: `$5 / 1M input tokens` and `$25 / 1M output tokens` for the Claude Opus 4.5 Bedrock path, kept configurable in [`scripts/sync-ai-telemetry-ssm.sh`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/sync-ai-telemetry-ssm.sh)
+- proactive reasoning budget: `6k-10k` input tokens and `500-1.2k` output tokens from [`PRESEARCH.md`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/PRESEARCH.md)
+- on-demand scoped analysis budget: `8k-15k` input tokens and `800-1.5k` output tokens from [`PRESEARCH.md`](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/PRESEARCH.md)
+- quiet exits and rules-only sweeps cost `0` model tokens
 
-- cost per graph run
-- estimated runs per day
-- development and testing spend
-- monthly projections for 100, 1,000, and 10,000 users
+Using those assumptions, approximate per-run LLM cost is:
+
+- proactive reasoning run: `$0.0425-$0.0800` per run, midpoint `~$0.0613`
+- on-demand analysis run: `$0.0600-$0.1125` per run, midpoint `~$0.0863`
+
+For daily planning, the hybrid trigger model means the worker may sweep every 5 minutes, but only suspicious scopes should reach Claude. A practical budgeting assumption is:
+
+- proactive: about `1` model-backed run per active workspace per day
+- on-demand: about `4` successful analyses per active user per month, or `0.13` per user per day
+
+Using the repo’s existing light-usage assumption of `4` successful analyses per active user per month, on-demand monthly projections are:
+
+| Active users | Monthly analyses | Estimated monthly cost |
+| --- | ---: | ---: |
+| 100 | 400 | `$24.00-$45.00` |
+| 1,000 | 4,000 | `$240.00-$450.00` |
+| 10,000 | 40,000 | `$2,400.00-$4,500.00` |
+
+Development and testing spend are tracked separately from graph inference cost:
+
+- coding-agent usage is not part of graph run cost
+- provider invoices remain the source of truth for actual spend
+- shared traces and telemetry are already in place, so run counts and token usage can be audited before submission
 
 ## Current status
 

@@ -30,18 +30,13 @@ Current implementation slice:
   - recent project week history for throughput comparison
   - project allocation grid for staffing comparison
 
-Later expansion targets:
+Follow-on expansion targets:
 
-- capacity
-- velocity
-- roadmap generation
-- burn-up / burn-down
-- dependency and release confidence
-- Jira-like story-point estimation and sprint analytics:
-  - committed baseline
-  - daily burn series
-  - scope-change overlays
-  - capacity interpretation
+- deeper capacity and throughput history
+- richer burn and scope-trend interpretation
+- dependency-specific rollups and release confidence
+- roadmap and milestone planning structure
+- scenario planning and staffing intelligence
 
 ## Why
 
@@ -58,12 +53,11 @@ This is where FleetGraph becomes more valuable to PMs, directors, and product ow
   - compare incomplete sprint work against recent project throughput
   - compare incomplete sprint work against the currently allocated team
   - surface grounded planning explanations before any model-only reasoning
-- later slices:
-  - add stronger planning primitives to Ship
-  - add historical planning state
+- follow-on work:
+  - deepen historical planning state
   - add roadmap and milestone structure
   - reason on top of those signals with the same graph foundation
-  - add story points, sprint analytics, and burn-up / burn-down support as defined in:
+  - keep extending the planning telemetry described in:
     - [story-points-burn-tracking-plan.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/story-points-burn-tracking-plan.md)
 
 ## Purpose

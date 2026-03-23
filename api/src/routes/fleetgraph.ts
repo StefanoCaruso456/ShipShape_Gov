@@ -126,7 +126,12 @@ const feedbackSurfaceSchema = z.object({
 });
 
 const feedbackEventSchema = z.object({
-  event_name: z.enum(['drawer_opened', 'route_clicked']),
+  event_name: z.enum([
+    'drawer_opened',
+    'route_clicked',
+    'proactive_toast_shown',
+    'proactive_toast_clicked',
+  ]),
   thread_id: z.string().min(1).nullable().optional(),
   turn_id: z.string().min(1).nullable().optional(),
   question_source: z.enum(['typed', 'starter_prompt', 'follow_up_prompt']).nullable().optional(),
@@ -139,6 +144,21 @@ const feedbackEventSchema = z.object({
     route: z.string().trim().min(1),
     featured: z.boolean(),
     intent: z.enum(['inspect', 'prioritize', 'follow_up', 'write', 'complete']).optional(),
+  }).nullable().optional(),
+  finding_context: z.object({
+    finding_id: z.string().trim().min(1),
+    delivery_source: z.enum(['sweep', 'event']),
+    audience_role: z.enum([
+      'responsible_owner',
+      'issue_assignee',
+      'accountable',
+      'manager',
+      'team_member',
+    ]),
+    audience_scope: z.enum(['individual', 'team']),
+    delivery_reason: z.string().trim().min(1).nullable().optional(),
+    severity: z.enum(['info', 'warning', 'action']),
+    signal_kinds: z.array(z.string().trim().min(1)).max(20),
   }).nullable().optional(),
 });
 

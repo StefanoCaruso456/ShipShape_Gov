@@ -1,6 +1,6 @@
-# Story Points and Burn Tracking Plan
+# Story Points and Burn Tracking
 
-Concrete product and implementation plan for Jira-like sprint estimation,
+Product and implementation reference for Jira-like sprint estimation,
 burn-up, burn-down, and capacity tracking in Ship.
 
 ## Goal
@@ -37,7 +37,7 @@ Implemented in code now:
 - primary left-rail analytics entry with sidebar shortcuts into current-week sprint dashboards
 - program-level historical velocity series and average delivered work in the velocity dashboard
 
-Still to deepen later:
+Possible follow-on work:
 
 - richer sprint history and history APIs
 - release-confidence rollups
@@ -353,134 +353,7 @@ FleetGraph could then answer:
 - "Should we add capacity or reduce scope?"
 - "Which projects consistently burn above available capacity?"
 
-## Recommended Build Order
-
-### Slice 1: Story points foundation
-
-What:
-
-- add `story_points`
-- add `estimate_hours`
-- update issue UI and validation
-
-Why:
-
-- burn tracking is unreliable without a stable estimation model
-
-How:
-
-- extend issue schema, API validation, and issue sidebar/editor
-
-Purpose:
-
-- standardize the planning unit before building charts
-
-Outcome:
-
-- issues can be sized like Jira stories
-
-### Slice 2: Sprint baseline and history
-
-What:
-
-- committed-at-start snapshot
-- sprint event history
-- estimate-change history
-
-Why:
-
-- burn charts need a historical baseline, not just current scope
-
-How:
-
-- persist sprint baseline and normalized event records
-
-Purpose:
-
-- create trustworthy burn-up and burn-down inputs
-
-Outcome:
-
-- Ship knows original scope versus changed scope
-
-### Slice 3: Sprint analytics APIs
-
-What:
-
-- analytics endpoint
-- burn series
-- scope-change series
-- projection data
-
-Why:
-
-- UI and FleetGraph both need one shared source of truth
-
-How:
-
-- aggregate sprint baseline plus event history into daily analytics
-
-Purpose:
-
-- expose planning telemetry cleanly
-
-Outcome:
-
-- charts and agents both consume the same planning facts
-
-### Slice 4: Sprint planning UI
-
-What:
-
-- compact sprint snapshot on overview
-- dedicated `Analytics` tab on weeks
-- sprint report, velocity, forecast, flow, workload, and hygiene dashboards
-- program week timelines deep-link into `/documents/:programId/weeks/:weekId`
-- program and project week detail sidebars now expose an `Open dashboard` entry plus quick links into the analytics views
-- planning weeks show the scoped baseline in analytics instead of a blank "not available yet" state
-
-Why:
-
-- teams need to see planning drift directly inside Ship
-
-How:
-
-- add a sprint analytics section to the week surface
-
-Purpose:
-
-- make planning health visible without leaving the workflow
-
-Outcome:
-
-- Ship gains Jira-like sprint analytics
-
-### Slice 5: FleetGraph reasoning over burn data
-
-What:
-
-- burn-rate signals
-- scope-trajectory signals
-- under-commitment and over-commitment signals
-- staffing recommendation signals
-
-Why:
-
-- charts are useful; agent interpretation is more useful
-
-How:
-
-- extend FleetGraph planning evidence and deterministic signals
-
-Purpose:
-
-- let FleetGraph explain the charts and recommend action
-
-Outcome:
-
-- FleetGraph can reason from true sprint telemetry instead of approximations
-
-## Final Outcome
+## Current Outcome
 
 The end state should feel Jira-like in the places that matter most:
 

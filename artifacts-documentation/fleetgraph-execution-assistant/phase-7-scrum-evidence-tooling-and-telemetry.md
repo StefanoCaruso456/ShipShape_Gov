@@ -122,10 +122,10 @@ Phase 7 is complete when:
 
 As of 2026-03-20:
 
-- implementation status: planned
-- verification status: not started
-- merge-to-main status: not started
-- production status: not live yet
+- implementation status: complete
+- verification status: passed
+- merge-to-main status: complete
+- production status: pending deploy verification in this phase doc
 
 ## Key Touchpoints
 
@@ -147,10 +147,10 @@ That order is intentional. FleetGraph should have a trustworthy evidence and tel
 
 ## Delivery Status
 
-Phase 7 is currently a documented architecture and execution contract.
+Phase 7 is implemented and merged to `main`.
 
 That means:
 
-- the direction is defined
-- the implementation order is clear
-- code changes have not started yet
+- the shared telemetry and tooling foundation is in code
+- targeted verification passed
+- deploy verification is the remaining status step in this doc

@@ -1,22 +1,26 @@
 import { randomUUID } from 'crypto';
 import type { FleetGraphRunInput, FleetGraphShipApiClient } from '@ship/fleetgraph';
 import type {
+  FleetGraphProactiveAudienceRole,
+  FleetGraphProactiveAudienceScope,
+  FleetGraphProactiveDeliverySource,
   FleetGraphProactiveFinding,
   FleetGraphProactiveStatusResponse,
 } from '@ship/shared';
 import { pool } from '../db/client.js';
 import { broadcastToUser } from '../collaboration/index.js';
+import { resolveFleetGraphSweepRecipients } from './fleetgraph-proactive-targeting.js';
 import {
   createApiTokenShipApiClient,
   createFleetGraphLogger,
   invokeFleetGraph,
 } from './fleetgraph-runner.js';
+import { recordFleetGraphProactiveDelivery } from './fleetgraph-telemetry.js';
 
 const DEFAULT_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 const DEFAULT_COOLDOWN_MS = 30 * 60 * 1000;
 const PROACTIVE_ROUTE_TAB = 'issues';
 const PROACTIVE_ROUTE_SURFACE = 'document';
-const UUID_LIKE_PATTERN = /^[0-9a-f-]{36}$/i;
 
 type FleetGraphFindingSeverity = FleetGraphProactiveFinding['severity'];
 
@@ -33,6 +37,10 @@ interface PersistProactiveFindingInput {
   projectId: string | null;
   programId: string | null;
   targetUserId: string;
+  audienceRole: FleetGraphProactiveAudienceRole;
+  audienceScope: FleetGraphProactiveAudienceScope;
+  deliverySource: FleetGraphProactiveDeliverySource;
+  deliveryReason: string | null;
   title: string | null;
   summary: string;
   severity: FleetGraphFindingSeverity;
@@ -142,6 +150,10 @@ function mapFindingRow(row: Record<string, unknown>): FleetGraphProactiveFinding
     route: String(row.route),
     surface: row.surface as FleetGraphProactiveFinding['surface'],
     tab: typeof row.tab === 'string' ? row.tab : null,
+    audienceRole: row.audience_role as FleetGraphProactiveAudienceRole,
+    audienceScope: row.audience_scope as FleetGraphProactiveAudienceScope,
+    deliverySource: row.delivery_source as FleetGraphProactiveDeliverySource,
+    deliveryReason: typeof row.delivery_reason === 'string' ? row.delivery_reason : null,
     signalKinds: Array.isArray(row.signal_kinds)
       ? row.signal_kinds.filter((kind): kind is string => typeof kind === 'string')
       : [],
@@ -205,28 +217,6 @@ async function listActiveSprintTargets(
     weekTitle: row.week_title,
     targetUserId: typeof row.target_user_id === 'string' ? row.target_user_id : null,
   }));
-}
-
-async function resolveValidTargetUserId(
-  candidates: Array<string | null | undefined>
-): Promise<string | null> {
-  const orderedCandidates = candidates.filter(
-    (candidate): candidate is string => typeof candidate === 'string' && UUID_LIKE_PATTERN.test(candidate)
-  );
-
-  if (orderedCandidates.length === 0) {
-    return null;
-  }
-
-  const result = await pool.query(
-    `SELECT id
-     FROM users
-     WHERE id = ANY($1::uuid[])`,
-    [orderedCandidates]
-  );
-
-  const validIds = new Set(result.rows.map((row) => row.id as string));
-  return orderedCandidates.find((candidate) => validIds.has(candidate)) ?? null;
 }
 
 export async function resolveFleetGraphFindingsForWeek(
@@ -303,15 +293,19 @@ export async function persistFleetGraphProactiveFinding(
         ? await client.query(
             `INSERT INTO fleetgraph_findings (
                id,
-               workspace_id,
-               week_id,
-               project_id,
-               program_id,
-               target_user_id,
-               title,
-               summary,
-               severity,
-               route,
+             workspace_id,
+             week_id,
+             project_id,
+             program_id,
+             target_user_id,
+             audience_role,
+             audience_scope,
+             delivery_source,
+             delivery_reason,
+             title,
+             summary,
+             severity,
+             route,
                surface,
                tab,
                signal_kinds,
@@ -323,8 +317,8 @@ export async function persistFleetGraphProactiveFinding(
                cooldown_until,
                updated_at
              ) VALUES (
-               $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-               $13::text[], $14, $15::jsonb, $16, $16, $16, $17, $16
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+              $15, $16, $17::text[], $18, $19::jsonb, $20, $20, $20, $21, $20
              )
              RETURNING *`,
             [
@@ -334,6 +328,10 @@ export async function persistFleetGraphProactiveFinding(
               input.projectId,
               input.programId,
               input.targetUserId,
+              input.audienceRole,
+              input.audienceScope,
+              input.deliverySource,
+              input.deliveryReason,
               input.title,
               input.summary,
               input.severity,
@@ -351,25 +349,33 @@ export async function persistFleetGraphProactiveFinding(
             `UPDATE fleetgraph_findings
              SET project_id = $2,
                  program_id = $3,
-                 title = $4,
-                 summary = $5,
-                 severity = $6,
-                 route = $7,
-                 surface = $8,
-                 tab = $9,
-                 signal_kinds = $10::text[],
-                 payload = $11::jsonb,
-                 last_detected_at = $12,
-                 last_notified_at = CASE WHEN $13 THEN $12 ELSE last_notified_at END,
-                 cooldown_until = CASE WHEN $13 THEN $14 ELSE cooldown_until END,
+                 audience_role = $4,
+                 audience_scope = $5,
+                 delivery_source = $6,
+                 delivery_reason = $7,
+                 title = $8,
+                 summary = $9,
+                 severity = $10,
+                 route = $11,
+                 surface = $12,
+                 tab = $13,
+                 signal_kinds = $14::text[],
+                 payload = $15::jsonb,
+                 last_detected_at = $16,
+                 last_notified_at = CASE WHEN $17 THEN $16 ELSE last_notified_at END,
+                 cooldown_until = CASE WHEN $17 THEN $18 ELSE cooldown_until END,
                  resolved_at = NULL,
-                 updated_at = $12
+                 updated_at = $16
              WHERE id = $1
              RETURNING *`,
             [
               existingResult.rows[0]!.id,
               input.projectId,
               input.programId,
+              input.audienceRole,
+              input.audienceScope,
+              input.deliverySource,
+              input.deliveryReason,
               input.title,
               input.summary,
               input.severity,
@@ -470,58 +476,90 @@ export async function runFleetGraphProactiveSweep(options: {
     }
 
     surfacedFindings += 1;
-
-    const ownerPropertyId =
-      typeof result.fetched.entity?.properties.owner_id === 'string'
-        ? result.fetched.entity.properties.owner_id
-        : null;
-
-    const targetUserId = await resolveValidTargetUserId([
-      ownerPropertyId,
-      result.fetched.entity?.owner_id,
-      target.targetUserId,
-    ]);
-
-    if (!targetUserId) {
-      logger.warn('Skipping proactive FleetGraph finding without a resolvable target user', {
-        weekId: resolvedWeekId,
-        workspaceId: target.workspaceId,
-      });
-      continue;
-    }
-
     const signalKinds = result.derivedSignals.signals.map((signal) => signal.kind);
-    const persisted = await persistFleetGraphProactiveFinding({
+    const recipients = await resolveFleetGraphSweepRecipients({
       workspaceId: target.workspaceId,
       weekId: resolvedWeekId,
       projectId: result.expandedScope.projectId,
       programId: result.expandedScope.programId,
-      targetUserId,
-      title: result.fetched.entity?.title ?? target.weekTitle,
-      summary: result.finding.summary,
       severity: result.finding.severity as FleetGraphFindingSeverity,
-      route: buildProactiveRoute(resolvedWeekId),
-      surface: PROACTIVE_ROUTE_SURFACE,
-      tab: PROACTIVE_ROUTE_TAB,
       signalKinds,
-      signalSignature: buildSignalSignature(signalKinds, resolvedWeekId),
-      payload: {
-        finding: result.finding,
-        derivedSignals: result.derivedSignals,
-        expandedScope: result.expandedScope,
-      },
-      now,
-      cooldownMs,
     });
 
-    findings.push(persisted.finding);
+    if (recipients.length === 0) {
+      logger.warn('Skipping proactive FleetGraph finding without a resolvable audience', {
+        weekId: resolvedWeekId,
+        workspaceId: target.workspaceId,
+        signalKinds,
+      });
+      continue;
+    }
 
-    if (persisted.shouldNotify) {
-      newNotifications += 1;
-      broadcastToUser(
-        targetUserId,
-        'fleetgraph:finding',
-        persisted.finding as unknown as Record<string, unknown>
+    for (const recipient of recipients) {
+      const persisted = await persistFleetGraphProactiveFinding({
+        workspaceId: target.workspaceId,
+        weekId: resolvedWeekId,
+        projectId: result.expandedScope.projectId,
+        programId: result.expandedScope.programId,
+        targetUserId: recipient.userId,
+        audienceRole: recipient.audienceRole,
+        audienceScope: recipient.audienceScope,
+        deliverySource: 'sweep',
+        deliveryReason: recipient.deliveryReason,
+        title: result.fetched.entity?.title ?? target.weekTitle,
+        summary: result.finding.summary,
+        severity: result.finding.severity as FleetGraphFindingSeverity,
+        route: buildProactiveRoute(resolvedWeekId),
+        surface: PROACTIVE_ROUTE_SURFACE,
+        tab: PROACTIVE_ROUTE_TAB,
+        signalKinds,
+        signalSignature: buildSignalSignature(signalKinds, resolvedWeekId),
+        payload: {
+          finding: result.finding,
+          derivedSignals: result.derivedSignals,
+          expandedScope: result.expandedScope,
+          trace: {
+            langsmithRunId: result.telemetry.langsmithRunId,
+            langsmithRunUrl: result.telemetry.langsmithRunUrl,
+            langsmithShareUrl: result.telemetry.langsmithShareUrl,
+          },
+        },
+        now,
+        cooldownMs,
+      });
+
+      findings.push(persisted.finding);
+
+      if (persisted.shouldNotify) {
+        newNotifications += 1;
+        broadcastToUser(
+          recipient.userId,
+          'fleetgraph:finding',
+          persisted.finding as unknown as Record<string, unknown>
+        );
+      }
+
+      recordFleetGraphProactiveDelivery(
+        {
+          workspaceId: target.workspaceId,
+          weekId: resolvedWeekId,
+          projectId: result.expandedScope.projectId,
+          programId: result.expandedScope.programId,
+          findingId: persisted.finding.id,
+          targetUserId: recipient.userId,
+          audienceRole: recipient.audienceRole,
+          audienceScope: recipient.audienceScope,
+          deliverySource: 'sweep',
+          deliveryReason: recipient.deliveryReason,
+          severity: result.finding.severity as FleetGraphFindingSeverity,
+          signalKinds,
+          route: persisted.finding.route,
+          shouldNotify: persisted.shouldNotify,
+          langsmithRunId: result.telemetry.langsmithRunId,
+          langsmithRunUrl: result.telemetry.langsmithRunUrl,
+          langsmithShareUrl: result.telemetry.langsmithShareUrl,
+        },
+        logger
       );
     }
   }

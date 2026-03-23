@@ -2,6 +2,8 @@
 
 Pre-code design document for FleetGraph, grounded in the current Ship codebase and product model.
 
+If a checklist or grader mentions `RESEARCH.md`, treat this file as the canonical deliverable. `RESEARCH.md` is maintained as a compatibility alias for that naming variant.
+
 ## Working Thesis
 
 FleetGraph should be a project intelligence agent for **execution drift and next-action clarity**.

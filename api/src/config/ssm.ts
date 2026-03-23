@@ -8,6 +8,7 @@
  * SSM Parameter Store (/ship/{env}/):
  *   - DATABASE_URL, SESSION_SECRET, CORS_ORIGIN
  *   - Application config that changes per environment
+ *   - AI telemetry and tracing config (Braintrust, LangSmith, OpenAI)
  *   - CAIA OAuth credentials (CAIA_ISSUER_URL, CAIA_CLIENT_ID, etc.)
  */
 import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
@@ -94,6 +95,16 @@ export async function loadProductionSecrets(): Promise<void> {
     fleetGraphInternalApiToken,
     fleetGraphProactiveSweepIntervalMs,
     fleetGraphFindingCooldownMs,
+    langChainTracingV2,
+    langChainApiKey,
+    langChainProject,
+    langChainEndpoint,
+    langSmithTracing,
+    langSmithApiKey,
+    langSmithProject,
+    langSmithEndpoint,
+    langSmithWebUrl,
+    fleetGraphLangSmithShareTraces,
   ] = await Promise.all([
     getOptionalSSMSecret(`${basePath}/BRAINTRUST_API_KEY`),
     getOptionalSSMSecret(`${basePath}/BRAINTRUST_PROJECT`),
@@ -110,6 +121,16 @@ export async function loadProductionSecrets(): Promise<void> {
     getOptionalSSMSecret(`${basePath}/FLEETGRAPH_INTERNAL_API_TOKEN`),
     getOptionalSSMSecret(`${basePath}/FLEETGRAPH_PROACTIVE_SWEEP_INTERVAL_MS`),
     getOptionalSSMSecret(`${basePath}/FLEETGRAPH_FINDING_COOLDOWN_MS`),
+    getOptionalSSMSecret(`${basePath}/LANGCHAIN_TRACING_V2`),
+    getOptionalSSMSecret(`${basePath}/LANGCHAIN_API_KEY`),
+    getOptionalSSMSecret(`${basePath}/LANGCHAIN_PROJECT`),
+    getOptionalSSMSecret(`${basePath}/LANGCHAIN_ENDPOINT`),
+    getOptionalSSMSecret(`${basePath}/LANGSMITH_TRACING`),
+    getOptionalSSMSecret(`${basePath}/LANGSMITH_API_KEY`),
+    getOptionalSSMSecret(`${basePath}/LANGSMITH_PROJECT`),
+    getOptionalSSMSecret(`${basePath}/LANGSMITH_ENDPOINT`),
+    getOptionalSSMSecret(`${basePath}/LANGSMITH_WEB_URL`),
+    getOptionalSSMSecret(`${basePath}/FLEETGRAPH_LANGSMITH_SHARE_TRACES`),
   ]);
 
   process.env.DATABASE_URL = databaseUrl;
@@ -134,6 +155,16 @@ export async function loadProductionSecrets(): Promise<void> {
     setIfDefined('FLEETGRAPH_INTERNAL_API_TOKEN', fleetGraphInternalApiToken),
     setIfDefined('FLEETGRAPH_PROACTIVE_SWEEP_INTERVAL_MS', fleetGraphProactiveSweepIntervalMs),
     setIfDefined('FLEETGRAPH_FINDING_COOLDOWN_MS', fleetGraphFindingCooldownMs),
+    setIfDefined('LANGCHAIN_TRACING_V2', langChainTracingV2),
+    setIfDefined('LANGCHAIN_API_KEY', langChainApiKey),
+    setIfDefined('LANGCHAIN_PROJECT', langChainProject),
+    setIfDefined('LANGCHAIN_ENDPOINT', langChainEndpoint),
+    setIfDefined('LANGSMITH_TRACING', langSmithTracing),
+    setIfDefined('LANGSMITH_API_KEY', langSmithApiKey),
+    setIfDefined('LANGSMITH_PROJECT', langSmithProject),
+    setIfDefined('LANGSMITH_ENDPOINT', langSmithEndpoint),
+    setIfDefined('LANGSMITH_WEB_URL', langSmithWebUrl),
+    setIfDefined('FLEETGRAPH_LANGSMITH_SHARE_TRACES', fleetGraphLangSmithShareTraces),
   ].filter(Boolean).length;
 
   console.log('Secrets loaded from SSM Parameter Store');

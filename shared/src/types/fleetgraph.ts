@@ -1,6 +1,8 @@
 import type { DocumentType } from './document.js';
 import type { WorkPersona } from './user.js';
 
+import type { WorkPersona } from './user.js';
+
 export type FleetGraphViewSurface =
   | 'document'
   | 'dashboard'
@@ -84,6 +86,21 @@ export interface FleetGraphPageContext {
 }
 
 export type FleetGraphQuestionSource = 'typed' | 'starter_prompt' | 'follow_up_prompt';
+
+export type FleetGraphRunMode = 'proactive' | 'on_demand';
+
+export type FleetGraphTriggerType =
+  | 'event'
+  | 'sweep'
+  | 'user_invoke'
+  | 'resume';
+
+export type FleetGraphStatus =
+  | 'starting'
+  | 'running'
+  | 'waiting_on_human'
+  | 'completed'
+  | 'failed';
 
 export interface FleetGraphOnDemandRequest {
   active_view: FleetGraphActiveViewContext | null;
@@ -215,6 +232,22 @@ export interface FleetGraphApprovalTrace {
   latencyMs: number;
 }
 
+export type FleetGraphReasoningSource = 'deterministic' | 'model';
+
+export type FleetGraphSuppressionReason =
+  | 'approved_before'
+  | 'dismissed_before'
+  | 'snoozed';
+
+export type FleetGraphTerminalOutcome =
+  | 'quiet'
+  | 'finding_only'
+  | 'waiting_on_human'
+  | 'action_executed'
+  | 'suppressed'
+  | 'failed_retryable'
+  | 'failed_terminal';
+
 export type FleetGraphSignalSeverity = 'info' | 'warning' | 'action';
 
 export type FleetGraphDerivedSignalsSeverity = 'none' | FleetGraphSignalSeverity;
@@ -232,7 +265,8 @@ export type FleetGraphSignalKind =
   | 'dependency_risk'
   | 'workload_concentration'
   | 'throughput_gap'
-  | 'staffing_pressure';
+  | 'staffing_pressure'
+  | FleetGraphProactiveTriggerKind;
 
 export interface FleetGraphDerivedSignal {
   kind: FleetGraphSignalKind;
@@ -281,7 +315,11 @@ export interface FleetGraphOnDemandFinding {
 
 export type FleetGraphAnswerMode = 'execution' | 'context' | 'launcher';
 
-export type FleetGraphFeedbackEventName = 'drawer_opened' | 'route_clicked';
+export type FleetGraphFeedbackEventName =
+  | 'drawer_opened'
+  | 'route_clicked'
+  | 'proactive_toast_shown'
+  | 'proactive_toast_clicked';
 
 export interface FleetGraphFeedbackSurfaceContext {
   route: string;
@@ -299,6 +337,16 @@ export interface FleetGraphFeedbackRouteAction {
   intent?: FleetGraphPageContextActionIntent;
 }
 
+export interface FleetGraphFeedbackFindingContext {
+  finding_id: string;
+  delivery_source: FleetGraphProactiveDeliverySource;
+  audience_role: FleetGraphProactiveAudienceRole;
+  audience_scope: FleetGraphProactiveAudienceScope;
+  delivery_reason?: string | null;
+  severity: FleetGraphSignalSeverity;
+  signal_kinds: string[];
+}
+
 export interface FleetGraphFeedbackEventRequest {
   event_name: FleetGraphFeedbackEventName;
   thread_id?: string | null;
@@ -309,6 +357,7 @@ export interface FleetGraphFeedbackEventRequest {
   latency_ms?: number | null;
   surface: FleetGraphFeedbackSurfaceContext;
   route_action?: FleetGraphFeedbackRouteAction | null;
+  finding_context?: FleetGraphFeedbackFindingContext | null;
 }
 
 export interface FleetGraphOnDemandReasoning {
@@ -319,8 +368,6 @@ export interface FleetGraphOnDemandReasoning {
   recommendedNextStep: string | null;
   confidence: 'low' | 'medium' | 'high';
 }
-
-export type FleetGraphReasoningSource = 'deterministic' | 'model';
 
 export type FleetGraphOnDemandActionType =
   | 'draft_follow_up_comment'
@@ -349,20 +396,6 @@ export interface FleetGraphOnDemandActionResult {
   snoozedUntil: string | null;
   executedCommentId: string | null;
 }
-
-export type FleetGraphSuppressionReason =
-  | 'approved_before'
-  | 'dismissed_before'
-  | 'snoozed';
-
-export type FleetGraphTerminalOutcome =
-  | 'quiet'
-  | 'finding_only'
-  | 'waiting_on_human'
-  | 'action_executed'
-  | 'suppressed'
-  | 'failed_retryable'
-  | 'failed_terminal';
 
 export interface FleetGraphAttempts {
   reasoning: number;
@@ -411,6 +444,55 @@ export interface FleetGraphTelemetryState {
   approvalCount: number;
   lastToolName: FleetGraphEvidenceToolName | null;
   loopDetected: boolean;
+}
+
+export interface FleetGraphTraceMetadataFields {
+  schemaVersion: 'v1';
+  runId: string | null;
+  threadId: string | null;
+  mode: FleetGraphRunMode | null;
+  triggerType: FleetGraphTriggerType | null;
+  workspaceId: string | null;
+  actorId: string | null;
+  actorKind: 'user' | 'service' | null;
+  actorRole: string | null;
+  actorWorkPersona: WorkPersona | null;
+  activeViewSurface: FleetGraphViewSurface | null;
+  activeViewRoute: string | null;
+  activeViewTab: string | null;
+  activeEntityId: string | null;
+  activeEntityType: FleetGraphViewEntityType | null;
+  activeEntitySourceDocumentType: DocumentType | null;
+  contextEntityId: string | null;
+  contextEntityType: FleetGraphViewEntityType | null;
+  issueId: string | null;
+  weekId: string | null;
+  projectId: string | null;
+  programId: string | null;
+  personId: string | null;
+  questionSource: FleetGraphQuestionSource | null;
+  questionTheme: FleetGraphQuestionTheme | null;
+  answerMode: FleetGraphAnswerMode | null;
+  status: FleetGraphStatus | null;
+  stage: string | null;
+  terminalOutcome: FleetGraphTerminalOutcome | null;
+  signalSeverity: FleetGraphDerivedSignalsSeverity | null;
+  signalKinds: FleetGraphSignalKind[];
+  reasoningSource: FleetGraphReasoningSource | null;
+  pendingApproval: boolean;
+  proposedActionType: FleetGraphOnDemandActionType | null;
+  actionOutcome: FleetGraphOnDemandActionResult['outcome'] | null;
+  suppressionReason: FleetGraphSuppressionReason | null;
+  lastNode: string | null;
+  nodeCount: number;
+  toolCallCount: number;
+  approvalCount: number;
+}
+
+export interface FleetGraphTrace {
+  runName: string | null;
+  tags: string[];
+  metadata: FleetGraphTraceMetadataFields;
 }
 
 export interface FleetGraphOnDemandFetchedEntity {
@@ -546,10 +628,7 @@ export interface FleetGraphOnDemandResponse {
   toolCalls: FleetGraphToolCallTrace[];
   approvals: FleetGraphApprovalTrace[];
   telemetry: FleetGraphTelemetryState;
-  trace: {
-    runName: string | null;
-    tags: string[];
-  };
+  trace: FleetGraphTrace;
 }
 
 export interface FleetGraphProactiveFinding {
@@ -564,10 +643,25 @@ export interface FleetGraphProactiveFinding {
   route: string;
   surface: FleetGraphViewSurface;
   tab: string | null;
+  audienceRole: FleetGraphProactiveAudienceRole;
+  audienceScope: FleetGraphProactiveAudienceScope;
+  deliverySource: FleetGraphProactiveDeliverySource;
+  deliveryReason: string | null;
   signalKinds: string[];
   lastDetectedAt: string;
   lastNotifiedAt: string;
 }
+
+export type FleetGraphProactiveAudienceRole =
+  | 'responsible_owner'
+  | 'issue_assignee'
+  | 'accountable'
+  | 'manager'
+  | 'team_member';
+
+export type FleetGraphProactiveAudienceScope = 'individual' | 'team';
+
+export type FleetGraphProactiveDeliverySource = 'sweep' | 'event';
 
 export type FleetGraphProactiveEventEntityType = 'issue' | 'sprint';
 
@@ -618,6 +712,7 @@ export interface FleetGraphProactiveIssueEventPayload {
     sprintId: string | null;
   };
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   occurredAt: string;
 }
 
@@ -631,6 +726,7 @@ export interface FleetGraphProactiveIssueIterationEventPayload {
     authorName: string | null;
   };
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   occurredAt: string;
 }
 
@@ -654,6 +750,7 @@ export interface FleetGraphProactiveSprintEventPayload {
     ownerPersonId: string | null;
   };
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   occurredAt: string;
 }
 
@@ -667,6 +764,7 @@ export interface FleetGraphProactiveSprintApprovalEventPayload {
     requestedByUserId: string | null;
   };
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   occurredAt: string;
 }
 

@@ -48,6 +48,7 @@ export async function supervisorEntryNode(
         trace: {
           runName: state.trace.runName ?? 'fleetgraph-proactive',
           tags: Array.from(new Set([...state.trace.tags, 'mode:proactive'])),
+          metadata: state.trace.metadata,
         },
       }
     );
@@ -68,6 +69,7 @@ export async function supervisorEntryNode(
         trace: {
           runName: state.trace.runName ?? 'fleetgraph-on-demand',
           tags: Array.from(new Set([...state.trace.tags, 'mode:on_demand'])),
+          metadata: state.trace.metadata,
         },
       }
     );

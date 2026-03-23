@@ -1142,4 +1142,180 @@ describe('FleetGraph Phase 3 deterministic signals', () => {
     expect(result.reasoning?.summary.toLowerCase()).toContain('overcommitted');
     expect(result.reasoning?.recommendedNextStep?.toLowerCase()).toContain('reduce scope');
   });
+
+  it('surfaces injected proactive event signals through the shared graph path', async () => {
+    const graph = createFleetGraph();
+    const weekId = 'week-event';
+    const runtime = createFleetGraphRuntime({
+      shipApi: createShipApiStub({
+        [`/api/documents/${weekId}`]: {
+          id: weekId,
+          document_type: 'sprint',
+          title: 'Week 15',
+          status: 'active',
+          plan: 'Close milestone tasks',
+          owner_id: 'owner-1',
+          owner: null,
+          accountable_id: null,
+          properties: {},
+        },
+        [`/api/documents/${weekId}/context`]: {
+          current: {
+            id: weekId,
+            title: 'Week 15',
+            document_type: 'sprint',
+          },
+          breadcrumbs: [],
+          belongs_to: [{ id: 'project-1', title: 'Project', type: 'project' }],
+        },
+        [`/api/activity/sprint/${weekId}`]: {
+          days: [
+            { date: '2026-03-18', count: 2 },
+            { date: '2026-03-19', count: 1 },
+            { date: '2026-03-20', count: 3 },
+          ],
+        },
+        [`/api/claude/context?context_type=review&sprint_id=${weekId}`]: {
+          context_type: 'review',
+          sprint: {
+            id: weekId,
+            title: 'Week 15',
+            number: '15',
+            status: 'active',
+            plan: 'Close milestone tasks',
+          },
+          program: null,
+          project: {
+            id: 'project-1',
+            name: 'Project',
+            plan: 'Project plan',
+            ice_scores: {
+              impact: null,
+              confidence: null,
+              ease: null,
+            },
+            monetary_impact_expected: null,
+          },
+          standups: [
+            {
+              id: 'standup-1',
+              title: 'Standup',
+              content: null,
+              author: 'owner-1',
+              created_at: '2026-03-20T13:00:00.000Z',
+            },
+          ],
+          issues: {
+            stats: {
+              total: 3,
+              completed: 1,
+              in_progress: 1,
+              planned_at_start: 3,
+              added_mid_sprint: 0,
+              cancelled: 0,
+            },
+            completed_items: [{ id: 'issue-1' }],
+            incomplete_items: [{ id: 'issue-2' }, { id: 'issue-3' }],
+          },
+          existing_review: null,
+          clarifying_questions_context: [],
+        },
+        ...createPlanningResponses(
+          weekId,
+          'project-1',
+          [
+            {
+              id: 'issue-1',
+              title: 'Issue 1',
+              state: 'done',
+              priority: 'medium',
+              ticket_number: 1,
+              display_id: '#1',
+              assignee_id: 'owner-1',
+              assignee_name: 'Lead Engineer',
+              estimate: 3,
+            },
+            {
+              id: 'issue-2',
+              title: 'Issue 2',
+              state: 'in_progress',
+              priority: 'medium',
+              ticket_number: 2,
+              display_id: '#2',
+              assignee_id: 'owner-1',
+              assignee_name: 'Lead Engineer',
+              estimate: 3,
+            },
+            {
+              id: 'issue-3',
+              title: 'Issue 3',
+              state: 'todo',
+              priority: 'medium',
+              ticket_number: 3,
+              display_id: '#3',
+              assignee_id: 'owner-2',
+              assignee_name: 'Pair Engineer',
+              estimate: 2,
+            },
+          ],
+          {
+            originalScope: 8,
+            currentScope: 8,
+            scopeChangePercent: 0,
+            sprintStartDate: '2026-03-18T00:00:00.000Z',
+            scopeChanges: [],
+          }
+        ),
+      }),
+      now: () => new Date('2026-03-20T18:00:00.000Z'),
+    });
+
+    const input: FleetGraphRunInput = {
+      runId: 'run-event',
+      mode: 'proactive',
+      triggerType: 'event',
+      workspaceId: 'workspace-1',
+      actor: {
+        id: 'user-1',
+        kind: 'user',
+        role: null,
+      },
+      contextEntity: {
+        id: weekId,
+        type: 'week',
+      },
+      injectedSignals: [
+        {
+          kind: 'issue_blocker_logged',
+          severity: 'warning',
+          summary: '#9 logged a blocker in Week 15: Waiting on platform review.',
+          evidence: [
+            '#9 logged a blocker in Week 15: Waiting on platform review.',
+            'Blocker summary: Waiting on platform review.',
+            'Iteration status: in_progress.',
+          ],
+          dedupeKey: `${weekId}:issue_blocker_logged:issue-9`,
+        },
+      ],
+      trace: {
+        runName: 'fleetgraph-proactive-event-test',
+        tags: ['fleetgraph', 'test', 'event'],
+      },
+    };
+
+    const result = await graph.invoke(
+      input,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'phase-3-event',
+      })
+    );
+
+    expect(result.status).toBe('completed');
+    expect(result.terminalOutcome).toBe('finding_only');
+    expect(result.finding).toEqual({
+      summary: '#9 logged a blocker in Week 15: Waiting on platform review.',
+      severity: 'warning',
+    });
+    expect(result.derivedSignals.signals.map((signal) => signal.kind)).toContain('issue_blocker_logged');
+  });
 });

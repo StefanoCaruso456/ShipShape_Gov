@@ -9,7 +9,7 @@ import type {
   FleetGraphReasoning,
   FleetGraphReasoningSource,
 } from '../types.js';
-import { inferFleetGraphQuestionTheme } from '../tool-runtime.js';
+import { inferFleetGraphQuestionTheme } from '../question-theme.js';
 
 interface ReasonAboutSprintArgs {
   activeView: FleetGraphActiveViewContext | null;

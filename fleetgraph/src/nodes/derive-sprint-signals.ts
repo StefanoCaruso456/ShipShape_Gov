@@ -1,7 +1,7 @@
 import { Command } from '@langchain/langgraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import { beginFleetGraphNode, createFleetGraphCommand } from '../node-runtime.js';
-import { deriveSprintSignals } from '../signals/derive-sprint-signals.js';
+import { deriveSprintSignals, mergeDerivedSignals } from '../signals/derive-sprint-signals.js';
 import type { FleetGraphState } from '../state.js';
 import { createHandoff } from '../supervision.js';
 
@@ -26,7 +26,7 @@ export async function deriveSprintSignalsNode(
     return started.command;
   }
 
-  const derivedSignals = deriveSprintSignals(
+  const deterministicSignals = deriveSprintSignals(
     {
       entity: state.fetched.entity,
       activity: state.fetched.activity,
@@ -35,6 +35,7 @@ export async function deriveSprintSignalsNode(
     },
     runtime.now()
   );
+  const derivedSignals = mergeDerivedSignals(deterministicSignals, state.injectedSignals ?? []);
 
   const nextTarget: DeriveSprintSignalsTargets = derivedSignals.shouldSurface
     ? 'recordSignalFinding'
@@ -44,6 +45,7 @@ export async function deriveSprintSignalsNode(
 
   runtime.logger.info('FleetGraph deterministic signals derived', {
     weekId: state.expandedScope.weekId,
+    injectedSignalCount: state.injectedSignals?.length ?? 0,
     severity: derivedSignals.severity,
     signalCount: derivedSignals.signals.length,
     nextTarget,
