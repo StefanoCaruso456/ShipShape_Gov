@@ -169,6 +169,16 @@ function getFirstAction(pageContext: FleetGraphPageContext, prefix: string): Fle
   return pageContext.actions?.find((action) => action.label.startsWith(prefix)) ?? null;
 }
 
+function isCutCandidateAction(action: FleetGraphPageContextAction): boolean {
+  const corpus = `${action.label} ${action.reason ?? ''}`.toLowerCase();
+  return corpus.includes('cut candidate');
+}
+
+function isRiskClusterAction(action: FleetGraphPageContextAction): boolean {
+  const corpus = `${action.label} ${action.reason ?? ''}`.toLowerCase();
+  return corpus.includes('risk cluster');
+}
+
 function getIssueItems(
   pageContext: FleetGraphPageContext,
   options?: {
@@ -440,6 +450,30 @@ function buildRecommendedNextStep(
     );
   }
 
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'risk') {
+    const riskClusterAction =
+      getFirstAction(pageContext, 'Open risk cluster') ??
+      pageContext.actions?.find(isRiskClusterAction) ??
+      null;
+
+    if (riskClusterAction) {
+      return formatActionRecommendation(
+        riskClusterAction,
+        'Then inspect the week or cluster with the most not-started, stale, or blocked work before considering any scope cuts.'
+      );
+    }
+
+    const nonCutAction = pageContext.actions?.find((action) => !isCutCandidateAction(action)) ?? null;
+    if (nonCutAction) {
+      return formatActionRecommendation(
+        nonCutAction,
+        'Then inspect the week or cluster that looks riskiest on this tab before considering any scope cuts.'
+      );
+    }
+
+    return 'Then inspect the week or cluster with the most not-started, stale, or blocked work before considering any scope cuts.';
+  }
+
   if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'cut') {
     const cutAction = getFirstAction(pageContext, 'Review cut candidate');
     if (cutAction) {
@@ -583,6 +617,29 @@ function buildSummary(pageContext: FleetGraphPageContext, question: string | nul
     return `There is no in-progress work on this tab right now. The main delivery risk is the work that still has not started.`;
   }
 
+  if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'risk') {
+    const riskCluster = getMetricValue(pageContext, 'Risk cluster');
+    const notStarted = getMetricCount(pageContext, 'Not started');
+    const blocked = getMetricCount(pageContext, 'Blocked issues');
+    const stalled = getMetricCount(pageContext, 'Stalled active') ?? getMetricCount(pageContext, 'In progress');
+
+    if (riskCluster) {
+      const notStartedPhrase = notStarted
+        ? `${pluralize(notStarted, 'issue')} ${notStarted === 1 ? 'is' : 'are'} still not started.`
+        : '';
+      const blockedPhrase = blocked
+        ? `${pluralize(blocked, 'issue')} ${blocked === 1 ? 'is' : 'are'} blocked.`
+        : '';
+      const stalledPhrase = stalled
+        ? `${pluralize(stalled, 'issue')} ${stalled === 1 ? 'is' : 'are'} stalled or stale.`
+        : '';
+
+      return `${riskCluster} is the clearest risk cluster on this tab.${notStartedPhrase ? ` ${notStartedPhrase}` : ''}${blockedPhrase ? ` ${blockedPhrase}` : ''}${stalledPhrase ? ` ${stalledPhrase}` : ''}`;
+    }
+
+    return `${summary} FleetGraph is treating the riskiest week or cluster on this tab as the main place to inspect before considering any scope cuts.`;
+  }
+
   if (pageContext.kind === 'issue_surface' && issueSurfaceIntent === 'cut') {
     const cutCandidates = getIssueItems(pageContext, { includeMarker: 'Cut candidate' }).slice(0, 2);
     const highestImpactIssue = getMetricValue(pageContext, 'Highest impact issue');
@@ -697,6 +754,8 @@ function buildWhyNow(
         return 'I ranked the visible issues using blockers, freshness, state, and business value on this tab so the first answer is an order of operations, not a generic summary.';
       case 'stalled':
         return 'I only treated active work as stalled when it is still in progress and either has a logged blocker or has gone stale on the current tab.';
+      case 'risk':
+        return 'I ranked the current risk cluster first, then used not-started, blocked, and stale work to keep the recommendation on the riskiest week or cluster.';
       case 'cut':
         return 'I treated not-started, lower-value backlog work as safer to move out than blocked, active, or highest-impact work.';
       case 'value_risk':

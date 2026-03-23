@@ -391,20 +391,32 @@ describe('FleetGraphOnDemandPanel', () => {
       derivedSignals: {
         ...baseResponse.derivedSignals,
         severity: 'none',
-        reasons: [],
-        summary: null,
+        reasons: [
+          'Visible issues are still mixed across triage, backlog, and todo.',
+          'The current tab has not turned into a clean stable state yet.',
+        ],
+        summary:
+          'API Platform does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet. 3 visible issues are still sitting in triage, backlog, or todo, led by Week 3.',
         shouldSurface: false,
-        signals: [],
+        signals: [
+          {
+            kind: 'scope_growth',
+            severity: 'warning',
+            summary: 'Delivery risk is building in the current issue set.',
+            evidence: ['Visible issues are still mixed.', 'No named blocker is present yet.'],
+            dedupeKey: 'program-1:scope_growth',
+          },
+        ],
         metrics: {
-          totalIssues: 0,
-          completedIssues: 0,
-          inProgressIssues: 0,
-          incompleteIssues: 0,
+          totalIssues: 5,
+          completedIssues: 2,
+          inProgressIssues: 1,
+          incompleteIssues: 2,
           cancelledIssues: 0,
           standupCount: 0,
-          recentActivityCount: 0,
-          recentActiveDays: 0,
-          completionRate: null,
+          recentActivityCount: 4,
+          recentActiveDays: 2,
+          completionRate: 40,
         },
       },
       finding: null,
@@ -439,7 +451,6 @@ describe('FleetGraphOnDemandPanel', () => {
     expect(await screen.findByText('Programs shows 5 active programs in this workspace.')).toBeInTheDocument();
     expect(screen.getAllByText('Launcher guidance').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Best next surface').length).toBeGreaterThan(0);
-    expect(screen.getByText('Active programs')).toBeInTheDocument();
     expect(screen.queryByText('Stable')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open API Platform' })).toHaveAttribute(
       'href',
@@ -528,10 +539,11 @@ describe('FleetGraphOnDemandPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'What is the risk inside Week 3?' }));
 
     expect(await screen.findByText('Grounded execution guidance')).toBeInTheDocument();
-    expect(screen.getByText('Execution view')).toBeInTheDocument();
+    expect(screen.getAllByText('Execution view').length).toBeGreaterThan(1);
     expect(
       screen.getByText(/does not show a named blocker on this issues surface/)
     ).toBeInTheDocument();
+    expect(screen.queryByText('Stable')).not.toBeInTheDocument();
     expect(screen.getByText('Recommended next step')).toBeInTheDocument();
     expect(screen.getByText('Best route in Ship')).toBeInTheDocument();
     expect(screen.getByText('Week 3 holds 3 open issues with 2 issues still not started.')).toBeInTheDocument();
@@ -656,6 +668,140 @@ describe('FleetGraphOnDemandPanel', () => {
     );
     expect(screen.getAllByText(/Safer to move out than the active or higher-value work/).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Should this stay in sprint or move out?' })).toBeInTheDocument();
+  });
+
+  it('keeps the risk-cluster route featured for risk questions even when a cut candidate is present', async () => {
+    const riskContext: FleetGraphPageContext = {
+      ...issueSurfacePageContext,
+      summary:
+        'API Platform shows risk building inside Week 2, where the visible issue mix has shifted toward work that is not started or still stale.',
+      metrics: [
+        { label: 'Visible issues', value: '18' },
+        { label: 'Not started', value: '10' },
+        { label: 'In progress', value: '5' },
+        { label: 'Risk cluster', value: 'Week 2' },
+      ],
+      items: [
+        {
+          label: '#19 Untitled',
+          detail:
+            'Highest impact • State: Backlog • Week: Week 2 • Business value: 64/100 • Drivers: ICE fallback 80/125 • Risk: not started inside Week 2',
+          route: '/documents/issue-19',
+        },
+        {
+          label: '#15 Performance: Explore stretch improvements',
+          detail:
+            'Cut candidate • State: Backlog • Week: Week 2 • Business value: 24/100 • Not started and safer to move out than the active or higher-value work on this tab',
+          route: '/documents/issue-15',
+        },
+        {
+          label: 'Week 2',
+          detail: '5 open issues • 3 issues active • 2 issues not started',
+          route: '/documents/week-2/issues',
+        },
+      ],
+      actions: [
+        {
+          label: 'Review cut candidate #15',
+          route: '/documents/issue-15',
+          intent: 'prioritize',
+          reason:
+            '#15 is not started yet. Business value 24/100. Safer to move out than the active or higher-value work on this tab. Keeps #19 protected.',
+        },
+        {
+          label: 'Open risk cluster Week 2',
+          route: '/documents/week-2/issues',
+          intent: 'prioritize',
+          reason: 'Week 2 holds the current risk cluster. 4 issues are not started and 1 issue is stalled.',
+        },
+        {
+          label: 'Open highest-impact #19',
+          route: '/documents/issue-19',
+          intent: 'prioritize',
+          reason: '#19 carries the strongest business value signal on this tab. Business value 64/100.',
+        },
+      ],
+    };
+
+    mockUseFleetGraphActiveView.mockReturnValue({
+      ...activeView,
+      entity: {
+        id: 'program-1',
+        type: 'program',
+        sourceDocumentType: 'program',
+      },
+      route: '/documents/program-1/issues',
+      tab: 'issues',
+      projectId: null,
+    });
+    mockUseFleetGraphPageContext.mockReturnValue(riskContext);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      activeView: {
+        ...activeView,
+        entity: {
+          id: 'program-1',
+          type: 'program',
+          sourceDocumentType: 'program',
+        },
+        route: '/documents/program-1/issues',
+        tab: 'issues',
+        projectId: null,
+      },
+      fetched: {
+        entity: null,
+        supporting: null,
+        activity: null,
+        accountability: null,
+        people: null,
+      },
+      derivedSignals: {
+        ...baseResponse.derivedSignals,
+        severity: 'none',
+        reasons: [],
+        summary: null,
+        shouldSurface: false,
+        signals: [],
+        metrics: {
+          totalIssues: 0,
+          completedIssues: 0,
+          inProgressIssues: 0,
+          incompleteIssues: 0,
+          cancelledIssues: 0,
+          standupCount: 0,
+          recentActivityCount: 0,
+          recentActiveDays: 0,
+          completionRate: null,
+        },
+      },
+      finding: null,
+      reasoning: {
+        answerMode: 'execution',
+        summary: 'Week 2 is the clearest risk cluster on this tab. 10 issues are still not started.',
+        evidence: ['Not started: 10', 'Risk cluster: Week 2'],
+        whyNow: 'This answer is grounded in the visible issues on the current tab.',
+        recommendedNextStep:
+          'Open risk cluster Week 2. Then inspect the week or cluster with the most not-started, stale, or blocked work before considering any scope cuts.',
+        confidence: 'high',
+      },
+      reasoningSource: 'deterministic',
+      terminalOutcome: 'quiet',
+    });
+
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'What is the risk inside Week 2?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send FleetGraph message' }));
+
+    const routeLinks = (await screen.findAllByRole('link')).filter((element) =>
+      element.getAttribute('href')?.startsWith('/documents/')
+    );
+    expect(routeLinks[0]).toHaveTextContent('Open risk cluster Week 2');
+    expect(routeLinks[0]).toHaveAttribute('href', '/documents/week-2/issues');
+    expect(screen.queryByText('Stable')).not.toBeInTheDocument();
   });
 
   it('records drawer-open evaluation events for the current surface', async () => {

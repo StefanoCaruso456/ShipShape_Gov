@@ -875,4 +875,87 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.reasoning?.summary).toContain('lower value than #9');
     expect(result.reasoning?.recommendedNextStep).toContain('Review cut candidate #15');
   });
+
+  it('answers risk questions inside a week with the risk cluster CTA instead of a cut candidate', async () => {
+    const graph = createFleetGraph();
+    const runtime = createFleetGraphRuntime({
+      now: () => new Date('2026-03-20T12:00:00.000Z'),
+    });
+
+    const result = await graph.invoke(
+      {
+        runId: 'issue-surface-risk-context',
+        mode: 'on_demand',
+        triggerType: 'user_invoke',
+        workspaceId: 'workspace-1',
+        actor: {
+          id: 'user-1',
+          kind: 'user',
+          role: 'pm',
+        },
+        activeView: null,
+        contextEntity: null,
+        prompt: {
+          question: 'What is the risk inside Week 2?',
+          pageContext: {
+            kind: 'issue_surface',
+            route: '/documents/program-1/issues',
+            title: 'API Platform Issues',
+            summary:
+              'API Platform shows risk building inside Week 2, where the visible issue mix has shifted toward work that is not started or still stale.',
+            emptyState: false,
+            metrics: [
+              { label: 'Visible issues', value: '8' },
+              { label: 'Not started', value: '4' },
+              { label: 'Stalled active', value: '1' },
+              { label: 'Blocked issues', value: '1' },
+              { label: 'Risk cluster', value: 'Week 2' },
+            ],
+            items: [
+              {
+                label: '#15 Explore stretch improvements',
+                detail:
+                  'Cut candidate • State: Backlog • Week: Week 2 • Business value: 24/100 • Not started and safer to move out than the active or higher-value work on this tab',
+                route: '/documents/issue-15',
+              },
+              {
+                label: 'Week 2',
+                detail: '2 open issues • 1 issue active • 1 issue not started',
+                route: '/documents/week-2/issues',
+              },
+            ],
+            actions: [
+              {
+                label: 'Review cut candidate #15',
+                route: '/documents/issue-15',
+                intent: 'prioritize',
+                reason:
+                  '#15 is not started yet. Business value 24/100. Safer to move out than the active or higher-value work on this tab.',
+              },
+              {
+                label: 'Open risk cluster Week 2',
+                route: '/documents/week-2/issues',
+                intent: 'prioritize',
+                reason:
+                  'Week 2 holds the current risk cluster. 4 issues are not started and 1 issue is stalled.',
+              },
+            ],
+          },
+        },
+        trace: {
+          runName: 'fleetgraph-issue-surface-risk-test',
+          tags: ['fleetgraph', 'test', 'issue-surface', 'risk'],
+        },
+      } satisfies FleetGraphRunInput,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'issue-surface-risk-context',
+      })
+    );
+
+    expect(result.status).toBe('completed');
+    expect(result.reasoning?.answerMode).toBe('execution');
+    expect(result.reasoning?.summary).toContain('Week 2 is the clearest risk cluster on this tab');
+    expect(result.reasoning?.recommendedNextStep).toContain('Open risk cluster Week 2');
+    expect(result.reasoning?.recommendedNextStep).not.toContain('Review cut candidate #15');
+  });
 });

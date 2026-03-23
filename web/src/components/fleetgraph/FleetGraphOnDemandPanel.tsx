@@ -886,6 +886,16 @@ type FleetGraphRouteAction = FleetGraphPageContextAction & {
   order: number;
 };
 
+function isRiskClusterRouteAction(action: FleetGraphPageContextAction): boolean {
+  const corpus = [action.label, action.reason ?? ''].join(' ').toLowerCase();
+  return corpus.includes('risk cluster');
+}
+
+function isCutCandidateRouteAction(action: FleetGraphPageContextAction): boolean {
+  const corpus = [action.label, action.reason ?? ''].join(' ').toLowerCase();
+  return corpus.includes('cut candidate') || corpus.includes('move out');
+}
+
 function getPreferredActionIntentsForTurn(
   turn: FleetGraphChatTurn,
   answerMode: FleetGraphAnswerMode
@@ -945,7 +955,15 @@ function getRouteActionQuestionBoost(
     normalizedQuestion.includes('stale') ||
     normalizedQuestion.includes('stuck')
   ) {
-    return corpus.includes('risk cluster') || corpus.includes('stale') || corpus.includes('not started') ? 3 : 0;
+    if (isRiskClusterRouteAction(action)) {
+      return 4;
+    }
+
+    if (isCutCandidateRouteAction(action)) {
+      return 0;
+    }
+
+    return corpus.includes('stale') || corpus.includes('blocked') ? 2 : 0;
   }
 
   if (
@@ -1273,6 +1291,10 @@ export function FleetGraphOnDemandPanel({
   );
   const latestSeverity = latestCompletedTurn?.derivedSignals.severity ?? 'none';
   const latestSeverityStyle = SEVERITY_STYLES[latestSeverity];
+  const latestExecutionBadgeStyle =
+    latestAnswerMode === 'execution' && latestSeverity === 'none'
+      ? EXECUTION_CONTEXT_BADGE
+      : latestSeverityStyle;
   const contextSummary = buildContextSummary(activeView, pageContext, latestCompletedTurn);
   const unavailableReason = hasUsableContext
     ? null
@@ -1582,10 +1604,10 @@ export function FleetGraphOnDemandPanel({
                       <span
                         className={cn(
                           'rounded-full border px-2.5 py-1 text-[11px] font-medium',
-                          latestSeverityStyle.badgeClassName
+                          latestExecutionBadgeStyle.badgeClassName
                         )}
                       >
-                        {latestSeverityStyle.label}
+                        {latestExecutionBadgeStyle.label}
                       </span>
                     ) : (
                       <span
@@ -1684,7 +1706,8 @@ export function FleetGraphOnDemandPanel({
                     )
                 );
                 const contextMetrics = turn.pageContext?.metrics ?? [];
-                const showExecutionSeverityBadge = answerMode === 'execution' && hasDerivedMetrics;
+                const showExecutionSeverityBadge =
+                  answerMode === 'execution' && severity !== 'none' && hasDerivedMetrics;
 
                 return (
                   <div key={turn.id} className="space-y-3">
