@@ -494,6 +494,22 @@ Notes:
 - The current evidence bundle is summarized in [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md).
 - If `LANGCHAIN_TRACING_V2`, `LANGCHAIN_API_KEY`, and `FLEETGRAPH_LANGSMITH_SHARE_TRACES=true` are set during a fresh evidence run, [collect-fleetgraph-evidence.ts](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/collect-fleetgraph-evidence.ts) can backfill public share URLs for HITL and resume as well.
 
+### Recent Public LangSmith Traces
+
+The links below were supplied after the original evidence bundle and were verified against the public LangSmith run API. They are additional recent public traces, not replacements for the original five MVP proof rows above.
+
+| Surface | Outcome | Notes | Public Trace |
+|---|---|---|---|
+| Week document on-demand run | `quiet` | `Week 15` on-demand sprint/week path, `action_not_proposed` | [Recent week trace](https://smith.langchain.com/public/682269f7-324a-4375-a938-7580552f91fb/r) |
+| Issue document current-view run | `quiet` | issue-document current-view answer, `current_view_reasoned`, `answerMode=context` | [Recent issue trace](https://smith.langchain.com/public/3ba63dd1-6fa0-491f-b517-6c41fcee282b/r) |
+| Team Allocation current-view run | `quiet` | generic current-view answer on the Team Allocation page, `answerMode=context` | [Recent team-allocation trace](https://smith.langchain.com/public/fbd826eb-9407-4560-a6d2-ce7160d9b068/r) |
+| Projects current-view run | `quiet` | projects launcher-style answer, `answerMode=launcher` | [Recent projects trace](https://smith.langchain.com/public/4cfb2a90-8bd8-4230-bf37-28ddfdde8843/r) |
+
+Additional note:
+
+- the week trace link above was supplied twice in the most recent update, so it is documented once here as a single unique trace
+- all four recent public traces above are on-demand deterministic/current-view or quiet runs, so they do not add billable LLM token or cost totals to the captured evidence bundle
+
 Current verification for this repo state:
 
 - `pnpm --filter @ship/fleetgraph test` passed
