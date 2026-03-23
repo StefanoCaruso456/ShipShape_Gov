@@ -8,16 +8,18 @@ We expect all contributors to be respectful and professional in their interactio
 
 ## How to Contribute
 
-### Mainline Sync Rule
+### Mainline Delivery Rule
 
-Ship does not treat local-only work as finished. If a change is accepted by the user or deployed to a shared environment, it must also be:
+Finished work must not stay only on a branch, in a worktree, or in a single coding session.
 
-1. Committed
-2. Pushed to GitHub
-3. Opened as a pull request
-4. Merged to `main`
+The required finish line for accepted or deployed work is:
 
-If the current branch is stale, rebase or cherry-pick the work onto the latest `origin/main` before opening the PR. If any step is blocked, call out the blocker explicitly instead of leaving the change only in a local branch or worktree.
+1. Commit the changes
+2. Move the committed changes onto local `main` if they were developed elsewhere
+3. Push the result to `origin/main`
+4. If production should reflect the work, redeploy production from that exact `main` commit
+
+Pull requests are optional. They can still be used for review, but they are not required to keep GitHub `main` and production in sync.
 
 ### Reporting Issues
 
@@ -30,23 +32,21 @@ If you find a bug or have a feature request:
 
 ### Submitting Changes
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Make your changes
-4. Write or update tests as needed
-5. Ensure all tests pass (`pnpm test`)
-6. Commit your changes with clear commit messages
-7. Push to your fork
-8. Submit a pull request
+1. Create a branch if it helps you work safely
+2. Make your changes
+3. Write or update tests as needed
+4. Ensure all relevant tests pass
+5. Commit your changes with clear commit messages
+6. Move the final committed work onto local `main`
+7. Push `main` to `origin/main`
+8. If production should reflect the change, redeploy from that same `main` commit
 
-### Pull Request Guidelines
+### Pull Requests
 
-- Keep PRs focused on a single feature or fix
-- Include a clear description of changes
-- Reference any related issues
-- Ensure CI checks pass
-- Be responsive to feedback
-- Do not deploy code that is not also on track to be merged into `main`
+- PRs are optional for review and discussion
+- If you use a PR, keep it focused on a single feature or fix
+- Make sure the final delivered code still lands on `origin/main`
+- Do not treat a change as done while it exists only on a branch or only in production
 
 ## Development Setup
 

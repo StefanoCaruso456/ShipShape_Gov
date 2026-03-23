@@ -7,6 +7,21 @@ This guide documents the end-to-end developer workflow in Ship, from receiving a
 
 ---
 
+## Repo Delivery Rule
+
+Ship work is not considered done when it exists only in a feature branch, a temporary worktree, a local session, or a one-off production deploy.
+
+The required finish line is:
+
+1. Commit the changes
+2. Move the committed changes onto local `main` if they were developed elsewhere
+3. Push the result to `origin/main`
+4. If production should reflect the work, redeploy from that exact `main` commit
+
+Pull requests are optional. They are useful for review, but they are not required to keep `main` and production in sync.
+
+---
+
 ## Overview
 
 Ship follows a document-first approach where everything (issues, weeks, programs, wikis) is a document. The developer workflow centers around:
@@ -15,19 +30,6 @@ Ship follows a document-first approach where everything (issues, weeks, programs
 2. **Issues** - Work items with state, priority, and assignee
 3. **Weeks** - Time-boxed iterations with goals and backlog planning
 4. **Documents** - Wiki pages, weekly plans, and retrospectives
-
-## Repo Delivery Rule
-
-Ship uses a mainline-sync workflow for both human and agent contributors:
-
-1. Finished or deployed work must be committed
-2. The commit must be pushed to GitHub
-3. A pull request must be opened
-4. The pull request must be merged to `main`
-
-Local-only branches, worktrees, or session state do not count as completed delivery. If a branch is stale, rebase or cherry-pick the work onto the latest `origin/main` before merging.
-
----
 
 ## Workflow 1: Issue Triage & Assignment
 
