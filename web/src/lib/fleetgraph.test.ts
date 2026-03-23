@@ -386,6 +386,10 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
       route: '/documents/issue-1',
       surface: 'issue',
       tab: null,
+      audienceRole: 'issue_assignee',
+      audienceScope: 'individual',
+      deliverySource: 'event',
+      deliveryReason: 'test fixture',
       signalKinds: ['issue_blocker_logged'],
       lastDetectedAt: '2026-03-22T10:00:00.000Z',
       lastNotifiedAt: '2026-03-22T10:00:00.000Z',
@@ -410,6 +414,10 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
       route: '/documents/week-2/review',
       surface: 'document',
       tab: 'review',
+      audienceRole: 'manager',
+      audienceScope: 'individual',
+      deliverySource: 'event',
+      deliveryReason: 'test fixture',
       signalKinds: ['changes_requested_review'],
       lastDetectedAt: '2026-03-22T10:00:00.000Z',
       lastNotifiedAt: '2026-03-22T10:00:00.000Z',
@@ -418,6 +426,34 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
     expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
       message: 'FleetGraph flagged Week 13: Review follow-up is overdue.',
       actionLabel: 'Open Review',
+    });
+  });
+
+  it('uses persona-aware copy when a work persona is provided', () => {
+    const finding: FleetGraphProactiveFinding = {
+      id: 'finding-3',
+      workspaceId: 'workspace-1',
+      weekId: 'week-3',
+      projectId: 'project-3',
+      programId: null,
+      title: 'Week 14',
+      summary: 'An issue was reopened after completion.',
+      severity: 'warning',
+      route: '/documents/issue-3',
+      surface: 'issue',
+      tab: null,
+      audienceRole: 'issue_assignee',
+      audienceScope: 'individual',
+      deliverySource: 'event',
+      deliveryReason: 'test fixture',
+      signalKinds: ['issue_reopened_after_done'],
+      lastDetectedAt: '2026-03-22T10:00:00.000Z',
+      lastNotifiedAt: '2026-03-22T10:00:00.000Z',
+    };
+
+    expect(buildFleetGraphProactiveFindingToastCopy(finding, 'engineer')).toEqual({
+      message: 'FleetGraph noticed engineering follow-up: An issue was reopened after completion.',
+      actionLabel: 'Open Issue',
     });
   });
 });

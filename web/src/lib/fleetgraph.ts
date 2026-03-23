@@ -6,6 +6,7 @@ import type {
   FleetGraphOnDemandResumeRequest,
   FleetGraphOnDemandResponse,
   FleetGraphProactiveFinding,
+  WorkPersona,
 } from '@ship/shared';
 import { apiGet, apiPost } from '@/lib/api';
 import type { DocumentResponse } from '@/lib/document-tabs';
@@ -285,8 +286,50 @@ export function resolveFleetGraphActiveView({
   });
 }
 
-export function buildFleetGraphProactiveFindingToastCopy(
+function describePersonaFollowUp(
+  workPersona: WorkPersona,
   finding: FleetGraphProactiveFinding
+): string {
+  const personaLabel = (() => {
+    switch (workPersona) {
+      case 'product_manager':
+        return 'product';
+      case 'engineer':
+        return 'engineering';
+      case 'engineering_manager':
+        return 'engineering manager';
+      case 'designer':
+        return 'design';
+      case 'qa':
+        return 'QA';
+      case 'ops_platform':
+        return 'ops/platform';
+      case 'stakeholder':
+        return 'stakeholder';
+      case 'other':
+      default:
+        return 'team';
+    }
+  })();
+
+  if (finding.audienceScope === 'team' || finding.audienceRole === 'team_member') {
+    return `${personaLabel} coordination`;
+  }
+
+  if (finding.audienceRole === 'accountable') {
+    return `${personaLabel} decision`;
+  }
+
+  if (finding.audienceRole === 'manager') {
+    return `${personaLabel} support`;
+  }
+
+  return `${personaLabel} follow-up`;
+}
+
+export function buildFleetGraphProactiveFindingToastCopy(
+  finding: FleetGraphProactiveFinding,
+  workPersona?: WorkPersona | null
 ): { message: string; actionLabel: string } {
   const title = finding.title ?? 'Current week';
   const prefix =
@@ -295,9 +338,10 @@ export function buildFleetGraphProactiveFindingToastCopy(
       : finding.severity === 'warning'
         ? 'FleetGraph noticed'
         : 'FleetGraph surfaced';
+  const personaLead = workPersona ? describePersonaFollowUp(workPersona, finding) : null;
 
   return {
-    message: `${prefix} ${title}: ${finding.summary}`,
+    message: `${prefix} ${personaLead ?? title}: ${finding.summary}`,
     actionLabel: getFleetGraphProactiveActionLabel(finding),
   };
 }

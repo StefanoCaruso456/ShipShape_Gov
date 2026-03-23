@@ -1794,6 +1794,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       workspaceId,
       sprintId: id as string,
       actorId: userId,
+      actorWorkPersona: req.userWorkPersona ?? null,
       eventKind: 'sprint_updated',
       previous: {
         status: currentProps.status || null,
@@ -1905,6 +1906,7 @@ router.post('/:id/start', authMiddleware, async (req: Request, res: Response) =>
       workspaceId,
       sprintId: id as string,
       actorId: userId,
+      actorWorkPersona: req.userWorkPersona ?? null,
       eventKind: 'sprint_started',
       previous: {
         status: currentStatus,
@@ -3783,6 +3785,7 @@ router.post('/:id/request-plan-changes', authMiddleware, async (req: Request, re
       workspaceId,
       sprintId: id as string,
       actorId: userId,
+      actorWorkPersona: req.userWorkPersona ?? null,
       eventKind: 'sprint_plan_changes_requested',
       approval: {
         previousState: currentProps.plan_approval?.state ?? null,
@@ -3892,6 +3895,7 @@ router.post('/:id/request-retro-changes', authMiddleware, async (req: Request, r
       workspaceId,
       sprintId: id as string,
       actorId: userId,
+      actorWorkPersona: req.userWorkPersona ?? null,
       eventKind: 'sprint_review_changes_requested',
       approval: {
         previousState: currentProps.review_approval?.state ?? null,
