@@ -3,6 +3,7 @@ import { DEMO_PROGRAM_TEMPLATES, DEMO_PROJECT_TEMPLATES } from './demoWorkspaceT
 import { buildIssuePlanningProperties, ensureIssuePlanningProperties } from './seedPlanningUtils.js';
 import { inferSeedIssueType } from './seedIssueTypes.js';
 import { createIssueTemplateContent, shouldPopulateIssueTemplate } from '../utils/issueContentTemplate.js';
+import { hasSprintPlanningSnapshot, persistSprintPlanningSnapshot } from '../utils/sprint-planning.js';
 
 interface PopulateDemoWorkspaceOptions {
   workspaceId: string;
@@ -289,6 +290,13 @@ function toIsoDate(date: Date): string {
   return date.toISOString().split('T')[0] as string;
 }
 
+function buildSprintSnapshotDate(workspaceSprintStartDate: Date, sprintNumber: number): Date {
+  const snapshotDate = new Date(workspaceSprintStartDate);
+  snapshotDate.setUTCHours(0, 0, 0, 0);
+  snapshotDate.setUTCDate(snapshotDate.getUTCDate() + (sprintNumber - 1) * 7);
+  return snapshotDate;
+}
+
 async function resolveOwnerPersonDocumentId(
   pool: pg.Pool,
   workspaceId: string,
@@ -330,6 +338,28 @@ async function resolveCurrentWeekNumber(pool: pg.Pool, workspaceId: string): Pro
   );
 
   return Math.max(1, Math.floor(daysSinceStart / 7) + 1);
+}
+
+async function resolveWorkspaceSprintStartDate(pool: pg.Pool, workspaceId: string): Promise<Date> {
+  const result = await pool.query(
+    `SELECT sprint_start_date
+     FROM workspaces
+     WHERE id = $1`,
+    [workspaceId]
+  );
+
+  const rawStartDate = result.rows[0]?.sprint_start_date;
+  if (rawStartDate instanceof Date) {
+    return new Date(
+      Date.UTC(rawStartDate.getFullYear(), rawStartDate.getMonth(), rawStartDate.getDate())
+    );
+  }
+
+  if (typeof rawStartDate === 'string') {
+    return new Date(`${rawStartDate}T00:00:00Z`);
+  }
+
+  return new Date();
 }
 
 async function ensureDemoWorkspaceProgramsAndProjects(
@@ -487,6 +517,7 @@ export async function populateDemoWorkspaceData(
   }
 
   const currentWeekNumber = await resolveCurrentWeekNumber(pool, workspaceId);
+  const workspaceSprintStartDate = await resolveWorkspaceSprintStartDate(pool, workspaceId);
   const primaryProject =
     base.projects.find(
       (project) =>
@@ -672,6 +703,30 @@ export async function populateDemoWorkspaceData(
         await createAssociation(pool, createdIssue.rows[0].id, sprintRecord.id, 'sprint');
       }
       issuesCreated++;
+    }
+  }
+
+  for (const projectSprintMap of sprintMap.values()) {
+    for (const [weekNumber, sprintRecord] of projectSprintMap.entries()) {
+      if (weekNumber > currentWeekNumber) {
+        continue;
+      }
+
+      const sprintPropertiesResult = await pool.query(
+        `SELECT properties
+         FROM documents
+         WHERE id = $1`,
+        [sprintRecord.id]
+      );
+      const sprintProperties = sprintPropertiesResult.rows[0]?.properties as Record<string, unknown> | undefined;
+      if (hasSprintPlanningSnapshot(sprintProperties)) {
+        continue;
+      }
+
+      await persistSprintPlanningSnapshot(pool, sprintRecord.id, sprintProperties, {
+        source: weekNumber < currentWeekNumber ? 'seeded_history' : 'captured_at_start',
+        snapshotTakenAt: buildSprintSnapshotDate(workspaceSprintStartDate, weekNumber),
+      });
     }
   }
 

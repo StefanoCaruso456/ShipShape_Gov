@@ -2,12 +2,20 @@ import { useMemo } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { WeekAnalyticsPanel } from '@/components/week';
 import { useAnalyticsSprintsQuery } from '@/hooks/useAnalyticsSprintsQuery';
-import { buildAnalyticsPath, parseAnalyticsView } from '@/lib/analytics-route';
+import {
+  buildAnalyticsPath,
+  parseAnalyticsHistoryScope,
+  parseAnalyticsView,
+  parseAnalyticsWeekNumber,
+} from '@/lib/analytics-route';
 
 export function AnalyticsPage() {
   const [searchParams] = useSearchParams();
   const requestedSprintId = searchParams.get('sprintId');
   const activeView = parseAnalyticsView(searchParams.get('view'));
+  const historyScope = parseAnalyticsHistoryScope(searchParams.get('historyScope'));
+  const historyStartWeek = parseAnalyticsWeekNumber(searchParams.get('historyStartWeek'));
+  const historyEndWeek = parseAnalyticsWeekNumber(searchParams.get('historyEndWeek'));
   const { data: analyticsSprints = [], isLoading, error } = useAnalyticsSprintsQuery();
 
   const availableSprintIds = useMemo(() => {
@@ -20,11 +28,29 @@ export function AnalyticsPage() {
   const activeSprintId = requestedSprintId ?? fallbackSprintId;
 
   if (!requestedSprintId && fallbackSprintId) {
-    return <Navigate to={buildAnalyticsPath(fallbackSprintId, activeView)} replace />;
+    return (
+      <Navigate
+        to={buildAnalyticsPath(fallbackSprintId, activeView, {
+          historyScope,
+          historyStartWeek,
+          historyEndWeek,
+        })}
+        replace
+      />
+    );
   }
 
   if (requestedSprintId && fallbackSprintId && !requestedSprintIsKnown) {
-    return <Navigate to={buildAnalyticsPath(fallbackSprintId, activeView)} replace />;
+    return (
+      <Navigate
+        to={buildAnalyticsPath(fallbackSprintId, activeView, {
+          historyScope,
+          historyStartWeek,
+          historyEndWeek,
+        })}
+        replace
+      />
+    );
   }
 
   if (isLoading && !activeSprintId) {

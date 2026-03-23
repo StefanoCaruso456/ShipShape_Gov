@@ -1,8 +1,12 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/cn';
 import type { DashboardId } from '@/components/week';
-import { buildAnalyticsPath } from '@/lib/analytics-route';
+import {
+  buildAnalyticsPath,
+  parseAnalyticsHistoryScope,
+  parseAnalyticsWeekNumber,
+} from '@/lib/analytics-route';
 
 export interface AnalyticsSidebarSprint {
   id: string;
@@ -42,6 +46,10 @@ export function AnalyticsSidebar({
   activeSprintId,
   activeView,
 }: AnalyticsSidebarProps) {
+  const [searchParams] = useSearchParams();
+  const historyScope = parseAnalyticsHistoryScope(searchParams.get('historyScope'));
+  const historyStartWeek = parseAnalyticsWeekNumber(searchParams.get('historyStartWeek'));
+  const historyEndWeek = parseAnalyticsWeekNumber(searchParams.get('historyEndWeek'));
   const groupedSprints = useMemo(
     () =>
       SIDEBAR_SECTIONS.map((section) => ({
@@ -70,7 +78,11 @@ export function AnalyticsSidebar({
               {section.sprints.map((sprint) => (
                 <Link
                   key={sprint.id}
-                  to={buildAnalyticsPath(sprint.id)}
+                  to={buildAnalyticsPath(sprint.id, activeView, {
+                    historyScope,
+                    historyStartWeek,
+                    historyEndWeek,
+                  })}
                   className={cn(
                     'block rounded-md px-2 py-2 transition-colors',
                     sprint.id === activeSprintId
@@ -112,7 +124,11 @@ export function AnalyticsSidebar({
             {DASHBOARD_LINKS.map((dashboard) => (
               <Link
                 key={dashboard.id}
-                to={buildAnalyticsPath(activeSprintId, dashboard.id)}
+                to={buildAnalyticsPath(activeSprintId, dashboard.id, {
+                  historyScope,
+                  historyStartWeek,
+                  historyEndWeek,
+                })}
                 className={cn(
                   'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
                   dashboard.id === activeView

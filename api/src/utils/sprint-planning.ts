@@ -11,6 +11,11 @@ export interface SprintPlanningSnapshot {
   estimateHours: number;
 }
 
+export type SprintPlanningSnapshotSource =
+  | 'captured_at_start'
+  | 'backfilled_from_current_scope'
+  | 'seeded_history';
+
 export interface SprintAnalyticsSnapshotRow {
   snapshot_date: string;
   current_issue_count: number;
@@ -65,6 +70,74 @@ export function getIssuePlanningMetrics(properties: Record<string, unknown> | nu
   return {
     storyPoints,
     estimateHours,
+  };
+}
+
+export function hasSprintPlanningSnapshot(properties: Record<string, unknown> | null | undefined): boolean {
+  const props = properties ?? {};
+  return (
+    Array.isArray(props.planned_issue_ids) ||
+    props.planned_issue_count !== undefined ||
+    props.planned_story_points !== undefined ||
+    props.planned_estimate_hours !== undefined ||
+    props.snapshot_taken_at !== undefined
+  );
+}
+
+export function buildSprintPlanningSnapshotProperties(
+  properties: Record<string, unknown> | null | undefined,
+  snapshot: SprintPlanningSnapshot,
+  snapshotTakenAt: string,
+  source: SprintPlanningSnapshotSource
+): Record<string, unknown> {
+  return {
+    ...(properties ?? {}),
+    planned_issue_ids: snapshot.issueIds,
+    planned_issue_count: snapshot.issueCount,
+    planned_story_points: snapshot.storyPoints,
+    planned_estimate_hours: snapshot.estimateHours,
+    snapshot_taken_at: snapshotTakenAt,
+    planning_snapshot_source: source,
+  };
+}
+
+export async function persistSprintPlanningSnapshot(
+  queryable: Queryable,
+  sprintId: string,
+  properties: Record<string, unknown> | null | undefined,
+  options: {
+    source: SprintPlanningSnapshotSource;
+    snapshotTakenAt?: string | Date;
+  }
+): Promise<{
+  snapshot: SprintPlanningSnapshot;
+  properties: Record<string, unknown>;
+  snapshotTakenAt: string;
+}> {
+  const snapshot = await takeSprintPlanningSnapshot(queryable, sprintId);
+  const snapshotTakenAt =
+    options.snapshotTakenAt instanceof Date
+      ? options.snapshotTakenAt.toISOString()
+      : options.snapshotTakenAt ?? new Date().toISOString();
+  const nextProperties = buildSprintPlanningSnapshotProperties(
+    properties,
+    snapshot,
+    snapshotTakenAt,
+    options.source
+  );
+
+  await queryable.query(
+    `UPDATE documents
+     SET properties = $1,
+         updated_at = NOW()
+     WHERE id = $2`,
+    [JSON.stringify(nextProperties), sprintId]
+  );
+
+  return {
+    snapshot,
+    properties: nextProperties,
+    snapshotTakenAt,
   };
 }
 
