@@ -53,6 +53,15 @@ const reasoningJsonSchema = {
   },
 } as const;
 
+interface FleetGraphLangSmithUsageMetadata {
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  input_token_details?: Record<string, number>;
+  output_token_details?: Record<string, number>;
+  total_cost?: number;
+}
+
 function getOpenAiApiKey(): string | null {
   const apiKey = process.env.OPENAI_API_KEY?.trim() ?? process.env.OPEN_API_KEY?.trim();
   return apiKey || null;
@@ -134,6 +143,105 @@ function extractUsage(payload: Record<string, unknown>) {
     'openai',
     getOpenAiModel()
   );
+}
+
+function readUsageRecord(payload: Record<string, unknown>): Record<string, unknown> | null {
+  const usage = payload.usage;
+  if (!usage || typeof usage !== 'object') {
+    return null;
+  }
+
+  return usage as Record<string, unknown>;
+}
+
+function readOptionalNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function buildLangSmithTokenDetails(
+  usage: Record<string, unknown>,
+  field: 'prompt_tokens_details' | 'completion_tokens_details'
+): Record<string, number> | undefined {
+  const rawDetails = usage[field];
+  if (!rawDetails || typeof rawDetails !== 'object') {
+    return undefined;
+  }
+
+  const details = rawDetails as Record<string, unknown>;
+  const normalized: Record<string, number> = {};
+
+  if (field === 'prompt_tokens_details') {
+    const audio = readOptionalNumber(details.audio_tokens);
+    const cachedTokens = readOptionalNumber(details.cached_tokens);
+    if (audio !== undefined) {
+      normalized.audio = audio;
+    }
+    if (cachedTokens !== undefined) {
+      normalized.cache_read = cachedTokens;
+    }
+  } else {
+    const audio = readOptionalNumber(details.audio_tokens);
+    const reasoning = readOptionalNumber(details.reasoning_tokens);
+    if (audio !== undefined) {
+      normalized.audio = audio;
+    }
+    if (reasoning !== undefined) {
+      normalized.reasoning = reasoning;
+    }
+  }
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
+function buildLangSmithUsageMetadata(
+  payload: Record<string, unknown>
+): FleetGraphLangSmithUsageMetadata | undefined {
+  const usage = readUsageRecord(payload);
+  if (!usage) {
+    return undefined;
+  }
+
+  const estimatedUsage = extractUsage(payload);
+  const inputTokens = readOptionalNumber(usage.prompt_tokens);
+  const outputTokens = readOptionalNumber(usage.completion_tokens);
+  const inputTokenDetails = buildLangSmithTokenDetails(usage, 'prompt_tokens_details');
+  const outputTokenDetails = buildLangSmithTokenDetails(usage, 'completion_tokens_details');
+  const totalTokens =
+    readOptionalNumber(usage.total_tokens) ??
+    (inputTokens !== undefined || outputTokens !== undefined
+      ? (inputTokens ?? 0) + (outputTokens ?? 0)
+      : undefined);
+
+  if (inputTokens === undefined && outputTokens === undefined && totalTokens === undefined) {
+    return undefined;
+  }
+
+  return {
+    input_tokens: inputTokens ?? 0,
+    output_tokens: outputTokens ?? 0,
+    total_tokens: totalTokens ?? 0,
+    ...(inputTokenDetails ? { input_token_details: inputTokenDetails } : {}),
+    ...(outputTokenDetails ? { output_token_details: outputTokenDetails } : {}),
+    ...(estimatedUsage?.estimatedCostUsd !== undefined
+      ? {
+          total_cost: estimatedUsage.estimatedCostUsd,
+        }
+      : {}),
+  };
+}
+
+function withUsageMetadata(
+  output: Record<string, unknown>,
+  usageMetadata: FleetGraphLangSmithUsageMetadata | undefined
+): Record<string, unknown> {
+  if (!usageMetadata) {
+    return output;
+  }
+
+  return {
+    ...output,
+    usage_metadata: usageMetadata,
+  };
 }
 
 function buildReasoningTraceInputs(
@@ -245,8 +353,13 @@ export function createFleetGraphReasoner(
             extra: {
               metadata: {
                 feature: 'fleetgraph_reasoning',
-                provider: 'openai',
-                model: getOpenAiModel(),
+                ls_provider: 'openai',
+                ls_model_name: getOpenAiModel(),
+                ls_temperature: 0,
+                ls_max_tokens: REASONING_MAX_TOKENS,
+                ls_invocation_params: {
+                  response_format: 'json_schema',
+                },
                 ...(options.traceMetadata ?? {}),
               },
             },
@@ -301,6 +414,7 @@ export function createFleetGraphReasoner(
 
         const payload = (await response.json()) as Record<string, unknown>;
         const usage = extractUsage(payload);
+        const usageMetadata = buildLangSmithUsageMetadata(payload);
         if (!response.ok) {
           const message =
             typeof payload.error === 'object' &&
@@ -318,12 +432,12 @@ export function createFleetGraphReasoner(
             },
           });
           await finalizeReasoningTraceRun(reasoningRun, {
-            outputs: {
+            outputs: withUsageMetadata({
               fallback: 'request_failure',
-            },
+            }, usageMetadata),
             metadata: {
               response_status: response.status,
-              usage,
+              ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
             },
             error: message,
           });
@@ -348,12 +462,12 @@ export function createFleetGraphReasoner(
             },
           });
           await finalizeReasoningTraceRun(reasoningRun, {
-            outputs: {
+            outputs: withUsageMetadata({
               fallback: 'empty_response',
-            },
+            }, usageMetadata),
             metadata: {
-              usage,
               response_status: response.status,
+              ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
             },
           });
           reasoningTraceFinished = true;
@@ -372,11 +486,14 @@ export function createFleetGraphReasoner(
             },
           });
           await finalizeReasoningTraceRun(reasoningRun, {
-            outputs: parsed,
+            outputs: withUsageMetadata({
+              parsed,
+              response_text: content,
+            }, usageMetadata),
             metadata: {
-              usage,
               response_status: response.status,
               fallback: false,
+              ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
             },
           });
           reasoningTraceFinished = true;
@@ -396,12 +513,12 @@ export function createFleetGraphReasoner(
             },
           });
           await finalizeReasoningTraceRun(reasoningRun, {
-            outputs: {
+            outputs: withUsageMetadata({
               fallback: 'parse_failure',
-            },
+            }, usageMetadata),
             metadata: {
-              usage,
               response_status: response.status,
+              ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
             },
             error,
           });
