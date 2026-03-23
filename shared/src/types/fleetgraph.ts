@@ -1,4 +1,5 @@
 import type { DocumentType } from './document.js';
+import type { WorkPersona } from './user.js';
 
 import type { WorkPersona } from './user.js';
 

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../db/client.js';
 import { z } from 'zod';
+import { WORK_PERSONAS, type WorkPersona } from '@ship/shared';
 import { authMiddleware, getAuthContext } from '../middleware/auth.js';
 import { isWorkspaceAdmin } from '../middleware/visibility.js';
 import { handleVisibilityChange, handleDocumentConversion, invalidateDocumentCache, broadcastToUser } from '../collaboration/index.js';
@@ -10,6 +11,10 @@ import { loadContentFromYjsState } from '../utils/yjsConverter.js';
 
 type RouterType = ReturnType<typeof Router>;
 const router: RouterType = Router();
+
+function isWorkPersona(value: unknown): value is WorkPersona {
+  return typeof value === 'string' && WORK_PERSONAS.includes(value as WorkPersona);
+}
 
 // Check if user can access a document (visibility check)
 async function canAccessDocument(
@@ -659,6 +664,14 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     }
 
     const data = parsed.data;
+    const personUserId =
+      existing.document_type === 'person' && typeof existing.properties?.user_id === 'string'
+        ? existing.properties.user_id
+        : null;
+    const requestedWorkPersona =
+      existing.document_type === 'person' && data.properties && Object.prototype.hasOwnProperty.call(data.properties, 'work_persona')
+        ? data.properties.work_persona
+        : undefined;
 
     // Check permission for visibility changes
     if (data.visibility !== undefined && data.visibility !== existing.visibility) {
@@ -680,6 +693,30 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       if (parentResult.rows[0]?.visibility === 'workspace' && existing.visibility === 'private') {
         // Moving private doc under workspace parent makes it workspace-visible
         data.visibility = 'workspace';
+      }
+    }
+
+    // Restrict reports_to changes on person documents to workspace admins
+    if (existing.document_type === 'person' && data.properties?.reports_to !== undefined) {
+      const isAdmin = await isWorkspaceAdmin(userId, workspaceId);
+      if (!isAdmin) {
+        res.status(403).json({ error: 'Only workspace admins can set the reports_to field' });
+        return;
+      }
+    }
+
+    if (existing.document_type === 'person' && requestedWorkPersona !== undefined) {
+      const isAdmin = await isWorkspaceAdmin(userId, workspaceId);
+      const isSelf = personUserId !== null && personUserId === userId;
+
+      if (!isAdmin && !isSelf) {
+        res.status(403).json({ error: 'Only the linked user or a workspace admin can set work persona' });
+        return;
+      }
+
+      if (requestedWorkPersona !== null && !isWorkPersona(requestedWorkPersona)) {
+        res.status(400).json({ error: 'Invalid work persona' });
+        return;
       }
     }
 
@@ -766,15 +803,6 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     if (data.informed_ids !== undefined) topLevelProps.informed_ids = data.informed_ids;
 
     const hasTopLevelProps = Object.keys(topLevelProps).length > 0;
-
-    // Restrict reports_to changes on person documents to workspace admins
-    if (existing.document_type === 'person' && data.properties?.reports_to !== undefined) {
-      const isAdmin = await isWorkspaceAdmin(userId, workspaceId);
-      if (!isAdmin) {
-        res.status(403).json({ error: 'Only workspace admins can set the reports_to field' });
-        return;
-      }
-    }
 
     // Handle properties update - merge existing, data.properties, top-level fields, and extracted values
     // Content is source of truth: extracted values override any manually set hypothesis/success_criteria/vision/goals
@@ -979,6 +1007,15 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       `UPDATE documents SET ${updates.join(', ')} WHERE id = $${paramIndex} AND workspace_id = $${paramIndex + 1} RETURNING *`,
       [...values, id, workspaceId]
     );
+
+    if (existing.document_type === 'person' && requestedWorkPersona !== undefined && personUserId) {
+      await client.query(
+        `UPDATE users
+         SET work_persona = $1, updated_at = NOW()
+         WHERE id = $2`,
+        [requestedWorkPersona, personUserId]
+      );
+    }
 
     // When a weekly plan/retro is edited after changes were requested, move it back to re-review.
     if (contentUpdated && (existing.document_type === 'weekly_plan' || existing.document_type === 'weekly_retro')) {

@@ -228,6 +228,42 @@ function normalizeRoute(route: string): string {
   return route.trim();
 }
 
+function getFleetGraphProactiveActionLabel(finding: FleetGraphProactiveFinding): string {
+  if (finding.surface === 'my_week') {
+    return 'Open My Week';
+  }
+
+  if (finding.surface === 'project') {
+    return 'Open Project';
+  }
+
+  if (finding.surface === 'program') {
+    return 'Open Program';
+  }
+
+  if (finding.surface === 'issue') {
+    return 'Open Issue';
+  }
+
+  if (finding.tab === 'plan') {
+    return 'Open Plan';
+  }
+
+  if (finding.tab === 'retro' || finding.tab === 'review') {
+    return 'Open Review';
+  }
+
+  if (finding.tab === 'issues') {
+    return 'Open Issues';
+  }
+
+  if (finding.tab === 'details') {
+    return 'Open Details';
+  }
+
+  return 'Open Surface';
+}
+
 export function resolveFleetGraphActiveView({
   currentDocumentId,
   currentDocumentProjectId,
@@ -262,7 +298,7 @@ export function buildFleetGraphProactiveFindingToastCopy(
 
   return {
     message: `${prefix} ${title}: ${finding.summary}`,
-    actionLabel: 'Open',
+    actionLabel: getFleetGraphProactiveActionLabel(finding),
   };
 }
 
@@ -283,7 +319,7 @@ export function buildFleetGraphProactiveFindingFeedback(
     route_action:
       eventName === 'proactive_toast_clicked'
         ? {
-            label: 'Open',
+            label: getFleetGraphProactiveActionLabel(finding),
             route: finding.route,
             featured: true,
             intent: 'inspect',
