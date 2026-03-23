@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import type { Request } from 'express';
 import { Command } from '@langchain/langgraph';
 import {
+  buildFleetGraphTraceFromInput,
   createFleetGraph,
   createFleetGraphRunnableConfig,
   createFleetGraphRuntime,
@@ -63,6 +64,18 @@ function enrichFleetGraphResultTelemetry(
       loopDetected: inferLoopDetected(result),
     },
   };
+}
+
+function toLangChainMetadata(
+  metadata: FleetGraphState['trace']['metadata'] | null | undefined
+): Record<string, unknown> | undefined {
+  if (!metadata) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(metadata).filter(([, value]) => value !== undefined)
+  );
 }
 
 function buildInternalApiUrl(path: string): string {
@@ -203,10 +216,20 @@ export async function invokeFleetGraph(
     checkpointNamespace?: string;
   }
 ): Promise<FleetGraphInvokeResult> {
-  const normalizedInput: FleetGraphRunInput = {
+  const threadId = input.runId ?? randomUUID();
+  const normalizedInput = {
     ...input,
-    runId: input.runId ?? randomUUID(),
-  };
+    runId: threadId,
+    trace: buildFleetGraphTraceFromInput(
+      {
+        ...input,
+        runId: threadId,
+      },
+      {
+        threadId,
+      }
+    ),
+  } as FleetGraphRunInput & { trace: FleetGraphState['trace'] };
 
   const logger = options.logger ?? createFleetGraphLogger('FleetGraph');
   const telemetryRun = createFleetGraphTelemetryRun(normalizedInput, logger);
@@ -223,11 +246,13 @@ export async function invokeFleetGraph(
 
   try {
     const result = (await graph.invoke(
-      normalizedInput,
+      normalizedInput as unknown as FleetGraphState,
       createFleetGraphRunnableConfig(runtime, {
         threadId: normalizedInput.runId,
         checkpointNamespace: options.checkpointNamespace ?? 'fleetgraph',
+        runName: normalizedInput.trace?.runName ?? undefined,
         tags: normalizedInput.trace?.tags,
+        metadata: toLangChainMetadata(normalizedInput.trace?.metadata),
         callbacks: langSmithSession?.callbacks,
       })
     )) as FleetGraphInvokeResult;
@@ -273,7 +298,13 @@ export async function resumeFleetGraph(
       tags: options.tags ?? ['fleetgraph', 'resume'],
     },
   };
-  const telemetryRun = createFleetGraphTelemetryRun(telemetryInput, logger);
+  const normalizedTelemetryInput: FleetGraphRunInput = {
+    ...telemetryInput,
+    trace: buildFleetGraphTraceFromInput(telemetryInput, {
+      threadId,
+    }),
+  };
+  const telemetryRun = createFleetGraphTelemetryRun(normalizedTelemetryInput, logger);
   const langSmithSession = createFleetGraphLangSmithSession();
   const startedAt = Date.now();
   const runtime = createFleetGraphRuntime({
@@ -292,7 +323,9 @@ export async function resumeFleetGraph(
       createFleetGraphRunnableConfig(runtime, {
         threadId,
         checkpointNamespace: options.checkpointNamespace ?? 'fleetgraph',
+        runName: normalizedTelemetryInput.trace?.runName ?? undefined,
         tags: options.tags,
+        metadata: toLangChainMetadata(normalizedTelemetryInput.trace?.metadata),
         callbacks: langSmithSession?.callbacks,
       })
     )) as FleetGraphInvokeResult;

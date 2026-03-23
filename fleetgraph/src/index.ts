@@ -29,6 +29,10 @@ export {
   createIntervention,
   pauseForHumanApproval,
 } from './supervision.js';
+export {
+  buildFleetGraphTraceFromInput,
+  buildFleetGraphTraceFromState,
+} from './trace-metadata.js';
 export type {
   FleetGraphActivitySnapshot,
   FleetGraphActionMemoryRecord,

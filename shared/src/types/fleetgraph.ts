@@ -85,6 +85,21 @@ export interface FleetGraphPageContext {
 
 export type FleetGraphQuestionSource = 'typed' | 'starter_prompt' | 'follow_up_prompt';
 
+export type FleetGraphRunMode = 'proactive' | 'on_demand';
+
+export type FleetGraphTriggerType =
+  | 'event'
+  | 'sweep'
+  | 'user_invoke'
+  | 'resume';
+
+export type FleetGraphStatus =
+  | 'starting'
+  | 'running'
+  | 'waiting_on_human'
+  | 'completed'
+  | 'failed';
+
 export interface FleetGraphOnDemandRequest {
   active_view: FleetGraphActiveViewContext | null;
   page_context?: FleetGraphPageContext | null;
@@ -215,6 +230,22 @@ export interface FleetGraphApprovalTrace {
   latencyMs: number;
 }
 
+export type FleetGraphReasoningSource = 'deterministic' | 'model';
+
+export type FleetGraphSuppressionReason =
+  | 'approved_before'
+  | 'dismissed_before'
+  | 'snoozed';
+
+export type FleetGraphTerminalOutcome =
+  | 'quiet'
+  | 'finding_only'
+  | 'waiting_on_human'
+  | 'action_executed'
+  | 'suppressed'
+  | 'failed_retryable'
+  | 'failed_terminal';
+
 export type FleetGraphSignalSeverity = 'info' | 'warning' | 'action';
 
 export type FleetGraphDerivedSignalsSeverity = 'none' | FleetGraphSignalSeverity;
@@ -320,8 +351,6 @@ export interface FleetGraphOnDemandReasoning {
   confidence: 'low' | 'medium' | 'high';
 }
 
-export type FleetGraphReasoningSource = 'deterministic' | 'model';
-
 export type FleetGraphOnDemandActionType =
   | 'draft_follow_up_comment'
   | 'draft_escalation_comment';
@@ -349,20 +378,6 @@ export interface FleetGraphOnDemandActionResult {
   snoozedUntil: string | null;
   executedCommentId: string | null;
 }
-
-export type FleetGraphSuppressionReason =
-  | 'approved_before'
-  | 'dismissed_before'
-  | 'snoozed';
-
-export type FleetGraphTerminalOutcome =
-  | 'quiet'
-  | 'finding_only'
-  | 'waiting_on_human'
-  | 'action_executed'
-  | 'suppressed'
-  | 'failed_retryable'
-  | 'failed_terminal';
 
 export interface FleetGraphAttempts {
   reasoning: number;
@@ -411,6 +426,55 @@ export interface FleetGraphTelemetryState {
   approvalCount: number;
   lastToolName: FleetGraphEvidenceToolName | null;
   loopDetected: boolean;
+}
+
+export interface FleetGraphTraceMetadataFields {
+  schemaVersion: 'v1';
+  runId: string | null;
+  threadId: string | null;
+  mode: FleetGraphRunMode | null;
+  triggerType: FleetGraphTriggerType | null;
+  workspaceId: string | null;
+  actorId: string | null;
+  actorKind: 'user' | 'service' | null;
+  actorRole: string | null;
+  actorWorkPersona: WorkPersona | null;
+  activeViewSurface: FleetGraphViewSurface | null;
+  activeViewRoute: string | null;
+  activeViewTab: string | null;
+  activeEntityId: string | null;
+  activeEntityType: FleetGraphViewEntityType | null;
+  activeEntitySourceDocumentType: DocumentType | null;
+  contextEntityId: string | null;
+  contextEntityType: FleetGraphViewEntityType | null;
+  issueId: string | null;
+  weekId: string | null;
+  projectId: string | null;
+  programId: string | null;
+  personId: string | null;
+  questionSource: FleetGraphQuestionSource | null;
+  questionTheme: FleetGraphQuestionTheme | null;
+  answerMode: FleetGraphAnswerMode | null;
+  status: FleetGraphStatus | null;
+  stage: string | null;
+  terminalOutcome: FleetGraphTerminalOutcome | null;
+  signalSeverity: FleetGraphDerivedSignalsSeverity | null;
+  signalKinds: FleetGraphSignalKind[];
+  reasoningSource: FleetGraphReasoningSource | null;
+  pendingApproval: boolean;
+  proposedActionType: FleetGraphOnDemandActionType | null;
+  actionOutcome: FleetGraphOnDemandActionResult['outcome'] | null;
+  suppressionReason: FleetGraphSuppressionReason | null;
+  lastNode: string | null;
+  nodeCount: number;
+  toolCallCount: number;
+  approvalCount: number;
+}
+
+export interface FleetGraphTrace {
+  runName: string | null;
+  tags: string[];
+  metadata: FleetGraphTraceMetadataFields;
 }
 
 export interface FleetGraphOnDemandFetchedEntity {
@@ -546,10 +610,7 @@ export interface FleetGraphOnDemandResponse {
   toolCalls: FleetGraphToolCallTrace[];
   approvals: FleetGraphApprovalTrace[];
   telemetry: FleetGraphTelemetryState;
-  trace: {
-    runName: string | null;
-    tags: string[];
-  };
+  trace: FleetGraphTrace;
 }
 
 export interface FleetGraphProactiveFinding {
@@ -618,6 +679,7 @@ export interface FleetGraphProactiveIssueEventPayload {
     sprintId: string | null;
   };
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   occurredAt: string;
 }
 
@@ -631,6 +693,7 @@ export interface FleetGraphProactiveIssueIterationEventPayload {
     authorName: string | null;
   };
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   occurredAt: string;
 }
 
@@ -654,6 +717,7 @@ export interface FleetGraphProactiveSprintEventPayload {
     ownerPersonId: string | null;
   };
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   occurredAt: string;
 }
 
@@ -667,6 +731,7 @@ export interface FleetGraphProactiveSprintApprovalEventPayload {
     requestedByUserId: string | null;
   };
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   occurredAt: string;
 }
 

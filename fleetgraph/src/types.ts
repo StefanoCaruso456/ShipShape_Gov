@@ -5,12 +5,20 @@ import type {
   FleetGraphApprovalTrace as SharedFleetGraphApprovalTrace,
   FleetGraphAnswerMode as SharedFleetGraphAnswerMode,
   FleetGraphEvidenceToolName as SharedFleetGraphEvidenceToolName,
+  FleetGraphReasoningSource as SharedFleetGraphReasoningSource,
   FleetGraphQuestionSource as SharedFleetGraphQuestionSource,
   FleetGraphPageContext as SharedFleetGraphPageContext,
   FleetGraphQuestionTheme as SharedFleetGraphQuestionTheme,
+  FleetGraphRunMode as SharedFleetGraphRunMode,
   FleetGraphScrumSurface as SharedFleetGraphScrumSurface,
   FleetGraphScrumToolContext as SharedFleetGraphScrumToolContext,
+  FleetGraphStatus as SharedFleetGraphStatus,
+  FleetGraphSuppressionReason as SharedFleetGraphSuppressionReason,
+  FleetGraphTerminalOutcome as SharedFleetGraphTerminalOutcome,
+  FleetGraphTrace as SharedFleetGraphTrace,
   FleetGraphToolCallTrace as SharedFleetGraphToolCallTrace,
+  FleetGraphTriggerType as SharedFleetGraphTriggerType,
+  FleetGraphDerivedSignal as SharedFleetGraphDerivedSignal,
   FleetGraphViewEntityType,
   WorkPersona,
 } from '@ship/shared';
@@ -23,21 +31,9 @@ export type FleetGraphEvidenceToolName = SharedFleetGraphEvidenceToolName;
 export type FleetGraphScrumToolContext = SharedFleetGraphScrumToolContext;
 export type FleetGraphToolCallTrace = SharedFleetGraphToolCallTrace;
 export type FleetGraphApprovalTrace = SharedFleetGraphApprovalTrace;
-
-export type FleetGraphRunMode = 'proactive' | 'on_demand';
-
-export type FleetGraphTriggerType =
-  | 'event'
-  | 'sweep'
-  | 'user_invoke'
-  | 'resume';
-
-export type FleetGraphStatus =
-  | 'starting'
-  | 'running'
-  | 'waiting_on_human'
-  | 'completed'
-  | 'failed';
+export type FleetGraphRunMode = SharedFleetGraphRunMode;
+export type FleetGraphTriggerType = SharedFleetGraphTriggerType;
+export type FleetGraphStatus = SharedFleetGraphStatus;
 
 export type FleetGraphActorKind = 'user' | 'service';
 
@@ -351,7 +347,7 @@ export interface FleetGraphReasoning {
   confidence: FleetGraphReasoningConfidence;
 }
 
-export type FleetGraphReasoningSource = 'deterministic' | 'model';
+export type FleetGraphReasoningSource = SharedFleetGraphReasoningSource;
 
 export type FleetGraphActionType =
   | 'draft_follow_up_comment'
@@ -389,11 +385,6 @@ export interface FleetGraphActionResult {
   executedCommentId: string | null;
 }
 
-export type FleetGraphSuppressionReason =
-  | 'approved_before'
-  | 'dismissed_before'
-  | 'snoozed';
-
 export interface FleetGraphActionMemoryRecord {
   status: 'approved' | 'dismissed' | 'snoozed';
   snoozedUntil: string | null;
@@ -407,14 +398,8 @@ export interface FleetGraphErrorState {
   source: string | null;
 }
 
-export type FleetGraphTerminalOutcome =
-  | 'quiet'
-  | 'finding_only'
-  | 'waiting_on_human'
-  | 'action_executed'
-  | 'suppressed'
-  | 'failed_retryable'
-  | 'failed_terminal';
+export type FleetGraphSuppressionReason = SharedFleetGraphSuppressionReason;
+export type FleetGraphTerminalOutcome = SharedFleetGraphTerminalOutcome;
 
 export interface FleetGraphAttempts {
   reasoning: number;
@@ -471,10 +456,7 @@ export interface FleetGraphTelemetryState {
   loopDetected: boolean;
 }
 
-export interface FleetGraphTraceMetadata {
-  runName: string | null;
-  tags: string[];
-}
+export type FleetGraphTraceMetadata = SharedFleetGraphTrace;
 
 export interface FleetGraphPromptInput {
   question: string | null;
@@ -503,5 +485,6 @@ export interface FleetGraphRunInput {
   activeView?: FleetGraphActiveViewContext | null;
   contextEntity?: FleetGraphEntityRef | null;
   prompt?: FleetGraphPromptInput | null;
-  trace?: FleetGraphTraceMetadata;
+  injectedSignals?: FleetGraphDerivedSignal[];
+  trace?: Partial<FleetGraphTraceMetadata> | null;
 }

@@ -11,9 +11,11 @@ import type {
   FleetGraphSignalSeverity,
   FleetGraphTerminalOutcome,
   FleetGraphTelemetryState,
+  FleetGraphTraceMetadata,
   FleetGraphTimingState,
 } from './types.js';
 import { createIntervention } from './supervision.js';
+import { buildFleetGraphTraceFromState } from './trace-metadata.js';
 
 export interface FleetGraphNodeContext {
   nodeName: string;
@@ -217,15 +219,30 @@ function applyNodeRuntimeUpdate(
     status,
     errorCode
   );
-  const guard = partialUpdate.guard ?? {
+  const guard: FleetGraphGuardState = (partialUpdate.guard as FleetGraphGuardState | undefined) ?? {
     ...context.effectiveGuard,
     transitionCount: context.transitionCount,
   };
-  const timing = partialUpdate.timing ?? {
+  const timing: FleetGraphTimingState = (partialUpdate.timing as FleetGraphTimingState | undefined) ?? {
     ...context.effectiveTiming,
     lastNodeAt: finishedAt.toISOString(),
   };
-  const telemetry = partialUpdate.telemetry ?? resolveTelemetryState(context.state, context.runtime);
+  const telemetry: FleetGraphTelemetryState =
+    (partialUpdate.telemetry as FleetGraphTelemetryState | undefined) ??
+    resolveTelemetryState(context.state, context.runtime);
+  const lastNode = (partialUpdate.lastNode as string | null | undefined) ?? context.nodeName;
+  const baseNextState = {
+    ...context.state,
+    ...partialUpdate,
+    guard,
+    timing,
+    telemetry,
+    lastNode,
+    ...(terminalOutcome ? { terminalOutcome } : {}),
+  } as FleetGraphState;
+  const trace = buildFleetGraphTraceFromState(baseNextState, {
+    traceOverride: (partialUpdate.trace as Partial<FleetGraphTraceMetadata> | null | undefined) ?? null,
+  });
 
   context.runtime.telemetry?.finishNodeSpan(context.span, {
     status,
@@ -242,8 +259,9 @@ function applyNodeRuntimeUpdate(
     guard,
     timing,
     telemetry,
-    lastNode: partialUpdate.lastNode ?? context.nodeName,
+    lastNode,
     nodeHistory: partialUpdate.nodeHistory ?? buildNodeHistory(context.state, context.runtime, entry),
+    trace,
     ...(terminalOutcome ? { terminalOutcome } : {}),
   };
 }
