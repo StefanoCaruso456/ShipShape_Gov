@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { RunnableConfig } from '@langchain/core/runnables';
 import { RunTree } from 'langsmith';
 import type { FleetGraphReasoningService, FleetGraphReasoning, FleetGraphLogger } from '@ship/fleetgraph';
 import { estimateAiCost, finishAiSpan, startAiSpan } from './ai-telemetry.js';
@@ -75,7 +76,7 @@ function stripCodeFences(text: string): string {
   return text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '').trim();
 }
 
-function buildSystemPrompt(): string {
+function buildSprintSystemPrompt(): string {
   return [
     'You are FleetGraph, a project execution reasoning agent inside Ship.',
     'Use only the evidence you are given.',
@@ -88,7 +89,20 @@ function buildSystemPrompt(): string {
   ].join(' ');
 }
 
-function buildUserPrompt(input: Parameters<FleetGraphReasoningService['reasonAboutSprint']>[0]): string {
+function buildCurrentViewSystemPrompt(): string {
+  return [
+    'You are FleetGraph, a context-aware project execution assistant inside Ship.',
+    'Use only the current page snapshot, the provided deterministic draft, and the visible routes/actions in the prompt.',
+    'Answer the user question directly from the current view instead of falling back to generic navigation advice when the page already contains relevant evidence.',
+    'Name the specific visible project, issue, owner, review queue, or route when the evidence supports it.',
+    'Preserve the provided answerMode unless the evidence clearly requires a more grounded execution mode.',
+    'Keep the answer concise, grounded, and actionable.',
+    'Return JSON only with keys: answerMode, summary, evidence, whyNow, recommendedNextStep, confidence.',
+    'Do not invent projects, issues, approvals, blockers, or counts that are not in the evidence.',
+  ].join(' ');
+}
+
+function buildUserPrompt(input: unknown): string {
   return JSON.stringify(input);
 }
 
@@ -244,7 +258,7 @@ function withUsageMetadata(
   };
 }
 
-function buildReasoningTraceInputs(
+function buildSprintReasoningTraceInputs(
   input: Parameters<FleetGraphReasoningService['reasonAboutSprint']>[0]
 ): Record<string, unknown> {
   return {
@@ -307,6 +321,28 @@ function buildReasoningTraceInputs(
   };
 }
 
+function buildCurrentViewReasoningTraceInputs(
+  input: Parameters<FleetGraphReasoningService['reasonAboutCurrentView']>[0]
+): Record<string, unknown> {
+  return {
+    activeViewRoute: input.activeViewRoute,
+    question: input.question,
+    questionTheme: input.questionTheme,
+    workPersona: input.workPersona,
+    pageContext: {
+      kind: input.pageContext.kind,
+      route: input.pageContext.route,
+      title: input.pageContext.title,
+      summary: input.pageContext.summary,
+      emptyState: input.pageContext.emptyState,
+      metrics: input.pageContext.metrics,
+      items: input.pageContext.items.slice(0, 6),
+      actions: (input.pageContext.actions ?? []).slice(0, 6),
+    },
+    deterministicDraft: input.deterministicDraft,
+  };
+}
+
 function serializeTraceError(error: unknown): string {
   return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 }
@@ -332,6 +368,251 @@ async function finalizeReasoningTraceRun(
   await runTree.patchRun();
 }
 
+async function executeReasoningRequest(
+  apiKey: string,
+  logger: FleetGraphLogger,
+  input: {
+    feature: 'fleetgraph_reasoning' | 'fleetgraph_current_view_reasoning';
+    operation: 'fleetgraph.reasoning' | 'fleetgraph.current_view_reasoning';
+    runName: 'fleetgraph.reasoning.model' | 'fleetgraph.current_view.model';
+    tags: string[];
+    systemPrompt: string;
+    userPrompt: string;
+    traceInputs: Record<string, unknown>;
+    workPersona: string | null;
+    options?: {
+      runnableConfig?: RunnableConfig;
+      traceMetadata?: Record<string, unknown>;
+    };
+  }
+): Promise<FleetGraphReasoning | null> {
+  const startedAt = Date.now();
+  const reasoningRun = input.options?.runnableConfig
+    ? RunTree.fromRunnableConfig(input.options.runnableConfig, {
+        name: input.runName,
+        run_type: 'llm',
+        inputs: input.traceInputs,
+        extra: {
+          metadata: {
+            feature: input.feature,
+            ls_provider: 'openai',
+            ls_model_name: getOpenAiModel(),
+            ls_temperature: 0,
+            ls_max_tokens: REASONING_MAX_TOKENS,
+            ls_invocation_params: {
+              response_format: 'json_schema',
+            },
+            ...(input.options?.traceMetadata ?? {}),
+          },
+        },
+        tags: [
+          'fleetgraph',
+          'reasoning',
+          'model',
+          ...input.tags,
+          input.workPersona ? `persona:${input.workPersona}` : 'persona:none',
+        ],
+      })
+    : null;
+  const span = startAiSpan({
+    operation: input.operation,
+    provider: 'openai',
+    model: getOpenAiModel(),
+    region: 'global',
+    systemPrompt: input.systemPrompt,
+    userPrompt: input.userPrompt,
+    maxTokens: REASONING_MAX_TOKENS,
+  });
+
+  await reasoningRun?.postRun();
+  let reasoningTraceFinished = false;
+
+  try {
+    const response = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: getOpenAiModel(),
+        temperature: 0,
+        max_tokens: REASONING_MAX_TOKENS,
+        response_format: {
+          type: 'json_schema',
+          json_schema: reasoningJsonSchema,
+        },
+        messages: [
+          {
+            role: 'system',
+            content: input.systemPrompt,
+          },
+          {
+            role: 'user',
+            content: input.userPrompt,
+          },
+        ],
+      }),
+    });
+
+    const payload = (await response.json()) as Record<string, unknown>;
+    const usage = extractUsage(payload);
+    const usageMetadata = buildLangSmithUsageMetadata(payload);
+    if (!response.ok) {
+      const message =
+        typeof payload.error === 'object' &&
+        payload.error !== null &&
+        typeof (payload.error as { message?: unknown }).message === 'string'
+          ? (payload.error as { message: string }).message
+          : `FleetGraph reasoning request failed with status ${response.status}`;
+      finishAiSpan(span, {
+        latencyMs: Date.now() - startedAt,
+        usage,
+        error: new Error(message),
+        metadata: {
+          feature: input.feature,
+          response_status: response.status,
+        },
+      });
+      await finalizeReasoningTraceRun(reasoningRun, {
+        outputs: withUsageMetadata(
+          {
+            fallback: 'request_failure',
+          },
+          usageMetadata
+        ),
+        metadata: {
+          response_status: response.status,
+          ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
+        },
+        error: message,
+      });
+      reasoningTraceFinished = true;
+      const enrichedError = new Error(message) as Error & {
+        fleetgraphTelemetryFinished?: boolean;
+      };
+      enrichedError.fleetgraphTelemetryFinished = true;
+      throw enrichedError;
+    }
+
+    const content = extractOpenAiContent(payload);
+    if (!content) {
+      logger.warn('FleetGraph reasoning response was empty; falling back', {
+        feature: input.feature,
+      });
+      finishAiSpan(span, {
+        latencyMs: Date.now() - startedAt,
+        usage,
+        responseText: null,
+        metadata: {
+          feature: input.feature,
+          fallback: 'empty_response',
+        },
+      });
+      await finalizeReasoningTraceRun(reasoningRun, {
+        outputs: withUsageMetadata(
+          {
+            fallback: 'empty_response',
+          },
+          usageMetadata
+        ),
+        metadata: {
+          response_status: response.status,
+          ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
+        },
+      });
+      reasoningTraceFinished = true;
+      return null;
+    }
+
+    try {
+      const parsed = reasoningSchema.parse(JSON.parse(stripCodeFences(content)));
+      finishAiSpan(span, {
+        latencyMs: Date.now() - startedAt,
+        usage,
+        responseText: content,
+        metadata: {
+          feature: input.feature,
+          fallback: false,
+        },
+      });
+      await finalizeReasoningTraceRun(reasoningRun, {
+        outputs: withUsageMetadata(
+          {
+            parsed,
+            response_text: content,
+          },
+          usageMetadata
+        ),
+        metadata: {
+          response_status: response.status,
+          fallback: false,
+          ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
+        },
+      });
+      reasoningTraceFinished = true;
+      return parsed;
+    } catch (error) {
+      logger.warn('FleetGraph reasoning response could not be parsed; falling back', {
+        feature: input.feature,
+        message: error instanceof Error ? error.message : 'Unknown parse failure',
+      });
+      finishAiSpan(span, {
+        latencyMs: Date.now() - startedAt,
+        usage,
+        responseText: content,
+        error,
+        metadata: {
+          feature: input.feature,
+          fallback: 'parse_failure',
+        },
+      });
+      await finalizeReasoningTraceRun(reasoningRun, {
+        outputs: withUsageMetadata(
+          {
+            fallback: 'parse_failure',
+          },
+          usageMetadata
+        ),
+        metadata: {
+          response_status: response.status,
+          ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
+        },
+        error,
+      });
+      reasoningTraceFinished = true;
+      return null;
+    }
+  } catch (error) {
+    if (
+      !(
+        error &&
+        typeof error === 'object' &&
+        'fleetgraphTelemetryFinished' in error &&
+        (error as { fleetgraphTelemetryFinished?: boolean }).fleetgraphTelemetryFinished
+      )
+    ) {
+      finishAiSpan(span, {
+        latencyMs: Date.now() - startedAt,
+        error,
+        metadata: {
+          feature: input.feature,
+          fallback: 'request_failure',
+        },
+      });
+    }
+    if (!reasoningTraceFinished) {
+      await finalizeReasoningTraceRun(reasoningRun, {
+        outputs: {
+          fallback: 'request_failure',
+        },
+        error,
+      });
+    }
+    throw error;
+  }
+}
+
 export function createFleetGraphReasoner(
   logger: FleetGraphLogger
 ): FleetGraphReasoningService | null {
@@ -342,217 +623,36 @@ export function createFleetGraphReasoner(
 
   return {
     async reasonAboutSprint(input, options): Promise<FleetGraphReasoning | null> {
-      const systemPrompt = buildSystemPrompt();
-      const userPrompt = buildUserPrompt(input);
-      const startedAt = Date.now();
-      const reasoningRun = options?.runnableConfig
-        ? RunTree.fromRunnableConfig(options.runnableConfig, {
-            name: 'fleetgraph.reasoning.model',
-            run_type: 'llm',
-            inputs: buildReasoningTraceInputs(input),
-            extra: {
-              metadata: {
-                feature: 'fleetgraph_reasoning',
-                ls_provider: 'openai',
-                ls_model_name: getOpenAiModel(),
-                ls_temperature: 0,
-                ls_max_tokens: REASONING_MAX_TOKENS,
-                ls_invocation_params: {
-                  response_format: 'json_schema',
-                },
-                ...(options.traceMetadata ?? {}),
-              },
-            },
-            tags: [
-              'fleetgraph',
-              'reasoning',
-              'model',
-              input.workPersona ? `persona:${input.workPersona}` : 'persona:none',
-            ],
-          })
-        : null;
-      const span = startAiSpan({
+      return executeReasoningRequest(apiKey, logger, {
+        feature: 'fleetgraph_reasoning',
         operation: 'fleetgraph.reasoning',
-        provider: 'openai',
-        model: getOpenAiModel(),
-        region: 'global',
-        systemPrompt,
-        userPrompt,
-        maxTokens: REASONING_MAX_TOKENS,
+        runName: 'fleetgraph.reasoning.model',
+        tags: ['sprint'],
+        systemPrompt: buildSprintSystemPrompt(),
+        userPrompt: buildUserPrompt(input),
+        traceInputs: buildSprintReasoningTraceInputs(input),
+        workPersona: input.workPersona,
+        options,
       });
-
-      await reasoningRun?.postRun();
-      let reasoningTraceFinished = false;
-
-      try {
-        const response = await fetch(OPENAI_API_URL, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: getOpenAiModel(),
-            temperature: 0,
-            max_tokens: REASONING_MAX_TOKENS,
-            response_format: {
-              type: 'json_schema',
-              json_schema: reasoningJsonSchema,
-            },
-            messages: [
-              {
-                role: 'system',
-                content: systemPrompt,
-              },
-              {
-                role: 'user',
-                content: userPrompt,
-              },
-            ],
-          }),
-        });
-
-        const payload = (await response.json()) as Record<string, unknown>;
-        const usage = extractUsage(payload);
-        const usageMetadata = buildLangSmithUsageMetadata(payload);
-        if (!response.ok) {
-          const message =
-            typeof payload.error === 'object' &&
-            payload.error !== null &&
-            typeof (payload.error as { message?: unknown }).message === 'string'
-              ? (payload.error as { message: string }).message
-              : `FleetGraph reasoning request failed with status ${response.status}`;
-          finishAiSpan(span, {
-            latencyMs: Date.now() - startedAt,
-            usage,
-            error: new Error(message),
-            metadata: {
-              feature: 'fleetgraph_reasoning',
-              response_status: response.status,
-            },
-          });
-          await finalizeReasoningTraceRun(reasoningRun, {
-            outputs: withUsageMetadata({
-              fallback: 'request_failure',
-            }, usageMetadata),
-            metadata: {
-              response_status: response.status,
-              ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
-            },
-            error: message,
-          });
-          reasoningTraceFinished = true;
-          const enrichedError = new Error(message) as Error & {
-            fleetgraphTelemetryFinished?: boolean;
-          };
-          enrichedError.fleetgraphTelemetryFinished = true;
-          throw enrichedError;
-        }
-
-        const content = extractOpenAiContent(payload);
-        if (!content) {
-          logger.warn('FleetGraph reasoning response was empty; falling back');
-          finishAiSpan(span, {
-            latencyMs: Date.now() - startedAt,
-            usage,
-            responseText: null,
-            metadata: {
-              feature: 'fleetgraph_reasoning',
-              fallback: 'empty_response',
-            },
-          });
-          await finalizeReasoningTraceRun(reasoningRun, {
-            outputs: withUsageMetadata({
-              fallback: 'empty_response',
-            }, usageMetadata),
-            metadata: {
-              response_status: response.status,
-              ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
-            },
-          });
-          reasoningTraceFinished = true;
-          return null;
-        }
-
-        try {
-          const parsed = reasoningSchema.parse(JSON.parse(stripCodeFences(content)));
-          finishAiSpan(span, {
-            latencyMs: Date.now() - startedAt,
-            usage,
-            responseText: content,
-            metadata: {
-              feature: 'fleetgraph_reasoning',
-              fallback: false,
-            },
-          });
-          await finalizeReasoningTraceRun(reasoningRun, {
-            outputs: withUsageMetadata({
-              parsed,
-              response_text: content,
-            }, usageMetadata),
-            metadata: {
-              response_status: response.status,
-              fallback: false,
-              ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
-            },
-          });
-          reasoningTraceFinished = true;
-          return parsed;
-        } catch (error) {
-          logger.warn('FleetGraph reasoning response could not be parsed; falling back', {
-            message: error instanceof Error ? error.message : 'Unknown parse failure',
-          });
-          finishAiSpan(span, {
-            latencyMs: Date.now() - startedAt,
-            usage,
-            responseText: content,
-            error,
-            metadata: {
-              feature: 'fleetgraph_reasoning',
-              fallback: 'parse_failure',
-            },
-          });
-          await finalizeReasoningTraceRun(reasoningRun, {
-            outputs: withUsageMetadata({
-              fallback: 'parse_failure',
-            }, usageMetadata),
-            metadata: {
-              response_status: response.status,
-              ...(usageMetadata ? { usage_metadata: usageMetadata } : {}),
-            },
-            error,
-          });
-          reasoningTraceFinished = true;
-          return null;
-        }
-      } catch (error) {
-        if (
-          !(
-            error &&
-            typeof error === 'object' &&
-            'fleetgraphTelemetryFinished' in error &&
-            (error as { fleetgraphTelemetryFinished?: boolean }).fleetgraphTelemetryFinished
-          )
-        ) {
-          finishAiSpan(span, {
-            latencyMs: Date.now() - startedAt,
-            error,
-            metadata: {
-              feature: 'fleetgraph_reasoning',
-              fallback: 'request_failure',
-            },
-          });
-        }
-        if (!reasoningTraceFinished) {
-          await finalizeReasoningTraceRun(reasoningRun, {
-            outputs: {
-              fallback: 'request_failure',
-            },
-            error,
-          });
-        }
-        throw error;
-      }
+    },
+    async reasonAboutCurrentView(input, options): Promise<FleetGraphReasoning | null> {
+      return executeReasoningRequest(apiKey, logger, {
+        feature: 'fleetgraph_current_view_reasoning',
+        operation: 'fleetgraph.current_view_reasoning',
+        runName: 'fleetgraph.current_view.model',
+        tags: ['current_view', `page_kind:${input.pageContext.kind}`],
+        systemPrompt: buildCurrentViewSystemPrompt(),
+        userPrompt: buildUserPrompt({
+          question: input.question,
+          questionTheme: input.questionTheme,
+          workPersona: input.workPersona,
+          pageContext: input.pageContext,
+          deterministicDraft: input.deterministicDraft,
+        }),
+        traceInputs: buildCurrentViewReasoningTraceInputs(input),
+        workPersona: input.workPersona,
+        options,
+      });
     },
   };
 }

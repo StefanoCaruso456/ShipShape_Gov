@@ -9,6 +9,7 @@ import {
   beginFleetGraphNode,
   createFleetGraphCommand,
 } from "../node-runtime.js";
+import { inferFleetGraphQuestionTheme } from "../question-theme.js";
 import type { FleetGraphState } from "../state.js";
 import { createHandoff } from "../supervision.js";
 import type { FleetGraphReasoning } from "../types.js";
@@ -1510,10 +1511,55 @@ export async function reasonAboutCurrentViewNode(
     emptyState: pageContext.emptyState,
   });
 
+  const question = state.prompt?.question ?? null;
+  const deterministicReasoning = buildReasoning(pageContext, question);
+  let reasoning = deterministicReasoning;
+  let reasoningSource: FleetGraphState["reasoningSource"] = "deterministic";
+
+  if (state.mode === "on_demand" && runtime.reasoner) {
+    try {
+      const modelReasoning = await runtime.reasoner.reasonAboutCurrentView(
+        {
+          activeViewRoute: state.activeView?.route ?? pageContext.route ?? null,
+          question,
+          questionTheme: inferFleetGraphQuestionTheme(question),
+          workPersona: state.actor?.workPersona ?? null,
+          pageContext,
+          deterministicDraft: deterministicReasoning,
+        },
+        {
+          runnableConfig: config,
+          traceMetadata: {
+            reasoning_scope: "current_view",
+            active_view_route: state.activeView?.route ?? pageContext.route ?? null,
+            page_context_kind: pageContext.kind,
+          },
+        },
+      );
+
+      if (modelReasoning) {
+        reasoning = modelReasoning;
+        reasoningSource = "model";
+      }
+    } catch (error) {
+      runtime.logger.warn(
+        "FleetGraph current-view model reasoning failed; using deterministic fallback",
+        {
+          route: pageContext.route,
+          kind: pageContext.kind,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unknown FleetGraph current-view reasoning failure",
+        },
+      );
+    }
+  }
+
   return createFleetGraphCommand(started.context, "completeRun", {
     stage: "current_view_reasoned",
-    reasoning: buildReasoning(pageContext, state.prompt?.question ?? null),
-    reasoningSource: "deterministic",
+    reasoning,
+    reasoningSource,
     attempts: {
       ...state.attempts,
       reasoning: state.attempts.reasoning + 1,

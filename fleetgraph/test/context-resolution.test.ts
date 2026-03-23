@@ -493,6 +493,108 @@ describe("FleetGraph non-week context resolution", () => {
     expect(result.reasoning?.evidence).toContain("Active programs: 5");
   });
 
+  it("uses the model-backed current-view reasoner for on-demand page-context questions when available", async () => {
+    const graph = createFleetGraph();
+    let currentViewInput: Parameters<
+      NonNullable<ReturnType<typeof createFleetGraphRuntime>["reasoner"]>["reasonAboutCurrentView"]
+    >[0] | null = null;
+    const runtime = createFleetGraphRuntime({
+      now: () => new Date("2026-03-17T12:00:00.000Z"),
+      reasoner: {
+        async reasonAboutSprint() {
+          return null;
+        },
+        async reasonAboutCurrentView(input) {
+          currentViewInput = input;
+          return {
+            answerMode: "launcher",
+            summary:
+              "Core Features needs attention first because review wait and after-start scope are both visible on this page.",
+            evidence: [
+              "Waiting on review: 1 issue.",
+              "Added after sprint start: 2 issues.",
+            ],
+            whyNow:
+              "The projects tab already shows both review wait and late scope without needing a sprint fetch.",
+            recommendedNextStep: "Open review queue Core Features.",
+            confidence: "high",
+          };
+        },
+      },
+    });
+
+    const result = await graph.invoke(
+      {
+        runId: "page-context-model",
+        mode: "on_demand",
+        triggerType: "user_invoke",
+        workspaceId: "workspace-1",
+        actor: {
+          id: "user-1",
+          kind: "user",
+          role: "pm",
+          workPersona: "product_manager",
+        },
+        activeView: null,
+        contextEntity: null,
+        prompt: {
+          question: "Where are we waiting on review or approval?",
+          pageContext: {
+            kind: "projects",
+            route: "/documents/program-1/projects",
+            title: "API Platform Projects",
+            summary:
+              "API Platform points first to Core Features. It has 4 open issues, 1 issue waiting on review, and 2 issues added after sprint start.",
+            emptyState: false,
+            metrics: [
+              { label: "Visible projects", value: "2" },
+              { label: "Waiting on review", value: "1 issue" },
+              { label: "Added after sprint start", value: "2 issues" },
+            ],
+            items: [
+              {
+                label: "Core Features",
+                detail:
+                  "Needs attention • 4 open issues • Waiting on review: 1 • Added after sprint start: 2 • Owner: stefano caruso",
+                route: "/documents/project-1/issues",
+              },
+            ],
+            actions: [
+              {
+                label: "Open review queue Core Features",
+                route: "/documents/project-1/issues",
+                intent: "follow_up",
+                reason: "Core Features is waiting on review for 1 issue.",
+              },
+            ],
+          },
+        },
+        trace: {
+          runName: "fleetgraph-page-context-model-test",
+          tags: ["fleetgraph", "test", "page-context", "model"],
+        },
+      } satisfies FleetGraphRunInput,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: "page-context-model",
+      }),
+    );
+
+    expect(result.status).toBe("completed");
+    expect(result.stage).toBe("current_view_reasoned");
+    expect(result.reasoningSource).toBe("model");
+    expect(result.reasoning?.summary).toContain(
+      "Core Features needs attention first",
+    );
+    expect(result.reasoning?.recommendedNextStep).toContain(
+      "Open review queue Core Features",
+    );
+    expect(currentViewInput?.questionTheme).toBe("follow_up");
+    expect(currentViewInput?.workPersona).toBe("product_manager");
+    expect(currentViewInput?.deterministicDraft.summary).toContain(
+      "Core Features",
+    );
+  });
+
   it("treats a scoped issue surface as execution guidance instead of generic page guidance", async () => {
     const graph = createFleetGraph();
     const runtime = createFleetGraphRuntime({

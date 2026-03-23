@@ -34,6 +34,8 @@ export function inferFleetGraphQuestionTheme(
   if (
     normalized.includes('follow-up') ||
     normalized.includes('follow up') ||
+    normalized.includes('review') ||
+    normalized.includes('approval') ||
     normalized.includes('owner') ||
     normalized.includes('who')
   ) {

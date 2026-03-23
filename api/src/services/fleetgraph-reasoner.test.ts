@@ -220,4 +220,147 @@ describe('createFleetGraphReasoner', () => {
       (metadata as { usage_metadata: { total_cost: number } }).usage_metadata.total_cost
     ).toBeCloseTo(0.000072, 12);
   });
+
+  it('records LangSmith usage_metadata for current-view reasoning calls too', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  answerMode: 'launcher',
+                  summary: 'Core Features needs attention first because review wait and after-start scope both show up on this page.',
+                  evidence: ['Waiting on review: 1 issue.', 'Added after sprint start: 2 issues.'],
+                  whyNow: 'The current page already shows where the review queue and late scope are building.',
+                  recommendedNextStep: 'Open review queue Core Features.',
+                  confidence: 'high',
+                }),
+              },
+            },
+          ],
+          usage: {
+            prompt_tokens: 140,
+            completion_tokens: 32,
+            total_tokens: 172,
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+    );
+
+    const reasoner = createFleetGraphReasoner(logger);
+    expect(reasoner).not.toBeNull();
+
+    const result = await reasoner!.reasonAboutCurrentView(
+      {
+        activeViewRoute: '/documents/program-1/projects',
+        question: 'Where are we waiting on review or approval?',
+        questionTheme: 'follow_up',
+        workPersona: 'product_manager',
+        pageContext: {
+          kind: 'projects',
+          route: '/documents/program-1/projects',
+          title: 'API Platform Projects',
+          summary:
+            'API Platform points first to Core Features. It has 4 open issues, 1 issue waiting on review, and 2 issues added after sprint start.',
+          emptyState: false,
+          metrics: [
+            { label: 'Visible projects', value: '2' },
+            { label: 'Waiting on review', value: '1 issue' },
+            { label: 'Added after sprint start', value: '2 issues' },
+          ],
+          items: [
+            {
+              label: 'Core Features',
+              detail:
+                'Needs attention • 4 open issues • Waiting on review: 1 • Added after sprint start: 2 • Owner: stefano caruso',
+              route: '/documents/project-1/issues',
+            },
+          ],
+          actions: [
+            {
+              label: 'Open review queue Core Features',
+              route: '/documents/project-1/issues',
+              intent: 'follow_up',
+              reason: 'Core Features is waiting on review for 1 issue.',
+              owner: 'stefano caruso',
+            },
+          ],
+        },
+        deterministicDraft: {
+          answerMode: 'launcher',
+          summary: 'Core Features is where review wait is visible on this page.',
+          evidence: ['Waiting on review: 1 issue.'],
+          whyNow: 'The projects tab shows the review queue directly.',
+          recommendedNextStep: 'Open review queue Core Features.',
+          confidence: 'medium',
+        },
+      },
+      {
+        runnableConfig: {
+          callbacks: {
+            handlers: [],
+            getParentRunId: () => 'run-parent',
+          },
+        } as any,
+        traceMetadata: {
+          active_view_route: '/documents/program-1/projects',
+          page_context_kind: 'projects',
+        },
+      }
+    );
+
+    expect(result).toMatchObject({
+      answerMode: 'launcher',
+      summary: expect.stringContaining('Core Features needs attention first'),
+      confidence: 'high',
+    });
+
+    expect(fromRunnableConfigMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        name: 'fleetgraph.current_view.model',
+        run_type: 'llm',
+        extra: {
+          metadata: expect.objectContaining({
+            feature: 'fleetgraph_current_view_reasoning',
+            ls_provider: 'openai',
+            ls_model_name: 'gpt-4.1-mini',
+            active_view_route: '/documents/program-1/projects',
+            page_context_kind: 'projects',
+          }),
+        },
+        tags: expect.arrayContaining(['current_view', 'page_kind:projects', 'persona:product_manager']),
+      })
+    );
+
+    const [outputs, error, endTime, metadata] = runTreeMock.end.mock.calls[0]!;
+    expect(outputs).toMatchObject({
+      parsed: {
+        answerMode: 'launcher',
+      },
+      usage_metadata: {
+        input_tokens: 140,
+        output_tokens: 32,
+        total_tokens: 172,
+      },
+    });
+    expect(error).toBeUndefined();
+    expect(endTime).toBeUndefined();
+    expect(metadata).toMatchObject({
+      response_status: 200,
+      fallback: false,
+      usage_metadata: {
+        input_tokens: 140,
+        output_tokens: 32,
+        total_tokens: 172,
+      },
+    });
+  });
 });
