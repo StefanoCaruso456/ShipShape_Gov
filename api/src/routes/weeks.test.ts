@@ -421,6 +421,230 @@ describe('Sprints API', () => {
     })
   })
 
+  describe('GET /api/weeks/:id/analytics', () => {
+    let analyticsProgramId: string
+    let analyticsProjectAlphaId: string
+    let analyticsProjectBetaId: string
+    let currentSprintId: string
+
+    const buildIssueContent = (title: string, includeAcceptanceCriteria = true) => ({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: includeAcceptanceCriteria
+                ? `${title}. User Story: ship the work. Acceptance Criteria: completion is testable.`
+                : `${title}. User Story: ship the work with a clear description.`,
+            },
+          ],
+        },
+      ],
+    })
+
+    const createSprintIssue = async ({
+      sprintId,
+      projectId,
+      title,
+      state = 'done',
+      includeAcceptanceCriteria = true,
+    }: {
+      sprintId: string
+      projectId: string
+      title: string
+      state?: 'done' | 'in_progress'
+      includeAcceptanceCriteria?: boolean
+    }) => {
+      const issueResult = await pool.query(
+        `INSERT INTO documents (workspace_id, document_type, title, content, visibility, created_by, properties)
+         VALUES ($1, 'issue', $2, $3, 'workspace', $4, $5)
+         RETURNING id`,
+        [
+          testWorkspaceId,
+          title,
+          JSON.stringify(buildIssueContent(title, includeAcceptanceCriteria)),
+          testUserId,
+          JSON.stringify({
+            state,
+            story_points: 3,
+            estimate_hours: 4,
+            estimate: 4,
+            issue_type: 'story',
+          }),
+        ]
+      )
+      const issueId = issueResult.rows[0].id
+
+      await pool.query(
+        `INSERT INTO document_associations (document_id, related_id, relationship_type)
+         VALUES
+           ($1, $2, 'sprint'),
+           ($1, $3, 'project'),
+           ($1, $4, 'program')`,
+        [issueId, sprintId, projectId, analyticsProgramId]
+      )
+    }
+
+    const createHistoricalSprint = async ({
+      sprintNumber,
+      projectId,
+      includeAcceptanceCriteria = true,
+    }: {
+      sprintNumber: number
+      projectId: string
+      includeAcceptanceCriteria?: boolean
+    }) => {
+      const sprintResult = await pool.query(
+        `INSERT INTO documents (workspace_id, document_type, title, visibility, created_by, properties)
+         VALUES ($1, 'sprint', $2, 'workspace', $3, $4)
+         RETURNING id`,
+        [
+          testWorkspaceId,
+          `Analytics Week ${sprintNumber}`,
+          testUserId,
+          JSON.stringify({ sprint_number: sprintNumber, status: 'completed' }),
+        ]
+      )
+      const sprintId = sprintResult.rows[0].id
+
+      await pool.query(
+        `INSERT INTO document_associations (document_id, related_id, relationship_type)
+         VALUES
+           ($1, $2, 'program'),
+           ($1, $3, 'project')`,
+        [sprintId, analyticsProgramId, projectId]
+      )
+
+      await createSprintIssue({
+        sprintId,
+        projectId,
+        title: `History issue ${sprintNumber}`,
+        includeAcceptanceCriteria,
+      })
+    }
+
+    beforeAll(async () => {
+      await pool.query(
+        `UPDATE workspaces
+         SET sprint_start_date = CURRENT_DATE - INTERVAL '70 days'
+         WHERE id = $1`,
+        [testWorkspaceId]
+      )
+
+      const programResult = await pool.query(
+        `INSERT INTO documents (workspace_id, document_type, title, visibility)
+         VALUES ($1, 'program', 'Analytics Program', 'workspace')
+         RETURNING id`,
+        [testWorkspaceId]
+      )
+      analyticsProgramId = programResult.rows[0].id
+
+      const projectAlphaResult = await pool.query(
+        `INSERT INTO documents (workspace_id, document_type, title, visibility)
+         VALUES ($1, 'project', 'Analytics Project Alpha', 'workspace')
+         RETURNING id`,
+        [testWorkspaceId]
+      )
+      analyticsProjectAlphaId = projectAlphaResult.rows[0].id
+      await pool.query(
+        `INSERT INTO document_associations (document_id, related_id, relationship_type)
+         VALUES ($1, $2, 'program')`,
+        [analyticsProjectAlphaId, analyticsProgramId]
+      )
+
+      const projectBetaResult = await pool.query(
+        `INSERT INTO documents (workspace_id, document_type, title, visibility)
+         VALUES ($1, 'project', 'Analytics Project Beta', 'workspace')
+         RETURNING id`,
+        [testWorkspaceId]
+      )
+      analyticsProjectBetaId = projectBetaResult.rows[0].id
+      await pool.query(
+        `INSERT INTO document_associations (document_id, related_id, relationship_type)
+         VALUES ($1, $2, 'program')`,
+        [analyticsProjectBetaId, analyticsProgramId]
+      )
+
+      for (const config of [
+        { sprintNumber: 3, projectId: analyticsProjectBetaId, includeAcceptanceCriteria: true },
+        { sprintNumber: 4, projectId: analyticsProjectBetaId, includeAcceptanceCriteria: true },
+        { sprintNumber: 5, projectId: analyticsProjectBetaId, includeAcceptanceCriteria: true },
+        { sprintNumber: 6, projectId: analyticsProjectBetaId, includeAcceptanceCriteria: true },
+        { sprintNumber: 7, projectId: analyticsProjectAlphaId, includeAcceptanceCriteria: true },
+        { sprintNumber: 8, projectId: analyticsProjectAlphaId, includeAcceptanceCriteria: true },
+        { sprintNumber: 9, projectId: analyticsProjectAlphaId, includeAcceptanceCriteria: false },
+      ]) {
+        await createHistoricalSprint(config)
+      }
+
+      const currentSprintResult = await pool.query(
+        `INSERT INTO documents (workspace_id, document_type, title, visibility, created_by, properties)
+         VALUES ($1, 'sprint', 'Analytics Current Sprint', 'workspace', $2, $3)
+         RETURNING id`,
+        [testWorkspaceId, testUserId, JSON.stringify({ sprint_number: 10, status: 'active' })]
+      )
+      currentSprintId = currentSprintResult.rows[0].id
+
+      await pool.query(
+        `INSERT INTO document_associations (document_id, related_id, relationship_type)
+         VALUES
+           ($1, $2, 'program'),
+           ($1, $3, 'project')`,
+        [currentSprintId, analyticsProgramId, analyticsProjectAlphaId]
+      )
+
+      await createSprintIssue({
+        sprintId: currentSprintId,
+        projectId: analyticsProjectAlphaId,
+        title: 'Current sprint issue',
+        state: 'in_progress',
+      })
+    })
+
+    it('uses the last six qualifying program weeks and reports excluded integrity gaps', async () => {
+      const res = await request(app)
+        .get(`/api/weeks/${currentSprintId}/analytics`)
+        .set('Cookie', sessionCookie)
+
+      expect(res.status).toBe(200)
+      expect(res.body.velocityHistory.map((point: { sprintNumber: number }) => point.sprintNumber)).toEqual([3, 4, 5, 6, 7, 8])
+      expect(res.body.historyMeta.scope).toBe('program')
+      expect(res.body.historyMeta.backfilledWeekCount).toBe(6)
+      expect(res.body.historyMeta.excludedWeeks).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            sprintNumber: 9,
+            missingAcceptanceCriteria: 1,
+          }),
+        ])
+      )
+    })
+
+    it('can aggregate historical velocity at project scope', async () => {
+      const res = await request(app)
+        .get(`/api/weeks/${currentSprintId}/analytics?historyScope=project`)
+        .set('Cookie', sessionCookie)
+
+      expect(res.status).toBe(200)
+      expect(res.body.historyMeta.scope).toBe('project')
+      expect(res.body.velocityHistory.map((point: { sprintNumber: number }) => point.sprintNumber)).toEqual([7, 8])
+    })
+
+    it('can limit historical velocity to a custom week range', async () => {
+      const res = await request(app)
+        .get(`/api/weeks/${currentSprintId}/analytics?historyStartWeek=4&historyEndWeek=6`)
+        .set('Cookie', sessionCookie)
+
+      expect(res.status).toBe(200)
+      expect(res.body.historyMeta.isCustomRange).toBe(true)
+      expect(res.body.historyMeta.selectedRangeStartWeek).toBe(4)
+      expect(res.body.historyMeta.selectedRangeEndWeek).toBe(6)
+      expect(res.body.velocityHistory.map((point: { sprintNumber: number }) => point.sprintNumber)).toEqual([4, 5, 6])
+    })
+  })
+
   describe('Sprint Lifecycle', () => {
     let testSprintId: string
 

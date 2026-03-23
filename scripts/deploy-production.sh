@@ -28,13 +28,49 @@ require_command() {
 latest_deploy_errors() {
   local deploy_started_at="$1"
 
-  aws elasticbeanstalk describe-events \
-    --region "$AWS_REGION" \
-    --environment-name "$EB_ENV_NAME" \
-    --severity ERROR \
-    --max-items 10 \
-    --query 'Events[].[EventDate,Message]' \
-    --output text 2>/dev/null | awk -v start="$deploy_started_at" '$1 >= start { print }' | grep -v '^None$' || true
+  python3 - "$deploy_started_at" "$AWS_REGION" "$EB_ENV_NAME" <<'PY'
+import datetime
+import json
+import subprocess
+import sys
+
+deploy_started_at, aws_region, env_name = sys.argv[1:4]
+start = datetime.datetime.fromisoformat(deploy_started_at.replace("Z", "+00:00"))
+
+raw = subprocess.check_output(
+    [
+        "aws",
+        "elasticbeanstalk",
+        "describe-events",
+        "--region",
+        aws_region,
+        "--environment-name",
+        env_name,
+        "--severity",
+        "ERROR",
+        "--max-items",
+        "20",
+        "--output",
+        "json",
+    ],
+    text=True,
+)
+
+events = json.loads(raw).get("Events", [])
+matches = []
+for event in events:
+    event_date = event.get("EventDate")
+    message = (event.get("Message") or "").strip()
+    if not event_date or not message:
+        continue
+
+    occurred_at = datetime.datetime.fromisoformat(event_date.replace("Z", "+00:00"))
+    if occurred_at >= start:
+        matches.append(f"{event_date} {message}")
+
+if matches:
+    print("\n".join(matches))
+PY
 }
 
 current_api_healthcheck_url() {
@@ -152,6 +188,7 @@ docker_smoke_test() {
 
 require_command aws
 require_command pnpm
+require_command python3
 require_command zip
 require_command curl
 

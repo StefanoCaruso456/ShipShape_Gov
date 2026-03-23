@@ -36,6 +36,7 @@ const ALL_COLUMNS: ColumnDefinition[] = [
 
 const SORT_OPTIONS = [
   { value: 'ice_score', label: 'ICE Score' },
+  { value: 'business_value_score', label: 'Business Value' },
   { value: 'impact', label: 'Impact' },
   { value: 'confidence', label: 'Confidence' },
   { value: 'ease', label: 'Ease' },
@@ -155,6 +156,8 @@ export function ProjectsPage() {
       switch (sortBy) {
         case 'ice_score':
           return sortNullable(a.ice_score, b.ice_score);
+        case 'business_value_score':
+          return sortNullable(a.business_value_score, b.business_value_score);
         case 'impact':
           return sortNullable(a.impact, b.impact);
         case 'confidence':

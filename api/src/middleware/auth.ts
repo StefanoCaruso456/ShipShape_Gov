@@ -1,7 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { pool } from '../db/client.js';
-import { SESSION_TIMEOUT_MS, ABSOLUTE_SESSION_TIMEOUT_MS, ERROR_CODES, HTTP_STATUS } from '@ship/shared';
+import {
+  SESSION_TIMEOUT_MS,
+  ABSOLUTE_SESSION_TIMEOUT_MS,
+  ERROR_CODES,
+  HTTP_STATUS,
+  type WorkPersona,
+} from '@ship/shared';
 
 // Extend Express Request to include session info
 declare global {
@@ -11,6 +17,7 @@ declare global {
       userId?: string;
       userEmail?: string;
       userName?: string;
+      userWorkPersona?: WorkPersona | null;
       workspaceId?: string;
       workspaceRole?: string | null;
       isSuperAdmin?: boolean;
@@ -35,6 +42,44 @@ export interface AuthContext {
   sessionId?: string;
   isSuperAdmin: boolean;
   isApiToken: boolean;
+}
+
+const API_TOKEN_WORKSPACE_OVERRIDE_HEADER = 'x-ship-workspace-id';
+
+async function resolveApiTokenWorkspaceId(
+  tokenData: {
+    workspaceId: string;
+    isSuperAdmin: boolean;
+  },
+  requestedWorkspaceId: string | null
+): Promise<{ workspaceId: string } | { errorStatus: number; errorMessage: string }> {
+  if (!requestedWorkspaceId || requestedWorkspaceId === tokenData.workspaceId) {
+    return { workspaceId: requestedWorkspaceId ?? tokenData.workspaceId };
+  }
+
+  if (!tokenData.isSuperAdmin) {
+    return {
+      errorStatus: HTTP_STATUS.FORBIDDEN,
+      errorMessage: 'API token cannot override workspace scope',
+    };
+  }
+
+  const result = await pool.query(
+    `SELECT id
+     FROM workspaces
+     WHERE id = $1
+       AND archived_at IS NULL`,
+    [requestedWorkspaceId]
+  );
+
+  if (result.rows.length === 0) {
+    return {
+      errorStatus: HTTP_STATUS.NOT_FOUND,
+      errorMessage: 'Requested workspace does not exist',
+    };
+  }
+
+  return { workspaceId: requestedWorkspaceId };
 }
 
 export function getAuthContext(req: Request, res: Response): AuthContext | null {
@@ -63,12 +108,13 @@ async function validateApiToken(token: string): Promise<{
   userId: string;
   workspaceId: string;
   isSuperAdmin: boolean;
+  workPersona: WorkPersona | null;
   tokenId: string;
 } | null> {
   const tokenHash = hashToken(token);
 
   const result = await pool.query(
-    `SELECT t.id, t.user_id, t.workspace_id, t.expires_at, t.revoked_at, u.is_super_admin
+    `SELECT t.id, t.user_id, t.workspace_id, t.expires_at, t.revoked_at, u.is_super_admin, u.work_persona
      FROM api_tokens t
      JOIN users u ON t.user_id = u.id
      WHERE t.token_hash = $1`,
@@ -95,6 +141,7 @@ async function validateApiToken(token: string): Promise<{
     userId: tokenRow.user_id,
     workspaceId: tokenRow.workspace_id,
     isSuperAdmin: tokenRow.is_super_admin,
+    workPersona: tokenRow.work_persona,
     tokenId: tokenRow.id,
   };
 }
@@ -108,6 +155,10 @@ export async function authMiddleware(
   const authHeader = req.headers?.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
+    const requestedWorkspaceId =
+      typeof req.headers[API_TOKEN_WORKSPACE_OVERRIDE_HEADER] === 'string'
+        ? req.headers[API_TOKEN_WORKSPACE_OVERRIDE_HEADER].trim()
+        : null;
 
     try {
       const tokenData = await validateApiToken(token);
@@ -123,11 +174,27 @@ export async function authMiddleware(
         return;
       }
 
+      const resolvedWorkspace = await resolveApiTokenWorkspaceId(tokenData, requestedWorkspaceId);
+      if ('errorStatus' in resolvedWorkspace) {
+        res.status(resolvedWorkspace.errorStatus).json({
+          success: false,
+          error: {
+            code:
+              resolvedWorkspace.errorStatus === HTTP_STATUS.NOT_FOUND
+                ? ERROR_CODES.NOT_FOUND
+                : ERROR_CODES.FORBIDDEN,
+            message: resolvedWorkspace.errorMessage,
+          },
+        });
+        return;
+      }
+
       // Attach token info to request
       req.userId = tokenData.userId;
-      req.workspaceId = tokenData.workspaceId;
+      req.workspaceId = resolvedWorkspace.workspaceId;
       req.isSuperAdmin = tokenData.isSuperAdmin;
       req.isApiToken = true;
+      req.userWorkPersona = tokenData.workPersona ?? null;
 
       next();
       return;
@@ -162,7 +229,7 @@ export async function authMiddleware(
     // Get session and check if it's valid
     const result = await pool.query(
       `SELECT s.id, s.user_id, s.workspace_id, s.expires_at, s.last_activity, s.created_at,
-              u.email as user_email, u.name as user_name,
+              u.email as user_email, u.name as user_name, u.work_persona as user_work_persona,
               u.is_super_admin,
               wm.role as workspace_role
        FROM sessions s
@@ -257,6 +324,7 @@ export async function authMiddleware(
     req.userId = session.user_id;
     req.userEmail = session.user_email;
     req.userName = session.user_name;
+    req.userWorkPersona = session.user_work_persona ?? null;
     req.workspaceId = session.workspace_id;
     req.workspaceRole = session.workspace_role ?? null;
     req.isSuperAdmin = session.is_super_admin;

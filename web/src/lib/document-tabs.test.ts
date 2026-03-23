@@ -47,7 +47,7 @@ describe('getTabsForDocumentType', () => {
 
   it('returns default tabs for sprint documents', () => {
     const tabs = getTabsForDocumentType('sprint');
-    expect(tabs.map(t => t.id)).toEqual(['overview', 'plan', 'review', 'standups']);
+    expect(tabs.map(t => t.id)).toEqual(['overview', 'analytics', 'plan', 'review', 'standups']);
   });
 
   it('returns empty array for unknown document types', () => {
@@ -145,7 +145,7 @@ describe('getTabsForDocument', () => {
       properties: { status: 'planning' },
     });
 
-    expect(tabs.map((tab) => tab.id)).toEqual(['overview', 'plan']);
+    expect(tabs.map((tab) => tab.id)).toEqual(['overview', 'analytics', 'plan']);
   });
 
   it('returns active sprint tabs when sprint status is active', () => {
@@ -156,7 +156,7 @@ describe('getTabsForDocument', () => {
       properties: { status: 'active' },
     });
 
-    expect(tabs.map((tab) => tab.id)).toEqual(['overview', 'issues', 'review', 'standups']);
+    expect(tabs.map((tab) => tab.id)).toEqual(['overview', 'analytics', 'issues', 'review', 'standups']);
   });
 });
 

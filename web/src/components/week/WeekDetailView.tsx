@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { StandupFeed } from '@/components/StandupFeed';
 import { IssuesList } from '@/components/IssuesList';
-import { WeekProgressGraph } from './WeekProgressGraph';
+import { WeekAnalyticsPanel } from './WeekAnalyticsPanel';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '';
 
@@ -28,6 +28,8 @@ export interface WeekIssue {
   assignee_archived?: boolean;
   display_id: string;
   sprint_ref_id: string | null;
+  story_points: number | null;
+  estimate_hours: number | null;
   estimate: number | null;
 }
 
@@ -82,34 +84,6 @@ export function WeekDetailView({
     return () => { cancelled = true; };
   }, [sprintId]);
 
-  // Calculate estimates
-  const sprintEstimate = issues.reduce((sum, issue) => sum + (issue.estimate || 0), 0);
-  const completedEstimate = issues
-    .filter(issue => issue.state === 'done')
-    .reduce((sum, issue) => sum + (issue.estimate || 0), 0);
-
-  // Compute sprint dates from sprint_number
-  const computeSprintDates = (sprintNumber: number, workspaceStartDate: string) => {
-    const baseDate = new Date(workspaceStartDate);
-    const sprintDuration = 7; // 1 week
-
-    const startDate = new Date(baseDate);
-    startDate.setDate(startDate.getDate() + (sprintNumber - 1) * sprintDuration);
-
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + sprintDuration - 1);
-
-    const now = new Date();
-    let status: 'planning' | 'active' | 'completed' = 'planning';
-    if (now >= startDate && now <= endDate) {
-      status = 'active';
-    } else if (now > endDate) {
-      status = 'completed';
-    }
-
-    return { startDate: startDate.toISOString(), endDate: endDate.toISOString(), status };
-  };
-
   if (loading || !sprint) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -118,14 +92,17 @@ export function WeekDetailView({
     );
   }
 
-  const { startDate, endDate, status } = computeSprintDates(
-    sprint.sprint_number,
-    sprint.workspace_sprint_start_date
-  );
-
   const progress = sprint.issue_count > 0
     ? Math.round((sprint.completed_count / sprint.issue_count) * 100)
     : 0;
+  const analyticsLinks = [
+    { id: 'report', label: 'Sprint Report' },
+    { id: 'velocity', label: 'Velocity' },
+    { id: 'forecast', label: 'Forecast' },
+    { id: 'flow', label: 'Flow' },
+    { id: 'workload', label: 'Workload' },
+    { id: 'hygiene', label: 'Hygiene' },
+  ] as const;
 
   return (
     <div className="flex flex-col h-full">
@@ -146,16 +123,28 @@ export function WeekDetailView({
               <p className="text-sm text-muted">{sprint.owner.name}</p>
             )}
           </div>
-          <Link
-            to={`/documents/${sprintId}`}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/50 rounded-md transition-colors"
-            title="Open week document"
-          >
-            <span>Open</span>
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/documents/${sprintId}/analytics`}
+              className="flex items-center gap-1.5 rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-sm text-accent hover:bg-accent/20 transition-colors"
+              title="Open analytics dashboard"
+            >
+              <span>Analytics</span>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 19h16M7 16V8m5 8V5m5 11v-6" />
+              </svg>
+            </Link>
+            <Link
+              to={`/documents/${sprintId}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted hover:text-foreground hover:bg-border/50 rounded-md transition-colors"
+              title="Open week document"
+            >
+              <span>Open</span>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </Link>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex-1 h-2 rounded-full bg-border overflow-hidden">
@@ -174,21 +163,34 @@ export function WeekDetailView({
       <div className="flex flex-1 overflow-hidden">
         {/* Left Column: Sprint Progress (fixed) + Standups (scrollable) */}
         <div className="w-1/3 min-w-[320px] max-w-[400px] flex-shrink-0 border-r border-border flex flex-col overflow-hidden">
-          {/* Sprint Progress - Fixed */}
+          {/* Analytics launcher + compact snapshot */}
           <div className="flex-shrink-0 border-b border-border p-4">
-            <h3 className="text-sm font-medium text-foreground mb-3">Week Progress</h3>
-            {sprintEstimate > 0 ? (
-              <WeekProgressGraph
-                startDate={startDate}
-                endDate={endDate}
-                scopeHours={sprintEstimate}
-                completedHours={completedEstimate}
-                status={status}
-              />
-            ) : (
-              <div className="text-sm text-muted">No estimates yet</div>
-            )}
-            {/* Plans are now per-person weekly_plan documents, accessible via the Weeks tab */}
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-medium text-foreground">Analytics</h3>
+                <p className="mt-1 text-xs text-muted">
+                  Burn, velocity, forecast, flow, workload, and hygiene for this week.
+                </p>
+              </div>
+              <Link
+                to={`/documents/${sprintId}/analytics`}
+                className="rounded-md border border-border bg-border/20 px-2.5 py-1.5 text-xs text-foreground hover:bg-border/40 transition-colors"
+              >
+                Open dashboard
+              </Link>
+            </div>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {analyticsLinks.map((link) => (
+                <Link
+                  key={link.id}
+                  to={`/documents/${sprintId}/analytics?view=${link.id}`}
+                  className="rounded-full border border-border bg-border/15 px-3 py-1 text-xs text-muted hover:text-foreground hover:bg-border/30 transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+            <WeekAnalyticsPanel sprintId={sprintId} compact />
           </div>
 
           {/* Standups - Scrollable with fixed header */}

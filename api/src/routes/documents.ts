@@ -1,14 +1,20 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../db/client.js';
 import { z } from 'zod';
+import { WORK_PERSONAS, type WorkPersona } from '@ship/shared';
 import { authMiddleware, getAuthContext } from '../middleware/auth.js';
 import { isWorkspaceAdmin } from '../middleware/visibility.js';
 import { handleVisibilityChange, handleDocumentConversion, invalidateDocumentCache, broadcastToUser } from '../collaboration/index.js';
 import { extractHypothesisFromContent, extractSuccessCriteriaFromContent, extractVisionFromContent, extractGoalsFromContent, checkDocumentCompleteness } from '../utils/extractHypothesis.js';
+import { createIssueTemplateContent } from '../utils/issueContentTemplate.js';
 import { loadContentFromYjsState } from '../utils/yjsConverter.js';
 
 type RouterType = ReturnType<typeof Router>;
 const router: RouterType = Router();
+
+function isWorkPersona(value: unknown): value is WorkPersona {
+  return typeof value === 'string' && WORK_PERSONAS.includes(value as WorkPersona);
+}
 
 // Check if user can access a document (visibility check)
 async function canAccessDocument(
@@ -59,9 +65,12 @@ const updateDocumentSchema = z.object({
   // Issue-specific fields (stored in properties but accepted at top level for convenience)
   state: z.string().optional(),
   priority: z.string().optional(),
+  issue_type: z.enum(['story', 'bug', 'task', 'spike', 'chore']).optional(),
+  story_points: z.number().nullable().optional(),
+  estimate_hours: z.number().nullable().optional(),
   estimate: z.number().nullable().optional(),
   assignee_id: z.string().uuid().nullable().optional(),
-  source: z.enum(['internal', 'external']).optional(),
+  source: z.enum(['internal', 'external', 'action_items']).optional(),
   rejection_reason: z.string().nullable().optional(),
   belongs_to: z.array(z.object({
     id: z.string().uuid(),
@@ -141,7 +150,10 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
         // Flatten common properties for backwards compatibility
         state: props.state,
         priority: props.priority,
-        estimate: props.estimate,
+        issue_type: props.issue_type ?? 'task',
+        story_points: props.story_points,
+        estimate_hours: props.estimate_hours ?? props.estimate,
+        estimate: props.estimate_hours ?? props.estimate,
         assignee_id: props.assignee_id,
         source: props.source,
         prefix: props.prefix,
@@ -306,9 +318,16 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
       }
     }
 
-    // Get belongs_to associations from junction table (for issues, wikis, sprints, and projects)
+    // Get belongs_to associations from junction table for context-aware clients like FleetGraph.
     let belongs_to: Array<{ id: string; type: string; title?: string; color?: string }> = [];
-    if (doc.document_type === 'issue' || doc.document_type === 'wiki' || doc.document_type === 'sprint' || doc.document_type === 'project') {
+    if (
+      doc.document_type === 'issue' ||
+      doc.document_type === 'wiki' ||
+      doc.document_type === 'sprint' ||
+      doc.document_type === 'project' ||
+      doc.document_type === 'weekly_plan' ||
+      doc.document_type === 'weekly_retro'
+    ) {
       const assocResult = await pool.query(
         `SELECT da.related_id as id, da.relationship_type as type,
                 d.title, (d.properties->>'color') as color
@@ -333,7 +352,10 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
       // Issue properties
       state: props.state,
       priority: props.priority,
-      estimate: props.estimate,
+      issue_type: props.issue_type ?? 'task',
+      story_points: props.story_points,
+      estimate_hours: props.estimate_hours ?? props.estimate,
+      estimate: props.estimate_hours ?? props.estimate,
       assignee_id: props.assignee_id,
       source: props.source,
       // Project properties
@@ -361,8 +383,17 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
       plan_approval: props.plan_approval,
       review_approval: props.review_approval,
       review_rating: props.review_rating,
-      // Include belongs_to for issue, wiki, sprint, and project documents
-      ...((doc.document_type === 'issue' || doc.document_type === 'wiki' || doc.document_type === 'sprint' || doc.document_type === 'project') && { belongs_to }),
+      // Include belongs_to for issue, wiki, sprint, project, and weekly documents
+      ...(
+        (
+          doc.document_type === 'issue' ||
+          doc.document_type === 'wiki' ||
+          doc.document_type === 'sprint' ||
+          doc.document_type === 'project' ||
+          doc.document_type === 'weekly_plan' ||
+          doc.document_type === 'weekly_retro'
+        ) && { belongs_to }
+      ),
     });
   } catch (err) {
     console.error('Get document error:', err);
@@ -531,13 +562,25 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
     // Default to 'workspace' visibility if not specified
     visibility = visibility || 'workspace';
 
+    const resolvedContent =
+      content ?? (document_type === 'issue' ? createIssueTemplateContent({ title }) : null);
+
     await client.query('BEGIN');
 
     const result = await client.query(
       `INSERT INTO documents (workspace_id, document_type, title, parent_id, properties, created_by, visibility, content)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [req.workspaceId, document_type, title, parent_id || null, JSON.stringify(properties || {}), req.userId, visibility, content ? JSON.stringify(content) : null]
+      [
+        req.workspaceId,
+        document_type,
+        title,
+        parent_id || null,
+        JSON.stringify(properties || {}),
+        req.userId,
+        visibility,
+        resolvedContent ? JSON.stringify(resolvedContent) : null,
+      ]
     );
 
     const newDoc = result.rows[0];
@@ -621,6 +664,14 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     }
 
     const data = parsed.data;
+    const personUserId =
+      existing.document_type === 'person' && typeof existing.properties?.user_id === 'string'
+        ? existing.properties.user_id
+        : null;
+    const requestedWorkPersona =
+      existing.document_type === 'person' && data.properties && Object.prototype.hasOwnProperty.call(data.properties, 'work_persona')
+        ? data.properties.work_persona
+        : undefined;
 
     // Check permission for visibility changes
     if (data.visibility !== undefined && data.visibility !== existing.visibility) {
@@ -642,6 +693,30 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       if (parentResult.rows[0]?.visibility === 'workspace' && existing.visibility === 'private') {
         // Moving private doc under workspace parent makes it workspace-visible
         data.visibility = 'workspace';
+      }
+    }
+
+    // Restrict reports_to changes on person documents to workspace admins
+    if (existing.document_type === 'person' && data.properties?.reports_to !== undefined) {
+      const isAdmin = await isWorkspaceAdmin(userId, workspaceId);
+      if (!isAdmin) {
+        res.status(403).json({ error: 'Only workspace admins can set the reports_to field' });
+        return;
+      }
+    }
+
+    if (existing.document_type === 'person' && requestedWorkPersona !== undefined) {
+      const isAdmin = await isWorkspaceAdmin(userId, workspaceId);
+      const isSelf = personUserId !== null && personUserId === userId;
+
+      if (!isAdmin && !isSelf) {
+        res.status(403).json({ error: 'Only the linked user or a workspace admin can set work persona' });
+        return;
+      }
+
+      if (requestedWorkPersona !== null && !isWorkPersona(requestedWorkPersona)) {
+        res.status(400).json({ error: 'Invalid work persona' });
+        return;
       }
     }
 
@@ -692,6 +767,9 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     const topLevelProps: Record<string, unknown> = {};
     if (data.state !== undefined) topLevelProps.state = data.state;
     if (data.priority !== undefined) topLevelProps.priority = data.priority;
+    if (data.issue_type !== undefined) topLevelProps.issue_type = data.issue_type;
+    if (data.story_points !== undefined) topLevelProps.story_points = data.story_points;
+    if (data.estimate_hours !== undefined) topLevelProps.estimate_hours = data.estimate_hours;
     if (data.estimate !== undefined) topLevelProps.estimate = data.estimate;
     if (data.assignee_id !== undefined) topLevelProps.assignee_id = data.assignee_id;
     if (data.source !== undefined) topLevelProps.source = data.source;
@@ -725,15 +803,6 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     if (data.informed_ids !== undefined) topLevelProps.informed_ids = data.informed_ids;
 
     const hasTopLevelProps = Object.keys(topLevelProps).length > 0;
-
-    // Restrict reports_to changes on person documents to workspace admins
-    if (existing.document_type === 'person' && data.properties?.reports_to !== undefined) {
-      const isAdmin = await isWorkspaceAdmin(userId, workspaceId);
-      if (!isAdmin) {
-        res.status(403).json({ error: 'Only workspace admins can set the reports_to field' });
-        return;
-      }
-    }
 
     // Handle properties update - merge existing, data.properties, top-level fields, and extracted values
     // Content is source of truth: extracted values override any manually set hypothesis/success_criteria/vision/goals
@@ -939,6 +1008,15 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       [...values, id, workspaceId]
     );
 
+    if (existing.document_type === 'person' && requestedWorkPersona !== undefined && personUserId) {
+      await client.query(
+        `UPDATE users
+         SET work_persona = $1, updated_at = NOW()
+         WHERE id = $2`,
+        [requestedWorkPersona, personUserId]
+      );
+    }
+
     // When a weekly plan/retro is edited after changes were requested, move it back to re-review.
     if (contentUpdated && (existing.document_type === 'weekly_plan' || existing.document_type === 'weekly_retro')) {
       const docProps = (existing.properties || {}) as Record<string, unknown>;
@@ -1073,6 +1151,9 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       // Issue properties
       state: props.state,
       priority: props.priority,
+      issue_type: props.issue_type ?? 'task',
+      story_points: props.story_points,
+      estimate_hours: props.estimate_hours ?? props.estimate,
       estimate: props.estimate,
       assignee_id: props.assignee_id,
       source: props.source,
@@ -1322,6 +1403,10 @@ router.post('/:id/convert', authMiddleware, async (req: Request, res: Response) 
       ...(target_type === 'issue' && {
         state: props.state,
         priority: props.priority,
+        issue_type: props.issue_type ?? 'task',
+        story_points: props.story_points,
+        estimate_hours: props.estimate_hours ?? props.estimate,
+        estimate: props.estimate_hours ?? props.estimate,
         assignee_id: props.assignee_id,
         source: props.source,
       }),
@@ -1488,6 +1573,10 @@ router.post('/:id/undo-conversion', authMiddleware, async (req: Request, res: Re
       ...(restoredType === 'issue' && {
         state: props.state,
         priority: props.priority,
+        issue_type: props.issue_type ?? 'task',
+        story_points: props.story_points,
+        estimate_hours: props.estimate_hours ?? props.estimate,
+        estimate: props.estimate_hours ?? props.estimate,
         assignee_id: props.assignee_id,
         source: props.source,
       }),

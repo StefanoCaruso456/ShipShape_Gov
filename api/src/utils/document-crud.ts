@@ -28,8 +28,12 @@ export const TRACKED_FIELDS = [
   'title',
   'state',
   'priority',
+  'issue_type',
   'assignee_id',
   'estimate',
+  'estimate_hours',
+  'story_points',
+  'sprint_id',
   'belongs_to',
 ];
 

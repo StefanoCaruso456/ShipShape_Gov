@@ -1,18 +1,52 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { FleetGraphActiveViewContext, FleetGraphOnDemandResponse } from '@ship/shared';
+import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import type {
+  FleetGraphActiveViewContext,
+  FleetGraphOnDemandResponse,
+  FleetGraphPageContext,
+} from '@ship/shared';
 import { FleetGraphOnDemandPanel } from './FleetGraphOnDemandPanel';
 
 const mockUseFleetGraphActiveView = vi.fn();
+const mockUseFleetGraphPageContext = vi.fn();
 const mockInvokeFleetGraphOnDemand = vi.fn();
 const mockResumeFleetGraphOnDemand = vi.fn();
+const mockReportFleetGraphFeedback = vi.fn();
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+
+  return {
+    ...actual,
+    Link: ({
+      to,
+      children,
+      ...props
+    }: {
+      to: string;
+      children: ReactNode;
+      [key: string]: unknown;
+    }) => (
+      <a href={to} {...props}>
+        {children}
+      </a>
+    ),
+  };
+});
 
 vi.mock('@/hooks/useFleetGraphActiveView', () => ({
   useFleetGraphActiveView: () => mockUseFleetGraphActiveView(),
 }));
 
+vi.mock('@/hooks/useFleetGraphPageContext', () => ({
+  useFleetGraphPageContext: () => mockUseFleetGraphPageContext(),
+}));
+
 vi.mock('@/lib/fleetgraph', () => ({
   invokeFleetGraphOnDemand: (request: unknown) => mockInvokeFleetGraphOnDemand(request),
+  reportFleetGraphFeedback: (request: unknown) => mockReportFleetGraphFeedback(request),
   resumeFleetGraphOnDemand: (request: unknown) => mockResumeFleetGraphOnDemand(request),
 }));
 
@@ -27,6 +61,71 @@ const activeView: FleetGraphActiveViewContext = {
   tab: 'issues',
   projectId: '22222222-2222-2222-2222-222222222222',
 };
+
+const programsPageContext: FleetGraphPageContext = {
+  kind: 'programs',
+  route: '/programs',
+  title: 'Programs',
+  summary: 'Programs shows 5 active programs in this workspace.',
+  emptyState: false,
+  metrics: [
+    { label: 'Active programs', value: '5' },
+    { label: 'Programs with owner', value: '5' },
+  ],
+  items: [
+    {
+      label: 'API Platform',
+      detail: 'Owner: stefano caruso • 11 issues',
+      route: '/documents/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    },
+  ],
+};
+
+const issueSurfacePageContext: FleetGraphPageContext = {
+  kind: 'issue_surface',
+  route: '/documents/program-1/issues',
+  title: 'API Platform Issues',
+  summary:
+    'API Platform does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet. 3 visible issues are still sitting in triage, backlog, or todo, led by Week 3.',
+  emptyState: false,
+  metrics: [
+    { label: 'Visible issues', value: '5' },
+    { label: 'Not started', value: '3' },
+    { label: 'In progress', value: '1' },
+    { label: 'Stale open', value: '1' },
+    { label: 'Risk cluster', value: 'Week 3' },
+  ],
+  items: [
+    {
+      label: 'Week 3',
+      detail: '3 open issues • 1 issue active • 2 issues not started',
+      route: '/documents/week-3/issues',
+    },
+  ],
+  actions: [
+    {
+      label: 'Open highest-impact #14',
+      route: '/documents/issue-3',
+      intent: 'prioritize',
+      reason: '#14 carries the strongest business value signal on this tab. Business value 87/100.',
+      owner: 'stefano caruso',
+    },
+    {
+      label: 'Open risk cluster Week 3',
+      route: '/documents/week-3/issues',
+      intent: 'prioritize',
+      reason: 'Week 3 holds 3 open issues with 2 issues still not started.',
+    },
+  ],
+};
+
+function renderPanel() {
+  return render(
+    <MemoryRouter>
+      <FleetGraphOnDemandPanel />
+    </MemoryRouter>
+  );
+}
 
 const baseResponse: FleetGraphOnDemandResponse = {
   threadId: 'thread-1',
@@ -121,6 +220,7 @@ const baseResponse: FleetGraphOnDemandResponse = {
     severity: 'action',
   },
   reasoning: {
+    answerMode: 'execution',
     summary:
       'FleetGraph sees clear execution drift because all work is still untouched and no standup has been logged.',
     evidence: ['Completed issues: 0 of 6.', 'Standups logged: 0.'],
@@ -144,6 +244,8 @@ const baseResponse: FleetGraphOnDemandResponse = {
     maxRetries: 2,
     maxResumeCount: 2,
     maxReasoningAttempts: 2,
+    maxToolCalls: 12,
+    toolCallCount: 0,
     circuitBreakerOpen: false,
     lastTripReason: null,
   },
@@ -158,11 +260,20 @@ const baseResponse: FleetGraphOnDemandResponse = {
   error: null,
   lastNode: 'proposeSprintAction',
   nodeHistory: [],
+  toolCalls: [],
+  approvals: [],
   telemetry: {
     langsmithRunId: null,
     langsmithRunUrl: null,
     langsmithShareUrl: null,
     braintrustSpanId: null,
+    totalLatencyMs: null,
+    toolCallCount: 0,
+    toolFailureCount: 0,
+    totalToolLatencyMs: 0,
+    approvalCount: 0,
+    lastToolName: null,
+    loopDetected: false,
   },
   trace: {
     runName: 'fleetgraph-on-demand',
@@ -173,16 +284,20 @@ const baseResponse: FleetGraphOnDemandResponse = {
 describe('FleetGraphOnDemandPanel', () => {
   beforeEach(() => {
     mockUseFleetGraphActiveView.mockReset();
+    mockUseFleetGraphPageContext.mockReset();
     mockInvokeFleetGraphOnDemand.mockReset();
     mockResumeFleetGraphOnDemand.mockReset();
+    mockReportFleetGraphFeedback.mockReset();
+    mockReportFleetGraphFeedback.mockResolvedValue(undefined);
     window.localStorage.clear();
   });
 
   it('opens the drawer, sends a typed question, and renders the returned answer', async () => {
     mockUseFleetGraphActiveView.mockReturnValue(activeView);
+    mockUseFleetGraphPageContext.mockReturnValue(null);
     mockInvokeFleetGraphOnDemand.mockResolvedValue(baseResponse);
 
-    render(<FleetGraphOnDemandPanel />);
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
     fireEvent.change(screen.getByRole('textbox'), {
@@ -193,34 +308,396 @@ describe('FleetGraphOnDemandPanel', () => {
     await waitFor(() => {
       expect(mockInvokeFleetGraphOnDemand).toHaveBeenCalledWith({
         active_view: activeView,
+        page_context: null,
         question: 'Why is this sprint at risk?',
+        question_source: 'typed',
       });
     });
 
-    expect(await screen.findByText('Grounded answer')).toBeInTheDocument();
+    expect(await screen.findByText('Grounded execution guidance')).toBeInTheDocument();
+    expect(screen.getAllByText('Needs action').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/FleetGraph sees clear execution drift/).length).toBeGreaterThan(0);
     expect(screen.getByText('Recommended next step')).toBeInTheDocument();
     expect(screen.getByText('What FleetGraph saw')).toBeInTheDocument();
     expect(screen.getByText(/API Platform - Core Features/)).toBeInTheDocument();
+    expect(screen.getByText('Suggested follow-up questions')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Is the risk coming from scope, blockers, or capacity?' })
+    ).toBeInTheDocument();
   });
 
-  it('shows an unsupported-surface state when page context is not available', () => {
+  it('uses page context on non-sprint pages instead of showing an unavailable state', async () => {
     mockUseFleetGraphActiveView.mockReturnValue(null);
+    mockUseFleetGraphPageContext.mockReturnValue(programsPageContext);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      activeView: null,
+      expandedScope: {
+        issueId: null,
+        weekId: null,
+        projectId: null,
+        programId: null,
+        personId: null,
+      },
+      fetched: {
+        entity: null,
+        supporting: null,
+        activity: null,
+        accountability: null,
+        people: null,
+      },
+      derivedSignals: {
+        ...baseResponse.derivedSignals,
+        severity: 'none',
+        reasons: [],
+        summary: null,
+        shouldSurface: false,
+        signals: [],
+        metrics: {
+          totalIssues: 0,
+          completedIssues: 0,
+          inProgressIssues: 0,
+          incompleteIssues: 0,
+          cancelledIssues: 0,
+          standupCount: 0,
+          recentActivityCount: 0,
+          recentActiveDays: 0,
+          completionRate: null,
+        },
+      },
+      finding: null,
+      reasoning: {
+        answerMode: 'launcher',
+        summary: 'Programs shows 5 active programs in this workspace.',
+        evidence: ['Active programs: 5', 'Programs with owner: 5'],
+        whyNow:
+          'This answer is grounded in the current page snapshot. FleetGraph is using this launcher surface to guide what to open next rather than score execution health from the list alone.',
+        recommendedNextStep: 'Open the program that looks most active or least clear so you can inspect its projects, issues, and current sprint.',
+        confidence: 'high',
+      },
+      reasoningSource: 'deterministic',
+      terminalOutcome: 'quiet',
+    });
 
-    render(<FleetGraphOnDemandPanel />);
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Which project needs attention first?' }));
+
+    await waitFor(() => {
+      expect(mockInvokeFleetGraphOnDemand).toHaveBeenCalledWith({
+        active_view: null,
+        page_context: programsPageContext,
+        question: 'Which project needs attention first?',
+        question_source: 'starter_prompt',
+      });
+    });
+
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(await screen.findByText('Programs shows 5 active programs in this workspace.')).toBeInTheDocument();
+    expect(screen.getAllByText('Launcher guidance').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Best next surface').length).toBeGreaterThan(0);
+    expect(screen.getByText('Active programs')).toBeInTheDocument();
+    expect(screen.queryByText('Stable')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open API Platform' })).toHaveAttribute(
+      'href',
+      '/documents/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    );
+  });
+
+  it('renders scoped issue-surface answers as execution guidance instead of generic page guidance', async () => {
+    mockUseFleetGraphActiveView.mockReturnValue({
+      ...activeView,
+      entity: {
+        id: 'program-1',
+        type: 'program',
+        sourceDocumentType: 'program',
+      },
+      route: '/documents/program-1/issues',
+      tab: 'issues',
+      projectId: null,
+    });
+    mockUseFleetGraphPageContext.mockReturnValue(issueSurfacePageContext);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      activeView: {
+        ...activeView,
+        entity: {
+          id: 'program-1',
+          type: 'program',
+          sourceDocumentType: 'program',
+        },
+        route: '/documents/program-1/issues',
+        tab: 'issues',
+        projectId: null,
+      },
+      fetched: {
+        entity: null,
+        supporting: null,
+        activity: null,
+        accountability: null,
+        people: null,
+      },
+      derivedSignals: {
+        ...baseResponse.derivedSignals,
+        severity: 'none',
+        reasons: [],
+        summary: null,
+        shouldSurface: false,
+        signals: [],
+        metrics: {
+          totalIssues: 0,
+          completedIssues: 0,
+          inProgressIssues: 0,
+          incompleteIssues: 0,
+          cancelledIssues: 0,
+          standupCount: 0,
+          recentActivityCount: 0,
+          recentActiveDays: 0,
+          completionRate: null,
+        },
+      },
+      finding: null,
+      reasoning: {
+        answerMode: 'execution',
+        summary:
+          'API Platform does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet. 3 visible issues are still sitting in triage, backlog, or todo, led by Week 3.',
+        evidence: [
+          'Visible issues: 5',
+          'Not started: 3',
+          'Stale open: 1',
+          'Risk cluster: Week 3',
+        ],
+        whyNow:
+          'This answer is grounded in the visible issues on the current tab, including state mix, freshness, week grouping, and ownership in the worklist.',
+        recommendedNextStep:
+          'Open risk cluster Week 3. Week 3 holds 3 open issues with 2 issues still not started.',
+        confidence: 'high',
+      },
+      reasoningSource: 'deterministic',
+      terminalOutcome: 'quiet',
+    });
+
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    expect(screen.getByRole('button', { name: 'What is the risk inside Week 3?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Which issues are stale or stuck?' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'What is the risk inside Week 3?' }));
+
+    expect(await screen.findByText('Grounded execution guidance')).toBeInTheDocument();
+    expect(screen.getByText('Execution view')).toBeInTheDocument();
+    expect(
+      screen.getByText(/does not show a named blocker on this issues surface/)
+    ).toBeInTheDocument();
+    expect(screen.getByText('Recommended next step')).toBeInTheDocument();
+    expect(screen.getByText('Best route in Ship')).toBeInTheDocument();
+    expect(screen.getByText('Week 3 holds 3 open issues with 2 issues still not started.')).toBeInTheDocument();
+    expect(screen.getByText('Suggested follow-up questions')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Which exact issues are driving the risk?' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open risk cluster Week 3' })).toHaveAttribute(
+      'href',
+      '/documents/week-3/issues'
+    );
+    expect(screen.getByRole('link', { name: 'Open highest-impact #14' })).toHaveAttribute(
+      'href',
+      '/documents/issue-3'
+    );
+    expect(screen.queryByText('Page guidance')).not.toBeInTheDocument();
+  });
+
+  it('promotes a cut candidate route for cut questions on issue surfaces', async () => {
+    const cutContext: FleetGraphPageContext = {
+      ...issueSurfacePageContext,
+      items: [
+        {
+          label: '#15 Explore stretch improvements',
+          detail:
+            'Cut candidate • State: Backlog • Backlog • Business value: 24/100 • Not started and safer to move out than the active or higher-value work on this tab',
+          route: '/documents/issue-15',
+        },
+      ],
+      actions: [
+        {
+          label: 'Review cut candidate #15',
+          route: '/documents/issue-15',
+          intent: 'prioritize',
+          reason:
+            '#15 is not started yet. Business value 24/100. Safer to move out than the active or higher-value work on this tab. Keeps #14 protected.',
+        },
+        ...(issueSurfacePageContext.actions ?? []),
+      ],
+    };
+
+    mockUseFleetGraphActiveView.mockReturnValue({
+      ...activeView,
+      entity: {
+        id: 'program-1',
+        type: 'program',
+        sourceDocumentType: 'program',
+      },
+      route: '/documents/program-1/issues',
+      tab: 'issues',
+      projectId: null,
+    });
+    mockUseFleetGraphPageContext.mockReturnValue(cutContext);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      activeView: {
+        ...activeView,
+        entity: {
+          id: 'program-1',
+          type: 'program',
+          sourceDocumentType: 'program',
+        },
+        route: '/documents/program-1/issues',
+        tab: 'issues',
+        projectId: null,
+      },
+      fetched: {
+        entity: null,
+        supporting: null,
+        activity: null,
+        accountability: null,
+        people: null,
+      },
+      derivedSignals: {
+        ...baseResponse.derivedSignals,
+        severity: 'none',
+        reasons: [],
+        summary: null,
+        shouldSurface: false,
+        signals: [],
+        metrics: {
+          totalIssues: 0,
+          completedIssues: 0,
+          inProgressIssues: 0,
+          incompleteIssues: 0,
+          cancelledIssues: 0,
+          standupCount: 0,
+          recentActivityCount: 0,
+          recentActiveDays: 0,
+          completionRate: null,
+        },
+      },
+      finding: null,
+      reasoning: {
+        answerMode: 'execution',
+        summary:
+          'If you need to cut scope, start with #15 Explore stretch improvements. It is not started and lower value than #14, so it is safer to move out first.',
+        evidence: [
+          'Not started: 3',
+          'Highest impact issue: #14',
+          '#15 Explore stretch improvements: Cut candidate • State: Backlog • Backlog • Business value: 24/100',
+        ],
+        whyNow:
+          'I treated not-started, lower-value backlog work as safer to move out than blocked, active, or highest-impact work.',
+        recommendedNextStep:
+          'Review cut candidate #15. #15 is not started yet. Business value 24/100. Safer to move out than the active or higher-value work on this tab. Keeps #14 protected.',
+        confidence: 'high',
+      },
+      reasoningSource: 'deterministic',
+      terminalOutcome: 'quiet',
+    });
+
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'What can we cut and still protect delivery?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send FleetGraph message' }));
+
+    expect(await screen.findByRole('link', { name: 'Review cut candidate #15' })).toHaveAttribute(
+      'href',
+      '/documents/issue-15'
+    );
+    expect(screen.getAllByText(/Safer to move out than the active or higher-value work/).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Should this stay in sprint or move out?' })).toBeInTheDocument();
+  });
+
+  it('records drawer-open evaluation events for the current surface', async () => {
+    mockUseFleetGraphActiveView.mockReturnValue({
+      ...activeView,
+      entity: {
+        id: 'program-1',
+        type: 'program',
+        sourceDocumentType: 'program',
+      },
+      route: '/documents/program-1/issues',
+      tab: 'issues',
+      projectId: null,
+    });
+    mockUseFleetGraphPageContext.mockReturnValue(issueSurfacePageContext);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      activeView: {
+        ...activeView,
+        entity: {
+          id: 'program-1',
+          type: 'program',
+          sourceDocumentType: 'program',
+        },
+        route: '/documents/program-1/issues',
+        tab: 'issues',
+        projectId: null,
+      },
+      fetched: {
+        entity: null,
+        supporting: null,
+        activity: null,
+        accountability: null,
+        people: null,
+      },
+      reasoning: {
+        answerMode: 'execution',
+        summary:
+          'API Platform does not show a named blocker on this issues surface, but delivery risk is building in scope that has not started yet.',
+        evidence: ['Visible issues: 5', 'Risk cluster: Week 3'],
+        whyNow: 'This answer is grounded in the visible issues on the current tab.',
+        recommendedNextStep: 'Open risk cluster Week 3.',
+        confidence: 'high',
+      },
+      telemetry: {
+        ...baseResponse.telemetry,
+        totalLatencyMs: 245,
+      },
+    });
+
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
 
-    expect(
-      screen.getAllByText('Open a sprint, project, or My Week view to use FleetGraph here.')
-        .length
-    ).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(mockReportFleetGraphFeedback).toHaveBeenCalledWith({
+        event_name: 'drawer_opened',
+        surface: {
+          route: '/documents/program-1/issues',
+          activeViewSurface: 'document',
+          entityType: 'program',
+          pageContextKind: 'issue_surface',
+          tab: 'issues',
+          projectId: null,
+        },
+      });
+    });
+  });
+
+  it('still shows an unavailable state only when neither active view nor page context exists', () => {
+    mockUseFleetGraphActiveView.mockReturnValue(null);
+    mockUseFleetGraphPageContext.mockReturnValue(null);
+
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+
+    expect(screen.getAllByText(/FleetGraph could not derive current page context/).length).toBeGreaterThan(0);
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    expect(screen.getByText('Unavailable here')).toBeInTheDocument();
   });
 
   it('supports HITL decisions from the drawer', async () => {
     mockUseFleetGraphActiveView.mockReturnValue(activeView);
+    mockUseFleetGraphPageContext.mockReturnValue(null);
     mockInvokeFleetGraphOnDemand.mockResolvedValue({
       ...baseResponse,
       status: 'waiting_on_human',
@@ -272,7 +749,7 @@ describe('FleetGraphOnDemandPanel', () => {
       terminalOutcome: 'suppressed',
     });
 
-    render(<FleetGraphOnDemandPanel />);
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
     fireEvent.change(screen.getByRole('textbox'), {
@@ -297,5 +774,77 @@ describe('FleetGraphOnDemandPanel', () => {
     expect(
       await screen.findByText('FleetGraph dismissed this draft action for the current sprint pattern.')
     ).toBeInTheDocument();
+  });
+
+  it('translates writeback failures into structured execution guidance', async () => {
+    mockUseFleetGraphActiveView.mockReturnValue(activeView);
+    mockUseFleetGraphPageContext.mockReturnValue(null);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue({
+      ...baseResponse,
+      status: 'failed',
+      stage: 'fallback',
+      reasoning: null,
+      finding: null,
+      proposedAction: null,
+      pendingApproval: null,
+      actionResult: null,
+      error: {
+        code: 'PROPOSED_ACTION_EXECUTION_FAILED',
+        message:
+          'Ship API POST /api/documents/11111111-1111-1111-1111-111111111111/comments failed with status 403',
+        retryable: true,
+        source: 'executeProposedAction',
+      },
+      terminalOutcome: 'failed_retryable',
+    });
+
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Summarize the key risk signals.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send FleetGraph message' }));
+
+    expect(await screen.findByText('Issue detected')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Ship rejected the approved follow-up comment before it could be posted/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText('Root cause')).toBeInTheDocument();
+    expect(screen.getByText('Impact on workflow')).toBeInTheDocument();
+    expect(screen.getByText('Recommended actions')).toBeInTheDocument();
+    expect(screen.getByText('PM insight')).toBeInTheDocument();
+    expect(screen.getByText(/Technical detail:/i)).toBeInTheDocument();
+  });
+
+  it('marks follow-up prompt questions with the correct question source', async () => {
+    mockUseFleetGraphActiveView.mockReturnValue(activeView);
+    mockUseFleetGraphPageContext.mockReturnValue(null);
+    mockInvokeFleetGraphOnDemand
+      .mockResolvedValueOnce(baseResponse)
+      .mockResolvedValueOnce(baseResponse);
+
+    renderPanel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Why is this sprint at risk?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send FleetGraph message' }));
+
+    await screen.findByText('Suggested follow-up questions');
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Is the risk coming from scope, blockers, or capacity?' })
+    );
+
+    await waitFor(() => {
+      expect(mockInvokeFleetGraphOnDemand).toHaveBeenLastCalledWith({
+        active_view: activeView,
+        page_context: null,
+        question: 'Is the risk coming from scope, blockers, or capacity?',
+        question_source: 'follow_up_prompt',
+      });
+    });
   });
 });

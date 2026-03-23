@@ -6,6 +6,11 @@ import pg from 'pg';
 import bcrypt from 'bcryptjs';
 import { loadProductionSecrets } from '../config/ssm.js';
 import { WELCOME_DOCUMENT_TITLE, WELCOME_DOCUMENT_CONTENT } from './welcomeDocument.js';
+import { DEMO_PROGRAM_TEMPLATES, DEMO_PROJECT_TEMPLATES } from './demoWorkspaceTemplates.js';
+import { buildIssuePlanningProperties, ensureIssuePlanningProperties } from './seedPlanningUtils.js';
+import { inferSeedIssueType } from './seedIssueTypes.js';
+import { createIssueTemplateContent, shouldPopulateIssueTemplate } from '../utils/issueContentTemplate.js';
+import { hasSprintPlanningSnapshot, persistSprintPlanningSnapshot } from '../utils/sprint-planning.js';
 
 const { Pool } = pg;
 
@@ -33,6 +38,63 @@ async function createAssociation(
      ON CONFLICT (document_id, related_id, relationship_type) DO NOTHING`,
     [documentId, relatedId, relationshipType, JSON.stringify(metadata || { created_via: 'seed' })]
   );
+}
+
+async function ensureIssueType(
+  pool: pg.Pool,
+  issueId: string,
+  properties: Record<string, unknown> | null | undefined,
+  issueType: string
+): Promise<void> {
+  if ((properties?.issue_type as string | undefined) === issueType) {
+    return;
+  }
+
+  await pool.query(
+    `UPDATE documents
+     SET properties = $1,
+         updated_at = NOW()
+     WHERE id = $2`,
+    [JSON.stringify({ ...(properties ?? {}), issue_type: issueType }), issueId]
+  );
+}
+
+async function ensureIssueContent(
+  pool: pg.Pool,
+  issueId: string,
+  content: Record<string, unknown> | null | undefined,
+  nextContent: Record<string, unknown>
+): Promise<void> {
+  if (!shouldPopulateIssueTemplate(content)) {
+    return;
+  }
+
+  await pool.query(
+    `UPDATE documents
+     SET content = $1,
+         yjs_state = NULL,
+         updated_at = NOW()
+     WHERE id = $2`,
+    [JSON.stringify(nextContent), issueId]
+  );
+}
+
+interface SeedIssueTemplate {
+  title: string;
+  state: 'done' | 'in_progress' | 'todo' | 'backlog' | 'cancelled';
+  sprintOffset: number | null;
+  priority: 'high' | 'medium' | 'low';
+  estimate: number;
+}
+
+const PAST_SPRINTS_TO_SEED = 6;
+const FUTURE_SPRINTS_TO_SEED = 3;
+
+function buildSprintSnapshotDate(workspaceSprintStartDate: Date, sprintNumber: number): Date {
+  const snapshotDate = new Date(workspaceSprintStartDate);
+  snapshotDate.setUTCHours(0, 0, 0, 0);
+  snapshotDate.setUTCDate(snapshotDate.getUTCDate() + (sprintNumber - 1) * 7);
+  return snapshotDate;
 }
 
 async function seed() {
@@ -87,17 +149,17 @@ async function seed() {
 
     // Team members to seed (dev user + 10 fake users)
     const teamMembers = [
-      { email: 'dev@ship.local', name: 'Dev User' },
-      { email: 'alice.chen@ship.local', name: 'Alice Chen' },
-      { email: 'bob.martinez@ship.local', name: 'Bob Martinez' },
-      { email: 'carol.williams@ship.local', name: 'Carol Williams' },
-      { email: 'david.kim@ship.local', name: 'David Kim' },
-      { email: 'emma.johnson@ship.local', name: 'Emma Johnson' },
-      { email: 'frank.garcia@ship.local', name: 'Frank Garcia' },
-      { email: 'grace.lee@ship.local', name: 'Grace Lee' },
-      { email: 'henry.patel@ship.local', name: 'Henry Patel' },
-      { email: 'iris.nguyen@ship.local', name: 'Iris Nguyen' },
-      { email: 'jack.brown@ship.local', name: 'Jack Brown' },
+      { email: 'dev@ship.local', name: 'Dev User', workPersona: 'product_manager' },
+      { email: 'alice.chen@ship.local', name: 'Alice Chen', workPersona: 'engineering_manager' },
+      { email: 'bob.martinez@ship.local', name: 'Bob Martinez', workPersona: 'engineering_manager' },
+      { email: 'carol.williams@ship.local', name: 'Carol Williams', workPersona: 'designer' },
+      { email: 'david.kim@ship.local', name: 'David Kim', workPersona: 'engineer' },
+      { email: 'emma.johnson@ship.local', name: 'Emma Johnson', workPersona: 'engineer' },
+      { email: 'frank.garcia@ship.local', name: 'Frank Garcia', workPersona: 'qa' },
+      { email: 'grace.lee@ship.local', name: 'Grace Lee', workPersona: 'ops_platform' },
+      { email: 'henry.patel@ship.local', name: 'Henry Patel', workPersona: 'engineer' },
+      { email: 'iris.nguyen@ship.local', name: 'Iris Nguyen', workPersona: 'stakeholder' },
+      { email: 'jack.brown@ship.local', name: 'Jack Brown', workPersona: 'engineer' },
     ];
 
     const passwordHash = await bcrypt.hash('admin123', 10);
@@ -111,9 +173,9 @@ async function seed() {
 
       if (!existingUser.rows[0]) {
         await pool.query(
-          `INSERT INTO users (email, password_hash, name, last_workspace_id)
-           VALUES ($1, $2, $3, $4)`,
-          [member.email, passwordHash, member.name, workspaceId]
+          `INSERT INTO users (email, password_hash, name, work_persona, last_workspace_id)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [member.email, passwordHash, member.name, member.workPersona, workspaceId]
         );
         usersCreated++;
       }
@@ -170,7 +232,16 @@ async function seed() {
         await pool.query(
           `INSERT INTO documents (workspace_id, document_type, title, properties, created_by)
            VALUES ($1, 'person', $2, $3, $4)`,
-          [workspaceId, user.name, JSON.stringify({ user_id: user.id, email: user.email }), user.id]
+          [
+            workspaceId,
+            user.name,
+            JSON.stringify({
+              user_id: user.id,
+              email: user.email,
+              work_persona: teamMembers.find((member) => member.email === user.email)?.workPersona ?? null,
+            }),
+            user.id,
+          ]
         );
         personDocsCreated++;
       }
@@ -240,18 +311,10 @@ async function seed() {
     const allUsers = allUsersResult.rows;
 
     // Programs to seed
-    const programsToSeed = [
-      { prefix: 'SHIP', name: 'Ship Core', color: '#3B82F6' },
-      { prefix: 'AUTH', name: 'Authentication', color: '#8B5CF6' },
-      { prefix: 'API', name: 'API Platform', color: '#10B981' },
-      { prefix: 'UI', name: 'Design System', color: '#F59E0B' },
-      { prefix: 'INFRA', name: 'Infrastructure', color: '#EF4444' },
-    ];
-
     const programs: Array<{ id: string; prefix: string; name: string; color: string }> = [];
     let programsCreated = 0;
 
-    for (const prog of programsToSeed) {
+    for (const prog of DEMO_PROGRAM_TEMPLATES) {
       const existingProgram = await pool.query(
         `SELECT id FROM documents WHERE workspace_id = $1 AND document_type = $2 AND properties->>'prefix' = $3`,
         [workspaceId, 'program', prog.prefix]
@@ -299,49 +362,11 @@ async function seed() {
 
     // Create projects for each program
     // Each project has ICE scores (Impact, Confidence, Ease) for prioritization (1-5 scale)
-    const projectTemplates = [
-      {
-        name: 'Core Features',
-        color: '#6366f1',
-        emoji: '🚀',
-        impact: 5,
-        confidence: 4,
-        ease: 3,
-        plan: 'Building core features will establish the product foundation and attract early adopters.',
-        monetary_impact_expected: 50000,
-        has_design_review: true,
-        design_review_notes: 'Design approved after review session on 2025-01-15. UI mockups finalized.',
-      },
-      {
-        name: 'Bug Fixes',
-        color: '#ef4444',
-        emoji: '🐛',
-        impact: 4,
-        confidence: 5,
-        ease: 4,
-        plan: 'Fixing bugs will improve user retention and reduce support costs.',
-        monetary_impact_expected: 15000,
-        has_design_review: false,
-        design_review_notes: null,
-      },
-      {
-        name: 'Performance',
-        color: '#22c55e',
-        emoji: '⚡',
-        impact: 4,
-        confidence: 3,
-        ease: 2,
-        plan: 'Performance improvements will increase user satisfaction and enable scale.',
-        monetary_impact_expected: 25000,
-        // No design review fields - will be null/undefined
-      },
-    ];
-
     const projects: Array<{ id: string; programId: string; title: string }> = [];
     let projectsCreated = 0;
 
     for (const program of programs) {
-      for (const template of projectTemplates) {
+      for (const template of DEMO_PROJECT_TEMPLATES) {
         const projectTitle = `${program.name} - ${template.name}`;
 
         // Check if project already exists (via junction table association to program)
@@ -361,12 +386,12 @@ async function seed() {
           });
         } else {
           // Assign owner rotating through team members
-          const ownerIdx = (programs.indexOf(program) * projectTemplates.length + projectTemplates.indexOf(template)) % allUsers.length;
+          const ownerIdx = (programs.indexOf(program) * DEMO_PROJECT_TEMPLATES.length + DEMO_PROJECT_TEMPLATES.indexOf(template)) % allUsers.length;
           const owner = allUsers[ownerIdx]!;
 
           // Calculate target date (2-4 weeks from now based on project type)
           const targetDate = new Date();
-          targetDate.setDate(targetDate.getDate() + (projectTemplates.indexOf(template) + 2) * 7);
+          targetDate.setDate(targetDate.getDate() + (DEMO_PROJECT_TEMPLATES.indexOf(template) + 2) * 7);
 
           const projectProperties: Record<string, unknown> = {
             color: template.color,
@@ -377,15 +402,15 @@ async function seed() {
             confidence: template.confidence,
             ease: template.ease,
             plan: template.plan,
-            monetary_impact_expected: template.monetary_impact_expected,
+            monetary_impact_expected: template.monetaryImpactExpected,
             target_date: targetDate.toISOString().split('T')[0],
           };
           // Add design review fields if present in template
-          if ('has_design_review' in template) {
-            projectProperties.has_design_review = template.has_design_review;
+          if (template.hasDesignReview !== undefined) {
+            projectProperties.has_design_review = template.hasDesignReview;
           }
-          if ('design_review_notes' in template) {
-            projectProperties.design_review_notes = template.design_review_notes;
+          if (template.designReviewNotes !== undefined) {
+            projectProperties.design_review_notes = template.designReviewNotes;
           }
           // Create project document without legacy program_id column
           const projectResult = await pool.query(
@@ -425,7 +450,7 @@ async function seed() {
     const daysSinceStart = Math.floor((today.getTime() - sprintStartDate.getTime()) / (1000 * 60 * 60 * 24));
     const currentSprintNumber = Math.max(1, Math.floor(daysSinceStart / 7) + 1);
 
-    // Create sprints for each program (current-3 to current+3)
+    // Create sprints for each program (current-6 to current+3)
     // Sprint owners and assignees come from the program's team (not global rotation)
     // Sprints are distributed among the program's projects
     const sprintsToCreate: Array<{ programId: string; projectId: string; number: number; ownerIdx: number }> = [];
@@ -434,7 +459,7 @@ async function seed() {
       // Get projects for this program to distribute sprints among them
       const programProjects = projects.filter(p => p.programId === program.id);
       let projectIdx = 0;
-      for (let sprintNum = currentSprintNumber - 3; sprintNum <= currentSprintNumber + 3; sprintNum++) {
+      for (let sprintNum = currentSprintNumber - PAST_SPRINTS_TO_SEED; sprintNum <= currentSprintNumber + FUTURE_SPRINTS_TO_SEED; sprintNum++) {
         if (sprintNum > 0) {
           // Round-robin assign sprints to projects within the program
           const project = programProjects[projectIdx % programProjects.length]!;
@@ -565,17 +590,28 @@ async function seed() {
     // Get Ship Core program for comprehensive sprint testing
     const shipCoreProgram = programs.find(p => p.prefix === 'SHIP')!;
 
-    // Comprehensive issue templates for Ship Core covering all sprint/state combinations
-    // This gives us realistic data to test all views
-    // estimate added for sprint planning features (progress graph, accountability)
-    const shipCoreIssues = [
-      // Sprint -3 (completed, older history): All done
+    // Comprehensive issue templates for Ship Core covering at least six past weeks plus current/future planning.
+    const shipCoreIssues: SeedIssueTemplate[] = [
+      { title: 'Establish product vision baseline', state: 'done', sprintOffset: -6, priority: 'high', estimate: 5 },
+      { title: 'Define initial domain boundaries', state: 'done', sprintOffset: -6, priority: 'high', estimate: 8 },
+      { title: 'Map delivery milestones', state: 'done', sprintOffset: -6, priority: 'medium', estimate: 4 },
+      { title: 'Capture onboarding gaps', state: 'done', sprintOffset: -6, priority: 'medium', estimate: 3 },
+
+      { title: 'Stand up workspace permissions', state: 'done', sprintOffset: -5, priority: 'high', estimate: 6 },
+      { title: 'Create document hierarchy rules', state: 'done', sprintOffset: -5, priority: 'high', estimate: 5 },
+      { title: 'Define review workflow states', state: 'done', sprintOffset: -5, priority: 'medium', estimate: 4 },
+      { title: 'Draft internal usage guide', state: 'done', sprintOffset: -5, priority: 'low', estimate: 3 },
+
+      { title: 'Prototype program overview layout', state: 'done', sprintOffset: -4, priority: 'high', estimate: 8 },
+      { title: 'Add project ownership fields', state: 'done', sprintOffset: -4, priority: 'high', estimate: 5 },
+      { title: 'Capture roadmap milestone notes', state: 'done', sprintOffset: -4, priority: 'medium', estimate: 4 },
+      { title: 'Review dependency tracking gaps', state: 'todo', sprintOffset: -4, priority: 'medium', estimate: 3 },
+
       { title: 'Initial project setup', state: 'done', sprintOffset: -3, priority: 'high', estimate: 8 },
       { title: 'Database schema design', state: 'done', sprintOffset: -3, priority: 'high', estimate: 6 },
       { title: 'Set up development environment', state: 'done', sprintOffset: -3, priority: 'medium', estimate: 4 },
       { title: 'Create basic API structure', state: 'done', sprintOffset: -3, priority: 'medium', estimate: 4 },
 
-      // Sprint -2 (completed): Mostly done, some incomplete (tests pattern alert)
       { title: 'Implement user authentication', state: 'done', sprintOffset: -2, priority: 'high', estimate: 8 },
       { title: 'Add password hashing', state: 'done', sprintOffset: -2, priority: 'high', estimate: 4 },
       { title: 'Create session management', state: 'todo', sprintOffset: -2, priority: 'medium', estimate: 6 },
@@ -583,7 +619,6 @@ async function seed() {
       { title: 'Add CSRF protection', state: 'todo', sprintOffset: -2, priority: 'medium', estimate: 4 },
       { title: 'Write auth unit tests', state: 'todo', sprintOffset: -2, priority: 'low', estimate: 3 },
 
-      // Sprint -1 (completed): Low completion (tests pattern alert - 2 consecutive)
       { title: 'Create document model', state: 'done', sprintOffset: -1, priority: 'high', estimate: 8 },
       { title: 'Implement CRUD operations', state: 'todo', sprintOffset: -1, priority: 'high', estimate: 6 },
       { title: 'Add real-time collaboration', state: 'todo', sprintOffset: -1, priority: 'high', estimate: 8 },
@@ -591,7 +626,6 @@ async function seed() {
       { title: 'Integrate Yjs for CRDT', state: 'todo', sprintOffset: -1, priority: 'medium', estimate: 6 },
       { title: 'Add offline support', state: 'cancelled', sprintOffset: -1, priority: 'low', estimate: 4 },
 
-      // Current sprint: Mix of done, in_progress, todo
       { title: 'Implement sprint management', state: 'done', sprintOffset: 0, priority: 'high', estimate: 8 },
       { title: 'Create sprint timeline UI', state: 'done', sprintOffset: 0, priority: 'high', estimate: 6 },
       { title: 'Add sprint progress chart', state: 'done', sprintOffset: 0, priority: 'medium', estimate: 4 },
@@ -602,19 +636,14 @@ async function seed() {
       { title: 'Implement burndown chart', state: 'todo', sprintOffset: 0, priority: 'medium', estimate: 6 },
       { title: 'Add sprint completion notifications', state: 'todo', sprintOffset: 0, priority: 'low', estimate: 2 },
 
-      // Sprint +1 (upcoming): Some planned todo items
       { title: 'Add team workload view', state: 'todo', sprintOffset: 1, priority: 'high', estimate: 8 },
       { title: 'Create capacity planning', state: 'todo', sprintOffset: 1, priority: 'high', estimate: 6 },
       { title: 'Build resource allocation UI', state: 'todo', sprintOffset: 1, priority: 'medium', estimate: 4 },
       { title: 'Add team availability calendar', state: 'backlog', sprintOffset: 1, priority: 'low', estimate: 3 },
 
-      // Sprint +2 (upcoming): Fewer planned items
       { title: 'Implement reporting dashboard', state: 'todo', sprintOffset: 2, priority: 'medium', estimate: 6 },
       { title: 'Add export to PDF', state: 'backlog', sprintOffset: 2, priority: 'low', estimate: 4 },
 
-      // Sprint +3 (upcoming): Empty - no issues assigned
-
-      // Backlog (no sprint): Ideas for future
       { title: 'Add dark mode support', state: 'backlog', sprintOffset: null, priority: 'low', estimate: 4 },
       { title: 'Implement keyboard shortcuts', state: 'backlog', sprintOffset: null, priority: 'low', estimate: 3 },
       { title: 'Create mobile app', state: 'backlog', sprintOffset: null, priority: 'low', estimate: 40 },
@@ -622,26 +651,43 @@ async function seed() {
       { title: 'Build integration with Slack', state: 'backlog', sprintOffset: null, priority: 'medium', estimate: 8 },
     ];
 
-    // Generic issues for other programs - expanded for better testing
-    const genericIssueTemplates = [
-      // Completed issues (past sprints)
-      { title: 'Set up project structure', state: 'done', estimate: 4, sprintOffset: -2, priority: 'high' },
-      { title: 'Create initial documentation', state: 'done', estimate: 3, sprintOffset: -2, priority: 'medium' },
-      { title: 'Define coding standards', state: 'done', estimate: 2, sprintOffset: -2, priority: 'low' },
-      { title: 'Configure CI/CD pipeline', state: 'done', estimate: 6, sprintOffset: -1, priority: 'high' },
-      { title: 'Set up staging environment', state: 'done', estimate: 4, sprintOffset: -1, priority: 'medium' },
-      // Current sprint - mix of states
+    // Generic issues for other programs - expanded to six completed weeks of history.
+    const genericIssueTemplates: SeedIssueTemplate[] = [
+      { title: 'Define initial scope boundary', state: 'done', estimate: 3, sprintOffset: -6, priority: 'high' },
+      { title: 'Document success measures', state: 'done', estimate: 2, sprintOffset: -6, priority: 'medium' },
+      { title: 'Review current tooling gaps', state: 'done', estimate: 4, sprintOffset: -6, priority: 'medium' },
+
+      { title: 'Create implementation outline', state: 'done', estimate: 5, sprintOffset: -5, priority: 'high' },
+      { title: 'Map handoff checkpoints', state: 'done', estimate: 3, sprintOffset: -5, priority: 'medium' },
+      { title: 'Set baseline quality checks', state: 'done', estimate: 2, sprintOffset: -5, priority: 'low' },
+
+      { title: 'Prototype user journey', state: 'done', estimate: 5, sprintOffset: -4, priority: 'high' },
+      { title: 'Capture integration assumptions', state: 'todo', estimate: 3, sprintOffset: -4, priority: 'medium' },
+      { title: 'Add smoke-test checklist', state: 'done', estimate: 2, sprintOffset: -4, priority: 'low' },
+
+      { title: 'Set up project structure', state: 'done', estimate: 4, sprintOffset: -3, priority: 'high' },
+      { title: 'Create initial documentation', state: 'done', estimate: 3, sprintOffset: -3, priority: 'medium' },
+      { title: 'Define coding standards', state: 'done', estimate: 2, sprintOffset: -3, priority: 'low' },
+
+      { title: 'Configure CI/CD pipeline', state: 'done', estimate: 6, sprintOffset: -2, priority: 'high' },
+      { title: 'Set up staging environment', state: 'done', estimate: 4, sprintOffset: -2, priority: 'medium' },
+      { title: 'Harden release checklist', state: 'todo', estimate: 3, sprintOffset: -2, priority: 'low' },
+
+      { title: 'Implement auth hardening', state: 'done', estimate: 5, sprintOffset: -1, priority: 'high' },
+      { title: 'Tighten telemetry coverage', state: 'todo', estimate: 4, sprintOffset: -1, priority: 'medium' },
+      { title: 'Document deployment rollback', state: 'cancelled', estimate: 2, sprintOffset: -1, priority: 'low' },
+
       { title: 'Implement core features', state: 'done', estimate: 8, sprintOffset: 0, priority: 'high' },
       { title: 'Add input validation', state: 'done', estimate: 4, sprintOffset: 0, priority: 'high' },
       { title: 'Create error handling', state: 'in_progress', estimate: 5, sprintOffset: 0, priority: 'high' },
       { title: 'Build user interface', state: 'in_progress', estimate: 6, sprintOffset: 0, priority: 'medium' },
       { title: 'Add unit tests', state: 'todo', estimate: 4, sprintOffset: 0, priority: 'medium' },
       { title: 'Write integration tests', state: 'todo', estimate: 5, sprintOffset: 0, priority: 'low' },
-      // Upcoming sprint
+
       { title: 'Performance optimization', state: 'todo', estimate: 6, sprintOffset: 1, priority: 'medium' },
       { title: 'Add caching layer', state: 'todo', estimate: 4, sprintOffset: 1, priority: 'medium' },
       { title: 'Security audit fixes', state: 'todo', estimate: 8, sprintOffset: 1, priority: 'high' },
-      // Backlog
+
       { title: 'Implement analytics', state: 'backlog', estimate: 6, sprintOffset: null, priority: 'low' },
       { title: 'Add export functionality', state: 'backlog', estimate: 4, sprintOffset: null, priority: 'low' },
       { title: 'Create admin dashboard', state: 'backlog', estimate: 10, sprintOffset: null, priority: 'medium' },
@@ -681,33 +727,47 @@ async function seed() {
 
       // Check if issue already exists (via junction table association to program)
       const existingIssue = await pool.query(
-        `SELECT d.id FROM documents d
+        `SELECT d.id, d.properties, d.content FROM documents d
          JOIN document_associations da ON da.document_id = d.id
            AND da.related_id = $2 AND da.relationship_type = 'program'
          WHERE d.workspace_id = $1 AND d.title = $3 AND d.document_type = 'issue'`,
         [workspaceId, shipCoreProgram.id, issue.title]
       );
 
+      const issueType = inferSeedIssueType({
+        title: issue.title,
+      });
+      const issueContent = createIssueTemplateContent({
+        title: issue.title,
+        issueType,
+        mode: 'filled',
+      });
+
       if (!existingIssue.rows[0]) {
         maxTickets[shipCoreProgram.id]!++;
+        const planningProperties = buildIssuePlanningProperties(issue.estimate);
         const issueProperties: Record<string, unknown> = {
           state: issue.state,
           priority: issue.priority,
+          issue_type: issueType,
           source: 'internal',
           assignee_id: assignee.id,
           feedback_status: null,
           rejection_reason: null,
+          ...planningProperties,
         };
-        // Add estimate if provided
-        if (issue.estimate !== null) {
-          issueProperties.estimate = issue.estimate;
-        }
         // Create issue document without legacy program_id and sprint_id columns
         const issueResult = await pool.query(
-          `INSERT INTO documents (workspace_id, document_type, title, properties, ticket_number)
-           VALUES ($1, 'issue', $2, $3, $4)
+          `INSERT INTO documents (workspace_id, document_type, title, content, properties, ticket_number)
+           VALUES ($1, 'issue', $2, $3, $4, $5)
            RETURNING id`,
-          [workspaceId, issue.title, JSON.stringify(issueProperties), maxTickets[shipCoreProgram.id]]
+          [
+            workspaceId,
+            issue.title,
+            JSON.stringify(issueContent),
+            JSON.stringify(issueProperties),
+            maxTickets[shipCoreProgram.id],
+          ]
         );
         const issueId = issueResult.rows[0].id;
 
@@ -730,6 +790,25 @@ async function seed() {
         }
 
         issuesCreated++;
+      } else {
+        await ensureIssueType(
+          pool,
+          existingIssue.rows[0].id,
+          existingIssue.rows[0].properties as Record<string, unknown> | undefined,
+          issueType
+        );
+        await ensureIssueContent(
+          pool,
+          existingIssue.rows[0].id,
+          existingIssue.rows[0].content as Record<string, unknown> | undefined,
+          issueContent
+        );
+        await ensureIssuePlanningProperties(
+          pool,
+          existingIssue.rows[0].id,
+          existingIssue.rows[0].properties as Record<string, unknown> | undefined,
+          issue.estimate
+        );
       }
     }
 
@@ -753,30 +832,47 @@ async function seed() {
 
         // Check if issue already exists (via junction table association to program)
         const existingIssue = await pool.query(
-          `SELECT d.id FROM documents d
+          `SELECT d.id, d.properties, d.content FROM documents d
            JOIN document_associations da ON da.document_id = d.id
              AND da.related_id = $2 AND da.relationship_type = 'program'
            WHERE d.workspace_id = $1 AND d.title = $3 AND d.document_type = 'issue'`,
           [workspaceId, program.id, template.title]
         );
 
+        const issueType = inferSeedIssueType({
+          title: template.title,
+        });
+        const issueContent = createIssueTemplateContent({
+          title: template.title,
+          issueType,
+          mode: 'filled',
+        });
+
         if (!existingIssue.rows[0]) {
           maxTickets[program.id]!++;
+          const planningProperties = buildIssuePlanningProperties(template.estimate);
           const issueProperties = {
             state: template.state,
             priority: template.priority,
+            issue_type: issueType,
             source: 'internal',
             assignee_id: assignee.id,
             feedback_status: null,
             rejection_reason: null,
-            estimate: template.estimate,
+            ...planningProperties,
           };
           // Create issue document without legacy program_id and sprint_id columns
           const issueResult = await pool.query(
-            `INSERT INTO documents (workspace_id, document_type, title, properties, ticket_number)
-             VALUES ($1, 'issue', $2, $3, $4)
+            `INSERT INTO documents (workspace_id, document_type, title, content, properties, ticket_number)
+             VALUES ($1, 'issue', $2, $3, $4, $5)
              RETURNING id`,
-            [workspaceId, template.title, JSON.stringify(issueProperties), maxTickets[program.id]]
+            [
+              workspaceId,
+              template.title,
+              JSON.stringify(issueContent),
+              JSON.stringify(issueProperties),
+              maxTickets[program.id],
+            ]
           );
           const issueId = issueResult.rows[0].id;
 
@@ -799,6 +895,25 @@ async function seed() {
           }
 
           issuesCreated++;
+        } else {
+          await ensureIssueType(
+            pool,
+            existingIssue.rows[0].id,
+            existingIssue.rows[0].properties as Record<string, unknown> | undefined,
+            issueType
+          );
+          await ensureIssueContent(
+            pool,
+            existingIssue.rows[0].id,
+            existingIssue.rows[0].content as Record<string, unknown> | undefined,
+            issueContent
+          );
+          await ensureIssuePlanningProperties(
+            pool,
+            existingIssue.rows[0].id,
+            existingIssue.rows[0].properties as Record<string, unknown> | undefined,
+            template.estimate
+          );
         }
       }
     }
@@ -807,6 +922,34 @@ async function seed() {
       console.log(`✅ Created ${issuesCreated} issues`);
     } else {
       console.log('ℹ️  All issues already exist');
+    }
+
+    let sprintBaselinesCreated = 0;
+    for (const sprint of sprints) {
+      if (sprint.number > currentSprintNumber) {
+        continue;
+      }
+
+      const sprintPropertiesResult = await pool.query(
+        `SELECT properties
+         FROM documents
+         WHERE id = $1`,
+        [sprint.id]
+      );
+      const sprintProperties = sprintPropertiesResult.rows[0]?.properties as Record<string, unknown> | undefined;
+      if (hasSprintPlanningSnapshot(sprintProperties)) {
+        continue;
+      }
+
+      await persistSprintPlanningSnapshot(pool, sprint.id, sprintProperties, {
+        source: sprint.number < currentSprintNumber ? 'seeded_history' : 'captured_at_start',
+        snapshotTakenAt: buildSprintSnapshotDate(sprintStartDate, sprint.number),
+      });
+      sprintBaselinesCreated++;
+    }
+
+    if (sprintBaselinesCreated > 0) {
+      console.log(`✅ Created ${sprintBaselinesCreated} sprint planning baselines`);
     }
 
     // Create welcome/tutorial wiki document

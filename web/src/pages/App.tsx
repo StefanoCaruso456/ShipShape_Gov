@@ -18,9 +18,15 @@ import { programKeys } from '@/hooks/useProgramsQuery';
 import { useStandupStatusQuery } from '@/hooks/useStandupStatusQuery';
 import { useActionItemsQuery, actionItemsKeys } from '@/hooks/useActionItemsQuery';
 import { useTeamMembersQuery } from '@/hooks/useTeamMembersQuery';
+import { useAnalyticsSprintsQuery } from '@/hooks/useAnalyticsSprintsQuery';
 import { cn, getContrastTextColor } from '@/lib/cn';
 import { buildDocumentTree, DocumentTreeNode } from '@/lib/documentTree';
-import { listFleetGraphProactiveFindings } from '@/lib/fleetgraph';
+import {
+  buildFleetGraphProactiveFindingFeedback,
+  buildFleetGraphProactiveFindingToastCopy,
+  listFleetGraphProactiveFindings,
+  reportFleetGraphFeedback,
+} from '@/lib/fleetgraph';
 import { CommandPalette } from '@/components/CommandPalette';
 import { SessionTimeoutModal } from '@/components/SessionTimeoutModal';
 import { UploadNavigationWarning } from '@/components/UploadNavigationWarning';
@@ -31,6 +37,7 @@ import { useToast } from '@/components/ui/Toast';
 import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
 import { VISIBILITY_OPTIONS } from '@/lib/contextMenuActions';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
+import { AnalyticsSidebar, type AnalyticsSidebarSprint } from '@/components/AnalyticsSidebar';
 import { ContextTreeNav } from '@/components/ContextTreeNav';
 import { ProjectSetupWizard, ProjectSetupData } from '@/components/ProjectSetupWizard';
 import { SelectionPersistenceProvider } from '@/contexts/SelectionPersistenceContext';
@@ -38,9 +45,21 @@ import { ActionItemsModal } from '@/components/ActionItemsModal';
 import { AccountabilityBanner } from '@/components/AccountabilityBanner';
 import { ProjectContextSidebar } from '@/components/sidebars/ProjectContextSidebar';
 import { FleetGraphOnDemandPanel } from '@/components/fleetgraph/FleetGraphOnDemandPanel';
+import {
+  buildAnalyticsPath,
+  parseAnalyticsHistoryScope,
+  parseAnalyticsView,
+  parseAnalyticsWeekNumber,
+} from '@/lib/analytics-route';
 import type { FleetGraphProactiveFinding } from '@ship/shared';
 
-type Mode = 'docs' | 'issues' | 'projects' | 'programs' | 'sprints' | 'team' | 'settings' | 'dashboard' | 'project-context';
+type Mode = 'docs' | 'issues' | 'projects' | 'programs' | 'sprints' | 'team' | 'settings' | 'dashboard' | 'analytics' | 'project-context';
+type AnalyticsView = 'report' | 'velocity' | 'forecast' | 'flow' | 'workload' | 'hygiene';
+
+function getInlineWeekIdFromPath(pathname: string): string | null {
+  const match = pathname.match(/\/documents\/[^/]+\/weeks\/([0-9a-f-]{36})(?:\/|$)/i);
+  return match?.[1] ?? null;
+}
 
 export function AppLayout() {
   const { user, logout, isSuperAdmin, impersonating, endImpersonation } = useAuth();
@@ -80,6 +99,7 @@ export function AppLayout() {
   // Check if user needs to post a standup today
   const { data: standupStatus } = useStandupStatusQuery();
   const standupDue = standupStatus?.due ?? false;
+  const { data: analyticsSprintsData = [] } = useAnalyticsSprintsQuery();
 
   // Check if user has pending action items (accountability tasks)
   const { data: actionItemsData } = useActionItemsQuery();
@@ -140,22 +160,23 @@ export function AppLayout() {
     }
 
     markFleetGraphFindingSeen(finding.id);
-
-    const title = finding.title ?? 'Current week';
-    const prefix =
-      finding.severity === 'action'
-        ? 'FleetGraph flagged'
-        : finding.severity === 'warning'
-          ? 'FleetGraph noticed'
-          : 'FleetGraph surfaced';
+    const toastCopy = buildFleetGraphProactiveFindingToastCopy(finding);
+    void reportFleetGraphFeedback(
+      buildFleetGraphProactiveFindingFeedback(finding, 'proactive_toast_shown')
+    ).catch(() => {});
 
     showToast(
-      `${prefix} ${title}: ${finding.summary}`,
+      toastCopy.message,
       finding.severity === 'action' ? 'error' : 'info',
       7000,
       {
-        label: 'Open Sprint',
-        onClick: () => navigate(finding.route),
+        label: toastCopy.actionLabel,
+        onClick: () => {
+          void reportFleetGraphFeedback(
+            buildFleetGraphProactiveFindingFeedback(finding, 'proactive_toast_clicked')
+          ).catch(() => {});
+          navigate(finding.route);
+        },
       }
     );
   }, [currentWorkspace, hasSeenFleetGraphFinding, markFleetGraphFindingSeen, navigate, showToast]);
@@ -186,7 +207,7 @@ export function AppLayout() {
       return undefined;
     }
 
-    void listFleetGraphProactiveFindings(1)
+    void listFleetGraphProactiveFindings(5)
       .then((findings) => {
         if (cancelled) {
           return;
@@ -257,17 +278,60 @@ export function AppLayout() {
 
   // Get current document type and ID for /documents/:id routes
   const { currentDocumentType, currentDocumentId, currentDocumentProjectId } = useCurrentDocument();
+  const inlineWeekId = getInlineWeekIdFromPath(location.pathname);
+  const analyticsSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const analyticsView = parseAnalyticsView(analyticsSearchParams.get('view')) as AnalyticsView;
+  const analyticsHistoryScope = parseAnalyticsHistoryScope(analyticsSearchParams.get('historyScope'));
+  const analyticsHistoryStartWeek = parseAnalyticsWeekNumber(analyticsSearchParams.get('historyStartWeek'));
+  const analyticsHistoryEndWeek = parseAnalyticsWeekNumber(analyticsSearchParams.get('historyEndWeek'));
+
+  const analyticsSprints = useMemo<AnalyticsSidebarSprint[]>(
+    () => analyticsSprintsData.map((sprint) => ({
+      id: sprint.id,
+      title: sprint.title,
+      subtitle: sprint.subtitle,
+      programName: sprint.programName,
+      status: sprint.status,
+      statusLabel: sprint.statusLabel,
+    })),
+    [analyticsSprintsData]
+  );
+
+  const resolvePreferredAnalyticsSprintId = useCallback((): string | null => {
+    if (inlineWeekId) {
+      return inlineWeekId;
+    }
+
+    if (currentDocumentType === 'sprint' && currentDocumentId) {
+      return currentDocumentId;
+    }
+
+    return analyticsSprints[0]?.id ?? null;
+  }, [analyticsSprints, currentDocumentId, currentDocumentType, inlineWeekId]);
+
+  const activeAnalyticsSprintId = useMemo(() => {
+    if (location.pathname.startsWith('/analytics')) {
+      return new URLSearchParams(location.search).get('sprintId') ?? resolvePreferredAnalyticsSprintId();
+    }
+
+    if (location.pathname.match(/^\/documents\/[0-9a-f-]{36}\/analytics(?:\/|$)/i)) {
+      return currentDocumentType === 'sprint' ? currentDocumentId ?? null : null;
+    }
+
+    return inlineWeekId;
+  }, [currentDocumentId, currentDocumentType, inlineWeekId, location.pathname, location.search, resolvePreferredAnalyticsSprintId]);
 
   // Determine active mode from path or document type
   const getActiveMode = (): Mode => {
     if (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/my-week')) return 'dashboard';
     // For /documents/:id routes, use document type from context
     if (location.pathname.startsWith('/documents/')) {
+      if (location.pathname.match(/^\/documents\/[0-9a-f-]{36}\/analytics(?:\/|$)/i)) return 'analytics';
       if (currentDocumentType === 'wiki') return 'docs';
       if (currentDocumentType === 'issue') return 'issues';
       if (currentDocumentType === 'project') return 'projects';
       if (currentDocumentType === 'program') return 'programs';
-      if (currentDocumentType === 'sprint') return 'docs'; // Sprint documents open without special sidebar
+      if (currentDocumentType === 'sprint') return 'docs'; // Sprint documents default to docs unless analytics is open
       if (currentDocumentType === 'person') return 'team';
       // Weekly docs with a project_id stay in projects mode (sidebar shows position)
       if ((currentDocumentType === 'weekly_plan' || currentDocumentType === 'weekly_retro') && currentDocumentProjectId) {
@@ -279,6 +343,7 @@ export function AppLayout() {
     if (location.pathname.startsWith('/docs')) return 'docs';
     if (location.pathname.startsWith('/issues')) return 'issues';
     if (location.pathname.startsWith('/projects')) return 'projects';
+    if (location.pathname.startsWith('/analytics')) return 'analytics';
     // Sprints mode: /sprints/* or /programs/*/sprints/* paths
     if (location.pathname.startsWith('/sprints')) return 'sprints';
     if (location.pathname.match(/^\/programs\/[^/]+\/sprints/)) return 'sprints';
@@ -293,6 +358,12 @@ export function AppLayout() {
   const isWeeklyDoc = currentDocumentType === 'weekly_plan' || currentDocumentType === 'weekly_retro';
   const isStandup = currentDocumentType === 'standup';
   const hideLeftSidebar = isMyWeekPage || isWeeklyDoc || isStandup;
+
+  useEffect(() => {
+    if (activeMode === 'analytics' && leftSidebarCollapsed) {
+      setLeftSidebarCollapsed(false);
+    }
+  }, [activeMode, leftSidebarCollapsed]);
 
   // Get the active document ID from URL - works for /documents/:id and legacy routes
   const getActiveDocumentId = (): string | undefined => {
@@ -314,6 +385,20 @@ export function AppLayout() {
   const handleModeClick = (mode: Mode) => {
     switch (mode) {
       case 'dashboard': navigate('/my-week'); break;
+      case 'analytics': {
+        const sprintId = resolvePreferredAnalyticsSprintId();
+        setLeftSidebarCollapsed(false);
+        navigate(
+          sprintId
+            ? buildAnalyticsPath(sprintId, analyticsView, {
+                historyScope: analyticsHistoryScope,
+                historyStartWeek: analyticsHistoryStartWeek,
+                historyEndWeek: analyticsHistoryEndWeek,
+              })
+            : '/analytics'
+        );
+        break;
+      }
       case 'docs': navigate('/docs'); break;
       case 'issues': navigate('/issues'); break;
       case 'projects': navigate('/projects'); break;
@@ -486,6 +571,12 @@ export function AppLayout() {
               onClick={() => handleModeClick('dashboard')}
             />
             <RailIcon
+              icon={<AnalyticsIcon />}
+              label="Analytics"
+              active={activeMode === 'analytics'}
+              onClick={() => handleModeClick('analytics')}
+            />
+            <RailIcon
               icon={<DocsIcon />}
               label="Docs"
               active={activeMode === 'docs'}
@@ -556,6 +647,7 @@ export function AppLayout() {
             <div className="flex h-10 items-center justify-between border-b border-border px-3">
               <h2 className="text-sm font-medium text-foreground m-0">
                 {activeMode === 'dashboard' && 'Dashboard'}
+                {activeMode === 'analytics' && 'Analytics'}
                 {activeMode === 'docs' && 'Docs'}
                 {activeMode === 'issues' && 'Issues'}
                 {activeMode === 'projects' && 'Projects'}
@@ -645,6 +737,13 @@ export function AppLayout() {
               )}
               {activeMode === 'team' && (
                 <TeamSidebar />
+              )}
+              {activeMode === 'analytics' && (
+                <AnalyticsSidebar
+                  sprints={analyticsSprints}
+                  activeSprintId={activeAnalyticsSprintId}
+                  activeView={analyticsView}
+                />
               )}
               {activeMode === 'settings' && (
                 <div className="px-3 py-2 text-sm text-muted">Settings</div>
@@ -1916,6 +2015,17 @@ function DashboardIcon() {
   return (
     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z" />
+    </svg>
+  );
+}
+
+function AnalyticsIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 19h16" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16V10" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16V6" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16v-3" />
     </svg>
   );
 }

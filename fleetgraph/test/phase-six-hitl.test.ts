@@ -223,6 +223,13 @@ describe('FleetGraph Phase 6 reasoning and HITL', () => {
       snoozedUntil: null,
       executedCommentId: 'comment-1',
     });
+    expect(resumedResult.approvals).toHaveLength(1);
+    expect(resumedResult.approvals[0]).toMatchObject({
+      actionType: 'draft_escalation_comment',
+      decisionOutcome: 'approve',
+      requiresHumanApproval: true,
+    });
+    expect(resumedResult.telemetry.approvalCount).toBe(1);
     expect(postCalls).toHaveLength(1);
     expect(postCalls[0]).toMatchObject({
       path: `/api/documents/${weekId}/comments`,
@@ -263,6 +270,14 @@ describe('FleetGraph Phase 6 reasoning and HITL', () => {
       snoozedUntil: null,
       executedCommentId: null,
     });
+    expect(resumedResult.approvals).toHaveLength(1);
+    expect(resumedResult.approvals[0]).toMatchObject({
+      actionType: 'draft_escalation_comment',
+      decisionOutcome: 'dismiss',
+      requiresHumanApproval: true,
+      note: 'Not now',
+    });
+    expect(resumedResult.telemetry.approvalCount).toBe(1);
     expect(postCalls).toHaveLength(0);
   });
 });

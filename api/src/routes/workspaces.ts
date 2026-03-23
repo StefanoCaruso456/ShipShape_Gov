@@ -231,7 +231,14 @@ router.post('/:id/switch', authMiddleware, async (req: Request, res: Response): 
 
     res.json({
       success: true,
-      data: { workspaceId },
+      data: {
+        workspaceId,
+        workspace: {
+          id: workspace.id,
+          name: workspace.name,
+          role: membershipResult.rows[0] ? 'member' : 'admin',
+        },
+      },
     });
   } catch (error) {
     console.error('Switch workspace error:', error);

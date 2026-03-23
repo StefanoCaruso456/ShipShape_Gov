@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useActiveWeeksQuery, ActiveWeek } from '@/hooks/useWeeksQuery';
 import { useProjects, Project } from '@/contexts/ProjectsContext';
+import { useCurrentView } from '@/contexts/CurrentViewContext';
 import { useDashboardActionItems } from '@/hooks/useDashboardActionItems';
+import { buildFleetGraphDashboardActiveViewContext } from '@/lib/fleetgraph';
 import { cn } from '@/lib/cn';
 import { formatRelativeTime } from '@/lib/date-utils';
 import { DashboardVariantC } from '@/components/dashboard/DashboardVariantC';
@@ -43,7 +45,9 @@ function extractTextFromContent(content: unknown): string {
 }
 
 export function DashboardPage() {
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { setCurrentView, clearCurrentView } = useCurrentView();
   const currentView: DashboardView = (searchParams.get('view') as DashboardView) || 'my-work';
 
   const { data: weeksData, isLoading: weeksLoading } = useActiveWeeksQuery();
@@ -54,6 +58,7 @@ export function DashboardPage() {
 
   const activeWeeks = weeksData?.weeks || [];
   const actionItems = actionItemsData?.action_items || [];
+  const dashboardRoute = `${location.pathname}${location.search}`;
 
   // Fetch recent standups from all active sprints
   useEffect(() => {
@@ -107,6 +112,25 @@ export function DashboardPage() {
     archived: projects.filter(p => p.archived_at).length,
     total: projects.length,
   };
+
+  const dashboardActiveView = useMemo(
+    () =>
+      buildFleetGraphDashboardActiveViewContext({
+        pathname: dashboardRoute,
+        view: currentView,
+        activeWeeks,
+        actionItems,
+        projects,
+      }),
+    [actionItems, activeWeeks, currentView, dashboardRoute, projects]
+  );
+
+  useEffect(() => {
+    setCurrentView(dashboardActiveView);
+    return () => {
+      clearCurrentView();
+    };
+  }, [clearCurrentView, dashboardActiveView, setCurrentView]);
 
   const topProjects = [...projects]
     .filter(p => !p.archived_at)

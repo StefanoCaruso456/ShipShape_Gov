@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { pool } from '../db/client.js';
 import { ERROR_CODES, HTTP_STATUS } from '@ship/shared';
 import { WELCOME_DOCUMENT_TITLE, WELCOME_DOCUMENT_CONTENT } from '../db/welcomeDocument.js';
+import { populateDemoWorkspaceData } from '../db/demoWorkspaceBootstrap.js';
 
 const router: RouterType = Router();
 
@@ -116,7 +117,16 @@ router.post('/initialize', async (req: Request, res: Response): Promise<void> =>
       [workspaceId, WELCOME_DOCUMENT_TITLE, JSON.stringify(WELCOME_DOCUMENT_CONTENT), user.id]
     );
 
-    console.log(`Initial setup complete: ${email} is now super admin`);
+    const populated = await populateDemoWorkspaceData(pool, {
+      workspaceId,
+      ownerUserId: user.id,
+    });
+
+    console.log(
+      `Initial setup complete: ${email} is now super admin ` +
+        `(${populated.programsCreated} programs, ${populated.projectsCreated} projects, ` +
+        `${populated.sprintsCreated} weeks, ${populated.issuesCreated} issues bootstrapped)`
+    );
 
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
@@ -125,6 +135,7 @@ router.post('/initialize', async (req: Request, res: Response): Promise<void> =>
           id: user.id,
           email: user.email,
           name: user.name,
+          workPersona: null,
           isSuperAdmin: user.is_super_admin,
         },
         message: 'Setup complete! You can now log in.',

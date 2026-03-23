@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPatch } from '@/lib/api';
-import type { CascadeWarning, IncompleteChild, BelongsTo, BelongsToType } from '@ship/shared';
+import type {
+  CascadeWarning,
+  IncompleteChild,
+  BelongsTo,
+  BelongsToType,
+  IssueType,
+  IssueSource,
+} from '@ship/shared';
 
 // Custom error type for cascade warning (409 response)
 export class CascadeWarningError extends Error {
@@ -27,15 +34,19 @@ export interface Issue {
   title: string;
   state: string;
   priority: string;
+  issue_type?: IssueType | null;
+  content?: Record<string, unknown> | null;
   ticket_number: number;
   display_id: string;
   assignee_id: string | null;
   assignee_name: string | null;
   assignee_archived?: boolean;
+  story_points: number | null;
+  estimate_hours: number | null;
   estimate: number | null;
   // belongs_to array contains all associations (program, sprint, project, parent)
   belongs_to: BelongsTo[];
-  source: 'internal' | 'external';
+  source: IssueSource;
   rejection_reason: string | null;
   created_at?: string;
   updated_at?: string;
@@ -94,6 +105,7 @@ export interface IssueFilters {
   programId?: string;
   projectId?: string;
   sprintId?: string;
+  issueType?: IssueType;
 }
 
 // Query keys
@@ -120,6 +132,7 @@ async function fetchIssues(filters?: IssueFilters): Promise<Issue[]> {
   const params = new URLSearchParams();
   if (filters?.programId) params.append('program_id', filters.programId);
   if (filters?.sprintId) params.append('sprint_id', filters.sprintId);
+  if (filters?.issueType) params.append('issue_type', filters.issueType);
   // Note: projectId filtering is done client-side via belongs_to array
 
   const queryString = params.toString();
@@ -221,10 +234,13 @@ export function useCreateIssue() {
         title: newIssue?.title ?? 'Untitled',
         state: 'backlog',
         priority: 'none',
+        issue_type: 'task',
         ticket_number: -1,
         display_id: 'PENDING',
         assignee_id: null,
         assignee_name: null,
+        story_points: null,
+        estimate_hours: null,
         estimate: null,
         belongs_to,
         source: 'internal',

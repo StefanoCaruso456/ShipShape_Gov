@@ -46,12 +46,22 @@ describe('Projects API', () => {
   });
 
   describe('GET /api/projects', () => {
-    it('returns array with ice_score computed field', async () => {
+    it('returns array with computed ICE and business value scores', async () => {
       const mockProjects = [
         {
           id: 'project-1',
           title: 'High Priority Project',
-          properties: { impact: 5, confidence: 4, ease: 3, owner_id: 'owner-1', color: '#ff0000' },
+          properties: {
+            impact: 5,
+            confidence: 4,
+            ease: 3,
+            roi: 5,
+            retention: 4,
+            acquisition: 3,
+            growth: 5,
+            owner_id: 'owner-1',
+            color: '#ff0000',
+          },
           archived_at: null,
           created_at: new Date(),
           updated_at: new Date(),
@@ -64,7 +74,17 @@ describe('Projects API', () => {
         {
           id: 'project-2',
           title: 'Low Priority Project',
-          properties: { impact: 2, confidence: 2, ease: 2, owner_id: 'owner-2', color: '#00ff00' },
+          properties: {
+            impact: 2,
+            confidence: 2,
+            ease: 2,
+            roi: 2,
+            retention: 2,
+            acquisition: 1,
+            growth: 2,
+            owner_id: 'owner-2',
+            color: '#00ff00',
+          },
           archived_at: null,
           created_at: new Date(),
           updated_at: new Date(),
@@ -86,12 +106,16 @@ describe('Projects API', () => {
 
       // Verify ice_score is computed (5*4*3 = 60)
       expect(res.body[0].ice_score).toBe(60);
+      expect(res.body[0].business_value_score).toBe(87);
       expect(res.body[0].impact).toBe(5);
       expect(res.body[0].confidence).toBe(4);
       expect(res.body[0].ease).toBe(3);
+      expect(res.body[0].roi).toBe(5);
+      expect(res.body[0].growth).toBe(5);
 
       // Verify ice_score for second project (2*2*2 = 8)
       expect(res.body[1].ice_score).toBe(8);
+      expect(res.body[1].business_value_score).toBe(37);
     });
 
     it('returns projects sorted by ice_score descending by default', async () => {

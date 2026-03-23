@@ -22,7 +22,8 @@ import {
   type DocumentResponse,
   type TabCounts,
 } from '@/lib/document-tabs';
-import { buildFleetGraphActiveViewContext } from '@/lib/fleetgraph';
+import { buildFleetGraphActiveViewContext, extractFleetGraphProjectIdFromDocument } from '@/lib/fleetgraph';
+import type { IssueType } from '@ship/shared';
 
 /**
  * UnifiedDocumentPage - Renders any document type via /documents/:id route
@@ -37,7 +38,7 @@ export function UnifiedDocumentPage() {
   const location = useLocation();
 
   // Parse wildcard path into tab and nested path
-  // Example: /documents/abc/sprints/xyz -> wildcardPath = "sprints/xyz" -> tab = "sprints", nestedPath = "xyz"
+  // Example: /documents/abc/weeks/xyz -> wildcardPath = "weeks/xyz" -> tab = "weeks", nestedPath = "xyz"
   const pathSegments = wildcardPath ? wildcardPath.split('/').filter(Boolean) : [];
   const urlTab = pathSegments[0] || undefined;
   const nestedPath = pathSegments.length > 1 ? pathSegments.slice(1).join('/') : undefined;
@@ -80,10 +81,7 @@ export function UnifiedDocumentPage() {
   useEffect(() => {
     if (document && id) {
       const docType = document.document_type as 'wiki' | 'issue' | 'project' | 'program' | 'sprint' | 'person' | 'weekly_plan' | 'weekly_retro' | 'standup';
-      // Extract projectId for weekly documents
-      const projectId = (document.document_type === 'weekly_plan' || document.document_type === 'weekly_retro')
-        ? (document.properties?.project_id as string | undefined) ?? null
-        : null;
+      const projectId = extractFleetGraphProjectIdFromDocument(document);
       setCurrentDocument(id, docType, projectId, activeTab || null);
       setCurrentView(
         buildFleetGraphActiveViewContext({
@@ -308,8 +306,39 @@ export function UnifiedDocumentPage() {
   // Handle update
   const handleUpdate = useCallback(async (updates: Partial<UnifiedDocument>) => {
     if (!id) return;
+    const issueFieldKeys = new Set([
+      'title',
+      'state',
+      'priority',
+      'issue_type',
+      'story_points',
+      'estimate_hours',
+      'estimate',
+      'assignee_id',
+      'belongs_to',
+      'source',
+      'rejection_reason',
+    ]);
+    const updateKeys = Object.keys(updates);
+    const isIssueFieldUpdate =
+      document?.document_type === 'issue' &&
+      updateKeys.length > 0 &&
+      updateKeys.every((key) => issueFieldKeys.has(key));
+
+    if (isIssueFieldUpdate) {
+      const response = await apiPatch(`/api/issues/${id}`, updates as Partial<DocumentResponse>);
+      if (!response.ok) {
+        throw new Error('Failed to update issue');
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['document', id] }),
+        queryClient.invalidateQueries({ queryKey: issueKeys.lists() }),
+      ]);
+      return;
+    }
+
     await updateMutation.mutateAsync({ documentId: id, updates: updates as Partial<DocumentResponse> });
-  }, [updateMutation, id]);
+  }, [document?.document_type, id, issueKeys, queryClient, updateMutation]);
 
   // Handle delete
   const handleDelete = useCallback(async () => {
@@ -415,12 +444,15 @@ export function UnifiedDocumentPage() {
       ...(document.document_type === 'issue' && {
         state: (document.state as string) || 'backlog',
         priority: (document.priority as string) || 'medium',
+        issue_type: ((document.issue_type as IssueType | null) ?? 'task'),
+        story_points: (document.story_points as number | null) ?? null,
+        estimate_hours: (document.estimate_hours as number | null) ?? (document.estimate as number | null) ?? null,
         estimate: document.estimate as number | undefined,
         assignee_id: document.assignee_id as string | undefined,
         assignee_name: document.assignee_name as string | undefined,
         program_id: programIdFromBelongsTo,
         sprint_id: sprintIdFromBelongsTo,
-        source: document.source as 'internal' | 'external' | undefined,
+        source: document.source as 'internal' | 'external' | 'action_items' | undefined,
         converted_from_id: document.converted_from_id as string | undefined,
         display_id: (document.ticket_number as number) ? `#${document.ticket_number}` : undefined,
         belongs_to: document.belongs_to as Array<{
@@ -434,6 +466,11 @@ export function UnifiedDocumentPage() {
         impact: (document.impact as number | null) ?? null,
         confidence: (document.confidence as number | null) ?? null,
         ease: (document.ease as number | null) ?? null,
+        roi: (document.roi as number | null) ?? null,
+        retention: (document.retention as number | null) ?? null,
+        acquisition: (document.acquisition as number | null) ?? null,
+        growth: (document.growth as number | null) ?? null,
+        business_value_score: (document.business_value_score as number | null) ?? null,
         color: (document.color as string) || '#3b82f6',
         emoji: null,
         program_id: programIdFromBelongsTo,

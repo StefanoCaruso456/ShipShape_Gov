@@ -18,7 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { PlanQualityBanner, RetroQualityBanner } from '@/components/PlanQualityBanner';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import type { Person } from '@/components/PersonCombobox';
-import type { BelongsTo } from '@ship/shared';
+import type { BelongsTo, IssueSource, IssueType } from '@ship/shared';
 
 export type DocumentType = 'wiki' | 'issue' | 'project' | 'sprint' | 'program' | 'person' | 'weekly_plan' | 'weekly_retro';
 
@@ -45,13 +45,16 @@ interface IssueDocument extends BaseDocument {
   document_type: 'issue';
   state: string;
   priority: string;
+  issue_type?: IssueType | null;
+  story_points: number | null;
+  estimate_hours: number | null;
   estimate: number | null;
   assignee_id: string | null;
   assignee_name?: string | null;
   assignee_archived?: boolean;
   program_id: string | null;
   sprint_id: string | null;
-  source?: 'internal' | 'external';
+  source?: IssueSource;
   rejection_reason?: string | null;
   converted_from_id?: string | null;
   display_id?: string;
@@ -65,6 +68,11 @@ interface ProjectDocument extends BaseDocument {
   confidence: number | null;
   ease: number | null;
   ice_score?: number | null;
+  roi: number | null;
+  retention: number | null;
+  acquisition: number | null;
+  growth: number | null;
+  business_value_score?: number | null;
   color: string;
   emoji: string | null;
   program_id: string | null;
@@ -520,7 +528,7 @@ function getDefaultPlaceholder(documentType: DocumentType): string {
     case 'wiki':
       return 'Start writing...';
     case 'issue':
-      return 'Add a description...';
+      return 'Capture the user story, context, and acceptance criteria...';
     case 'project':
       return 'Describe this project...';
     case 'sprint':

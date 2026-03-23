@@ -16,6 +16,18 @@ Current snapshot:
 
 - [FLEETGRAPH-STATUS.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/FLEETGRAPH-STATUS.md)
 
+## How to use these phase docs
+
+Read each phase with this lens:
+
+- **What** it delivers
+- **Why** it exists
+- **How** we implement it
+- **Purpose** in the larger FleetGraph system
+- **Outcome** once it is done
+
+The numbered phases are a build history and a planning tool. They do not mean we must keep reopening every finished phase. Once a capability is live, we only revisit that phase if we are extending or hardening it.
+
 ## Cross-cutting build rules
 
 - Keep FleetGraph in the existing TypeScript monorepo.

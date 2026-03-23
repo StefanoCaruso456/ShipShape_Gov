@@ -70,6 +70,11 @@ const MyWeekPage = lazy(async () => {
   return { default: module.MyWeekPage };
 });
 
+const AnalyticsPage = lazy(async () => {
+  const module = await import('@/pages/AnalyticsPage');
+  return { default: module.AnalyticsPage };
+});
+
 const DocumentsPage = lazy(async () => {
   const module = await import('@/pages/Documents');
   return { default: module.DocumentsPage };
@@ -151,11 +156,13 @@ function DocumentRedirect() {
 
 /**
  * Redirect component for /programs/:id/* routes to /documents/:id/*
- * Preserves the tab portion of the path (issues, projects, sprints)
+ * Preserves the tab portion of the path and maps legacy "sprints" to "weeks".
  */
 function ProgramTabRedirect() {
   const { id, '*': splat } = useParams<{ id: string; '*': string }>();
-  const tab = splat || '';
+  const tab = splat?.startsWith('sprints')
+    ? splat.replace(/^sprints\b/, 'weeks')
+    : splat || '';
   const targetPath = tab ? `/documents/${id}/${tab}` : `/documents/${id}`;
   return <Navigate to={targetPath} replace />;
 }
@@ -343,6 +350,7 @@ function AppRoutes() {
         <Route index element={<Navigate to="/my-week" replace />} />
         <Route path="dashboard" element={<LazyRoute><DashboardPage /></LazyRoute>} />
         <Route path="my-week" element={<LazyRoute><MyWeekPage /></LazyRoute>} />
+        <Route path="analytics" element={<LazyRoute><AnalyticsPage /></LazyRoute>} />
         <Route path="docs" element={<LazyRoute><DocumentsPage /></LazyRoute>} />
         <Route path="docs/:id" element={<DocumentRedirect />} />
         <Route path="documents/:id/*" element={<LazyRoute><UnifiedDocumentPage /></LazyRoute>} />

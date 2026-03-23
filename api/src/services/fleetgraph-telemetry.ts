@@ -6,6 +6,7 @@ import type {
   FleetGraphTelemetryService,
   FleetGraphTelemetrySpanHandle,
 } from '@ship/fleetgraph';
+import type { FleetGraphFeedbackEventRequest } from '@ship/shared';
 
 const DEFAULT_BRAINTRUST_PROJECT = 'Shipshape';
 
@@ -19,8 +20,11 @@ interface FleetGraphTelemetryRun {
 }
 
 interface BraintrustNodeSpanHandle extends FleetGraphTelemetrySpanHandle {
+  id: string | null;
   span: Span | null;
 }
+
+type BraintrustSpanHandle = BraintrustNodeSpanHandle;
 
 let fleetGraphLogger: Logger<true> | null | undefined;
 let loggedInitFailure = false;
@@ -157,6 +161,42 @@ class FleetGraphBraintrustTelemetryService implements FleetGraphTelemetryService
     return handle;
   }
 
+  startToolSpan(input: {
+    toolName: string;
+    toolVersion: string;
+    mode: string | null;
+    surface: string | null;
+    route: string | null;
+    questionTheme: string | null;
+  }): FleetGraphTelemetrySpanHandle | null {
+    const span = startChildSpan(this.rootSpan, {
+      name: `fleetgraph.tool.${input.toolName}`,
+      type: 'task',
+      spanAttributes: {
+        mode: input.mode ?? 'unknown',
+        tool_name: input.toolName,
+        tool_version: input.toolVersion,
+      },
+      event: {
+        metadata: {
+          tool_name: input.toolName,
+          tool_version: input.toolVersion,
+          mode: input.mode,
+          surface: input.surface,
+          route: input.route,
+          question_theme: input.questionTheme,
+        },
+      },
+    });
+
+    const handle: BraintrustSpanHandle = {
+      id: extractSpanId(span),
+      span,
+    };
+
+    return handle;
+  }
+
   finishNodeSpan(
     handle: FleetGraphTelemetrySpanHandle | null,
     input: {
@@ -198,6 +238,100 @@ class FleetGraphBraintrustTelemetryService implements FleetGraphTelemetryService
       }
     }
   }
+
+  finishToolSpan(
+    handle: FleetGraphTelemetrySpanHandle | null,
+    input: {
+      status: 'ok' | 'error';
+      latencyMs: number;
+      cacheHit: boolean;
+      resultCount: number | null;
+      errorCode: string | null;
+      metadata?: Record<string, unknown>;
+    }
+  ): void {
+    const typedHandle = handle as BraintrustSpanHandle | null;
+    if (!typedHandle?.span) {
+      return;
+    }
+
+    try {
+      typedHandle.span.log({
+        metadata: {
+          status: input.status,
+          cache_hit: input.cacheHit,
+          result_count: input.resultCount,
+          error_code: input.errorCode,
+          ...(input.metadata ?? {}),
+        },
+        metrics: {
+          latency_ms: input.latencyMs,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to record FleetGraph tool span data:', error);
+    } finally {
+      try {
+        typedHandle.span.close();
+      } catch (error) {
+        console.error('Failed to close FleetGraph tool span:', error);
+      }
+    }
+  }
+
+  recordApproval(input: {
+    actionType: string;
+    decisionOutcome: string;
+    riskLevel: string | null;
+    targetRoute: string | null;
+    latencyMs: number;
+    metadata?: Record<string, unknown>;
+  }): void {
+    const span = startChildSpan(this.rootSpan, {
+      name: 'fleetgraph.approval',
+      type: 'task',
+      spanAttributes: {
+        action_type: input.actionType,
+        decision_outcome: input.decisionOutcome,
+      },
+      event: {
+        metadata: {
+          action_type: input.actionType,
+          decision_outcome: input.decisionOutcome,
+          risk_level: input.riskLevel,
+          target_route: input.targetRoute,
+          ...(input.metadata ?? {}),
+        },
+      },
+    });
+
+    if (!span) {
+      return;
+    }
+
+    try {
+      span.log({
+        metadata: {
+          action_type: input.actionType,
+          decision_outcome: input.decisionOutcome,
+          risk_level: input.riskLevel,
+          target_route: input.targetRoute,
+          ...(input.metadata ?? {}),
+        },
+        metrics: {
+          latency_ms: input.latencyMs,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to record FleetGraph approval telemetry:', error);
+    } finally {
+      try {
+        span.close();
+      } catch (error) {
+        console.error('Failed to close FleetGraph approval span:', error);
+      }
+    }
+  }
 }
 
 export function createFleetGraphTelemetryRun(
@@ -229,6 +363,7 @@ export function createFleetGraphTelemetryRun(
           trigger_type: input.triggerType,
           workspace_id: input.workspaceId,
           question: input.prompt?.question ?? null,
+          question_source: input.prompt?.questionSource ?? null,
         },
         metadata: {
           surface: input.activeView?.surface ?? null,
@@ -281,6 +416,7 @@ export function createFleetGraphTelemetryRun(
             action_outcome: result?.actionResult?.outcome ?? null,
             error_class: result?.error?.code ?? (error instanceof Error ? error.name : null),
             terminal_outcome: result?.terminalOutcome ?? null,
+            question_source: result?.prompt?.questionSource ?? input.prompt?.questionSource ?? null,
           },
           metrics: {
             latency_ms: latencyMs,
@@ -288,6 +424,10 @@ export function createFleetGraphTelemetryRun(
             reasoning_attempts: result?.attempts.reasoning ?? 0,
             resume_attempts: result?.attempts.resume ?? 0,
             action_execution_attempts: result?.attempts.actionExecution ?? 0,
+            tool_call_count: result?.telemetry.toolCallCount ?? 0,
+            tool_failure_count: result?.telemetry.toolFailureCount ?? 0,
+            total_tool_latency_ms: result?.telemetry.totalToolLatencyMs ?? 0,
+            approval_count: result?.telemetry.approvalCount ?? 0,
           },
         });
       } catch (spanError) {
@@ -311,4 +451,96 @@ export function createFleetGraphTelemetryRun(
       }
     },
   };
+}
+
+export function recordFleetGraphFeedback(
+  input: {
+    workspaceId: string | null;
+    actorId: string | null;
+    actorRole: string | null;
+    feedback: FleetGraphFeedbackEventRequest;
+  },
+  logger: FleetGraphLogger
+): void {
+  const telemetryLogger = getBraintrustLogger();
+  if (!telemetryLogger) {
+    return;
+  }
+
+  let span: Span | null = null;
+
+  try {
+    span = telemetryLogger.startSpan({
+      name: `fleetgraph.feedback.${input.feedback.event_name}`,
+      type: 'task',
+      spanAttributes: {
+        event_name: input.feedback.event_name,
+      },
+      event: {
+        input: {
+          thread_id: input.feedback.thread_id ?? null,
+          turn_id: input.feedback.turn_id ?? null,
+          question_source: input.feedback.question_source ?? null,
+          question_theme: input.feedback.question_theme ?? null,
+          answer_mode: input.feedback.answer_mode ?? null,
+        },
+        metadata: {
+          workspace_id: input.workspaceId,
+          actor_id: input.actorId,
+          actor_role: input.actorRole,
+          route: input.feedback.surface.route,
+          active_view_surface: input.feedback.surface.activeViewSurface,
+          entity_type: input.feedback.surface.entityType,
+          page_context_kind: input.feedback.surface.pageContextKind,
+          tab: input.feedback.surface.tab,
+          project_id: input.feedback.surface.projectId,
+          route_action_label: input.feedback.route_action?.label ?? null,
+          route_action_route: input.feedback.route_action?.route ?? null,
+          route_action_featured: input.feedback.route_action?.featured ?? null,
+          route_action_intent: input.feedback.route_action?.intent ?? null,
+        },
+      },
+    });
+
+    if (!span) {
+      return;
+    }
+
+    span.log({
+      metadata: {
+        workspace_id: input.workspaceId,
+        actor_id: input.actorId,
+        actor_role: input.actorRole,
+        route: input.feedback.surface.route,
+        active_view_surface: input.feedback.surface.activeViewSurface,
+        entity_type: input.feedback.surface.entityType,
+        page_context_kind: input.feedback.surface.pageContextKind,
+        tab: input.feedback.surface.tab,
+        project_id: input.feedback.surface.projectId,
+        question_source: input.feedback.question_source ?? null,
+        question_theme: input.feedback.question_theme ?? null,
+        answer_mode: input.feedback.answer_mode ?? null,
+        route_action_label: input.feedback.route_action?.label ?? null,
+        route_action_route: input.feedback.route_action?.route ?? null,
+        route_action_featured: input.feedback.route_action?.featured ?? null,
+        route_action_intent: input.feedback.route_action?.intent ?? null,
+      },
+      metrics: {
+        latency_ms: input.feedback.latency_ms ?? 0,
+      },
+    });
+  } catch (error) {
+    logger.warn('FleetGraph feedback telemetry failed to record', {
+      message: error instanceof Error ? error.message : 'Unknown FleetGraph feedback telemetry failure',
+      eventName: input.feedback.event_name,
+    });
+  } finally {
+    try {
+      span?.close();
+    } catch (error) {
+      logger.warn('FleetGraph feedback telemetry span failed to close', {
+        message: error instanceof Error ? error.message : 'Unknown FleetGraph feedback span close failure',
+      });
+    }
+  }
 }

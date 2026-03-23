@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams, Link, useLocation } from 'react-router-dom';
 import { useMyWeekQuery, StandupSlot } from '@/hooks/useMyWeekQuery';
 import { apiPost } from '@/lib/api';
@@ -37,6 +37,7 @@ export function MyWeekPage() {
 
   const { data, isLoading, error } = useMyWeekQuery(weekNumber);
   const [creating, setCreating] = useState<string | null>(null);
+  const handledAutoActionRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (data?.person_id) {
@@ -69,7 +70,7 @@ export function MyWeekPage() {
     }
   };
 
-  const handleCreatePlan = async () => {
+  const handleCreatePlan = useCallback(async () => {
     if (!data) return;
     setCreating('plan');
     try {
@@ -84,9 +85,9 @@ export function MyWeekPage() {
     } finally {
       setCreating(null);
     }
-  };
+  }, [data, navigate]);
 
-  const handleCreateRetro = async (weekNum: number) => {
+  const handleCreateRetro = useCallback(async (weekNum: number) => {
     if (!data) return;
     setCreating('retro');
     try {
@@ -101,9 +102,9 @@ export function MyWeekPage() {
     } finally {
       setCreating(null);
     }
-  };
+  }, [data, navigate]);
 
-  const handleCreateStandup = async (date: string) => {
+  const handleCreateStandup = useCallback(async (date: string) => {
     setCreating(`standup-${date}`);
     try {
       const res = await apiPost('/api/standups', { date });
@@ -114,7 +115,78 @@ export function MyWeekPage() {
     } finally {
       setCreating(null);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (!data || !action) {
+      handledAutoActionRef.current = null;
+      return;
+    }
+
+    const actionWeekNumber = searchParams.get('action_week_number');
+    const actionDate = searchParams.get('action_date');
+    const actionKey = [action, actionWeekNumber ?? 'current', actionDate ?? 'today'].join(':');
+    if (handledAutoActionRef.current === actionKey) {
+      return;
+    }
+
+    handledAutoActionRef.current = actionKey;
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('action');
+    nextParams.delete('action_week_number');
+    nextParams.delete('action_date');
+    setSearchParams(nextParams, { replace: true });
+
+    if (action === 'create-plan') {
+      if (data.plan?.id) {
+        navigate(`/documents/${data.plan.id}`);
+        return;
+      }
+
+      void handleCreatePlan();
+      return;
+    }
+
+    if (action === 'create-retro') {
+      const targetWeekNumber = actionWeekNumber ? Number.parseInt(actionWeekNumber, 10) : data.week.week_number;
+      if (Number.isNaN(targetWeekNumber)) {
+        return;
+      }
+
+      if (targetWeekNumber === data.week.week_number && data.retro?.id) {
+        navigate(`/documents/${data.retro.id}`);
+        return;
+      }
+
+      if (data.previous_retro?.week_number === targetWeekNumber && data.previous_retro.id) {
+        navigate(`/documents/${data.previous_retro.id}`);
+        return;
+      }
+
+      void handleCreateRetro(targetWeekNumber);
+      return;
+    }
+
+    if (action === 'create-standup' && actionDate) {
+      const existingStandup = data.standups.find((slot) => slot.date === actionDate)?.standup ?? null;
+      if (existingStandup) {
+        navigate(`/documents/${existingStandup.id}`);
+        return;
+      }
+
+      void handleCreateStandup(actionDate);
+    }
+  }, [
+    data,
+    handleCreatePlan,
+    handleCreateRetro,
+    handleCreateStandup,
+    navigate,
+    searchParams,
+    setSearchParams,
+  ]);
 
   if (isLoading) {
     return (

@@ -33,6 +33,18 @@ export const IssuePrioritySchema = z.enum([
 
 registry.register('IssuePriority', IssuePrioritySchema);
 
+export const IssueTypeSchema = z.enum([
+  'story',
+  'bug',
+  'task',
+  'spike',
+  'chore',
+]).openapi({
+  description: 'Issue work item classification',
+});
+
+registry.register('IssueType', IssueTypeSchema);
+
 export const IssueSourceSchema = z.enum([
   'internal',
   'external',
@@ -70,6 +82,7 @@ export const IssueResponseSchema = z.object({
   }),
   state: IssueStateSchema,
   priority: IssuePrioritySchema,
+  issue_type: IssueTypeSchema,
   assignee_id: UuidSchema.nullable(),
   assignee_name: z.string().nullable().openapi({
     description: 'Name of assigned user',
@@ -77,8 +90,14 @@ export const IssueResponseSchema = z.object({
   assignee_archived: z.boolean().optional().openapi({
     description: 'Whether the assigned user has been archived',
   }),
+  story_points: z.number().positive().nullable().openapi({
+    description: 'Story points used for sprint planning and burn tracking',
+  }),
+  estimate_hours: z.number().positive().nullable().openapi({
+    description: 'Estimate in hours used for capacity planning',
+  }),
   estimate: z.number().positive().nullable().openapi({
-    description: 'Time estimate in hours',
+    description: 'Legacy alias for estimate_hours',
   }),
   source: IssueSourceSchema,
   due_date: DateSchema.nullable().optional(),
@@ -116,11 +135,20 @@ export const CreateIssueSchema = z.object({
     description: 'Issue title',
     example: 'Fix login button not responding',
   }),
+  content: z.record(z.unknown()).optional().openapi({
+    description: 'Optional TipTap JSON content. If omitted, the API seeds a default issue brief template.',
+  }),
   state: IssueStateSchema.optional().default('backlog'),
   priority: IssuePrioritySchema.optional().default('medium'),
+  issue_type: IssueTypeSchema.optional().default('task'),
   assignee_id: UuidSchema.optional().nullable(),
   belongs_to: z.array(BelongsToEntrySchema).optional().default([]).openapi({
     description: 'Associate with programs, projects, sprints, or parent issues',
+  }),
+  story_points: z.number().positive().nullable().optional(),
+  estimate_hours: z.number().positive().nullable().optional(),
+  estimate: z.number().positive().nullable().optional().openapi({
+    description: 'Legacy alias for estimate_hours',
   }),
   source: IssueSourceSchema.optional().default('internal'),
   due_date: DateSchema.optional().nullable(),
@@ -137,8 +165,11 @@ export const UpdateIssueSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   state: IssueStateSchema.optional(),
   priority: IssuePrioritySchema.optional(),
+  issue_type: IssueTypeSchema.optional(),
   assignee_id: UuidSchema.optional().nullable(),
   belongs_to: z.array(BelongsToEntrySchema).optional(),
+  story_points: z.number().positive().nullable().optional(),
+  estimate_hours: z.number().positive().nullable().optional(),
   estimate: z.number().positive().nullable().optional(),
   confirm_orphan_children: z.boolean().optional().openapi({
     description: 'Confirm closing parent issue with incomplete children',
@@ -243,6 +274,7 @@ registry.registerPath({
         example: 'backlog,todo,in_progress',
       }),
       priority: IssuePrioritySchema.optional(),
+      issue_type: IssueTypeSchema.optional(),
       assignee_id: z.string().optional().openapi({
         description: 'Filter by assignee ID. Use "null" or "unassigned" for unassigned issues.',
       }),

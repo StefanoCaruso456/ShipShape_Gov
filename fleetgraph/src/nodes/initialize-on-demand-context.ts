@@ -28,22 +28,23 @@ export async function initializeOnDemandContextNode(
   runtime.logger.debug('Initializing on-demand FleetGraph context', {
     contextEntity: state.contextEntity,
     activeView: state.activeView,
+    hasPageContext: Boolean(state.prompt?.pageContext),
     actorId: state.actor?.id,
   });
 
   const contextEntity = state.contextEntity ?? state.activeView?.entity ?? null;
 
-  if (!contextEntity) {
+  if (!contextEntity && !state.prompt?.pageContext) {
     return createFleetGraphFailureCommand(started.context, {
       goto: 'fallback',
       stage: 'initialize_on_demand_context',
       error: {
-        code: 'MISSING_CONTEXT_ENTITY',
-        message: 'On-demand FleetGraph runs require a current context entity',
+        code: 'MISSING_CONTEXT',
+        message: 'On-demand FleetGraph runs require current page context',
         retryable: false,
         source: 'initializeOnDemandContext',
       },
-      reason: 'On-demand run missing context entity',
+      reason: 'On-demand run missing both context entity and page context',
       interventionKind: 'fail_safe_exit',
     });
   }
@@ -58,6 +59,7 @@ export async function initializeOnDemandContextNode(
         id: null,
         kind: 'user',
         role: null,
+        workPersona: null,
       },
       handoff: createHandoff(
         'initializeOnDemandContext',

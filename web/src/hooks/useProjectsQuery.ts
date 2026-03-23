@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
-import { computeICEScore } from '@ship/shared';
+import { computeBusinessValueScore, computeICEScore } from '@ship/shared';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 // Inferred project status based on sprint relationships
@@ -14,6 +14,11 @@ export interface Project {
   confidence: number | null;
   ease: number | null;
   ice_score: number | null;
+  roi: number | null;
+  retention: number | null;
+  acquisition: number | null;
+  growth: number | null;
+  business_value_score: number | null;
   // Visual properties
   color: string;
   emoji: string | null;
@@ -110,6 +115,10 @@ interface CreateProjectData {
   impact?: number | null;
   confidence?: number | null;
   ease?: number | null;
+  roi?: number | null;
+  retention?: number | null;
+  acquisition?: number | null;
+  growth?: number | null;
   color?: string;
   program_id?: string;
   plan?: string;
@@ -173,6 +182,10 @@ export function useCreateProject() {
       const impact = newProject.impact ?? null;
       const confidence = newProject.confidence ?? null;
       const ease = newProject.ease ?? null;
+      const roi = newProject.roi ?? null;
+      const retention = newProject.retention ?? null;
+      const acquisition = newProject.acquisition ?? null;
+      const growth = newProject.growth ?? null;
 
       const optimisticProject: Project = {
         id: `temp-${crypto.randomUUID()}`,
@@ -181,6 +194,11 @@ export function useCreateProject() {
         confidence,
         ease,
         ice_score: computeICEScore(impact, confidence, ease),
+        roi,
+        retention,
+        acquisition,
+        growth,
+        business_value_score: computeBusinessValueScore(roi, retention, acquisition, growth),
         color: newProject.color ?? '#6366f1',
         emoji: null,
         program_id: newProject.program_id ?? null,
@@ -244,6 +262,18 @@ export function useUpdateProject() {
               const ease = updates.ease ?? p.ease;
               updated.ice_score = computeICEScore(impact, confidence, ease);
             }
+            if (
+              updates.roi !== undefined ||
+              updates.retention !== undefined ||
+              updates.acquisition !== undefined ||
+              updates.growth !== undefined
+            ) {
+              const roi = updates.roi ?? p.roi;
+              const retention = updates.retention ?? p.retention;
+              const acquisition = updates.acquisition ?? p.acquisition;
+              const growth = updates.growth ?? p.growth;
+              updated.business_value_score = computeBusinessValueScore(roi, retention, acquisition, growth);
+            }
             return updated;
           }
           return p;
@@ -304,6 +334,10 @@ export interface CreateProjectOptions {
   accountable_id?: string | null;  // A - Accountable (approver)
   consulted_ids?: string[];        // C - Consulted
   informed_ids?: string[];         // I - Informed
+  roi?: number | null;
+  retention?: number | null;
+  acquisition?: number | null;
+  growth?: number | null;
   program_id?: string;
   plan?: string;
   target_date?: string;

@@ -38,8 +38,58 @@ Fast current-state summary:
 | Phase 5: On-demand UI | complete | embedded week/project FleetGraph panels are live, plus My Week when one project is in scope |
 | Phase 6: Reasoning, actions, and HITL | complete for sprint/week MVP | grounded explanation, draft action proposal, and approve/dismiss/snooze now work |
 | Phase 7: Failure/resume/memory hardening | complete for sprint/week MVP | guardrails, terminal outcomes, telemetry, and bounded action schemas now exist |
-| Phase 8: Planning intelligence | later | expansion path after MVP |
+| Phase 8: Planning intelligence | in progress | current slices add planning-aware sprint analysis plus live Jira-style sprint planning foundations: story points, estimate hours, issue-type classification, structured issue briefs, commitment snapshots, daily analytics snapshots, six seeded historical weeks per program, a dedicated week analytics tab, direct week-sidebar access, a primary left-rail analytics entry, and sprint report / velocity / forecast / flow / workload / hygiene dashboards with multi-sprint velocity context |
 | Phase 9: Evidence and submission | complete | shared LangSmith links are captured and the public CloudFront deployment is verified |
+
+## Phase execution summary
+
+This is the cleanest way to read the roadmap going forward. Each phase is here to deliver a capability, not just to create another milestone.
+
+| Phase | Delivers | Why | How | Purpose |
+|---|---|---|---|---|
+| Phase 0: MVP framing | Locked scope, use cases, trigger model, `FLEETGRAPH.md` | Prevents architecture drift and keeps the build tied to real requirements | Define the exact proactive use case, on-demand question, and HITL boundary before implementation | Give the project a defensible target |
+| Phase 1: Graph foundation | LangGraph runtime, supervisor, state, runtime services, fallback | The agent needs real control-plane structure before UI or prompts | Build the TypeScript graph package, typed state, runtime container, routing, and checkpoint-ready setup | Make FleetGraph a real system instead of a loose workflow |
+| Phase 2: Context and fetch | Active View Context plus real Ship data fetches | The graph cannot reason if it does not know what page, tab, or scope it is on | Pass typed page context from Ship into the graph and fetch live REST data in parallel | Turn the Ship app surface into usable agent context |
+| Phase 3: Deterministic signals | Rules-first risk detection and quiet-vs-flagged branches | Keeps cost down and avoids using the model for basic filtering | Derive typed signals from fetched sprint/project data before reasoning runs | Give the graph grounded evidence and clear branch conditions |
+| Phase 4: Proactive flow | Worker/sweep detection, persisted findings, dedupe, delivery | FleetGraph must act without being asked | Run event or sweep-triggered checks, store findings, and surface them in Ship | Make the proactive mode real |
+| Phase 5: On-demand UI | Embedded FleetGraph panel in Ship | The assignment requires contextual on-demand interaction, not a standalone chatbot | Invoke the same graph from the current issue/week/project/program surface | Make FleetGraph usable where work is actually happening |
+| Phase 6: Reasoning and HITL | Grounded explanation, action proposals, approve/dismiss/snooze | Detection alone is not enough; the agent must explain and pause before action | Add bounded reasoning, typed actions, and interrupt/resume approval flow | Turn findings into safe, useful next-step guidance |
+| Phase 7: Reliability and memory | Failure handling, resume safety, operational memory, telemetry | A graph that only works on the happy path will not hold up in real use | Add retry policy, terminal outcomes, checkpoint-aware resume, cooldowns, and run telemetry | Make FleetGraph durable and observable |
+| Phase 8: Planning intelligence | Capacity, velocity, scope creep, dependencies, release confidence, roadmaping | This is the broader PM/PO product value beyond execution drift | Add planning primitives to Ship and reason over them with the same graph | Expand FleetGraph from execution intelligence into planning intelligence |
+| Phase 9: Evidence and deployment | Shared traces, public verification, deploy proof, evidence bundles | Working code is not enough; we need proof and repeatable verification | Capture LangSmith traces, verify public routes, and package evidence | Close the loop for release and external review |
+
+## What we are starting now
+
+The roadmap work that still adds new product value is:
+
+1. **Phase 8: Planning intelligence**
+   - first live slice:
+     - scope growth
+     - blocked work
+     - dependency risk from issue updates and hierarchy
+     - workload concentration
+     - throughput gap vs recent delivery history
+     - staffing pressure from current project allocation
+      - story points and estimate hours on issues
+      - issue-type classification on unified issue documents
+      - structured issue briefs with user story, context, and acceptance criteria
+      - sprint commitment baseline snapshots
+      - daily sprint analytics snapshots
+      - six seeded historical weeks per program with structured issue data
+      - week analytics endpoint
+      - dedicated week analytics tab with sprint report, velocity, forecast, flow, workload, and hygiene dashboards
+      - program-level six-week historical velocity trend and average delivered work
+   - next expansion:
+      - deeper capacity and throughput history
+      - scope creep and richer burn trends
+      - richer dependency and release confidence
+      - roadmap and staffing intelligence
+
+Planning telemetry blueprint:
+
+- [story-points-burn-tracking-plan.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/docs/internal/story-points-burn-tracking-plan.md)
+
+The earlier phases remain important because they explain how FleetGraph was built, but they are already absorbed into the current product. We should only reopen them when we need to extend or harden an existing capability.
 
 ## Architecture we are building toward
 
@@ -559,6 +609,19 @@ A graph that only works on the happy path is not enough for this project or for 
 ### Goal
 
 Prepare FleetGraph to grow beyond execution drift into planning and portfolio intelligence.
+
+### Current progress
+
+- [x] fetched sprint issue worklist as planning evidence
+- [x] fetched sprint scope-change history as planning evidence
+- [x] added deterministic planning signals for:
+  - scope growth
+  - blocked work
+  - workload concentration
+- [x] added planning-aware reasoning for questions comparing scope, blockers, and capacity pressure
+- [ ] widen planning evidence into dependency-specific data
+- [ ] add true capacity and throughput history
+- [ ] add roadmap, release, and scenario-planning primitives
 
 ### What we plan to implement later
 

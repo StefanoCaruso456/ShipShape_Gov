@@ -13,6 +13,7 @@ import {
   DragStartEvent,
   DragEndEvent,
 } from '@dnd-kit/core';
+import { WORK_PERSONA_LABELS, type WorkPersona } from '@ship/shared';
 import { apiGet, apiPatch } from '@/lib/api';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 
@@ -24,6 +25,7 @@ interface PersonData {
   name: string;
   email: string;
   role?: string | null;
+  workPersona?: WorkPersona | null;
   reportsTo?: string | null;
   isArchived?: boolean;
   isPending?: boolean;
@@ -35,6 +37,7 @@ interface OrgTreeNode {
   name: string;
   email: string;
   role: string | null;
+  workPersona: WorkPersona | null;
   children: OrgTreeNode[];
 }
 
@@ -59,6 +62,7 @@ function buildTree(people: PersonData[]): OrgTreeNode[] {
       name: p.name,
       email: p.email,
       role: p.role || null,
+      workPersona: p.workPersona || null,
       children: [],
     });
   }
@@ -104,6 +108,10 @@ function flattenTree(nodes: OrgTreeNode[], expandedIds: Set<string>, depth = 0):
 
 function getInitials(name: string): string {
   return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function getWorkPersonaLabel(persona: WorkPersona | null | undefined): string | null {
+  return persona ? WORK_PERSONA_LABELS[persona] : null;
 }
 
 function collectAncestorIds(people: PersonData[], matchIds: Set<string>): Set<string> {
@@ -247,7 +255,14 @@ export function OrgChartPage() {
     const q = debouncedQuery.toLowerCase();
     const matchIds = new Set<string>();
     for (const p of people) {
-      if (p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)) {
+      const personaLabel = (getWorkPersonaLabel(p.workPersona) ?? '').toLowerCase();
+      const legacyRole = p.role?.toLowerCase() ?? '';
+      if (
+        p.name.toLowerCase().includes(q) ||
+        p.email.toLowerCase().includes(q) ||
+        personaLabel.includes(q) ||
+        legacyRole.includes(q)
+      ) {
         matchIds.add(p.id);
       }
     }
@@ -649,6 +664,7 @@ function OrgChartRow({
     disabled: !canDrag,
     data: { personId: node.personId },
   });
+  const roleLabel = getOrgNodeRoleLabel(node);
 
   // Exclude role and tabIndex from dnd-kit attributes — we set our own for the tree
   const { role: _role, tabIndex: _tabIndex, ...dragAttributes } = attributes;
@@ -714,12 +730,12 @@ function OrgChartRow({
               node.name
             )}
           </button>
-          {node.role && (
+          {roleLabel && (
             <span className="truncate text-xs text-muted">
               {searchMatches && debouncedQuery ? (
-                <HighlightedText text={node.role} query={debouncedQuery} />
+                <HighlightedText text={roleLabel} query={debouncedQuery} />
               ) : (
-                node.role
+                roleLabel
               )}
             </span>
           )}
@@ -755,4 +771,11 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
       {text.slice(idx + query.length)}
     </>
   );
+}
+
+function getOrgNodeRoleLabel(node: OrgTreeNode): string | null {
+  const workPersonaLabel = getWorkPersonaLabel(node.workPersona);
+  if (workPersonaLabel) return workPersonaLabel;
+
+  return node.role;
 }

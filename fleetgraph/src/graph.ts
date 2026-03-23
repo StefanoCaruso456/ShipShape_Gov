@@ -8,6 +8,7 @@ import { humanApprovalGateNode } from './nodes/human-approval-gate.js';
 import { initializeOnDemandContextNode } from './nodes/initialize-on-demand-context.js';
 import { initializeProactiveContextNode } from './nodes/initialize-proactive-context.js';
 import { proposeSprintActionNode } from './nodes/propose-sprint-action.js';
+import { reasonAboutCurrentViewNode } from './nodes/reason-about-current-view.js';
 import { reasonAboutSprintNode } from './nodes/reason-about-sprint.js';
 import { recordSignalFindingNode } from './nodes/record-signal-finding.js';
 import { resolveContextNode } from './nodes/resolve-context.js';
@@ -27,10 +28,10 @@ export function createFleetGraph() {
       ends: ['resolveContext', 'fallback'],
     })
     .addNode('resolveContext', resolveContextNode, {
-      ends: ['fetchSprintContext', 'resolveWeekScope', 'completeRun', 'fallback'],
+      ends: ['fetchSprintContext', 'resolveWeekScope', 'reasonAboutCurrentView', 'completeRun', 'fallback'],
     })
     .addNode('resolveWeekScope', resolveWeekScopeNode, {
-      ends: ['fetchSprintContext', 'completeRun', 'fallback'],
+      ends: ['fetchSprintContext', 'reasonAboutCurrentView', 'completeRun', 'fallback'],
     })
     .addNode('fetchSprintContext', fetchSprintContextNode, {
       ends: ['deriveSprintSignals', 'completeRun', 'fallback'],
@@ -40,6 +41,9 @@ export function createFleetGraph() {
     })
     .addNode('recordSignalFinding', recordSignalFindingNode, {
       ends: ['reasonAboutSprint', 'completeRun', 'fallback'],
+    })
+    .addNode('reasonAboutCurrentView', reasonAboutCurrentViewNode, {
+      ends: ['completeRun', 'fallback'],
     })
     .addNode('reasonAboutSprint', reasonAboutSprintNode, {
       ends: ['proposeSprintAction', 'completeRun', 'fallback'],

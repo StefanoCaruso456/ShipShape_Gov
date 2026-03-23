@@ -43,6 +43,28 @@ async function enrichFleetGraphResultWithLangSmithTrace(
   };
 }
 
+function inferLoopDetected(result: FleetGraphInvokeResult): boolean {
+  return (
+    result.telemetry.loopDetected ||
+    result.guard.lastTripReason === 'MAX_TRANSITIONS_EXCEEDED' ||
+    result.guard.lastTripReason === 'MAX_RESUMES_EXCEEDED'
+  );
+}
+
+function enrichFleetGraphResultTelemetry(
+  result: FleetGraphInvokeResult,
+  latencyMs: number
+): FleetGraphInvokeResult {
+  return {
+    ...result,
+    telemetry: {
+      ...result.telemetry,
+      totalLatencyMs: latencyMs,
+      loopDetected: inferLoopDetected(result),
+    },
+  };
+}
+
 function buildInternalApiUrl(path: string): string {
   const baseUrl = `http://127.0.0.1:${process.env.PORT ?? '3000'}`;
   return new URL(path, baseUrl).toString();
@@ -51,6 +73,7 @@ function buildInternalApiUrl(path: string): string {
 function createHeaderScopedShipApiClient(headers: {
   cookieHeader?: string;
   authHeader?: string;
+  csrfHeader?: string;
 }): FleetGraphShipApiClient {
   const baseHeaders: Record<string, string> = {
     Accept: 'application/json',
@@ -62,6 +85,10 @@ function createHeaderScopedShipApiClient(headers: {
 
   if (headers.authHeader) {
     baseHeaders.authorization = headers.authHeader;
+  }
+
+  if (headers.csrfHeader) {
+    baseHeaders['x-csrf-token'] = headers.csrfHeader;
   }
 
   return {
@@ -105,13 +132,50 @@ export function createRequestScopedShipApiClient(req: Request): FleetGraphShipAp
     cookieHeader: req.headers.cookie,
     authHeader:
       typeof req.headers.authorization === 'string' ? req.headers.authorization : undefined,
+    csrfHeader:
+      typeof req.headers['x-csrf-token'] === 'string' ? req.headers['x-csrf-token'] : undefined,
   });
 }
 
-export function createApiTokenShipApiClient(apiToken: string): FleetGraphShipApiClient {
-  return createHeaderScopedShipApiClient({
+export function createApiTokenShipApiClient(
+  apiToken: string,
+  options?: {
+    workspaceId?: string | null;
+  }
+): FleetGraphShipApiClient {
+  const client = createHeaderScopedShipApiClient({
     authHeader: `Bearer ${apiToken}`,
   });
+
+  const workspaceHeader =
+    typeof options?.workspaceId === 'string' && options.workspaceId.length > 0
+      ? { 'x-ship-workspace-id': options.workspaceId }
+      : null;
+
+  if (!workspaceHeader) {
+    return client;
+  }
+
+  return {
+    async get<T>(path: string, init?: RequestInit): Promise<T> {
+      return client.get<T>(path, {
+        ...init,
+        headers: {
+          ...(init?.headers ?? {}),
+          ...workspaceHeader,
+        },
+      });
+    },
+    async post<T>(path: string, body?: unknown, init?: RequestInit): Promise<T> {
+      return client.post<T>(path, body, {
+        ...init,
+        headers: {
+          ...(init?.headers ?? {}),
+          ...workspaceHeader,
+        },
+      });
+    },
+  };
 }
 
 export function createFleetGraphLogger(scope: string): FleetGraphLogger {
@@ -168,14 +232,14 @@ export async function invokeFleetGraph(
       })
     )) as FleetGraphInvokeResult;
 
-    const enrichedResult = await enrichFleetGraphResultWithLangSmithTrace(
-      result,
-      langSmithSession
+    const enrichedResult = enrichFleetGraphResultTelemetry(
+      await enrichFleetGraphResultWithLangSmithTrace(result, langSmithSession),
+      Date.now() - startedAt
     );
 
     telemetryRun.finish({
       result: enrichedResult,
-      latencyMs: Date.now() - startedAt,
+      latencyMs: enrichedResult.telemetry.totalLatencyMs ?? Date.now() - startedAt,
     });
 
     return enrichedResult;
@@ -233,14 +297,14 @@ export async function resumeFleetGraph(
       })
     )) as FleetGraphInvokeResult;
 
-    const enrichedResult = await enrichFleetGraphResultWithLangSmithTrace(
-      result,
-      langSmithSession
+    const enrichedResult = enrichFleetGraphResultTelemetry(
+      await enrichFleetGraphResultWithLangSmithTrace(result, langSmithSession),
+      Date.now() - startedAt
     );
 
     telemetryRun.finish({
       result: enrichedResult,
-      latencyMs: Date.now() - startedAt,
+      latencyMs: enrichedResult.telemetry.totalLatencyMs ?? Date.now() - startedAt,
     });
 
     return enrichedResult;

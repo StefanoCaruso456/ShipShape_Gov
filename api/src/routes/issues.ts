@@ -12,6 +12,17 @@ import {
   type BelongsToEntry,
 } from '../utils/document-crud.js';
 import { broadcastToUser } from '../collaboration/index.js';
+import {
+  deriveStoryPointsFromEstimateHours,
+  ensureSprintAnalyticsSnapshot,
+} from '../utils/sprint-planning.js';
+import { createIssueTemplateContent } from '../utils/issueContentTemplate.js';
+import { listIssueDependencySignals } from '../services/issue-dependency-signals.js';
+import {
+  enqueueFleetGraphIssueIterationEvent,
+  enqueueFleetGraphIssueMutationEvent,
+  scheduleFleetGraphProactiveEventProcessing,
+} from '../services/fleetgraph-proactive-events.js';
 
 type RouterType = ReturnType<typeof Router>;
 const router: RouterType = Router();
@@ -24,14 +35,20 @@ const belongsToEntrySchema = z.object({
 
 // Accountability types enum for validation
 const accountabilityTypes = ['standup', 'weekly_plan', 'weekly_review', 'week_start', 'week_issues', 'project_plan', 'project_retro'] as const;
+const issueTypes = ['story', 'bug', 'task', 'spike', 'chore'] as const;
 
 // Validation schemas
 const createIssueSchema = z.object({
   title: z.string().min(1).max(500),
   state: z.enum(['triage', 'backlog', 'todo', 'in_progress', 'in_review', 'done', 'cancelled']).optional().default('backlog'),
   priority: z.enum(['urgent', 'high', 'medium', 'low', 'none']).optional().default('medium'),
+  issue_type: z.enum(issueTypes).optional().default('task'),
   assignee_id: z.string().uuid().optional().nullable(),
   belongs_to: z.array(belongsToEntrySchema).optional().default([]),
+  content: z.record(z.unknown()).optional(),
+  story_points: z.number().positive().nullable().optional(),
+  estimate_hours: z.number().positive().nullable().optional(),
+  estimate: z.number().positive().nullable().optional(),
   // Source for the issue (internal, external, or action_items for system-generated)
   source: z.enum(['internal', 'external', 'action_items']).optional().default('internal'),
   // Due date (ISO date string)
@@ -47,8 +64,11 @@ const updateIssueSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   state: z.enum(['triage', 'backlog', 'todo', 'in_progress', 'in_review', 'done', 'cancelled']).optional(),
   priority: z.enum(['urgent', 'high', 'medium', 'low', 'none']).optional(),
+  issue_type: z.enum(issueTypes).optional(),
   assignee_id: z.string().uuid().optional().nullable(),
   belongs_to: z.array(belongsToEntrySchema).optional(),
+  story_points: z.number().positive().nullable().optional(),
+  estimate_hours: z.number().positive().nullable().optional(),
   estimate: z.number().positive().nullable().optional(),
   // Confirm closing parent with incomplete children (removes their parent association)
   confirm_orphan_children: z.boolean().optional(),
@@ -78,6 +98,18 @@ const rejectIssueSchema = z.object({
   reason: z.string().min(1).max(1000),
 });
 
+const dependencySignalsQuerySchema = z.object({
+  issue_ids: z
+    .string()
+    .transform((value) =>
+      value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+    .pipe(z.array(z.string().uuid()).min(1).max(25)),
+});
+
 // Helper to extract issue properties from row (without belongs_to - added separately)
 function extractIssueFromRow(row: any) {
   const props = row.properties || {};
@@ -86,8 +118,11 @@ function extractIssueFromRow(row: any) {
     title: row.title,
     state: props.state || 'backlog',
     priority: props.priority || 'medium',
+    issue_type: props.issue_type || 'task',
     assignee_id: props.assignee_id || null,
-    estimate: props.estimate ?? null,
+    story_points: props.story_points ?? null,
+    estimate_hours: props.estimate_hours ?? props.estimate ?? null,
+    estimate: props.estimate_hours ?? props.estimate ?? null,
     source: props.source || 'internal',
     rejection_reason: props.rejection_reason || null,
     // Accountability fields for action_items issues
@@ -114,7 +149,7 @@ function extractIssueFromRow(row: any) {
 // List issues with filters
 router.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { state, priority, assignee_id, program_id, sprint_id, source, parent_filter } = req.query;
+    const { state, priority, issue_type, assignee_id, program_id, sprint_id, source, parent_filter } = req.query;
     const authContext = getAuthContext(req, res);
     if (!authContext) {
       return;
@@ -178,6 +213,11 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     if (priority) {
       query += ` AND d.properties->>'priority' = $${params.length + 1}`;
       params.push(priority as string);
+    }
+
+    if (issue_type) {
+      query += ` AND COALESCE(d.properties->>'issue_type', 'task') = $${params.length + 1}`;
+      params.push(issue_type as string);
     }
 
     if (assignee_id) {
@@ -433,6 +473,50 @@ router.get('/by-ticket/:number', authMiddleware, async (req: Request, res: Respo
   }
 });
 
+// Get aggregated blocker and dependency signals for a visible issue set
+router.get('/dependency-signals', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+    const { userId, workspaceId } = authContext;
+
+    const parsed = dependencySignalsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Invalid dependency signal query', details: parsed.error.errors });
+      return;
+    }
+
+    const requestedIssueIds = parsed.data.issue_ids;
+    const { isAdmin } = await getVisibilityContext(userId, workspaceId);
+
+    const accessibleResult = await pool.query<{ id: string }>(
+      `SELECT d.id
+       FROM documents d
+       WHERE d.workspace_id = $1
+         AND d.document_type = 'issue'
+         AND d.id = ANY($2::uuid[])
+         AND d.archived_at IS NULL
+         AND d.deleted_at IS NULL
+         AND ${VISIBILITY_FILTER_SQL('d', '$3', '$4')}`,
+      [workspaceId, requestedIssueIds, userId, isAdmin]
+    );
+
+    const accessibleIssueIds = accessibleResult.rows.map((row) => row.id);
+    const dependencySignals = await listIssueDependencySignals({
+      workspaceId,
+      issueIds: accessibleIssueIds,
+      requestedIssueCount: requestedIssueIds.length,
+    });
+
+    res.json(dependencySignals);
+  } catch (err) {
+    console.error('Get dependency signals error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get sub-issues (children) of an issue
 router.get('/:id/children', authMiddleware, async (req: Request, res: Response) => {
   try {
@@ -601,14 +685,26 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       title,
       state,
       priority,
+      issue_type,
       assignee_id,
       belongs_to,
+      content,
+      story_points,
+      estimate_hours,
+      estimate,
       source,
       due_date,
       is_system_generated,
       accountability_target_id,
       accountability_type,
     } = parsed.data;
+
+    const resolvedEstimateHours =
+      estimate_hours !== undefined ? estimate_hours : (estimate !== undefined ? estimate : null);
+    const resolvedStoryPoints =
+      story_points !== undefined
+        ? story_points
+        : deriveStoryPointsFromEstimateHours(resolvedEstimateHours);
 
     await client.query('BEGIN');
 
@@ -632,8 +728,12 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
     const properties = {
       state: state || 'backlog',
       priority: priority || 'medium',
+      issue_type: issue_type || 'task',
       source: source || 'internal',
       assignee_id: assignee_id || null,
+      story_points: resolvedStoryPoints,
+      estimate_hours: resolvedEstimateHours,
+      estimate: resolvedEstimateHours,
       rejection_reason: null,
       // Accountability fields for action_items issues
       due_date: due_date || null,
@@ -642,11 +742,20 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       accountability_type: accountability_type || null,
     };
 
+    const issueContent = content ?? createIssueTemplateContent({ title });
+
     const result = await client.query(
-      `INSERT INTO documents (workspace_id, document_type, title, properties, ticket_number, created_by)
-       VALUES ($1, 'issue', $2, $3, $4, $5)
+      `INSERT INTO documents (workspace_id, document_type, title, content, properties, ticket_number, created_by)
+       VALUES ($1, 'issue', $2, $3, $4, $5, $6)
        RETURNING *`,
-      [req.workspaceId, title, JSON.stringify(properties), ticketNumber, req.userId]
+      [
+        req.workspaceId,
+        title,
+        JSON.stringify(issueContent),
+        JSON.stringify(properties),
+        ticketNumber,
+        req.userId,
+      ]
     );
 
     const newIssueId = result.rows[0].id;
@@ -661,7 +770,66 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       );
     }
 
+    const sprintAssociation = belongs_to.find((assoc) => assoc.type === 'sprint');
+    if (resolvedStoryPoints !== null) {
+      await logDocumentChange(
+        newIssueId,
+        'story_points',
+        null,
+        resolvedStoryPoints.toString(),
+        req.userId!,
+        undefined,
+        client
+      );
+    }
+    if (resolvedEstimateHours !== null) {
+      await logDocumentChange(
+        newIssueId,
+        'estimate_hours',
+        null,
+        resolvedEstimateHours.toString(),
+        req.userId!,
+        undefined,
+        client
+      );
+      await logDocumentChange(
+        newIssueId,
+        'estimate',
+        null,
+        resolvedEstimateHours.toString(),
+        req.userId!,
+        undefined,
+        client
+      );
+    }
+    if (sprintAssociation) {
+      await logDocumentChange(
+        newIssueId,
+        'sprint_id',
+        null,
+        sprintAssociation.id,
+        req.userId!,
+        undefined,
+        client
+      );
+    }
+    await enqueueFleetGraphIssueMutationEvent(
+      {
+        workspaceId: req.workspaceId!,
+        issueId: newIssueId,
+        actorId: req.userId ?? null,
+        eventKind: 'issue_created',
+        previous: {
+          state: null,
+          assigneeId: null,
+          sprintId: null,
+        },
+      },
+      client
+    );
+
     await client.query('COMMIT');
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Auto-complete sprint_issues accountability when first issue is created in a sprint
     const sprintAssociations = belongs_to.filter(bt => bt.type === 'sprint');
@@ -678,6 +846,8 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       if (issueCount === 1) {
         broadcastToUser(req.userId!, 'accountability:updated', { type: 'week_issues', targetId: sprintAssoc.id });
       }
+
+      await ensureSprintAnalyticsSnapshot(sprintAssoc.id, req.workspaceId!);
     }
 
     // Get the belongs_to associations with display info
@@ -735,6 +905,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
     const existingIssue = existing.rows[0];
     const currentProps = existingIssue.properties || {};
+    const existingBelongsTo = await getBelongsToAssociations(id);
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -745,9 +916,15 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     if (data.belongs_to) {
       const hasSprintAssociation = data.belongs_to.some(bt => bt.type === 'sprint');
       if (hasSprintAssociation) {
-        const effectiveEstimate = data.estimate !== undefined ? data.estimate : currentProps.estimate;
-        if (!effectiveEstimate) {
-          res.status(400).json({ error: 'Estimate is required before assigning to a week' });
+        const effectiveStoryPoints =
+          data.story_points !== undefined ? data.story_points : currentProps.story_points;
+        const effectiveEstimateHours =
+          data.estimate_hours !== undefined
+            ? data.estimate_hours
+            : (data.estimate !== undefined ? data.estimate : (currentProps.estimate_hours ?? currentProps.estimate));
+
+        if (!effectiveStoryPoints && !effectiveEstimateHours) {
+          res.status(400).json({ error: 'Story points or estimate hours are required before assigning to a week' });
           return;
         }
       }
@@ -832,14 +1009,54 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       newProps.priority = data.priority;
       propsChanged = true;
     }
+
+    const currentIssueType = currentProps.issue_type || 'task';
+    if (data.issue_type !== undefined && data.issue_type !== currentIssueType) {
+      changes.push({
+        field: 'issue_type',
+        oldValue: currentIssueType,
+        newValue: data.issue_type,
+      });
+      newProps.issue_type = data.issue_type;
+      propsChanged = true;
+    }
     if (data.assignee_id !== undefined && data.assignee_id !== currentProps.assignee_id) {
       changes.push({ field: 'assignee_id', oldValue: currentProps.assignee_id || null, newValue: data.assignee_id });
       newProps.assignee_id = data.assignee_id;
       propsChanged = true;
     }
-    if (data.estimate !== undefined && data.estimate !== currentProps.estimate) {
-      changes.push({ field: 'estimate', oldValue: currentProps.estimate?.toString() || null, newValue: data.estimate?.toString() || null });
-      newProps.estimate = data.estimate;
+    if (data.story_points !== undefined && data.story_points !== currentProps.story_points) {
+      changes.push({
+        field: 'story_points',
+        oldValue: currentProps.story_points?.toString() || null,
+        newValue: data.story_points?.toString() || null,
+      });
+      newProps.story_points = data.story_points;
+      propsChanged = true;
+    }
+
+    const nextEstimateHours =
+      data.estimate_hours !== undefined
+        ? data.estimate_hours
+        : (data.estimate !== undefined ? data.estimate : undefined);
+    const currentEstimateHours = currentProps.estimate_hours ?? currentProps.estimate ?? null;
+
+    if (nextEstimateHours !== undefined && nextEstimateHours !== currentEstimateHours) {
+      changes.push({
+        field: 'estimate_hours',
+        oldValue: currentEstimateHours?.toString() || null,
+        newValue: nextEstimateHours?.toString() || null,
+      });
+      changes.push({
+        field: 'estimate',
+        oldValue: currentEstimateHours?.toString() || null,
+        newValue: nextEstimateHours?.toString() || null,
+      });
+      newProps.estimate_hours = nextEstimateHours;
+      newProps.estimate = nextEstimateHours;
+      if ((newProps.story_points === undefined || newProps.story_points === null) && nextEstimateHours) {
+        newProps.story_points = deriveStoryPointsFromEstimateHours(nextEstimateHours);
+      }
       propsChanged = true;
     }
 
@@ -862,12 +1079,10 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
     // Handle belongs_to association updates via junction table
     let belongsToChanged = false;
-    let oldBelongsTo: BelongsToEntry[] = [];
+    let oldBelongsTo: BelongsToEntry[] = existingBelongsTo;
     let newBelongsTo: BelongsToEntry[] = [];
 
     if (data.belongs_to !== undefined) {
-      // Get existing associations for comparison
-      oldBelongsTo = await getBelongsToAssociations(id);
       newBelongsTo = data.belongs_to;
 
       // Compare to see if associations changed
@@ -919,6 +1134,14 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
           // Removing from sprint clears carryover
           delete newProps.carryover_from_sprint_id;
           propsChanged = true;
+        }
+
+        if ((oldSprintAssoc?.id ?? null) !== (newSprintAssoc?.id ?? null)) {
+          changes.push({
+            field: 'sprint_id',
+            oldValue: oldSprintAssoc?.id ?? null,
+            newValue: newSprintAssoc?.id ?? null,
+          });
         }
 
         // Log belongs_to change
@@ -983,6 +1206,21 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
       }
     }
 
+    await enqueueFleetGraphIssueMutationEvent(
+      {
+        workspaceId,
+        issueId: id,
+        actorId: userId,
+        eventKind: 'issue_updated',
+        previous: {
+          state: currentProps.state || null,
+          assigneeId: currentProps.assignee_id || null,
+          sprintId: oldBelongsTo.find((entry) => entry.type === 'sprint')?.id ?? null,
+        },
+      },
+      client
+    );
+
     // Fetch the updated issue
     const result = await client.query(
       `SELECT * FROM documents WHERE id = $1 AND workspace_id = $2`,
@@ -990,14 +1228,19 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     );
 
     await client.query('COMMIT');
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Post-commit operations (non-transactional)
+
+    const impactedSprintIds = new Set<string>();
 
     // Check if a NEW sprint association was added and this is the first issue in that sprint
     if (belongsToChanged) {
       const oldSprintIds = oldBelongsTo.filter(bt => bt.type === 'sprint').map(bt => bt.id);
       const newSprintIds = newBelongsTo.filter(bt => bt.type === 'sprint').map(bt => bt.id);
       const addedSprintIds = newSprintIds.filter(sprintId => !oldSprintIds.includes(sprintId));
+      for (const sprintId of oldSprintIds) impactedSprintIds.add(sprintId);
+      for (const sprintId of newSprintIds) impactedSprintIds.add(sprintId);
 
       for (const sprintId of addedSprintIds) {
         const issueCountResult = await pool.query(
@@ -1011,6 +1254,25 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
           broadcastToUser(req.userId!, 'accountability:updated', { type: 'week_issues', targetId: sprintId });
         }
       }
+    }
+
+    if (
+      data.state !== undefined ||
+      data.story_points !== undefined ||
+      data.estimate_hours !== undefined ||
+      data.estimate !== undefined
+    ) {
+      const activeSprintIds = (belongsToChanged ? newBelongsTo : await getBelongsToAssociations(id))
+        .filter((assoc) => assoc.type === 'sprint')
+        .map((assoc) => assoc.id);
+
+      for (const sprintId of activeSprintIds) {
+        impactedSprintIds.add(sprintId);
+      }
+    }
+
+    for (const sprintId of impactedSprintIds) {
+      await ensureSprintAnalyticsSnapshot(sprintId, workspaceId);
     }
 
     const row = result.rows[0];
@@ -1490,7 +1752,7 @@ const listIterationsSchema = z.object({
 // Create iteration entry - POST /api/issues/:id/iterations
 router.post('/:id/iterations', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { id: issueId } = req.params;
+    const issueId = String(req.params.id);
     const authContext = getAuthContext(req, res);
     if (!authContext) {
       return;
@@ -1537,6 +1799,20 @@ router.post('/:id/iterations', authMiddleware, async (req: Request, res: Respons
 
     const iteration = result.rows[0];
     const author = authorResult.rows[0];
+
+    await enqueueFleetGraphIssueIterationEvent({
+      workspaceId,
+      issueId,
+      actorId: userId,
+      iteration: {
+        id: typeof iteration.id === 'string' ? iteration.id : null,
+        status,
+        blockersEncountered: blockers_encountered ?? null,
+        authorId: userId,
+        authorName: author?.name ?? null,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
 
     res.status(201).json({
       id: iteration.id,

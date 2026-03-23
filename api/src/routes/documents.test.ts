@@ -407,6 +407,131 @@ describe('Documents API - Weekly Doc Resubmission', () => {
     expect(sprintAfter.rows[0].properties.review_approval.state).toBe('changed_since_approved')
     expect(sprintAfter.rows[0].properties.review_approval.feedback).toBe('Add evidence for delivered outcomes.')
   })
+
+  it('returns project belongs_to context for weekly plan documents', async () => {
+    const planResult = await pool.query(
+      `INSERT INTO documents (workspace_id, document_type, title, created_by, content, properties)
+       VALUES ($1, 'weekly_plan', 'Week 19 Plan', $2, $3, $4)
+       RETURNING id`,
+      [
+        testWorkspaceId,
+        testUserId,
+        JSON.stringify({ type: 'doc', content: [] }),
+        JSON.stringify({ person_id: testPersonId, week_number: 19 }),
+      ]
+    )
+    const planId = planResult.rows[0].id
+
+    await pool.query(
+      `INSERT INTO document_associations (document_id, related_id, relationship_type)
+       VALUES ($1, $2, 'project')`,
+      [planId, testProjectId]
+    )
+
+    const response = await request(app)
+      .get(`/api/documents/${planId}`)
+      .set('Cookie', sessionCookie)
+
+    expect(response.status).toBe(200)
+    expect(response.body.belongs_to).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: testProjectId,
+          type: 'project',
+          title: 'Weekly Resubmit Project',
+        }),
+      ])
+    )
+  })
+})
+
+describe('Documents API - Person work persona sync', () => {
+  const app = createApp()
+  const testRunId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+  const testEmail = `docs-persona-${testRunId}@ship.local`
+  const testWorkspaceName = `Docs Persona ${testRunId}`
+
+  let sessionCookie: string
+  let csrfToken: string
+  let testWorkspaceId: string
+  let testUserId: string
+  let testPersonDocId: string
+
+  beforeAll(async () => {
+    const workspaceResult = await pool.query(
+      `INSERT INTO workspaces (name) VALUES ($1) RETURNING id`,
+      [testWorkspaceName]
+    )
+    testWorkspaceId = workspaceResult.rows[0].id
+
+    const userResult = await pool.query(
+      `INSERT INTO users (email, password_hash, name)
+       VALUES ($1, 'test-hash', 'Persona User')
+       RETURNING id`,
+      [testEmail]
+    )
+    testUserId = userResult.rows[0].id
+
+    await pool.query(
+      `INSERT INTO workspace_memberships (workspace_id, user_id, role)
+       VALUES ($1, $2, 'member')`,
+      [testWorkspaceId, testUserId]
+    )
+
+    const personDocResult = await pool.query(
+      `INSERT INTO documents (workspace_id, document_type, title, properties, created_by)
+       VALUES ($1, 'person', 'Persona User', $2, $3)
+       RETURNING id`,
+      [testWorkspaceId, JSON.stringify({ user_id: testUserId, email: testEmail }), testUserId]
+    )
+    testPersonDocId = personDocResult.rows[0].id
+
+    const sessionId = crypto.randomBytes(32).toString('hex')
+    await pool.query(
+      `INSERT INTO sessions (id, user_id, workspace_id, expires_at)
+       VALUES ($1, $2, $3, now() + interval '1 hour')`,
+      [sessionId, testUserId, testWorkspaceId]
+    )
+    sessionCookie = `session_id=${sessionId}`
+
+    const csrfRes = await request(app)
+      .get('/api/csrf-token')
+      .set('Cookie', sessionCookie)
+    csrfToken = csrfRes.body.token
+    const connectSidCookie = csrfRes.headers['set-cookie']?.[0]?.split(';')[0] || ''
+    if (connectSidCookie) {
+      sessionCookie = `${sessionCookie}; ${connectSidCookie}`
+    }
+  })
+
+  afterAll(async () => {
+    await pool.query('DELETE FROM sessions WHERE user_id = $1', [testUserId])
+    await pool.query('DELETE FROM documents WHERE workspace_id = $1', [testWorkspaceId])
+    await pool.query('DELETE FROM workspace_memberships WHERE user_id = $1', [testUserId])
+    await pool.query('DELETE FROM users WHERE id = $1', [testUserId])
+    await pool.query('DELETE FROM workspaces WHERE id = $1', [testWorkspaceId])
+  })
+
+  it('updates the linked user work persona when a person document is patched', async () => {
+    const response = await request(app)
+      .patch(`/api/documents/${testPersonDocId}`)
+      .set('Cookie', sessionCookie)
+      .set('x-csrf-token', csrfToken)
+      .send({
+        properties: {
+          work_persona: 'product_manager',
+        },
+      })
+
+    expect(response.status).toBe(200)
+    expect(response.body.properties.work_persona).toBe('product_manager')
+
+    const userResult = await pool.query(
+      `SELECT work_persona FROM users WHERE id = $1`,
+      [testUserId]
+    )
+    expect(userResult.rows[0]?.work_persona).toBe('product_manager')
+  })
 })
 
 describe('Documents API - Delete', () => {

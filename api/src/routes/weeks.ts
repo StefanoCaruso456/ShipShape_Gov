@@ -11,6 +11,19 @@ import {
 import { logDocumentChange, getLatestDocumentFieldHistory } from '../utils/document-crud.js';
 import { broadcastToUser } from '../collaboration/index.js';
 import { extractText } from '../utils/document-content.js';
+import {
+  hasSprintPlanningSnapshot,
+  persistSprintPlanningSnapshot,
+  getIssuePlanningMetrics,
+  getSprintAnalyticsSnapshots,
+  takeSprintPlanningSnapshot,
+  upsertSprintAnalyticsSnapshot,
+} from '../utils/sprint-planning.js';
+import {
+  enqueueFleetGraphSprintApprovalEvent,
+  enqueueFleetGraphSprintMutationEvent,
+  scheduleFleetGraphProactiveEventProcessing,
+} from '../services/fleetgraph-proactive-events.js';
 
 type RouterType = ReturnType<typeof Router>;
 const router: RouterType = Router();
@@ -219,6 +232,9 @@ function extractSprintFromRow(row: any) {
     missing_fields: props.missing_fields ?? [],
     // Plan snapshot (populated when sprint becomes active)
     planned_issue_ids: props.planned_issue_ids || null,
+    planned_issue_count: props.planned_issue_count ?? null,
+    planned_story_points: props.planned_story_points ?? null,
+    planned_estimate_hours: props.planned_estimate_hours ?? null,
     snapshot_taken_at: props.snapshot_taken_at || null,
     // Approval tracking
     plan_approval: props.plan_approval || null,
@@ -260,15 +276,625 @@ function isSprintActive(sprintNumber: number, workspaceStartDate: Date | string)
   return today >= startDate;
 }
 
-// Take a snapshot of current issues in the sprint
-async function takeSprintSnapshot(sprintId: string): Promise<string[]> {
-  const result = await pool.query(
-    `SELECT d.id FROM documents d
-     JOIN document_associations da ON da.document_id = d.id
-     WHERE da.related_id = $1 AND da.relationship_type = 'sprint' AND d.document_type = 'issue'`,
+function formatIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function parsePositiveInteger(value: unknown): number | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function extractContentText(node: unknown): string {
+  if (!node || typeof node !== 'object') {
+    return '';
+  }
+
+  const candidate = node as { type?: string; text?: string; content?: unknown[] };
+  if (candidate.type === 'text' && typeof candidate.text === 'string') {
+    return candidate.text;
+  }
+
+  if (Array.isArray(candidate.content)) {
+    return candidate.content.map(extractContentText).join('');
+  }
+
+  return '';
+}
+
+function hasIssueDescriptionContent(content: unknown): boolean {
+  return extractContentText(content).trim().length > 0;
+}
+
+function hasIssueAcceptanceCriteriaContent(content: unknown): boolean {
+  return extractContentText(content).toLowerCase().includes('acceptance criteria');
+}
+
+function enumerateDates(startDate: Date, endDate: Date): string[] {
+  const dates: string[] = [];
+  const cursor = new Date(startDate);
+  cursor.setUTCHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setUTCHours(0, 0, 0, 0);
+
+  while (cursor <= end) {
+    dates.push(formatIsoDate(cursor));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return dates;
+}
+
+interface VelocityHistoryPoint {
+  sprintNumber: number;
+  sprintName: string;
+  committedStoryPoints: number;
+  completedStoryPoints: number;
+  currentStoryPoints: number;
+  committedEstimateHours: number;
+  completedEstimateHours: number;
+  currentEstimateHours: number;
+  issueCount: number;
+  completedIssueCount: number;
+}
+
+type VelocityHistoryScope = 'program' | 'project';
+
+interface VelocityHistoryQueryOptions {
+  scope: VelocityHistoryScope;
+  startWeek: number | null;
+  endWeek: number | null;
+  historyWindow?: number;
+}
+
+interface VelocityHistoryMetaExcludedWeek {
+  sprintNumber: number;
+  issueCount: number;
+  missingStoryPoints: number;
+  missingEstimateHours: number;
+  missingIssueType: number;
+  missingDescription: number;
+  missingAcceptanceCriteria: number;
+}
+
+interface VelocityHistoryMeta {
+  requestedScope: VelocityHistoryScope;
+  scope: VelocityHistoryScope;
+  scopeLabel: string | null;
+  programLabel: string | null;
+  projectLabel: string | null;
+  hasProjectScope: boolean;
+  isCustomRange: boolean;
+  selectedRangeStartWeek: number | null;
+  selectedRangeEndWeek: number | null;
+  availableWeekNumbers: number[];
+  recommendedWindow: number;
+  completedWeekCount: number;
+  qualifyingWeekCount: number;
+  includedWeekCount: number;
+  backfilledWeekCount: number;
+  excludedWeeks: VelocityHistoryMetaExcludedWeek[];
+}
+
+interface VelocityHistoryResult {
+  history: VelocityHistoryPoint[];
+  meta: VelocityHistoryMeta;
+}
+
+async function getVelocityHistory(
+  sprintId: string,
+  sprintNumber: number,
+  workspaceId: string,
+  userId: string,
+  isAdmin: boolean,
+  workspaceSprintStartDate: Date | string,
+  options: VelocityHistoryQueryOptions
+): Promise<VelocityHistoryResult> {
+  const historyWindow = options.historyWindow ?? 6;
+  const contextResult = await pool.query<{
+    program_id: string | null;
+    program_name: string | null;
+    project_id: string | null;
+    project_name: string | null;
+  }>(
+    `SELECT
+       MAX(CASE WHEN da.relationship_type = 'program' THEN da.related_id::text END)::uuid AS program_id,
+       MAX(CASE WHEN da.relationship_type = 'program' THEN related.title END) AS program_name,
+       MAX(CASE WHEN da.relationship_type = 'project' THEN da.related_id::text END)::uuid AS project_id,
+       MAX(CASE WHEN da.relationship_type = 'project' THEN related.title END) AS project_name
+     FROM document_associations da
+     JOIN documents related ON related.id = da.related_id
+     WHERE da.document_id = $1
+       AND da.relationship_type IN ('program', 'project')`,
     [sprintId]
   );
-  return result.rows.map(row => row.id);
+
+  const context = contextResult.rows[0] ?? {
+    program_id: null,
+    program_name: null,
+    project_id: null,
+    project_name: null,
+  };
+  const hasProjectScope = Boolean(context.project_id);
+  const scope: VelocityHistoryScope =
+    options.scope === 'project' && context.project_id ? 'project' : 'program';
+  const scopeId = scope === 'project' ? context.project_id : context.program_id;
+  const maxHistoricalWeek = Math.max(sprintNumber - 1, 0);
+  const requestedStart = options.startWeek;
+  const requestedEnd = options.endWeek;
+  const selectedRangeStartWeek =
+    requestedStart !== null && requestedEnd !== null
+      ? Math.max(1, Math.min(requestedStart, requestedEnd))
+      : null;
+  const selectedRangeEndWeek =
+    requestedStart !== null && requestedEnd !== null
+      ? Math.min(maxHistoricalWeek, Math.max(requestedStart, requestedEnd))
+      : null;
+  const isCustomRange =
+    selectedRangeStartWeek !== null &&
+    selectedRangeEndWeek !== null &&
+    selectedRangeStartWeek <= selectedRangeEndWeek;
+
+  const emptyMeta: VelocityHistoryMeta = {
+    requestedScope: options.scope,
+    scope,
+    scopeLabel: scope === 'project' ? context.project_name : context.program_name,
+    programLabel: context.program_name,
+    projectLabel: context.project_name,
+    hasProjectScope,
+    isCustomRange,
+    selectedRangeStartWeek: isCustomRange ? selectedRangeStartWeek : null,
+    selectedRangeEndWeek: isCustomRange ? selectedRangeEndWeek : null,
+    availableWeekNumbers: [],
+    recommendedWindow: historyWindow,
+    completedWeekCount: 0,
+    qualifyingWeekCount: 0,
+    includedWeekCount: 0,
+    backfilledWeekCount: 0,
+    excludedWeeks: [],
+  };
+
+  if (!scopeId) {
+    return { history: [], meta: emptyMeta };
+  }
+
+  const sprintParams: Array<string | boolean | number> = [scopeId, workspaceId, userId, isAdmin, sprintNumber];
+  let rangeSql = '';
+  if (isCustomRange) {
+    sprintParams.push(selectedRangeStartWeek!, selectedRangeEndWeek!);
+    rangeSql = ` AND (d.properties->>'sprint_number')::int BETWEEN $6 AND $7`;
+  }
+
+  const sprintResult = await pool.query<{
+    id: string;
+    title: string;
+    sprint_number: number;
+    properties: Record<string, unknown> | null;
+  }>(
+    `SELECT d.id,
+            d.title,
+            (d.properties->>'sprint_number')::int AS sprint_number,
+            d.properties
+     FROM documents d
+     JOIN document_associations da
+       ON da.document_id = d.id
+      AND da.related_id = $1
+      AND da.relationship_type = '${scope}'
+     WHERE d.workspace_id = $2
+       AND d.document_type = 'sprint'
+       AND d.archived_at IS NULL
+       AND d.deleted_at IS NULL
+       AND ${VISIBILITY_FILTER_SQL('d', '$3', '$4')}
+       AND COALESCE(d.properties->>'status', 'planning') = 'completed'
+       AND (d.properties->>'sprint_number')::int < $5
+       ${rangeSql}
+     ORDER BY (d.properties->>'sprint_number')::int DESC`,
+    sprintParams
+  );
+
+  if (sprintResult.rows.length === 0) {
+    return { history: [], meta: emptyMeta };
+  }
+
+  const backfilledSprintIds = new Set<string>();
+  for (const sprintRow of sprintResult.rows) {
+    const sprintProperties = (sprintRow.properties ?? {}) as Record<string, unknown>;
+    if (hasSprintPlanningSnapshot(sprintProperties)) {
+      continue;
+    }
+
+    const { startDate } = calculateSprintDates(sprintRow.sprint_number, workspaceSprintStartDate);
+    const persisted = await persistSprintPlanningSnapshot(pool, sprintRow.id, sprintProperties, {
+      source: 'backfilled_from_current_scope',
+      snapshotTakenAt: startDate,
+    });
+    sprintRow.properties = persisted.properties;
+    backfilledSprintIds.add(sprintRow.id);
+  }
+
+  const sprintIds = sprintResult.rows.map((row) => row.id);
+  const issueResult = await pool.query<{
+    sprint_id: string;
+    properties: Record<string, unknown> | null;
+    content: Record<string, unknown> | null;
+  }>(
+    `SELECT da.related_id AS sprint_id, d.properties, d.content
+     FROM documents d
+     JOIN document_associations da
+       ON da.document_id = d.id
+      AND da.related_id = ANY($1)
+      AND da.relationship_type = 'sprint'
+     WHERE d.workspace_id = $2
+       AND d.document_type = 'issue'
+       AND d.archived_at IS NULL
+       AND d.deleted_at IS NULL
+       AND ${VISIBILITY_FILTER_SQL('d', '$3', '$4')}`,
+    [sprintIds, workspaceId, userId, isAdmin]
+  );
+
+  const metricsBySprint = new Map<
+    string,
+    {
+      currentStoryPoints: number;
+      completedStoryPoints: number;
+      currentEstimateHours: number;
+      completedEstimateHours: number;
+      issueCount: number;
+      completedIssueCount: number;
+      missingStoryPoints: number;
+      missingEstimateHours: number;
+      missingIssueType: number;
+      missingDescription: number;
+      missingAcceptanceCriteria: number;
+    }
+  >();
+
+  for (const issueRow of issueResult.rows) {
+    const metrics = getIssuePlanningMetrics(issueRow.properties ?? {});
+    const state = (issueRow.properties?.state as string | undefined) ?? 'backlog';
+    const issueType = issueRow.properties?.issue_type;
+    const bucket = metricsBySprint.get(issueRow.sprint_id) ?? {
+      currentStoryPoints: 0,
+      completedStoryPoints: 0,
+      currentEstimateHours: 0,
+      completedEstimateHours: 0,
+      issueCount: 0,
+      completedIssueCount: 0,
+      missingStoryPoints: 0,
+      missingEstimateHours: 0,
+      missingIssueType: 0,
+      missingDescription: 0,
+      missingAcceptanceCriteria: 0,
+    };
+
+    bucket.currentStoryPoints += metrics.storyPoints;
+    bucket.currentEstimateHours += metrics.estimateHours;
+    bucket.issueCount += 1;
+
+    if (metrics.storyPoints <= 0) {
+      bucket.missingStoryPoints += 1;
+    }
+
+    if (metrics.estimateHours <= 0) {
+      bucket.missingEstimateHours += 1;
+    }
+
+    if (typeof issueType !== 'string' || issueType.trim().length === 0) {
+      bucket.missingIssueType += 1;
+    }
+
+    if (!hasIssueDescriptionContent(issueRow.content)) {
+      bucket.missingDescription += 1;
+    }
+
+    if (!hasIssueAcceptanceCriteriaContent(issueRow.content)) {
+      bucket.missingAcceptanceCriteria += 1;
+    }
+
+    if (state === 'done') {
+      bucket.completedStoryPoints += metrics.storyPoints;
+      bucket.completedEstimateHours += metrics.estimateHours;
+      bucket.completedIssueCount += 1;
+    }
+
+    metricsBySprint.set(issueRow.sprint_id, bucket);
+  }
+
+  const historyBySprintNumber = new Map<
+    number,
+    VelocityHistoryPoint & {
+      missingStoryPoints: number;
+      missingEstimateHours: number;
+      missingIssueType: number;
+      missingDescription: number;
+      missingAcceptanceCriteria: number;
+      hasBackfilledBaseline: boolean;
+    }
+  >();
+
+  for (const sprintRow of sprintResult.rows) {
+    const props = (sprintRow.properties ?? {}) as Record<string, unknown>;
+    const liveMetrics = metricsBySprint.get(sprintRow.id) ?? {
+      currentStoryPoints: 0,
+      completedStoryPoints: 0,
+      currentEstimateHours: 0,
+      completedEstimateHours: 0,
+      issueCount: 0,
+      completedIssueCount: 0,
+      missingStoryPoints: 0,
+      missingEstimateHours: 0,
+      missingIssueType: 0,
+      missingDescription: 0,
+      missingAcceptanceCriteria: 0,
+    };
+    const committedStoryPoints = Number(props.planned_story_points ?? liveMetrics.currentStoryPoints);
+    const committedEstimateHours = Number(
+      props.planned_estimate_hours ?? props.planned_estimate ?? liveMetrics.currentEstimateHours
+    );
+    const currentEntry = historyBySprintNumber.get(sprintRow.sprint_number) ?? {
+      sprintNumber: sprintRow.sprint_number,
+      sprintName: `Week ${sprintRow.sprint_number}`,
+      committedStoryPoints: 0,
+      completedStoryPoints: 0,
+      currentStoryPoints: 0,
+      committedEstimateHours: 0,
+      completedEstimateHours: 0,
+      currentEstimateHours: 0,
+      issueCount: 0,
+      completedIssueCount: 0,
+      missingStoryPoints: 0,
+      missingEstimateHours: 0,
+      missingIssueType: 0,
+      missingDescription: 0,
+      missingAcceptanceCriteria: 0,
+      hasBackfilledBaseline: false,
+    };
+
+    currentEntry.committedStoryPoints += committedStoryPoints;
+    currentEntry.completedStoryPoints += liveMetrics.completedStoryPoints;
+    currentEntry.currentStoryPoints += liveMetrics.currentStoryPoints;
+    currentEntry.committedEstimateHours += committedEstimateHours;
+    currentEntry.completedEstimateHours += liveMetrics.completedEstimateHours;
+    currentEntry.currentEstimateHours += liveMetrics.currentEstimateHours;
+    currentEntry.issueCount += liveMetrics.issueCount;
+    currentEntry.completedIssueCount += liveMetrics.completedIssueCount;
+    currentEntry.missingStoryPoints += liveMetrics.missingStoryPoints;
+    currentEntry.missingEstimateHours += liveMetrics.missingEstimateHours;
+    currentEntry.missingIssueType += liveMetrics.missingIssueType;
+    currentEntry.missingDescription += liveMetrics.missingDescription;
+    currentEntry.missingAcceptanceCriteria += liveMetrics.missingAcceptanceCriteria;
+    currentEntry.hasBackfilledBaseline ||= backfilledSprintIds.has(sprintRow.id);
+    historyBySprintNumber.set(sprintRow.sprint_number, currentEntry);
+  }
+
+  const aggregatedWeeks = Array.from(historyBySprintNumber.values()).sort(
+    (left, right) => right.sprintNumber - left.sprintNumber
+  );
+  const qualifyingWeeks = aggregatedWeeks.filter(
+    (week) =>
+      week.issueCount > 0 &&
+      week.missingStoryPoints === 0 &&
+      week.missingEstimateHours === 0 &&
+      week.missingIssueType === 0 &&
+      week.missingDescription === 0 &&
+      week.missingAcceptanceCriteria === 0
+  );
+  const selectedHistory = (
+    isCustomRange ? qualifyingWeeks : qualifyingWeeks.slice(0, historyWindow)
+  ).reverse();
+
+  return {
+    history: selectedHistory.map((week) => ({
+      sprintNumber: week.sprintNumber,
+      sprintName: week.sprintName,
+      committedStoryPoints: week.committedStoryPoints,
+      completedStoryPoints: week.completedStoryPoints,
+      currentStoryPoints: week.currentStoryPoints,
+      committedEstimateHours: week.committedEstimateHours,
+      completedEstimateHours: week.completedEstimateHours,
+      currentEstimateHours: week.currentEstimateHours,
+      issueCount: week.issueCount,
+      completedIssueCount: week.completedIssueCount,
+    })),
+    meta: {
+      requestedScope: options.scope,
+      scope,
+      scopeLabel: scope === 'project' ? context.project_name : context.program_name,
+      programLabel: context.program_name,
+      projectLabel: context.project_name,
+      hasProjectScope,
+      isCustomRange,
+      selectedRangeStartWeek: isCustomRange ? selectedRangeStartWeek : null,
+      selectedRangeEndWeek: isCustomRange ? selectedRangeEndWeek : null,
+      availableWeekNumbers: aggregatedWeeks
+        .map((week) => week.sprintNumber)
+        .sort((left, right) => left - right),
+      recommendedWindow: historyWindow,
+      completedWeekCount: aggregatedWeeks.length,
+      qualifyingWeekCount: qualifyingWeeks.length,
+      includedWeekCount: selectedHistory.length,
+      backfilledWeekCount: selectedHistory.filter((week) => week.hasBackfilledBaseline).length,
+      excludedWeeks: aggregatedWeeks
+        .filter((week) => !qualifyingWeeks.includes(week))
+        .slice(0, 12)
+        .map((week) => ({
+          sprintNumber: week.sprintNumber,
+          issueCount: week.issueCount,
+          missingStoryPoints: week.missingStoryPoints,
+          missingEstimateHours: week.missingEstimateHours,
+          missingIssueType: week.missingIssueType,
+          missingDescription: week.missingDescription,
+          missingAcceptanceCriteria: week.missingAcceptanceCriteria,
+        })),
+    },
+  };
+}
+
+async function getSprintScopeChangePayload(
+  sprintId: string,
+  workspaceId: string,
+  userId: string,
+  isAdmin: boolean
+) {
+  const sprintResult = await pool.query(
+    `SELECT d.id, d.properties,
+            d.properties->>'sprint_number' as sprint_number,
+            w.sprint_start_date as workspace_sprint_start_date
+     FROM documents d
+     JOIN workspaces w ON d.workspace_id = w.id
+     WHERE d.id = $1 AND d.workspace_id = $2 AND d.document_type = 'sprint'
+       AND ${VISIBILITY_FILTER_SQL('d', '$3', '$4')}`,
+    [sprintId, workspaceId, userId, isAdmin]
+  );
+
+  if (sprintResult.rows.length === 0) {
+    return null;
+  }
+
+  const sprintRow = sprintResult.rows[0];
+  const sprintProps = (sprintRow.properties ?? {}) as Record<string, unknown>;
+  const sprintNumber = parseInt(sprintRow.sprint_number, 10);
+  const { startDate } = calculateSprintDates(sprintNumber, sprintRow.workspace_sprint_start_date);
+  const baselineTimestamp = sprintProps.snapshot_taken_at
+    ? new Date(String(sprintProps.snapshot_taken_at))
+    : startDate;
+
+  const issuesResult = await pool.query(
+    `SELECT d.id, d.properties
+     FROM documents d
+     JOIN document_associations da
+       ON da.document_id = d.id
+      AND da.related_id = $1
+      AND da.relationship_type = 'sprint'
+     WHERE d.document_type = 'issue'
+       AND d.archived_at IS NULL
+       AND d.deleted_at IS NULL`,
+    [sprintId]
+  );
+
+  const currentMetricsByIssueId = new Map<string, { storyPoints: number; estimateHours: number }>();
+  let currentStoryPoints = 0;
+  let currentEstimateHours = 0;
+
+  for (const row of issuesResult.rows) {
+    const metrics = getIssuePlanningMetrics(row.properties as Record<string, unknown> | undefined);
+    currentMetricsByIssueId.set(row.id as string, metrics);
+    currentStoryPoints += metrics.storyPoints;
+    currentEstimateHours += metrics.estimateHours;
+  }
+
+  const additionHistory = await pool.query(
+    `SELECT document_id, created_at
+     FROM document_history
+     WHERE field = 'sprint_id'
+       AND new_value = $1
+       AND created_at > $2
+     ORDER BY created_at ASC`,
+    [sprintId, baselineTimestamp.toISOString()]
+  );
+
+  const removalHistory = await pool.query(
+    `SELECT document_id, created_at
+     FROM document_history
+     WHERE field = 'sprint_id'
+       AND old_value = $1
+       AND created_at > $2
+     ORDER BY created_at ASC`,
+    [sprintId, baselineTimestamp.toISOString()]
+  );
+
+  const removedIssueIds = [...new Set(removalHistory.rows.map((row) => row.document_id as string))];
+  const missingRemovedIds = removedIssueIds.filter((issueId) => !currentMetricsByIssueId.has(issueId));
+  if (missingRemovedIds.length > 0) {
+    const removedIssuesResult = await pool.query(
+      `SELECT id, properties
+       FROM documents
+       WHERE id = ANY($1)`,
+      [missingRemovedIds]
+    );
+
+    for (const row of removedIssuesResult.rows) {
+      currentMetricsByIssueId.set(
+        row.id as string,
+        getIssuePlanningMetrics(row.properties as Record<string, unknown> | undefined)
+      );
+    }
+  }
+
+  const originalStoryPoints = Number(sprintProps.planned_story_points ?? 0);
+  const originalEstimateHours = Number(
+    sprintProps.planned_estimate_hours ?? sprintProps.planned_estimate ?? 0
+  );
+
+  const scopeChanges: Array<{
+    timestamp: string;
+    scopeAfter: number;
+    scopeAfterStoryPoints: number;
+    changeType: 'added' | 'removed';
+    estimateChange: number;
+    storyPointsChange: number;
+  }> = [];
+
+  let runningEstimateHours = originalEstimateHours;
+  let runningStoryPoints = originalStoryPoints;
+
+  const additionEntries = additionHistory.rows.map((row) => {
+    const metrics = currentMetricsByIssueId.get(row.document_id as string) ?? { storyPoints: 0, estimateHours: 0 };
+    return {
+      timestamp: new Date(row.created_at).toISOString(),
+      changeType: 'added' as const,
+      estimateChange: metrics.estimateHours,
+      storyPointsChange: metrics.storyPoints,
+    };
+  });
+
+  const removalEntries = removalHistory.rows.map((row) => {
+    const metrics = currentMetricsByIssueId.get(row.document_id as string) ?? { storyPoints: 0, estimateHours: 0 };
+    return {
+      timestamp: new Date(row.created_at).toISOString(),
+      changeType: 'removed' as const,
+      estimateChange: -metrics.estimateHours,
+      storyPointsChange: -metrics.storyPoints,
+    };
+  });
+
+  for (const change of [...additionEntries, ...removalEntries].sort((a, b) => a.timestamp.localeCompare(b.timestamp))) {
+    runningEstimateHours += change.estimateChange;
+    runningStoryPoints += change.storyPointsChange;
+    scopeChanges.push({
+      timestamp: change.timestamp,
+      scopeAfter: runningEstimateHours,
+      scopeAfterStoryPoints: runningStoryPoints,
+      changeType: change.changeType,
+      estimateChange: change.estimateChange,
+      storyPointsChange: change.storyPointsChange,
+    });
+  }
+
+  const scopeChangePercent = originalEstimateHours > 0
+    ? Math.round(((currentEstimateHours - originalEstimateHours) / originalEstimateHours) * 100)
+    : 0;
+
+  return {
+    originalScope: originalEstimateHours,
+    currentScope: currentEstimateHours,
+    scopeChangePercent,
+    sprintStartDate: startDate.toISOString(),
+    scopeChanges,
+    planning: {
+      originalStoryPoints,
+      currentStoryPoints,
+      storyPointsChangePercent: originalStoryPoints > 0
+        ? Math.round(((currentStoryPoints - originalStoryPoints) / originalStoryPoints) * 100)
+        : 0,
+      originalEstimateHours,
+      currentEstimateHours,
+    },
+  };
 }
 
 // Get all active sprints across the workspace
@@ -808,25 +1434,15 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
     // Check if sprint is active and needs a snapshot
     // Take snapshot when: sprint is active (start_date reached) AND no snapshot exists yet
     if (workspaceStartDate && isSprintActive(sprintNumber, workspaceStartDate) && !props.planned_issue_ids) {
-      // Take the snapshot
       const sprintId = id as string; // Safe: Express route param is always a string
-      const plannedIssueIds = await takeSprintSnapshot(sprintId);
-      const snapshotTakenAt = new Date().toISOString();
-
-      // Update the sprint properties with the snapshot
-      const newProps = {
-        ...props,
-        planned_issue_ids: plannedIssueIds,
-        snapshot_taken_at: snapshotTakenAt,
-      };
-
-      await pool.query(
-        `UPDATE documents SET properties = $1, updated_at = now() WHERE id = $2`,
-        [JSON.stringify(newProps), id]
-      );
+      const persisted = await persistSprintPlanningSnapshot(pool, sprintId, props, {
+        source: 'backfilled_from_current_scope',
+      });
 
       // Update row properties for response
-      row.properties = newProps;
+      row.properties = persisted.properties;
+
+      await upsertSprintAnalyticsSnapshot(pool, sprintId, workspaceId);
     }
 
     res.json(extractSprintFromRow(row));
@@ -1142,6 +1758,9 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
       // Clear the plan snapshot - it will be retaken when the new date arrives
       delete newProps.planned_issue_ids;
+      delete newProps.planned_issue_count;
+      delete newProps.planned_story_points;
+      delete newProps.planned_estimate_hours;
       delete newProps.snapshot_taken_at;
 
       propsChanged = true;
@@ -1170,6 +1789,18 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
        WHERE id = $${paramIndex} AND workspace_id = $${paramIndex + 1} AND document_type = 'sprint'`,
       [...values, id, req.workspaceId]
     );
+
+    await enqueueFleetGraphSprintMutationEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_updated',
+      previous: {
+        status: currentProps.status || null,
+        ownerPersonId: currentProps.owner_id || null,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Re-query to get full sprint with owner info
     const result = await pool.query(
@@ -1255,23 +1886,32 @@ router.post('/:id/start', authMiddleware, async (req: Request, res: Response) =>
       return;
     }
 
-    // Take the scope snapshot
     const sprintId = id as string;
-    const plannedIssueIds = await takeSprintSnapshot(sprintId);
-    const snapshotTakenAt = new Date().toISOString();
+    const persisted = await persistSprintPlanningSnapshot(pool, sprintId, currentProps, {
+      source: 'captured_at_start',
+    });
 
-    // Update sprint properties with snapshot and active status
     const newProps = {
-      ...currentProps,
+      ...persisted.properties,
       status: 'active',
-      planned_issue_ids: plannedIssueIds,
-      snapshot_taken_at: snapshotTakenAt,
     };
 
     await pool.query(
       `UPDATE documents SET properties = $1, updated_at = now() WHERE id = $2`,
       [JSON.stringify(newProps), id]
     );
+
+    await enqueueFleetGraphSprintMutationEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_started',
+      previous: {
+        status: currentStatus,
+        ownerPersonId: currentProps.owner_id || null,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Broadcast celebration when sprint is started
     broadcastToUser(req.userId!, 'accountability:updated', { type: 'week_start', targetId: id as string });
@@ -1314,9 +1954,11 @@ router.post('/:id/start', authMiddleware, async (req: Request, res: Response) =>
 
     const sprint = extractSprintFromRow(result.rows[0]);
 
+    await upsertSprintAnalyticsSnapshot(pool, sprintId, workspaceId);
+
     res.json({
       ...sprint,
-      snapshot_issue_count: plannedIssueIds.length,
+      snapshot_issue_count: persisted.snapshot.issueCount,
     });
   } catch (err) {
     console.error('Start sprint error:', err);
@@ -1606,13 +2248,16 @@ router.get('/:id/issues', authMiddleware, async (req: Request, res: Response) =>
     const issues = result.rows.map(row => {
       const props = row.properties || {};
       const carryoverFromSprintId = props.carryover_from_sprint_id || null;
+      const planning = getIssuePlanningMetrics(props);
       return {
         id: row.id,
         title: row.title,
         state: props.state || 'backlog',
         priority: props.priority || 'medium',
         assignee_id: props.assignee_id || null,
-        estimate: props.estimate ?? null,
+        story_points: props.story_points ?? planning.storyPoints ?? null,
+        estimate_hours: props.estimate_hours ?? props.estimate ?? planning.estimateHours ?? null,
+        estimate: props.estimate_hours ?? props.estimate ?? planning.estimateHours ?? null,
         ticket_number: row.ticket_number,
         created_at: row.created_at,
         updated_at: row.updated_at,
@@ -1638,7 +2283,12 @@ router.get('/:id/issues', authMiddleware, async (req: Request, res: Response) =>
 // Returns: { originalScope, currentScope, scopeChangePercent, scopeChanges }
 router.get('/:id/scope-changes', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const rawId = req.params.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+    if (!id) {
+      res.status(400).json({ error: 'Week id is required' });
+      return;
+    }
     const authContext = getAuthContext(req, res);
     if (!authContext) {
       return;
@@ -1647,10 +2297,41 @@ router.get('/:id/scope-changes', authMiddleware, async (req: Request, res: Respo
 
     // Get visibility context for filtering
     const { isAdmin } = await getVisibilityContext(userId, workspaceId);
+    const payload = await getSprintScopeChangePayload(id, workspaceId, userId, isAdmin);
 
-    // Get sprint info including sprint_number and workspace start date
+    if (!payload) {
+      res.status(404).json({ error: 'Week not found' });
+      return;
+    }
+
+    res.json(payload);
+  } catch (err) {
+    console.error('Get sprint scope changes error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/:id/analytics', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const rawId = req.params.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+    if (!id) {
+      res.status(400).json({ error: 'Week id is required' });
+      return;
+    }
+    const authContext = getAuthContext(req, res);
+    if (!authContext) {
+      return;
+    }
+    const { userId, workspaceId } = authContext;
+    const { isAdmin } = await getVisibilityContext(userId, workspaceId);
+    const historyScope: VelocityHistoryScope = req.query.historyScope === 'project' ? 'project' : 'program';
+    const historyStartWeek = parsePositiveInteger(req.query.historyStartWeek);
+    const historyEndWeek = parsePositiveInteger(req.query.historyEndWeek);
+
     const sprintResult = await pool.query(
-      `SELECT d.id, d.properties->>'sprint_number' as sprint_number,
+      `SELECT d.id, d.title, d.properties,
+              d.properties->>'sprint_number' as sprint_number,
               w.sprint_start_date as workspace_sprint_start_date
        FROM documents d
        JOIN workspaces w ON d.workspace_id = w.id
@@ -1664,148 +2345,149 @@ router.get('/:id/scope-changes', authMiddleware, async (req: Request, res: Respo
       return;
     }
 
-    const sprintNumber = parseInt(sprintResult.rows[0].sprint_number, 10);
-    const rawStartDate = sprintResult.rows[0].workspace_sprint_start_date;
-    const sprintDuration = 7; // 1-week sprints
+    const sprintRow = sprintResult.rows[0];
+    const sprintProps = (sprintRow.properties ?? {}) as Record<string, unknown>;
+    const sprintNumber = parseInt(sprintRow.sprint_number, 10);
+    const { startDate, endDate } = calculateSprintDates(sprintNumber, sprintRow.workspace_sprint_start_date);
+    const status = (sprintProps.status as string | undefined) ?? 'planning';
 
-    // Calculate sprint start date
-    let workspaceStartDate: Date;
-    if (rawStartDate instanceof Date) {
-      workspaceStartDate = new Date(Date.UTC(rawStartDate.getFullYear(), rawStartDate.getMonth(), rawStartDate.getDate()));
-    } else if (typeof rawStartDate === 'string') {
-      workspaceStartDate = new Date(rawStartDate + 'T00:00:00Z');
-    } else {
-      workspaceStartDate = new Date();
-    }
-
-    const sprintStartDate = new Date(workspaceStartDate);
-    sprintStartDate.setUTCDate(sprintStartDate.getUTCDate() + (sprintNumber - 1) * sprintDuration);
-
-    // Get all issues currently in the sprint with their estimates
-    const issuesResult = await pool.query(
-      `SELECT d.id, COALESCE((d.properties->>'estimate')::numeric, 0) as estimate
-       FROM documents d
-       JOIN document_associations da ON da.document_id = d.id AND da.related_id = $1 AND da.relationship_type = 'sprint'
-       WHERE d.document_type = 'issue'`,
-      [id]
-    );
-
-    // Get when each issue was added to this sprint from document_history
-    // field = 'sprint_id' and new_value = sprint_id means issue was added to sprint
-    const historyResult = await pool.query(
-      `SELECT document_id, created_at, old_value, new_value
-       FROM document_history
-       WHERE field = 'sprint_id' AND new_value = $1
-       ORDER BY created_at ASC`,
-      [id]
-    );
-
-    // Build a map of issue_id -> first_added_at (when issue was added to this sprint)
-    const issueAddedAtMap: Record<string, Date> = {};
-    for (const row of historyResult.rows) {
-      if (!issueAddedAtMap[row.document_id]) {
-        issueAddedAtMap[row.document_id] = new Date(row.created_at);
-      }
-    }
-
-    // Calculate original scope (issues added before or at sprint start)
-    // and current scope (all issues)
-    let originalScope = 0;
-    let currentScope = 0;
-
-    for (const issue of issuesResult.rows) {
-      const estimate = parseFloat(issue.estimate) || 0;
-      currentScope += estimate;
-
-      const addedAt = issueAddedAtMap[issue.id];
-      // If no history record, assume it was always there (original)
-      // If added before or at sprint start, it's original scope
-      if (!addedAt || addedAt <= sprintStartDate) {
-        originalScope += estimate;
-      }
-    }
-
-    // Build scope changes timeline for the graph
-    // Each entry: { timestamp, newScope, changeType, estimateChange }
-    const scopeChanges: Array<{
-      timestamp: string;
-      scopeAfter: number;
-      changeType: 'added' | 'removed';
-      estimateChange: number;
-    }> = [];
-
-    // Get estimates for issues when they were added
-    const issueEstimateMap: Record<string, number> = {};
-    for (const issue of issuesResult.rows) {
-      issueEstimateMap[issue.id] = parseFloat(issue.estimate) || 0;
-    }
-
-    // Only track changes after sprint starts
-    let runningScope = originalScope;
-    for (const row of historyResult.rows) {
-      const createdAt = new Date(row.created_at);
-      if (createdAt > sprintStartDate) {
-        const estimate = issueEstimateMap[row.document_id] || 0;
-        runningScope += estimate;
-        scopeChanges.push({
-          timestamp: createdAt.toISOString(),
-          scopeAfter: runningScope,
-          changeType: 'added',
-          estimateChange: estimate,
-        });
-      }
-    }
-
-    // Also check for issues removed from sprint (sprint_id changed away from this sprint)
-    const removedResult = await pool.query(
-      `SELECT document_id, created_at, old_value, new_value
-       FROM document_history
-       WHERE field = 'sprint_id' AND old_value = $1 AND created_at > $2
-       ORDER BY created_at ASC`,
-      [id, sprintStartDate.toISOString()]
-    );
-
-    for (const row of removedResult.rows) {
-      // We need the estimate of the issue at time of removal
-      // For simplicity, we'll use the current estimate (or 0 if issue no longer in sprint)
-      // In a real system, you might want to track historical estimates
-      const issueResult = await pool.query(
-        `SELECT COALESCE((properties->>'estimate')::numeric, 0) as estimate
-         FROM documents WHERE id = $1`,
-        [row.document_id]
-      );
-      const estimate = issueResult.rows[0] ? parseFloat(issueResult.rows[0].estimate) : 0;
-
-      scopeChanges.push({
-        timestamp: new Date(row.created_at).toISOString(),
-        scopeAfter: -1, // Will be recalculated when sorting
-        changeType: 'removed',
-        estimateChange: -estimate,
+    if (!hasSprintPlanningSnapshot(sprintProps) && status !== 'planning') {
+      const persisted = await persistSprintPlanningSnapshot(pool, id, sprintProps, {
+        source: 'backfilled_from_current_scope',
       });
+      sprintRow.properties = persisted.properties;
     }
 
-    // Sort scope changes by timestamp and recalculate running scope
-    scopeChanges.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    runningScope = originalScope;
-    for (const change of scopeChanges) {
-      runningScope += change.estimateChange;
-      change.scopeAfter = runningScope;
+    if (status !== 'planning') {
+      await upsertSprintAnalyticsSnapshot(pool, id, workspaceId);
     }
 
-    // Calculate scope change percentage
-    const scopeChangePercent = originalScope > 0
-      ? Math.round(((currentScope - originalScope) / originalScope) * 100)
-      : 0;
+    const snapshots = await getSprintAnalyticsSnapshots(pool, id);
+    const scopeChanges = await getSprintScopeChangePayload(id, workspaceId, userId, isAdmin);
+    const velocityHistory = await getVelocityHistory(
+      id,
+      sprintNumber,
+      workspaceId,
+      userId,
+      isAdmin,
+      sprintRow.workspace_sprint_start_date,
+      {
+        scope: historyScope,
+        startWeek: historyStartWeek,
+        endWeek: historyEndWeek,
+      }
+    );
+    const props = (sprintRow.properties ?? {}) as Record<string, unknown>;
+    const livePlanningSnapshot = status === 'planning'
+      ? await takeSprintPlanningSnapshot(pool, id)
+      : null;
+    const plannedIssueIds = Array.isArray(props.planned_issue_ids) ? props.planned_issue_ids : [];
+    const fallbackIssueCount =
+      plannedIssueIds.length > 0
+        ? plannedIssueIds.length
+        : (livePlanningSnapshot?.issueCount ?? 0);
+    const baselineStoryPoints = Number(props.planned_story_points ?? livePlanningSnapshot?.storyPoints ?? 0);
+    const baselineEstimateHours = Number(
+      props.planned_estimate_hours ?? props.planned_estimate ?? livePlanningSnapshot?.estimateHours ?? 0
+    );
+    const baselineIssueCount = Number(props.planned_issue_count ?? fallbackIssueCount);
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const effectiveEndDate =
+      status === 'planning'
+        ? endDate
+        : status === 'completed'
+          ? endDate
+          : new Date(Math.min(endDate.getTime(), today.getTime()));
+    const dayKeys = enumerateDates(startDate, effectiveEndDate);
+
+    const snapshotByDate = new Map(snapshots.map((snapshot) => [snapshot.snapshot_date, snapshot]));
+    let lastSnapshot = snapshots[0] ?? null;
+    const days = dayKeys.map((day) => {
+      const snapshot = snapshotByDate.get(day) ?? lastSnapshot;
+      if (snapshotByDate.has(day)) {
+        lastSnapshot = snapshotByDate.get(day) ?? lastSnapshot;
+      }
+
+      return {
+        date: day,
+        committedStoryPoints: baselineStoryPoints,
+        currentStoryPoints: snapshot?.current_story_points ?? baselineStoryPoints,
+        completedStoryPoints: snapshot?.completed_story_points ?? 0,
+        remainingStoryPoints: snapshot?.remaining_story_points ?? baselineStoryPoints,
+        committedEstimateHours: baselineEstimateHours,
+        currentEstimateHours: snapshot?.current_estimate_hours ?? baselineEstimateHours,
+        completedEstimateHours: snapshot?.completed_estimate_hours ?? 0,
+        remainingEstimateHours: snapshot?.remaining_estimate_hours ?? baselineEstimateHours,
+        committedIssueCount: baselineIssueCount,
+        currentIssueCount: snapshot?.current_issue_count ?? baselineIssueCount,
+        completedIssueCount: snapshot?.completed_issue_count ?? 0,
+      };
+    });
+
+    const latestDay = days[days.length - 1] ?? {
+      committedStoryPoints: baselineStoryPoints,
+      currentStoryPoints: baselineStoryPoints,
+      completedStoryPoints: 0,
+      remainingStoryPoints: baselineStoryPoints,
+      committedEstimateHours: baselineEstimateHours,
+      currentEstimateHours: baselineEstimateHours,
+      completedEstimateHours: 0,
+      remainingEstimateHours: baselineEstimateHours,
+      committedIssueCount: baselineIssueCount,
+      currentIssueCount: baselineIssueCount,
+      completedIssueCount: 0,
+    };
+
+    const totalStoryPointsAdded = scopeChanges?.scopeChanges
+      .filter((change) => change.storyPointsChange > 0)
+      .reduce((sum, change) => sum + change.storyPointsChange, 0) ?? 0;
+    const totalStoryPointsRemoved = Math.abs(scopeChanges?.scopeChanges
+      .filter((change) => change.storyPointsChange < 0)
+      .reduce((sum, change) => sum + change.storyPointsChange, 0) ?? 0);
+    const totalEstimateHoursAdded = scopeChanges?.scopeChanges
+      .filter((change) => change.estimateChange > 0)
+      .reduce((sum, change) => sum + change.estimateChange, 0) ?? 0;
+    const totalEstimateHoursRemoved = Math.abs(scopeChanges?.scopeChanges
+      .filter((change) => change.estimateChange < 0)
+      .reduce((sum, change) => sum + change.estimateChange, 0) ?? 0);
 
     res.json({
-      originalScope,
-      currentScope,
-      scopeChangePercent,
-      sprintStartDate: sprintStartDate.toISOString(),
+      sprintId: id,
+      sprintName: sprintRow.title,
+      status,
+      startDate: formatIsoDate(startDate),
+      endDate: formatIsoDate(endDate),
+      snapshotTakenAt: props.snapshot_taken_at ?? null,
+      baseline: {
+        issueCount: baselineIssueCount,
+        storyPoints: baselineStoryPoints,
+        estimateHours: baselineEstimateHours,
+      },
+      current: {
+        issueCount: latestDay.currentIssueCount,
+        completedIssueCount: latestDay.completedIssueCount,
+        storyPoints: latestDay.currentStoryPoints,
+        completedStoryPoints: latestDay.completedStoryPoints,
+        remainingStoryPoints: latestDay.remainingStoryPoints,
+        estimateHours: latestDay.currentEstimateHours,
+        completedEstimateHours: latestDay.completedEstimateHours,
+        remainingEstimateHours: latestDay.remainingEstimateHours,
+      },
+      scope: {
+        addedStoryPoints: totalStoryPointsAdded,
+        removedStoryPoints: totalStoryPointsRemoved,
+        addedEstimateHours: totalEstimateHoursAdded,
+        removedEstimateHours: totalEstimateHoursRemoved,
+      },
+      velocityHistory: velocityHistory.history,
+      historyMeta: velocityHistory.meta,
+      days,
       scopeChanges,
     });
   } catch (err) {
-    console.error('Get sprint scope changes error:', err);
+    console.error('Get sprint analytics error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -3097,6 +3779,19 @@ router.post('/:id/request-plan-changes', authMiddleware, async (req: Request, re
       [JSON.stringify(newProps), id]
     );
 
+    await enqueueFleetGraphSprintApprovalEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_plan_changes_requested',
+      approval: {
+        previousState: currentProps.plan_approval?.state ?? null,
+        feedback: feedback.trim(),
+        requestedByUserId: userId,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
+
     // Notify the sprint owner that changes were requested
     const sprintOwnerId = sprint.sprint_owner_id;
     if (sprintOwnerId) {
@@ -3192,6 +3887,19 @@ router.post('/:id/request-retro-changes', authMiddleware, async (req: Request, r
        WHERE id = $2 AND document_type = 'sprint'`,
       [JSON.stringify(newProps), id]
     );
+
+    await enqueueFleetGraphSprintApprovalEvent({
+      workspaceId,
+      sprintId: id as string,
+      actorId: userId,
+      eventKind: 'sprint_review_changes_requested',
+      approval: {
+        previousState: currentProps.review_approval?.state ?? null,
+        feedback: feedback.trim(),
+        requestedByUserId: userId,
+      },
+    });
+    scheduleFleetGraphProactiveEventProcessing();
 
     // Notify the sprint owner that changes were requested
     const sprintOwnerId = sprint.sprint_owner_id;

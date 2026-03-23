@@ -41,7 +41,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const refreshWorkspaces = useCallback(async () => {
     const response = await api.workspaces.list();
     if (response.success && response.data) {
-      setWorkspaces(response.data);
+      setWorkspaces(response.data.workspaces);
     }
   }, []);
 

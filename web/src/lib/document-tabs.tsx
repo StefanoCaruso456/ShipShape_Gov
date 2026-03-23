@@ -18,6 +18,12 @@ export interface DocumentResponse extends Record<string, unknown> {
   title: string;
   document_type: string;
   properties?: Record<string, unknown>;
+  belongs_to?: Array<{
+    id: string;
+    type: string;
+    title?: string;
+    color?: string;
+  }>;
   workspace_id?: string;
   created_at?: string;
   updated_at?: string;
@@ -32,7 +38,7 @@ export interface DocumentResponse extends Record<string, unknown> {
 export interface DocumentTabProps {
   documentId: string;
   document: DocumentResponse;
-  /** Nested path segments after the tab, e.g., for /documents/:id/sprints/:sprintId, nestedPath would be the sprintId */
+  /** Nested path segments after the tab, e.g., for /documents/:id/weeks/:weekId, nestedPath would be the weekId */
   nestedPath?: string;
 }
 
@@ -60,6 +66,7 @@ const ProgramProjectsTab = React.lazy(() => import('@/components/document-tabs/P
 const ProgramWeeksTab = React.lazy(() => import('@/components/document-tabs/ProgramWeeksTab'));
 
 const WeekOverviewTab = React.lazy(() => import('@/components/document-tabs/WeekOverviewTab'));
+const WeekAnalyticsTab = React.lazy(() => import('@/components/document-tabs/WeekAnalyticsTab'));
 const WeekPlanningTab = React.lazy(() => import('@/components/document-tabs/WeekPlanningTab'));
 const WeekIssuesTab = React.lazy(() => import('@/components/document-tabs/WeekIssuesTab'));
 const WeekReviewTab = React.lazy(() => import('@/components/document-tabs/WeekReviewTab'));
@@ -127,6 +134,11 @@ export const documentTabConfigs: Record<string, DocumentTabConfig[]> = {
       component: WeekOverviewTab,
     },
     {
+      id: 'analytics',
+      label: 'Analytics',
+      component: WeekAnalyticsTab,
+    },
+    {
       id: 'plan',
       label: 'Plan',
       component: WeekPlanningTab,
@@ -150,6 +162,11 @@ export const documentTabConfigs: Record<string, DocumentTabConfig[]> = {
       component: WeekOverviewTab,
     },
     {
+      id: 'analytics',
+      label: 'Analytics',
+      component: WeekAnalyticsTab,
+    },
+    {
       id: 'plan',
       label: 'Plan',
       component: WeekPlanningTab,
@@ -161,6 +178,11 @@ export const documentTabConfigs: Record<string, DocumentTabConfig[]> = {
       id: 'overview',
       label: 'Overview',
       component: WeekOverviewTab,
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      component: WeekAnalyticsTab,
     },
     {
       id: 'issues',

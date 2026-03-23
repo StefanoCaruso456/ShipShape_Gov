@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT,  -- NULL if using PIV-only auth
   name TEXT NOT NULL,
+  work_persona TEXT CHECK (work_persona IN ('product_manager', 'engineer', 'engineering_manager', 'designer', 'qa', 'ops_platform', 'stakeholder', 'other')),
   is_super_admin BOOLEAN DEFAULT FALSE,
   last_workspace_id UUID REFERENCES workspaces(id) ON DELETE SET NULL,
   x509_subject_dn TEXT,           -- PIV certificate X.509 Subject DN
@@ -124,7 +125,7 @@ CREATE TABLE IF NOT EXISTS documents (
   -- Use document_associations table for all relationship queries.
 
   -- Type-specific properties stored as JSONB
-  -- Issue properties: state, priority, assignee_id, source, rejection_reason
+  -- Issue properties: state, priority, issue_type, assignee_id, source, rejection_reason
   -- Program/Project properties: color
   -- Sprint properties: start_date, end_date, sprint_status, plan
   -- Person properties: user_id (links to users.id), email, capacity_hours, skills
@@ -292,6 +293,24 @@ CREATE TABLE IF NOT EXISTS issue_iterations (
   author_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS sprint_analytics_snapshots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sprint_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  snapshot_date DATE NOT NULL,
+  current_issue_count INTEGER NOT NULL DEFAULT 0,
+  completed_issue_count INTEGER NOT NULL DEFAULT 0,
+  current_story_points NUMERIC(10,2) NOT NULL DEFAULT 0,
+  completed_story_points NUMERIC(10,2) NOT NULL DEFAULT 0,
+  remaining_story_points NUMERIC(10,2) NOT NULL DEFAULT 0,
+  current_estimate_hours NUMERIC(10,2) NOT NULL DEFAULT 0,
+  completed_estimate_hours NUMERIC(10,2) NOT NULL DEFAULT 0,
+  remaining_estimate_hours NUMERIC(10,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (sprint_id, snapshot_date)
 );
 
 -- File uploads (images, attachments)
