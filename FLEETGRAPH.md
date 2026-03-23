@@ -534,43 +534,89 @@ Current evidence status:
 
 ## Cost Analysis
 
-Exact development and testing costs should be backfilled from LangSmith trace costs, not estimated by hand. The table below matches the submission template and is ready to fill once you send the trace samples.
+FleetGraph currently has two cost classes:
+
+- deterministic graph runs, which do not call a model and therefore consume `0` tokens and `$0` API spend
+- OpenAI-backed sprint reasoning calls, which emit LangSmith `llm` child runs with token and cost metadata
+
+The current exported FleetGraph evidence bundle is entirely deterministic, so the measured FleetGraph totals below are all zero. This is why current-view issue traces in LangSmith can show blank cost and `0` tokens: those runs never invoked the model.
+
+### OpenAI Pricing and Formulas
+
+Current shipped FleetGraph pricing source:
+
+- provider: `OpenAI`
+- model: `gpt-4.1-mini`
+- input price: `$0.40 / 1M` tokens
+- output price: `$1.60 / 1M` tokens
+
+Current cost formula, matching [estimateAiCost()](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/api/src/services/ai-telemetry.ts):
+
+```text
+billable_input_tokens = prompt_tokens + prompt_cached_tokens + prompt_cache_creation_tokens
+billable_output_tokens = completion_tokens
+total_tokens = billable_input_tokens + billable_output_tokens
+estimated_cost_usd =
+  (billable_input_tokens / 1_000_000 * 0.40) +
+  (billable_output_tokens / 1_000_000 * 1.60)
+```
+
+Current LangSmith child-run payload for model-backed sprint reasoning:
+
+- `usage_metadata.input_tokens`
+- `usage_metadata.output_tokens`
+- `usage_metadata.total_tokens`
+- `usage_metadata.input_token_details.cache_read`
+- `usage_metadata.output_token_details.reasoning`
+- `usage_metadata.total_cost`
+
+Sanity-check example from the shipped LangSmith test:
+
+- input tokens: `100`
+- output tokens: `20`
+- total tokens: `120`
+- estimated cost: `(100 / 1,000,000 * 0.40) + (20 / 1,000,000 * 1.60) = $0.000072`
+
+### Captured FleetGraph Trace Totals
+
+Evidence bundle: [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md), generated `2026-03-22T21:20:00.000Z`.
+
+| Trace | Evidence | Reasoning source | Model invocations | Input tokens | Output tokens | Cost |
+|---|---|---|---:|---:|---:|---:|
+| `quietRun` | [quiet-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/quiet-run.json) | `deterministic` | 0 | 0 | 0 | `$0.000000` |
+| `flaggedRun` | [flagged-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/flagged-run.json) | `deterministic` | 0 | 0 | 0 | `$0.000000` |
+| `hitlRun` | [hitl-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/hitl-run.json) | `deterministic` | 0 | 0 | 0 | `$0.000000` |
+| `resumeRun` | [resume-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/resume-run.json) | `deterministic` | 0 | 0 | 0 | `$0.000000` |
+| `proactiveRun` | [proactive-run.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/proactive-run.json) | `rules-only summary captured` | 0 measured in bundle | 0 | 0 | `$0.000000` |
+| **Total captured FleetGraph evidence** | [summary.json](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.json) |  | **0** | **0** | **0** | **`$0.000000`** |
 
 ### Development and Testing Costs
 
 | Item | Amount |
 |---|---|
-| Claude API - input tokens | `TBD from LangSmith development traces` |
-| Claude API - output tokens | `TBD from LangSmith development traces` |
-| Total invocations during development | `TBD from LangSmith development traces` |
-| Total development spend | `TBD from LangSmith development traces` |
+| OpenAI API - input tokens from captured FleetGraph evidence | `0` |
+| OpenAI API - output tokens from captured FleetGraph evidence | `0` |
+| Total FleetGraph model invocations in captured evidence | `0` |
+| Total captured FleetGraph spend | `$0.000000` |
 
 ### Production Cost Projections
 
-These first-pass production ranges are still planning estimates. They use the current Bedrock pricing and token budgets already documented in [PRESEARCH.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/PRESEARCH.md). Once we have a few representative LangSmith traces with measured cost, we should replace the ranges below with empirical averages.
+Current production interpretation:
 
-| 100 Users | 1,000 Users | 10,000 Users |
-|---|---|---|
-| `$24-$45/month` | `$240-$450/month` | `$2,400-$4,500/month` |
+- current-view issue guidance, quiet paths, HITL-only pauses, resume flows, and rules-only sweeps cost `$0` while they remain deterministic
+- only model-backed sprint reasoning creates billable FleetGraph OpenAI usage today
+- a representative monthly estimate should be based on actual LangSmith `llm` child runs from the sprint reasoner, not on deterministic current-view traces
 
-Assumptions:
+Current monthly formula once those billable sprint traces exist:
 
-- Proactive runs per project per day: near `0` on average for model-backed runs; the worker may sweep every 5 minutes, but only suspicious scopes escalate beyond deterministic rules
-- On-demand invocations per user per day: about `0.13`, based on `4` successful analyses per active user per month
-- Average tokens per invocation: proactive `6k-10k` input + `500-1.2k` output; on-demand `8k-15k` input + `800-1.5k` output
-- Cost per run: proactive `$0.0425-$0.0800`; on-demand `$0.0600-$0.1125`
-- Estimated runs per day: the table above currently models the on-demand-dominant spend because proactive cost scales with suspicious workspaces and scopes, not raw user count
+```text
+monthly_spend_usd =
+  average_cost_per_model_backed_run_usd *
+  model_backed_runs_per_day *
+  30
+```
 
-Current pricing inputs:
-
-- Claude Opus 4.5 Bedrock pricing: `$5 / 1M` input tokens and `$25 / 1M` output tokens, kept configurable in [sync-ai-telemetry-ssm.sh](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/scripts/sync-ai-telemetry-ssm.sh)
-- Quiet exits and rules-only sweeps cost `$0` model tokens
-
-LangSmith backfill plan:
-
-- collect a few representative on-demand and proactive traces with visible token and cost totals
-- sum those traces for the development / testing table above
-- replace the projection row if the observed average per-run cost differs materially from the current planning ranges
+Until a representative billable FleetGraph sprint-reasoning trace bundle is captured, any stronger monthly projection would be made up.
 
 ## Current status
 
@@ -578,4 +624,5 @@ LangSmith backfill plan:
 - `FLEETGRAPH.md` completed for MVP scope, exact graph outline, and evidence-linked test-case documentation
 - shared LangSmith traces captured for quiet and flagged paths
 - deployed FleetGraph routes verified as mounted
-- development / testing cost rows are ready for LangSmith backfill once final trace samples are provided
+- FleetGraph OpenAI pricing formulas are documented
+- captured FleetGraph evidence bundle totals are documented as `0` tokens / `$0` spend because the current exported traces are deterministic
