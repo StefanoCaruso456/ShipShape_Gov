@@ -333,15 +333,24 @@ export function buildFleetGraphProactiveFindingToastCopy(
 ): { message: string; actionLabel: string } {
   const title = finding.title ?? 'Current week';
   const prefix =
-    finding.severity === 'action'
-      ? 'FleetGraph flagged'
-      : finding.severity === 'warning'
-        ? 'FleetGraph noticed'
-        : 'FleetGraph surfaced';
+    finding.audienceRole === 'accountable'
+      ? 'FleetGraph escalated'
+      : finding.severity === 'action'
+        ? 'FleetGraph flagged'
+        : finding.severity === 'warning'
+          ? 'FleetGraph noticed'
+          : 'FleetGraph surfaced';
   const personaLead = workPersona ? describePersonaFollowUp(workPersona, finding) : null;
+  const headline = personaLead ?? title;
+  const deliveryReason =
+    finding.audienceRole === 'accountable' &&
+    typeof finding.deliveryReason === 'string' &&
+    finding.deliveryReason.trim().length > 0
+      ? ` ${finding.deliveryReason.trim()}`
+      : '';
 
   return {
-    message: `${prefix} ${personaLead ?? title}: ${finding.summary}`,
+    message: `${prefix} ${headline}: ${finding.summary}${deliveryReason}`,
     actionLabel: getFleetGraphProactiveActionLabel(finding),
   };
 }
@@ -351,7 +360,7 @@ export function buildFleetGraphProactiveFindingFeedback(
   eventName: 'proactive_toast_shown' | 'proactive_toast_clicked'
 ): FleetGraphFeedbackEventRequest {
   return {
-    event_name: eventName === 'proactive_toast_clicked' ? 'route_clicked' : 'drawer_opened',
+    event_name: eventName,
     surface: {
       route: finding.route,
       activeViewSurface: finding.surface,
@@ -369,6 +378,15 @@ export function buildFleetGraphProactiveFindingFeedback(
             intent: 'inspect',
           }
         : null,
+    finding_context: {
+      finding_id: finding.id,
+      delivery_source: finding.deliverySource,
+      audience_role: finding.audienceRole,
+      audience_scope: finding.audienceScope,
+      delivery_reason: finding.deliveryReason,
+      severity: finding.severity,
+      signal_kinds: finding.signalKinds,
+    },
   };
 }
 

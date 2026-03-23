@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { CurrentViewProvider } from '@/contexts/CurrentViewContext';
 
 /**
  * Unit tests for Dashboard.tsx components
@@ -39,7 +40,11 @@ import { DashboardPage } from './Dashboard';
 // Uses ?view=overview to test the Overview view (stats, sections, etc.)
 function renderWithRouter(ui: React.ReactElement) {
   window.history.pushState({}, '', '?view=overview');
-  return render(<BrowserRouter>{ui}</BrowserRouter>);
+  return render(
+    <BrowserRouter>
+      <CurrentViewProvider>{ui}</CurrentViewProvider>
+    </BrowserRouter>
+  );
 }
 
 describe('extractTextFromContent helper', () => {

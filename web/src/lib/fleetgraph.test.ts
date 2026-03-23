@@ -456,4 +456,34 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
       actionLabel: 'Open Issue',
     });
   });
+
+  it('includes the escalation reason for accountable recipients', () => {
+    const finding: FleetGraphProactiveFinding = {
+      id: 'finding-4',
+      workspaceId: 'workspace-1',
+      weekId: 'week-4',
+      projectId: 'project-4',
+      programId: 'program-2',
+      title: 'Week 15',
+      summary: 'Scope growth needs a tradeoff decision.',
+      severity: 'action',
+      route: '/documents/week-4/issues',
+      surface: 'document',
+      tab: 'issues',
+      audienceRole: 'accountable',
+      audienceScope: 'individual',
+      deliverySource: 'sweep',
+      deliveryReason:
+        'Escalated to you as accountable because this risk may need a tradeoff or unblock decision.',
+      signalKinds: ['scope_growth', 'at_risk'],
+      lastDetectedAt: '2026-03-22T10:00:00.000Z',
+      lastNotifiedAt: '2026-03-22T10:00:00.000Z',
+    };
+
+    expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
+      message:
+        'FleetGraph escalated Week 15: Scope growth needs a tradeoff decision. Escalated to you as accountable because this risk may need a tradeoff or unblock decision.',
+      actionLabel: 'Open Issues',
+    });
+  });
 });
