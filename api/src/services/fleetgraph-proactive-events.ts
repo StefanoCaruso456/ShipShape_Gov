@@ -20,6 +20,7 @@ import type {
   FleetGraphProactiveSprintEventPayload,
   FleetGraphProactiveSprintSnapshot,
   FleetGraphProactiveTriggerKind,
+  WorkPersona,
 } from '@ship/shared';
 import { pool } from '../db/client.js';
 import { broadcastToUser } from '../collaboration/index.js';
@@ -70,6 +71,7 @@ interface EnqueueIssueMutationEventInput {
   workspaceId: string;
   issueId: string;
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   eventKind: Extract<FleetGraphProactiveEventKind, 'issue_created' | 'issue_updated'>;
   previous: {
     state: string | null;
@@ -82,6 +84,7 @@ interface EnqueueIssueIterationEventInput {
   workspaceId: string;
   issueId: string;
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   iteration: {
     id: string | null;
     status: 'pass' | 'fail' | 'in_progress';
@@ -95,6 +98,7 @@ interface EnqueueSprintMutationEventInput {
   workspaceId: string;
   sprintId: string;
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   eventKind: Extract<FleetGraphProactiveEventKind, 'sprint_updated' | 'sprint_started'>;
   previous: {
     status: string | null;
@@ -106,6 +110,7 @@ interface EnqueueSprintApprovalEventInput {
   workspaceId: string;
   sprintId: string;
   actorId: string | null;
+  actorWorkPersona?: WorkPersona | null;
   eventKind: Extract<
     FleetGraphProactiveEventKind,
     'sprint_plan_changes_requested' | 'sprint_review_changes_requested'
@@ -133,6 +138,13 @@ function getEventLogger(logger?: FleetGraphLogger): FleetGraphLogger {
 function getEventActorId(event: FleetGraphProactiveEventRecord): string | null {
   const payload = event.payload;
   return 'actorId' in payload && typeof payload.actorId === 'string' ? payload.actorId : null;
+}
+
+function getEventActorWorkPersona(event: FleetGraphProactiveEventRecord): WorkPersona | null {
+  const payload = event.payload;
+  return 'actorWorkPersona' in payload && typeof payload.actorWorkPersona === 'string'
+    ? payload.actorWorkPersona as WorkPersona
+    : null;
 }
 
 function buildEventActiveView(
@@ -179,6 +191,7 @@ function buildEventGraphInput(
   match: ReturnType<typeof evaluateFleetGraphProactiveEventRegistry>[number]
 ): FleetGraphRunInput {
   const actorId = getEventActorId(event);
+  const actorWorkPersona = getEventActorWorkPersona(event);
 
   return {
     runId: randomUUID(),
@@ -189,6 +202,7 @@ function buildEventGraphInput(
       id: actorId,
       kind: actorId ? 'user' : 'service',
       role: actorId ? null : 'fleetgraph',
+      workPersona: actorWorkPersona,
     },
     activeView: buildEventActiveView(event, match.route, match.projectId),
     contextEntity: match.weekId
@@ -442,6 +456,7 @@ function buildIssueEventPayload(
     issue,
     previous: input.previous,
     actorId: input.actorId,
+    actorWorkPersona: input.actorWorkPersona ?? null,
     occurredAt: new Date().toISOString(),
   };
 }
@@ -477,6 +492,7 @@ function buildIssueIterationEventPayload(
       authorName: input.iteration.authorName,
     },
     actorId: input.actorId,
+    actorWorkPersona: input.actorWorkPersona ?? null,
     occurredAt: new Date().toISOString(),
   };
 }
@@ -502,6 +518,7 @@ function buildSprintEventPayload(
     sprint,
     previous: input.previous,
     actorId: input.actorId,
+    actorWorkPersona: input.actorWorkPersona ?? null,
     occurredAt: new Date().toISOString(),
   };
 }
@@ -531,6 +548,7 @@ function buildSprintApprovalEventPayload(
       requestedByUserId: input.approval.requestedByUserId,
     },
     actorId: input.actorId,
+    actorWorkPersona: input.actorWorkPersona ?? null,
     occurredAt: new Date().toISOString(),
   };
 }

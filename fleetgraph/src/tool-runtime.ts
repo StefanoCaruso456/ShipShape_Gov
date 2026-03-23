@@ -4,12 +4,12 @@ import type { FleetGraphState, FleetGraphStateUpdate } from './state.js';
 import type {
   FleetGraphApprovalTrace,
   FleetGraphEvidenceToolName,
-  FleetGraphQuestionTheme,
   FleetGraphScrumSurface,
   FleetGraphScrumToolContext,
   FleetGraphToolCallTrace,
 } from './types.js';
 import { getFleetGraphEvidenceToolDefinition } from './tools/registry.js';
+import { inferFleetGraphQuestionTheme } from './question-theme.js';
 
 export class FleetGraphEvidenceToolError extends Error {
   readonly code: string;
@@ -48,71 +48,6 @@ function inferScrumSurface(state: FleetGraphState): FleetGraphScrumSurface {
   return 'document';
 }
 
-export function inferFleetGraphQuestionTheme(question: string | null | undefined): FleetGraphQuestionTheme {
-  const normalized = question?.trim().toLowerCase() ?? '';
-
-  if (
-    normalized.includes('impact') ||
-    normalized.includes('value') ||
-    normalized.includes('roi') ||
-    normalized.includes('retention') ||
-    normalized.includes('acquisition') ||
-    normalized.includes('growth')
-  ) {
-    return 'impact';
-  }
-
-  if (
-    normalized.includes('follow-up') ||
-    normalized.includes('follow up') ||
-    normalized.includes('owner') ||
-    normalized.includes('who')
-  ) {
-    return 'follow_up';
-  }
-
-  if (
-    normalized.includes('block') ||
-    normalized.includes('blocked') ||
-    normalized.includes('dependency')
-  ) {
-    return 'blockers';
-  }
-
-  if (
-    normalized.includes('capacity') ||
-    normalized.includes('overloaded') ||
-    normalized.includes('overcommit') ||
-    normalized.includes('bandwidth') ||
-    normalized.includes('staffing')
-  ) {
-    return 'capacity';
-  }
-
-  if (
-    normalized.includes('scope') ||
-    normalized.includes('added') ||
-    normalized.includes('change')
-  ) {
-    return 'scope';
-  }
-
-  if (
-    normalized.includes('status') ||
-    normalized.includes('moving') ||
-    normalized.includes('stale') ||
-    normalized.includes('stuck')
-  ) {
-    return 'status';
-  }
-
-  if (normalized.includes('risk')) {
-    return 'risk';
-  }
-
-  return 'generic';
-}
-
 export function createFleetGraphScrumToolContext(
   state: FleetGraphState,
   now: Date
@@ -125,6 +60,7 @@ export function createFleetGraphScrumToolContext(
     workspaceId: state.workspaceId,
     actorId: state.actor?.id ?? null,
     actorRole: state.actor?.role ?? null,
+    actorWorkPersona: state.actor?.workPersona ?? null,
     surface: inferScrumSurface(state),
     route: state.activeView?.route ?? state.prompt?.pageContext?.route ?? 'unknown-route',
     tab: state.activeView?.tab ?? null,

@@ -356,6 +356,7 @@ export function createFleetGraphTelemetryRun(
   let rootSpan: Span | null = null;
 
   try {
+    const traceMetadata = input.trace?.metadata ?? null;
     rootSpan = telemetryLogger.startSpan({
       name: input.triggerType === 'resume' ? 'fleetgraph.resume' : 'fleetgraph.invoke',
       type: 'task',
@@ -366,18 +367,36 @@ export function createFleetGraphTelemetryRun(
       event: {
         input: {
           run_id: input.runId ?? null,
+          thread_id: traceMetadata?.threadId ?? input.runId ?? null,
           mode: input.mode,
           trigger_type: input.triggerType,
           workspace_id: input.workspaceId,
           question: input.prompt?.question ?? null,
           question_source: input.prompt?.questionSource ?? null,
+          question_theme: traceMetadata?.questionTheme ?? null,
         },
         metadata: {
-          surface: input.activeView?.surface ?? null,
-          route: input.activeView?.route ?? null,
-          entity_type: input.contextEntity?.type ?? input.activeView?.entity.type ?? null,
-          week_id: input.contextEntity?.type === 'week' ? input.contextEntity.id : null,
-          project_id: input.activeView?.projectId ?? null,
+          surface: traceMetadata?.activeViewSurface ?? input.activeView?.surface ?? null,
+          route: traceMetadata?.activeViewRoute ?? input.activeView?.route ?? null,
+          entity_type:
+            traceMetadata?.contextEntityType ??
+            input.contextEntity?.type ??
+            input.activeView?.entity.type ??
+            null,
+          week_id: traceMetadata?.weekId ?? null,
+          project_id: traceMetadata?.projectId ?? input.activeView?.projectId ?? null,
+          program_id: traceMetadata?.programId ?? null,
+          issue_id: traceMetadata?.issueId ?? null,
+          person_id: traceMetadata?.personId ?? null,
+          actor_id: traceMetadata?.actorId ?? null,
+          actor_kind: traceMetadata?.actorKind ?? null,
+          actor_role: traceMetadata?.actorRole ?? null,
+          actor_work_persona: traceMetadata?.actorWorkPersona ?? null,
+          active_entity_id: traceMetadata?.activeEntityId ?? null,
+          active_entity_type: traceMetadata?.activeEntityType ?? null,
+          context_entity_id: traceMetadata?.contextEntityId ?? null,
+          context_entity_type: traceMetadata?.contextEntityType ?? null,
+          trace_schema_version: traceMetadata?.schemaVersion ?? null,
           tags: input.trace?.tags ?? [],
         },
       },
