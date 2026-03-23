@@ -52,9 +52,11 @@ export async function reasonAboutSprintNode(
         finding: state.finding,
         fetched: state.fetched,
         derivedSignals: state.derivedSignals,
+        actorWorkPersona: state.mode === 'on_demand' ? state.actor?.workPersona ?? null : null,
         forceDeterministic,
       },
-      runtime
+      runtime,
+      config
     );
 
     const nextTarget: ReasonAboutSprintTargets =
@@ -67,6 +69,14 @@ export async function reasonAboutSprintNode(
         stage: 'reasoned_about_sprint',
         reasoning: reasoningResult.reasoning,
         reasoningSource: reasoningResult.source,
+        ...(state.mode === 'proactive' && state.finding
+          ? {
+              finding: {
+                ...state.finding,
+                summary: reasoningResult.reasoning.summary,
+              },
+            }
+          : {}),
         attempts: {
           ...state.attempts,
           reasoning: reasoningAttempts,
@@ -80,6 +90,7 @@ export async function reasonAboutSprintNode(
       {
         metadata: {
           force_deterministic: forceDeterministic,
+          work_persona: state.actor?.workPersona ?? null,
         },
       }
     );
