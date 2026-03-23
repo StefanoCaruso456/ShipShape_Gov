@@ -15,6 +15,8 @@ import {
   createFleetGraphLogger,
   invokeFleetGraph,
 } from './fleetgraph-runner.js';
+import { recordFleetGraphLangSmithChildRun } from './fleetgraph-langsmith.js';
+import { personalizeFleetGraphProactiveFinding } from './fleetgraph-proactive-personalization.js';
 import { recordFleetGraphProactiveDelivery } from './fleetgraph-telemetry.js';
 
 const DEFAULT_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
@@ -496,6 +498,19 @@ export async function runFleetGraphProactiveSweep(options: {
     }
 
     for (const recipient of recipients) {
+      const personalized = await personalizeFleetGraphProactiveFinding(
+        {
+          baseSummary: result.finding.summary,
+          recommendedNextStep: result.reasoning?.recommendedNextStep ?? null,
+          workPersona: recipient.workPersona ?? null,
+          audienceRole: recipient.audienceRole,
+          deliverySource: 'sweep',
+          deliveryReason: recipient.deliveryReason,
+          parentLangSmithRunId: result.telemetry.langsmithRunId,
+        },
+        logger
+      );
+
       const persisted = await persistFleetGraphProactiveFinding({
         workspaceId: target.workspaceId,
         weekId: resolvedWeekId,
@@ -507,7 +522,7 @@ export async function runFleetGraphProactiveSweep(options: {
         deliverySource: 'sweep',
         deliveryReason: recipient.deliveryReason,
         title: result.fetched.entity?.title ?? target.weekTitle,
-        summary: result.finding.summary,
+        summary: personalized.summary,
         severity: result.finding.severity as FleetGraphFindingSeverity,
         route: buildProactiveRoute(resolvedWeekId),
         surface: PROACTIVE_ROUTE_SURFACE,
@@ -516,8 +531,18 @@ export async function runFleetGraphProactiveSweep(options: {
         signalSignature: buildSignalSignature(signalKinds, resolvedWeekId),
         payload: {
           finding: result.finding,
+          reasoning: result.reasoning ?? null,
+          reasoningSource: result.reasoningSource ?? null,
           derivedSignals: result.derivedSignals,
           expandedScope: result.expandedScope,
+          personalization: {
+            workPersona: recipient.workPersona ?? null,
+            audienceRole: recipient.audienceRole,
+            source: personalized.source,
+            applied: personalized.applied,
+            baseSummary: result.finding.summary,
+            personalizedSummary: personalized.summary,
+          },
           trace: {
             langsmithRunId: result.telemetry.langsmithRunId,
             langsmithRunUrl: result.telemetry.langsmithRunUrl,
@@ -527,6 +552,49 @@ export async function runFleetGraphProactiveSweep(options: {
         now,
         cooldownMs,
       });
+
+      try {
+        await recordFleetGraphLangSmithChildRun({
+          parentRunId: result.telemetry.langsmithRunId,
+          name: 'fleetgraph.proactive.delivery',
+          runType: 'tool',
+          inputs: {
+            targetUserId: recipient.userId,
+            audienceRole: recipient.audienceRole,
+            audienceScope: recipient.audienceScope,
+            deliverySource: 'sweep',
+            deliveryReason: recipient.deliveryReason,
+          },
+          outputs: {
+            findingId: persisted.finding.id,
+            shouldNotify: persisted.shouldNotify,
+            route: persisted.finding.route,
+          },
+          metadata: {
+            target_user_id: recipient.userId,
+            audience_role: recipient.audienceRole,
+            audience_scope: recipient.audienceScope,
+            delivery_source: 'sweep',
+            work_persona: recipient.workPersona ?? null,
+          },
+          tags: [
+            'fleetgraph',
+            'proactive',
+            'delivery',
+            'source:sweep',
+            `audience:${recipient.audienceRole}`,
+          ],
+        });
+      } catch (error) {
+        logger.warn('Failed to record FleetGraph proactive delivery trace', {
+          weekId: resolvedWeekId,
+          findingId: persisted.finding.id,
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Unknown proactive delivery trace failure',
+        });
+      }
 
       findings.push(persisted.finding);
 

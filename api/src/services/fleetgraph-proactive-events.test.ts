@@ -6,6 +6,7 @@ const {
   persistFindingMock,
   resolveEventRecipientsMock,
   recordDeliveryMock,
+  recordLangSmithChildRunMock,
   createApiTokenShipApiClientMock,
   invokeFleetGraphMock,
 } = vi.hoisted(() => ({
@@ -14,6 +15,7 @@ const {
   persistFindingMock: vi.fn(),
   resolveEventRecipientsMock: vi.fn(),
   recordDeliveryMock: vi.fn(),
+  recordLangSmithChildRunMock: vi.fn(),
   createApiTokenShipApiClientMock: vi.fn(() => ({
     get: vi.fn(),
     post: vi.fn(),
@@ -52,6 +54,10 @@ vi.mock('./fleetgraph-proactive-targeting.js', () => ({
 
 vi.mock('./fleetgraph-telemetry.js', () => ({
   recordFleetGraphProactiveDelivery: recordDeliveryMock,
+}));
+
+vi.mock('./fleetgraph-langsmith.js', () => ({
+  recordFleetGraphLangSmithChildRun: recordLangSmithChildRunMock,
 }));
 
 import type {
@@ -210,6 +216,7 @@ describe('FleetGraph proactive event trigger registry', () => {
     persistFindingMock.mockReset();
     resolveEventRecipientsMock.mockReset();
     recordDeliveryMock.mockReset();
+    recordLangSmithChildRunMock.mockReset();
     createApiTokenShipApiClientMock.mockClear();
     invokeFleetGraphMock.mockReset();
     process.env.FLEETGRAPH_INTERNAL_API_TOKEN = 'test-token';
@@ -219,8 +226,10 @@ describe('FleetGraph proactive event trigger registry', () => {
         audienceRole: 'responsible_owner',
         audienceScope: 'individual',
         deliveryReason: 'Sent to you because you own the sprint or workstream that needs coordination next.',
+        workPersona: 'engineer',
       },
     ]);
+    recordLangSmithChildRunMock.mockResolvedValue(undefined);
     invokeFleetGraphMock.mockResolvedValue({
       finding: {
         summary: 'FleetGraph surfaced an event-triggered risk.',
@@ -392,8 +401,43 @@ describe('FleetGraph proactive event trigger registry', () => {
       })
     );
     expect(persistFindingMock).toHaveBeenCalledTimes(3);
+    expect(persistFindingMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        summary: expect.stringContaining('As the engineer owning this follow-up'),
+        payload: expect.objectContaining({
+          personalization: expect.objectContaining({
+            workPersona: 'engineer',
+            applied: true,
+          }),
+        }),
+      })
+    );
     expect(broadcastToUserMock).toHaveBeenCalledTimes(3);
     expect(resolveEventRecipientsMock).toHaveBeenCalledTimes(3);
     expect(recordDeliveryMock).toHaveBeenCalledTimes(3);
+    expect(recordLangSmithChildRunMock).toHaveBeenCalledTimes(6);
+    expect(recordLangSmithChildRunMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        parentRunId: 'run-1',
+        name: 'fleetgraph.proactive.personalize',
+        metadata: expect.objectContaining({
+          work_persona: 'engineer',
+          audience_role: 'responsible_owner',
+        }),
+      })
+    );
+    expect(recordLangSmithChildRunMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        parentRunId: 'run-1',
+        name: 'fleetgraph.proactive.delivery',
+        metadata: expect.objectContaining({
+          work_persona: 'engineer',
+          audience_role: 'responsible_owner',
+        }),
+      })
+    );
   });
 });
