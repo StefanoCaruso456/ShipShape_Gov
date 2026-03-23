@@ -1,6 +1,6 @@
 # FleetGraph Evidence Bundle
 
-Generated: 2026-03-18T03:06:12.296Z
+Generated: 2026-03-22T21:20:00.000Z
 API URL: http://localhost:3000
 Actor: dev@ship.local
 
@@ -38,11 +38,33 @@ Actor: dev@ship.local
 
 ### hitlRun
 
-Not captured.
+- weekId: e36802fe-611f-45b0-aa51-d0957827b4f8
+- title: Week 14
+- status: waiting_on_human
+- stage: waiting_on_human
+- terminalOutcome: waiting_on_human
+- signalSeverity: warning
+- pendingApproval: true
+- reasoningSource: deterministic
+- LangSmith run id: 019cfee2-b2ed-74eb-a463-70482d76af12
+- LangSmith run URL: https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee2-b2ed-74eb-a463-70482d76af12?poll=true
+- LangSmith share URL: not captured
+- Braintrust span id: not captured
 
 ### resumeRun
 
-Not captured.
+- weekId: e36802fe-611f-45b0-aa51-d0957827b4f8
+- title: Week 14
+- status: completed
+- stage: action_dismissed
+- terminalOutcome: suppressed
+- signalSeverity: warning
+- pendingApproval: false
+- reasoningSource: deterministic
+- LangSmith run id: 019cfee2-d1ce-706e-9dbb-e313189af39a
+- LangSmith run URL: https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee2-d1ce-706e-9dbb-e313189af39a?poll=true
+- LangSmith share URL: not captured
+- Braintrust span id: not captured
 
 ### proactiveRun
 
@@ -53,5 +75,5 @@ Not captured.
 ## Notes
 
 - LangSmith trace URLs were captured for this evidence bundle.
-- Resume evidence was not captured because no pending approval candidate was available.
-
+- Resume evidence was captured with a dismiss decision.
+- HITL and resume run URLs were reconstructed from the captured LangSmith run IDs because public share URLs were not persisted in the original local bundle.

@@ -1,33 +1,33 @@
 {
-  "threadId": "1ccd2aaa-cfcf-498e-b2d1-145bdabb6206",
+  "threadId": "5ad131b8-6ece-4c10-aee9-741f089408c9",
   "status": "completed",
   "stage": "action_not_proposed",
   "mode": "on_demand",
   "triggerType": "user_invoke",
   "activeView": {
     "entity": {
-      "id": "64c5489f-50f0-4182-8ed6-17edb54e14da",
+      "id": "c1778328-5916-48f8-a50a-7345303a925c",
       "type": "week",
       "sourceDocumentType": "sprint"
     },
     "surface": "document",
-    "route": "/documents/64c5489f-50f0-4182-8ed6-17edb54e14da/issues",
+    "route": "/documents/c1778328-5916-48f8-a50a-7345303a925c/issues",
     "tab": "issues",
     "projectId": null
   },
   "expandedScope": {
     "issueId": null,
-    "weekId": "64c5489f-50f0-4182-8ed6-17edb54e14da",
-    "projectId": "b0903fdf-0bee-487d-a29c-253ae70b1414",
-    "programId": "3c0ab9bf-ec1c-46cb-a9be-4d8d7353f010",
+    "weekId": "c1778328-5916-48f8-a50a-7345303a925c",
+    "projectId": "952ddefc-511b-45a4-ab67-fc8463eda5cd",
+    "programId": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
     "personId": null
   },
   "fetched": {
     "entity": {
-      "id": "64c5489f-50f0-4182-8ed6-17edb54e14da",
+      "id": "c1778328-5916-48f8-a50a-7345303a925c",
       "workspace_id": "d5c678c4-c893-4d12-b176-57d2a39578a7",
       "document_type": "sprint",
-      "title": "Week 14",
+      "title": "Week 15",
       "content": {
         "type": "doc",
         "content": [
@@ -40,17 +40,16 @@
       "parent_id": null,
       "position": 0,
       "properties": {
-        "plan": "If we complete these features, we will unblock the next milestone.",
-        "status": "active",
-        "owner_id": "8264a368-c6e8-43da-8301-361cc748adb7",
-        "confidence": 73.16401271519672,
-        "project_id": "b0903fdf-0bee-487d-a29c-253ae70b1414",
+        "plan": "Fixing these issues will reduce user-reported problems by 50%.",
+        "owner_id": "7e45e19d-bb7c-45a3-9bc8-5d092272dcb0",
+        "confidence": 57.50213209229836,
+        "project_id": "952ddefc-511b-45a4-ab67-fc8463eda5cd",
         "assignee_ids": [
-          "607c8f50-57bb-4fc6-9db6-eac16c12ddc6",
-          "9ad6bf4d-fdb1-41b8-b7bb-b9fffd4f46f1"
+          "c68c86c4-f542-4d07-b8dd-9ae6ceb872c4",
+          "31aa69ce-07fe-4a55-ab72-708cb5454e7c"
         ],
-        "sprint_number": 14,
-        "success_criteria": "All planned stories marked done, tests passing"
+        "sprint_number": 15,
+        "success_criteria": "Bug count reduced by at least 10, no P0 issues remaining"
       },
       "ticket_number": null,
       "archived_at": null,
@@ -65,78 +64,77 @@
       "converted_by": null,
       "original_type": null,
       "conversion_count": 0,
-      "created_at": "2026-03-18T02:38:23.530Z",
-      "updated_at": "2026-03-18T02:38:23.530Z",
+      "created_at": "2026-03-18T02:38:23.550Z",
+      "updated_at": "2026-03-18T02:38:23.550Z",
       "created_by": null,
       "visibility": "workspace",
       "can_access": true,
-      "confidence": 73.16401271519672,
-      "owner_id": "607c8f50-57bb-4fc6-9db6-eac16c12ddc6",
+      "confidence": 57.50213209229836,
+      "owner_id": "c68c86c4-f542-4d07-b8dd-9ae6ceb872c4",
       "owner": null,
       "accountable_id": null,
       "consulted_ids": [],
       "informed_ids": [],
       "has_design_review": null,
       "design_review_notes": null,
-      "status": "active",
-      "plan": "If we complete these features, we will unblock the next milestone.",
+      "plan": "Fixing these issues will reduce user-reported problems by 50%.",
       "belongs_to": [
         {
-          "id": "b0903fdf-0bee-487d-a29c-253ae70b1414",
+          "id": "952ddefc-511b-45a4-ab67-fc8463eda5cd",
           "type": "project",
-          "title": "Ship Core - Core Features",
-          "color": "#6366f1"
+          "title": "API Platform - Bug Fixes",
+          "color": "#ef4444"
         },
         {
-          "id": "3c0ab9bf-ec1c-46cb-a9be-4d8d7353f010",
+          "id": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
           "type": "program",
-          "title": "Ship Core",
-          "color": "#3B82F6"
+          "title": "API Platform",
+          "color": "#10B981"
         }
       ]
     },
     "supporting": {
       "current": {
-        "id": "64c5489f-50f0-4182-8ed6-17edb54e14da",
-        "title": "Week 14",
+        "id": "c1778328-5916-48f8-a50a-7345303a925c",
+        "title": "Week 15",
         "document_type": "sprint",
         "ticket_number": null,
-        "program_id": "3c0ab9bf-ec1c-46cb-a9be-4d8d7353f010",
-        "program_name": "Ship Core",
-        "program_color": "#3B82F6"
+        "program_id": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
+        "program_name": "API Platform",
+        "program_color": "#10B981"
       },
       "ancestors": [],
       "children": [],
       "belongs_to": [
         {
           "type": "program",
-          "id": "3c0ab9bf-ec1c-46cb-a9be-4d8d7353f010",
-          "title": "Ship Core",
+          "id": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
+          "title": "API Platform",
           "document_type": "program",
-          "color": "#3B82F6"
+          "color": "#10B981"
         },
         {
           "type": "project",
-          "id": "b0903fdf-0bee-487d-a29c-253ae70b1414",
-          "title": "Ship Core - Core Features",
+          "id": "952ddefc-511b-45a4-ab67-fc8463eda5cd",
+          "title": "API Platform - Bug Fixes",
           "document_type": "project",
-          "color": "#6366f1"
+          "color": "#ef4444"
         }
       ],
       "breadcrumbs": [
         {
-          "id": "3c0ab9bf-ec1c-46cb-a9be-4d8d7353f010",
-          "title": "Ship Core",
+          "id": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
+          "title": "API Platform",
           "type": "program"
         },
         {
-          "id": "b0903fdf-0bee-487d-a29c-253ae70b1414",
-          "title": "Ship Core - Core Features",
+          "id": "952ddefc-511b-45a4-ab67-fc8463eda5cd",
+          "title": "API Platform - Bug Fixes",
           "type": "project"
         },
         {
-          "id": "64c5489f-50f0-4182-8ed6-17edb54e14da",
-          "title": "Week 14",
+          "id": "c1778328-5916-48f8-a50a-7345303a925c",
+          "title": "Week 15",
           "type": "sprint",
           "ticket_number": null
         }
@@ -144,26 +142,6 @@
     },
     "activity": {
       "days": [
-        {
-          "date": "2026-02-17",
-          "count": 0
-        },
-        {
-          "date": "2026-02-18",
-          "count": 0
-        },
-        {
-          "date": "2026-02-19",
-          "count": 0
-        },
-        {
-          "date": "2026-02-20",
-          "count": 0
-        },
-        {
-          "date": "2026-02-21",
-          "count": 0
-        },
         {
           "date": "2026-02-22",
           "count": 0
@@ -262,29 +240,49 @@
         },
         {
           "date": "2026-03-18",
-          "count": 13
+          "count": 4
+        },
+        {
+          "date": "2026-03-19",
+          "count": 0
+        },
+        {
+          "date": "2026-03-20",
+          "count": 0
+        },
+        {
+          "date": "2026-03-21",
+          "count": 0
+        },
+        {
+          "date": "2026-03-22",
+          "count": 0
+        },
+        {
+          "date": "2026-03-23",
+          "count": 0
         }
       ]
     },
     "accountability": {
       "context_type": "review",
       "sprint": {
-        "id": "64c5489f-50f0-4182-8ed6-17edb54e14da",
-        "title": "Week 14",
-        "number": "14",
-        "status": "active",
-        "plan": "If we complete these features, we will unblock the next milestone."
+        "id": "c1778328-5916-48f8-a50a-7345303a925c",
+        "title": "Week 15",
+        "number": "15",
+        "status": null,
+        "plan": "Fixing these issues will reduce user-reported problems by 50%."
       },
       "program": {
-        "id": "3c0ab9bf-ec1c-46cb-a9be-4d8d7353f010",
-        "name": "Ship Core",
+        "id": "e479c5ac-7648-488d-9da8-a188f3b91ae2",
+        "name": "API Platform",
         "description": null,
         "goals": null
       },
       "project": {
-        "id": "b0903fdf-0bee-487d-a29c-253ae70b1414",
-        "name": "Ship Core - Core Features",
-        "plan": "Building core features will establish the product foundation and attract early adopters.",
+        "id": "952ddefc-511b-45a4-ab67-fc8463eda5cd",
+        "name": "API Platform - Bug Fixes",
+        "plan": "Fixing bugs will improve user retention and reduce support costs.",
         "ice_scores": {
           "impact": null,
           "confidence": null,
@@ -292,203 +290,39 @@
         },
         "monetary_impact_expected": null
       },
-      "standups": [
-        {
-          "id": "3e4ebf11-2cad-43cc-ac24-a76b02179581",
-          "title": "Standup - Alice Chen",
-          "content": {
-            "type": "doc",
-            "content": [
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "text": "Yesterday: Finished implementing the sprint timeline UI component.",
-                    "type": "text"
-                  }
-                ]
-              },
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "text": "Today: Working on the progress chart integration.",
-                    "type": "text"
-                  }
-                ]
-              },
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "text": "Blockers: None",
-                    "type": "text"
-                  }
-                ]
-              }
-            ]
-          },
-          "author": "Alice Chen",
-          "created_at": "2026-03-18T02:38:23.916Z"
-        },
-        {
-          "id": "fa066d9d-8b3b-4ccf-8847-d3e746498842",
-          "title": "Standup - Bob Martinez",
-          "content": {
-            "type": "doc",
-            "content": [
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "text": "Yesterday: Code review and bug fixes.",
-                    "type": "text"
-                  }
-                ]
-              },
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "text": "Today: Starting on issue assignment flow.",
-                    "type": "text"
-                  }
-                ]
-              },
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "text": "Blockers: Waiting on API spec clarification.",
-                    "type": "text"
-                  }
-                ]
-              }
-            ]
-          },
-          "author": "Bob Martinez",
-          "created_at": "2026-03-17T02:38:23.917Z"
-        },
-        {
-          "id": "2210b2f1-5b94-4c94-bf49-4b4e3b7a7b60",
-          "title": "Standup - Carol Williams",
-          "content": {
-            "type": "doc",
-            "content": [
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "text": "Yesterday: Team sync and planning session.",
-                    "type": "text"
-                  }
-                ]
-              },
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "text": "Today: Documentation and testing.",
-                    "type": "text"
-                  }
-                ]
-              },
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "text": "Blockers: None",
-                    "type": "text"
-                  }
-                ]
-              }
-            ]
-          },
-          "author": "Carol Williams",
-          "created_at": "2026-03-16T02:38:23.918Z"
-        }
-      ],
+      "standups": [],
       "issues": {
         "stats": {
-          "total": 9,
-          "completed": 3,
-          "in_progress": 3,
-          "planned_at_start": 9,
+          "total": 3,
+          "completed": 0,
+          "in_progress": 0,
+          "planned_at_start": 3,
           "added_mid_sprint": 0,
           "cancelled": 0
         },
-        "completed_items": [
-          {
-            "id": "8a104ca0-1dc0-4ad0-b883-195ad30d4c87",
-            "title": "Implement sprint management",
-            "status": "done",
-            "priority": "high",
-            "added_mid_sprint": null,
-            "cancelled": null
-          },
-          {
-            "id": "e39b3a0c-733a-43e6-9610-a930d238e399",
-            "title": "Create sprint timeline UI",
-            "status": "done",
-            "priority": "high",
-            "added_mid_sprint": null,
-            "cancelled": null
-          },
-          {
-            "id": "2ee4a135-d62a-49da-b512-46ac3410453d",
-            "title": "Add sprint progress chart",
-            "status": "done",
-            "priority": "medium",
-            "added_mid_sprint": null,
-            "cancelled": null
-          }
-        ],
+        "completed_items": [],
         "incomplete_items": [
           {
-            "id": "18da192d-18a9-4109-877b-6065b364f20a",
-            "title": "Build issue assignment flow",
-            "status": "in_progress",
+            "id": "b6dd2b1d-c0ee-4573-aed5-26e9d82c43c3",
+            "title": "Performance optimization",
+            "status": "todo",
+            "priority": "medium",
+            "added_mid_sprint": null,
+            "cancelled": null
+          },
+          {
+            "id": "7134d997-b636-4d8f-93c8-1cc2dcd6637a",
+            "title": "Add caching layer",
+            "status": "todo",
+            "priority": "medium",
+            "added_mid_sprint": null,
+            "cancelled": null
+          },
+          {
+            "id": "e10aba3a-4363-4b67-9e76-b7611d53d07b",
+            "title": "Security audit fixes",
+            "status": "todo",
             "priority": "high",
-            "added_mid_sprint": null,
-            "cancelled": null
-          },
-          {
-            "id": "2331af95-882d-4521-aee0-d0ef1b7af1d7",
-            "title": "Add bulk issue operations",
-            "status": "in_progress",
-            "priority": "medium",
-            "added_mid_sprint": null,
-            "cancelled": null
-          },
-          {
-            "id": "0cb3e57f-b1b8-4393-9dfe-86948e9798c6",
-            "title": "Create sprint retrospective view",
-            "status": "in_progress",
-            "priority": "medium",
-            "added_mid_sprint": null,
-            "cancelled": null
-          },
-          {
-            "id": "d7ebebf2-4c48-4def-99a1-769c8385f9d5",
-            "title": "Add sprint velocity metrics",
-            "status": "todo",
-            "priority": "medium",
-            "added_mid_sprint": null,
-            "cancelled": null
-          },
-          {
-            "id": "b106de1c-20f7-431c-8ea5-f413a8ecb9ba",
-            "title": "Implement burndown chart",
-            "status": "todo",
-            "priority": "medium",
-            "added_mid_sprint": null,
-            "cancelled": null
-          },
-          {
-            "id": "2087d5f0-208e-4ac7-84d3-5c0829498dbc",
-            "title": "Add sprint completion notifications",
-            "status": "todo",
-            "priority": "low",
             "added_mid_sprint": null,
             "cancelled": null
           }
@@ -496,10 +330,9 @@
       },
       "existing_review": null,
       "clarifying_questions_context": [
-        "The sprint plan was: \"If we complete these features, we will unblock the next milestone.\". Was this validated or invalidated?",
+        "The sprint plan was: \"Fixing these issues will reduce user-reported problems by 50%.\". Was this validated or invalidated?",
         "What evidence supports your conclusion about the plan?",
-        "Only 33% of issues were completed. What prevented full completion?",
-        "Looking at the standup history, what were the main themes or patterns?",
+        "Only 0% of issues were completed. What prevented full completion?",
         "What would you do differently next sprint?",
         "What worked well that should be repeated?"
       ]
@@ -516,27 +349,27 @@
     "shouldSurface": false,
     "signals": [],
     "metrics": {
-      "totalIssues": 9,
-      "completedIssues": 3,
-      "inProgressIssues": 3,
-      "incompleteIssues": 6,
+      "totalIssues": 3,
+      "completedIssues": 0,
+      "inProgressIssues": 0,
+      "incompleteIssues": 3,
       "cancelledIssues": 0,
-      "standupCount": 3,
-      "recentActivityCount": 13,
-      "recentActiveDays": 1,
-      "completionRate": 0.3333333333333333
+      "standupCount": 0,
+      "recentActivityCount": 0,
+      "recentActiveDays": 0,
+      "completionRate": 0
     }
   },
   "finding": null,
   "reasoning": {
-    "summary": "Week 14 looks stable right now. 3 of 9 tracked issues are complete and 3 are in progress, with recent activity still visible in the sprint.",
+    "summary": "Week 15 looks stable right now. 0 of 3 tracked issues are complete and 0 are in progress, with recent activity still visible in the sprint.",
     "evidence": [
-      "Completed issues: 3 of 9.",
-      "In-progress issues: 3.",
-      "Standups logged: 3.",
-      "Recently active days: 1."
+      "Completed issues: 0 of 3.",
+      "In-progress issues: 0.",
+      "Standups logged: 0.",
+      "Recently active days: 0."
     ],
-    "whyNow": "You are looking at the issues tab for Ship Core - Core Features, and the current sprint evidence does not show a meaningful execution risk.",
+    "whyNow": "You are looking at the issues tab for API Platform - Bug Fixes, and the current sprint evidence does not show a meaningful execution risk.",
     "recommendedNextStep": "Keep the current execution rhythm and close in-progress work before adding new scope.",
     "confidence": "medium"
   },
@@ -558,9 +391,9 @@
     "lastTripReason": null
   },
   "timing": {
-    "startedAt": "2026-03-18T03:05:50.194Z",
-    "lastNodeAt": "2026-03-18T03:05:50.224Z",
-    "deadlineAt": "2026-03-18T03:07:50.194Z"
+    "startedAt": "2026-03-23T01:25:12.419Z",
+    "lastNodeAt": "2026-03-23T01:25:12.506Z",
+    "deadlineAt": "2026-03-23T01:27:12.419Z"
   },
   "reasoningSource": "deterministic",
   "suppressionReason": null,
@@ -571,9 +404,9 @@
     {
       "node": "supervisorEntry",
       "phase": "control",
-      "startedAt": "2026-03-18T03:05:50.194Z",
-      "finishedAt": "2026-03-18T03:05:50.195Z",
-      "latencyMs": 1,
+      "startedAt": "2026-03-23T01:25:12.419Z",
+      "finishedAt": "2026-03-23T01:25:12.425Z",
+      "latencyMs": 6,
       "status": "ok",
       "goto": "initializeOnDemandContext",
       "errorCode": null
@@ -581,9 +414,9 @@
     {
       "node": "initializeOnDemandContext",
       "phase": "context",
-      "startedAt": "2026-03-18T03:05:50.198Z",
-      "finishedAt": "2026-03-18T03:05:50.199Z",
-      "latencyMs": 1,
+      "startedAt": "2026-03-23T01:25:12.431Z",
+      "finishedAt": "2026-03-23T01:25:12.431Z",
+      "latencyMs": 0,
       "status": "ok",
       "goto": "resolveContext",
       "errorCode": null
@@ -591,9 +424,9 @@
     {
       "node": "resolveContext",
       "phase": "context",
-      "startedAt": "2026-03-18T03:05:50.202Z",
-      "finishedAt": "2026-03-18T03:05:50.202Z",
-      "latencyMs": 0,
+      "startedAt": "2026-03-23T01:25:12.433Z",
+      "finishedAt": "2026-03-23T01:25:12.434Z",
+      "latencyMs": 1,
       "status": "ok",
       "goto": "fetchSprintContext",
       "errorCode": null
@@ -601,9 +434,9 @@
     {
       "node": "fetchSprintContext",
       "phase": "fetch",
-      "startedAt": "2026-03-18T03:05:50.205Z",
-      "finishedAt": "2026-03-18T03:05:50.215Z",
-      "latencyMs": 10,
+      "startedAt": "2026-03-23T01:25:12.436Z",
+      "finishedAt": "2026-03-23T01:25:12.491Z",
+      "latencyMs": 55,
       "status": "ok",
       "goto": "deriveSprintSignals",
       "errorCode": null
@@ -611,9 +444,9 @@
     {
       "node": "deriveSprintSignals",
       "phase": "signals",
-      "startedAt": "2026-03-18T03:05:50.219Z",
-      "finishedAt": "2026-03-18T03:05:50.219Z",
-      "latencyMs": 0,
+      "startedAt": "2026-03-23T01:25:12.496Z",
+      "finishedAt": "2026-03-23T01:25:12.497Z",
+      "latencyMs": 1,
       "status": "ok",
       "goto": "reasonAboutSprint",
       "errorCode": null
@@ -621,8 +454,8 @@
     {
       "node": "reasonAboutSprint",
       "phase": "reasoning",
-      "startedAt": "2026-03-18T03:05:50.221Z",
-      "finishedAt": "2026-03-18T03:05:50.221Z",
+      "startedAt": "2026-03-23T01:25:12.502Z",
+      "finishedAt": "2026-03-23T01:25:12.502Z",
       "latencyMs": 0,
       "status": "ok",
       "goto": "proposeSprintAction",
@@ -631,8 +464,8 @@
     {
       "node": "proposeSprintAction",
       "phase": "action",
-      "startedAt": "2026-03-18T03:05:50.224Z",
-      "finishedAt": "2026-03-18T03:05:50.224Z",
+      "startedAt": "2026-03-23T01:25:12.506Z",
+      "finishedAt": "2026-03-23T01:25:12.506Z",
       "latencyMs": 0,
       "status": "ok",
       "goto": "completeRun",
@@ -640,9 +473,9 @@
     }
   ],
   "telemetry": {
-    "langsmithRunId": "019cfee8-1b6b-7539-875b-c92618eee720",
-    "langsmithRunUrl": "https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019cfee8-1b6b-7539-875b-c92618eee720?poll=true",
-    "langsmithShareUrl": "https://smith.langchain.com/public/8c5e90a5-3299-47ab-90d5-c7a16583ea13/r",
+    "langsmithRunId": "019d184b-c616-76ca-8c90-7447e3618a04",
+    "langsmithRunUrl": "https://smith.langchain.com/o/091fa5fb-a5d2-47b3-8af0-488a46a7424b/projects/p/b09fa7c9-c536-481f-b9c9-1b95ef04b40e/r/019d184b-c616-76ca-8c90-7447e3618a04?poll=true",
+    "langsmithShareUrl": "https://smith.langchain.com/public/a1309c87-a0a5-4cee-9078-99083c79a943/r",
     "braintrustSpanId": null
   },
   "trace": {

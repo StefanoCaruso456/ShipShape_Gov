@@ -185,7 +185,7 @@ export function PersonEditorPage() {
 
 interface PersonSidebarProps {
   person: PersonDocument;
-  people: { id: string; user_id: string; name: string; email?: string }[];
+  people: { id: string; user_id: string | null; name: string; email?: string; workPersona?: WorkPersona | null }[];
   isAdmin: boolean;
   currentUserId: string | null;
   onUpdateProperties: (updates: Record<string, unknown>) => Promise<void>;
@@ -205,7 +205,8 @@ function PersonSidebar({
   const props = person.properties || {};
   const reportsTo = (props.reports_to as string) || null;
   const personUserId = (props.user_id as string) || null;
-  const workPersona = (props.work_persona as WorkPersona | null | undefined) ?? null;
+  const linkedPerson = people.find((entry) => entry.id === person.id || entry.user_id === personUserId);
+  const workPersona = ((props.work_persona as WorkPersona | null | undefined) ?? linkedPerson?.workPersona) ?? null;
   const canEditWorkPersona = isAdmin || (personUserId !== null && personUserId === currentUserId);
   const [roleDraft, setRoleDraft] = useState(typeof props.role === 'string' ? props.role : '');
   const [isSavingRole, setIsSavingRole] = useState(false);
@@ -216,7 +217,7 @@ function PersonSidebar({
 
   // Build people list for combobox, excluding the current person
   const comboboxPeople: Person[] = people
-    .filter(p => p.user_id !== personUserId)
+    .filter((p): p is typeof p & { user_id: string } => typeof p.user_id === 'string' && p.user_id !== personUserId)
     .map(p => ({ id: p.id, user_id: p.user_id, name: p.name, email: p.email || '' }));
 
   // Find supervisor name for read-only display
@@ -260,6 +261,31 @@ function PersonSidebar({
         </div>
       </PropertyRow>
 
+      <PropertyRow label="Work Persona" tooltip="Persona FleetGraph uses for role-aware prompts and notifications">
+        {canEditWorkPersona ? (
+          <select
+            className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm text-foreground outline-none focus:border-ring"
+            value={workPersona ?? ''}
+            onChange={(event) =>
+              onUpdateProperties({
+                work_persona: event.target.value ? event.target.value : null,
+              })
+            }
+          >
+            <option value="">Not set</option>
+            {WORK_PERSONAS.map((persona) => (
+              <option key={persona} value={persona}>
+                {WORK_PERSONA_LABELS[persona]}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="text-sm text-foreground">
+            {workPersona ? WORK_PERSONA_LABELS[workPersona] : <span className="text-muted">Not set</span>}
+          </div>
+        )}
+      </PropertyRow>
+
       <PropertyRow label="Role" tooltip="Job title or functional role for this person">
         <input
           type="text"
@@ -284,31 +310,6 @@ function PersonSidebar({
           disabled={isSavingRole}
           className="w-full rounded bg-border px-2 py-1 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:cursor-wait disabled:opacity-60"
         />
-      </PropertyRow>
-
-      <PropertyRow label="Work Persona">
-        {canEditWorkPersona ? (
-          <select
-            className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm text-foreground outline-none focus:border-ring"
-            value={workPersona ?? ''}
-            onChange={(event) =>
-              onUpdateProperties({
-                work_persona: event.target.value ? event.target.value : null,
-              })
-            }
-          >
-            <option value="">Not set</option>
-            {WORK_PERSONAS.map((persona) => (
-              <option key={persona} value={persona}>
-                {WORK_PERSONA_LABELS[persona]}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <div className="text-sm text-foreground">
-            {workPersona ? WORK_PERSONA_LABELS[workPersona] : <span className="text-muted">Not set</span>}
-          </div>
-        )}
       </PropertyRow>
 
       <PropertyRow label="Reports To" tooltip="Official supervisor — determines performance evaluation authority">

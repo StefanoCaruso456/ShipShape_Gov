@@ -52,6 +52,8 @@ Both modes use the same graph.
 - FleetGraph reasoning and action-catalog skills
 - proactive sweep route
 - env-gated proactive worker
+- high-signal proactive event trigger registry
+- proactive event queue / drain path into the shared graph
 - finding persistence
 - cooldown / dedupe memory
 - realtime finding event
@@ -73,9 +75,8 @@ Both modes use the same graph.
 
 - full conversational FleetGraph chat UI
 - wider issue / program / dashboard surface coverage
-- high-signal mutation trigger / pub-sub delivery path
-- deployed public FleetGraph environment verification
-- final deployment evidence package
+- broader public/shared trace coverage for HITL and resume paths
+- fully repeatable final evidence refresh for every captured path
 
 ## MVP requirement audit
 
@@ -217,10 +218,15 @@ Built the evidence and submission slice so far:
 - captured live evidence for:
   - quiet on-demand run
   - flagged on-demand run
+  - HITL approval-waiting run
+  - resumed dismiss path
   - proactive sweep path
 - captured shared LangSmith traces for:
   - quiet on-demand path
   - problem-detected on-demand path
+- captured exact LangSmith run IDs for:
+  - HITL approval-waiting path
+  - resumed dismiss path
 
 Public deployment verification is now complete:
 
@@ -257,14 +263,19 @@ Implemented today:
   - `POST /api/fleetgraph/proactive/run`
 - optional timed sweep worker:
   - enabled with `FLEETGRAPH_ENABLE_PROACTIVE_WORKER=true`
+- proactive event trigger registry and queue:
+  - issue mutation events
+  - issue iteration events
+  - sprint mutation events
+  - sprint approval change events
 
 ### Future trigger
 
 Still planned:
 
-- high-signal Ship mutation trigger
-- webhook or pub/sub style trigger path
-- direct event-to-graph invocation for important changes
+- webhook or pub/sub style trigger path outside the API process
+- broader event coverage beyond the current sprint / issue mutation set
+- direct event-to-graph delivery for more external integration points
 
 ## Recommended next step
 
