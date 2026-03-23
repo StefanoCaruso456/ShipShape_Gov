@@ -352,6 +352,10 @@ Useful flow diagrams:
 - [fleetgraph-proactive-trigger-delivery-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-proactive-trigger-delivery-flow.mmd)
 - [fleetgraph-hitl-interrupt-resume-flow.mmd](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-diagrams/fleetgraph-hitl-interrupt-resume-flow.mmd)
 
+Manual proactive popup verification:
+
+- [fleetgraph-proactive-role-popup-manual-test-flows.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/artifacts-documentation/fleetgraph-proactive-role-popup-manual-test-flows.md)
+
 ## Graph Outline
 
 ### Exact node inventory

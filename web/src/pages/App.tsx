@@ -168,7 +168,7 @@ export function AppLayout() {
     showToast(
       toastCopy.message,
       toastCopy.toastType,
-      7000,
+      null,
       {
         label: toastCopy.actionLabel,
         onClick: () => {
@@ -177,6 +177,10 @@ export function AppLayout() {
           ).catch(() => {});
           navigate(finding.route);
         },
+      },
+      {
+        persist: true,
+        dismissOnAction: false,
       }
     );
   }, [currentWorkspace, hasSeenFleetGraphFinding, markFleetGraphFindingSeen, navigate, showToast, user?.workPersona]);

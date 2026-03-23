@@ -70,6 +70,38 @@ describe('buildSweepAudienceRecipients', () => {
       },
     ]);
   });
+
+  it('keeps stalled-work sweeps focused on owner, accountable, and manager without team-wide fanout', () => {
+    const recipients = buildSweepAudienceRecipients({
+      context: baseContext,
+      severity: 'action',
+      signalKinds: ['work_not_started'],
+    });
+
+    expect(recipients).toEqual([
+      {
+        userId: '00000000-0000-0000-0000-000000000101',
+        audienceRole: 'responsible_owner',
+        audienceScope: 'individual',
+        deliveryReason:
+          'Sent to you because you own the sprint or workstream that appears stalled.',
+      },
+      {
+        userId: '00000000-0000-0000-0000-000000000104',
+        audienceRole: 'accountable',
+        audienceScope: 'individual',
+        deliveryReason:
+          'Escalated to you as accountable because this risk may need a tradeoff or unblock decision.',
+      },
+      {
+        userId: '00000000-0000-0000-0000-000000000102',
+        audienceRole: 'manager',
+        audienceScope: 'individual',
+        deliveryReason:
+          'Escalated to you as the owner manager because the sprint appears stalled or needs support.',
+      },
+    ]);
+  });
 });
 
 describe('buildEventAudienceRecipients', () => {
@@ -117,6 +149,47 @@ describe('buildEventAudienceRecipients', () => {
         audienceScope: 'team',
         deliveryReason:
           'Shared with the sprint team because this affects shared sprint coordination or commitments.',
+      },
+    ]);
+  });
+
+  it('routes approval-change events to owner, accountable, and team without manager escalation', () => {
+    const recipients = buildEventAudienceRecipients({
+      context: baseContext,
+      severity: 'warning',
+      triggerKind: 'sprint_plan_changes_requested',
+      signalKinds: ['sprint_plan_changes_requested'],
+      primaryUserId: '00000000-0000-0000-0000-000000000101',
+      issueAssigneeUserId: null,
+    });
+
+    expect(recipients).toEqual([
+      {
+        userId: '00000000-0000-0000-0000-000000000101',
+        audienceRole: 'responsible_owner',
+        audienceScope: 'individual',
+        deliveryReason:
+          'Sent to you because you own the follow-up that the approval feedback now requires.',
+      },
+      {
+        userId: '00000000-0000-0000-0000-000000000104',
+        audienceRole: 'accountable',
+        audienceScope: 'individual',
+        deliveryReason: 'Escalated to you as accountable because approval follow-up is needed.',
+      },
+      {
+        userId: '00000000-0000-0000-0000-000000000111',
+        audienceRole: 'team_member',
+        audienceScope: 'team',
+        deliveryReason:
+          'Shared with the sprint team because approval feedback changes what the team needs to align on next.',
+      },
+      {
+        userId: '00000000-0000-0000-0000-000000000112',
+        audienceRole: 'team_member',
+        audienceScope: 'team',
+        deliveryReason:
+          'Shared with the sprint team because approval feedback changes what the team needs to align on next.',
       },
     ]);
   });
