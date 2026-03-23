@@ -534,9 +534,9 @@ describe('FleetGraphOnDemandPanel', () => {
     renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open FleetGraph' }));
-    expect(screen.getByRole('button', { name: 'What is the risk inside Week 3?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'What, if anything, still needs triage on this tab?' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Which issues are stale or stuck?' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'What is the risk inside Week 3?' }));
+    fireEvent.click(screen.getByRole('button', { name: 'What, if anything, still needs triage on this tab?' }));
 
     expect(await screen.findByText('Grounded execution guidance')).toBeInTheDocument();
     expect(screen.getAllByText('Execution view').length).toBeGreaterThan(1);
@@ -546,13 +546,14 @@ describe('FleetGraphOnDemandPanel', () => {
     expect(screen.queryByText('Stable')).not.toBeInTheDocument();
     expect(screen.getByText('Recommended next step')).toBeInTheDocument();
     expect(screen.getByText('Best route in Ship')).toBeInTheDocument();
-    expect(screen.getByText('Week 3 holds 3 open issues with 2 issues still not started.')).toBeInTheDocument();
-    expect(screen.getByText('Suggested follow-up questions')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Which exact issues are driving the risk?' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open risk cluster Week 3' })).toHaveAttribute(
       'href',
       '/documents/week-3/issues'
     );
+    expect(screen.getByText('Suggested follow-up questions')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Which status cluster is carrying the most unfinished risk?' })
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open highest-impact #14' })).toHaveAttribute(
       'href',
       '/documents/issue-3'
@@ -667,7 +668,9 @@ describe('FleetGraphOnDemandPanel', () => {
       '/documents/issue-15'
     );
     expect(screen.getAllByText(/Safer to move out than the active or higher-value work/).length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'Should this stay in sprint or move out?' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'What can move out without hurting the highest-value work?' })
+    ).toBeInTheDocument();
   });
 
   it('keeps the risk-cluster route featured for risk questions even when a cut candidate is present', async () => {

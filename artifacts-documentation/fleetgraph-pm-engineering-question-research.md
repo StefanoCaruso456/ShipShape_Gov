@@ -93,10 +93,11 @@ Best when the page is a sprint, weekly plan, weekly retro, or My Week surface ti
 Best when the user is on a project issue list or project issue tab.
 
 - Which issues need attention first?
-- What is blocking delivery in this project?
+- What, if anything, still needs triage on this tab?
 - Which issues are stale or stuck?
-- What should be triaged, moved, or cut?
-- Are there dependency risks in this issue set?
+- What is blocking delivery in this project?
+- Where is delivery risk hitting the highest-value work?
+- Which work should move out first if we need to de-risk delivery?
 
 ### Project Overview or Details View
 
@@ -168,19 +169,17 @@ These should appear after FleetGraph answers the first question and has a better
 
 ### If The Theme Is Scope Change
 
-- What was added after sprint start?
-- Why was this added mid-sprint?
-- Which planned work got displaced?
+- Which work should move out first if we need to de-risk delivery?
+- What can move out without hurting the highest-value work?
+- What, if anything, still needs triage on this tab?
 - Is this change worth the delivery risk it adds?
-- Should this stay in sprint or move out?
 
 ### If The Theme Is Status Or Progress
 
 - What has not moved recently?
 - Which "in progress" issues are actually stalled?
-- Where are we waiting on review or approval?
-- What is done but not reflected clearly?
-- What is the next milestone that matters?
+- What, if anything, still needs triage on this tab?
+- Which status cluster is carrying the most unfinished risk?
 
 ### If The Theme Is Review Or Outcome Quality
 

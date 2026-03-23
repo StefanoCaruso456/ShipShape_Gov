@@ -643,6 +643,88 @@ describe('FleetGraph non-week context resolution', () => {
     expect(result.reasoning?.recommendedNextStep).toContain('Open highest-impact #14');
   });
 
+  it('answers triage questions with the riskiest untouched cluster instead of generic cut guidance', async () => {
+    const graph = createFleetGraph();
+    const runtime = createFleetGraphRuntime({
+      now: () => new Date('2026-03-20T12:00:00.000Z'),
+    });
+
+    const result = await graph.invoke(
+      {
+        runId: 'issue-surface-triage-context',
+        mode: 'on_demand',
+        triggerType: 'user_invoke',
+        workspaceId: 'workspace-1',
+        actor: {
+          id: 'user-1',
+          kind: 'user',
+          role: 'pm',
+        },
+        activeView: null,
+        contextEntity: null,
+        prompt: {
+          question: 'What, if anything, still needs triage on this tab?',
+          pageContext: {
+            kind: 'issue_surface',
+            route: '/documents/program-1/issues',
+            title: 'API Platform Issues',
+            summary:
+              'API Platform has untouched scope building inside Week 3. 3 visible issues are still sitting in triage, backlog, or todo on this tab.',
+            emptyState: false,
+            metrics: [
+              { label: 'Visible issues', value: '5' },
+              { label: 'Not started', value: '3' },
+              { label: 'Risk cluster', value: 'Week 3' },
+              { label: 'Highest impact issue', value: '#14' },
+              { label: 'Business value', value: '87/100' },
+            ],
+            items: [
+              {
+                label: 'Week 3',
+                detail: '3 open issues • 1 issue active • 2 issues not started',
+                route: '/documents/week-3/issues',
+              },
+              {
+                label: '#14 Expand test coverage',
+                detail: 'Highest impact • Project: Performance • Business value: 87/100 • Risk: not started inside Week 3',
+                route: '/documents/issue-3',
+              },
+            ],
+            actions: [
+              {
+                label: 'Open risk cluster Week 3',
+                route: '/documents/week-3/issues',
+                intent: 'prioritize',
+                reason: 'Week 3 holds 3 open issues with 2 issues still not started.',
+              },
+              {
+                label: 'Open highest-impact #14',
+                route: '/documents/issue-3',
+                intent: 'prioritize',
+                reason: '#14 carries the strongest business value signal on this tab. Business value 87/100.',
+                owner: 'stefano caruso',
+              },
+            ],
+          },
+        },
+        trace: {
+          runName: 'fleetgraph-issue-surface-triage-context-test',
+          tags: ['fleetgraph', 'test', 'issue-surface', 'triage'],
+        },
+      } satisfies FleetGraphRunInput,
+      createFleetGraphRunnableConfig(runtime, {
+        threadId: 'issue-surface-triage-context',
+      })
+    );
+
+    expect(result.status).toBe('completed');
+    expect(result.stage).toBe('current_view_reasoned');
+    expect(result.reasoning?.answerMode).toBe('execution');
+    expect(result.reasoning?.summary).toContain('Week 3 is where triage pressure is building');
+    expect(result.reasoning?.summary).toContain('Protect #14');
+    expect(result.reasoning?.recommendedNextStep).toContain('Open risk cluster Week 3');
+  });
+
   it('answers blocker questions from explicit issue-surface blocker evidence', async () => {
     const graph = createFleetGraph();
     const runtime = createFleetGraphRuntime({
