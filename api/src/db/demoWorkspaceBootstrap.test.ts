@@ -48,7 +48,7 @@ describe('shouldBackfillDemoWorkspace', () => {
     ).toBe(true);
   });
 
-  it('rejects workspaces that already have full demo data', () => {
+  it('keeps full demo workspaces eligible for idempotent backfill passes', () => {
     expect(
       shouldBackfillDemoWorkspace({
         workspace_name: "stefano caruso's Workspace",
@@ -59,7 +59,21 @@ describe('shouldBackfillDemoWorkspace', () => {
         sprint_count: '15',
         welcome_doc_count: '1',
       })
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it('keeps setup workspaces eligible even after newer demo expansions land', () => {
+    expect(
+      shouldBackfillDemoWorkspace({
+        workspace_name: "stefano caruso's Workspace",
+        owner_user_id: 'user-123',
+        program_count: '5',
+        project_count: '15',
+        issue_count: '120',
+        sprint_count: '90',
+        welcome_doc_count: '1',
+      })
+    ).toBe(true);
   });
 
   it('still backfills missing issue types for full demo workspaces', () => {

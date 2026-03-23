@@ -1,5 +1,10 @@
 import type pg from 'pg';
 import { DEMO_PROGRAM_TEMPLATES, DEMO_PROJECT_TEMPLATES } from './demoWorkspaceTemplates.js';
+import {
+  buildDemoProjectSprintNumbers,
+  DEMO_FOUNDATION_WEEK_2_ISSUES,
+  resolveDemoWeekIssueState,
+} from './demoWeekCoverage.js';
 import { buildIssuePlanningProperties, ensureIssuePlanningProperties } from './seedPlanningUtils.js';
 import { inferSeedIssueType } from './seedIssueTypes.js';
 import { createIssueTemplateContent, shouldPopulateIssueTemplate } from '../utils/issueContentTemplate.js';
@@ -42,6 +47,7 @@ interface DemoWorkspacePopulationResult {
   issuesCreated: number;
   weeklyPlansCreated: number;
   weeklyRetrosCreated: number;
+  weeklyReviewsCreated: number;
   standupsCreated: number;
 }
 
@@ -53,8 +59,6 @@ interface DemoIssueTemplate {
   sprintOffset: number | null;
 }
 
-const EXPECTED_DEMO_PROGRAM_COUNT = DEMO_PROGRAM_TEMPLATES.length;
-const EXPECTED_DEMO_PROJECT_COUNT = DEMO_PROGRAM_TEMPLATES.length * DEMO_PROJECT_TEMPLATES.length;
 const PAST_WEEKS_TO_SEED = 6;
 
 const DEMO_ISSUE_TEMPLATES: DemoIssueTemplate[] = [
@@ -185,25 +189,12 @@ export const DEMO_WORKSPACE_OWNER_SELECTION_SQL = `
 `.trim();
 
 export function shouldBackfillDemoWorkspace(row: DemoWorkspaceScanRow): boolean {
-  const programCount = Number(row.program_count);
-  const projectCount = Number(row.project_count);
-  const issueCount = Number(row.issue_count);
-  const sprintCount = Number(row.sprint_count);
   const welcomeDocCount = Number(row.welcome_doc_count);
   const looksLikeSetupWorkspace = row.workspace_name.endsWith("'s Workspace");
-  const hasNoDemoStructure = programCount === 0 && projectCount === 0;
-  const hasOnlyStructureBackfill =
-    programCount >= EXPECTED_DEMO_PROGRAM_COUNT &&
-    projectCount >= EXPECTED_DEMO_PROJECT_COUNT &&
-    issueCount === 0 &&
-    sprintCount === 0;
 
-  return (
-    looksLikeSetupWorkspace &&
-    welcomeDocCount > 0 &&
-    (hasNoDemoStructure || hasOnlyStructureBackfill) &&
-    Boolean(row.owner_user_id)
-  );
+  // Keep setup workspaces eligible for idempotent demo backfills so newer
+  // baseline weeks and issue context can be added to already-populated demos.
+  return looksLikeSetupWorkspace && welcomeDocCount > 0 && Boolean(row.owner_user_id);
 }
 
 export function shouldBackfillMissingIssueTypesForWorkspace(row: DemoWorkspaceScanRow): boolean {
@@ -266,6 +257,64 @@ async function ensureIssueContent(
   );
 }
 
+function hasSeedValue(value: unknown): boolean {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  return true;
+}
+
+function shouldBackfillSeedProperty(currentValue: unknown, desiredValue: unknown): boolean {
+  if (Array.isArray(desiredValue)) {
+    return !Array.isArray(currentValue) || currentValue.length === 0;
+  }
+
+  if (typeof desiredValue === 'string') {
+    return typeof currentValue !== 'string' || currentValue.trim().length === 0;
+  }
+
+  return !hasSeedValue(currentValue) && hasSeedValue(desiredValue);
+}
+
+async function ensureDocumentProperties(
+  pool: pg.Pool,
+  documentId: string,
+  properties: Record<string, unknown> | null | undefined,
+  desiredProperties: Record<string, unknown>
+): Promise<void> {
+  const currentProperties = properties ?? {};
+  let changed = false;
+  const nextProperties: Record<string, unknown> = { ...currentProperties };
+
+  for (const [key, value] of Object.entries(desiredProperties)) {
+    if (shouldBackfillSeedProperty(currentProperties[key], value) && hasSeedValue(value)) {
+      nextProperties[key] = value;
+      changed = true;
+    }
+  }
+
+  if (!changed) {
+    return;
+  }
+
+  await pool.query(
+    `UPDATE documents
+     SET properties = $1,
+         updated_at = NOW()
+     WHERE id = $2`,
+    [JSON.stringify(nextProperties), documentId]
+  );
+}
+
 function buildListDocumentContent(items: string[]): Record<string, unknown> {
   return {
     type: 'doc',
@@ -273,6 +322,54 @@ function buildListDocumentContent(items: string[]): Record<string, unknown> {
       {
         type: 'bulletList',
         content: items.map((item) => ({
+          type: 'listItem',
+          content: [
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: item }],
+            },
+          ],
+        })),
+      },
+    ],
+  };
+}
+
+function buildReviewDocumentContent(projectTitle: string, weekNumber: number): Record<string, unknown> {
+  return {
+    type: 'doc',
+    content: [
+      {
+        type: 'heading',
+        attrs: { level: 2 },
+        content: [{ type: 'text', text: `Week ${weekNumber} review` }],
+      },
+      {
+        type: 'bulletList',
+        content: [
+          `Closed the baseline commitments for ${projectTitle}.`,
+          'Kept the sprint focused on the highest-priority scoped work.',
+        ].map((item) => ({
+          type: 'listItem',
+          content: [
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: item }],
+            },
+          ],
+        })),
+      },
+      {
+        type: 'heading',
+        attrs: { level: 2 },
+        content: [{ type: 'text', text: 'Follow-up' }],
+      },
+      {
+        type: 'bulletList',
+        content: [
+          'Carry forward any remaining cleanup explicitly into the next weekly plan.',
+          'Keep blocker and scope-change notes visible for the next review pass.',
+        ].map((item) => ({
           type: 'listItem',
           content: [
             {
@@ -378,7 +475,7 @@ async function ensureDemoWorkspaceProgramsAndProjects(
 
   for (const programTemplate of DEMO_PROGRAM_TEMPLATES) {
     const existingProgram = await pool.query(
-      `SELECT id
+      `SELECT id, properties
        FROM documents
        WHERE workspace_id = $1
          AND document_type = 'program'
@@ -387,6 +484,18 @@ async function ensureDemoWorkspaceProgramsAndProjects(
     );
 
     if (existingProgram.rows[0]) {
+      await ensureDocumentProperties(
+        pool,
+        existingProgram.rows[0].id as string,
+        existingProgram.rows[0].properties as Record<string, unknown> | undefined,
+        {
+          prefix: programTemplate.prefix,
+          color: programTemplate.color,
+          owner_id: ownerUserId,
+          description: programTemplate.description,
+          goals: programTemplate.goals,
+        }
+      );
       programs.push({
         id: existingProgram.rows[0].id,
         ...programTemplate,
@@ -405,6 +514,8 @@ async function ensureDemoWorkspaceProgramsAndProjects(
           prefix: programTemplate.prefix,
           color: programTemplate.color,
           owner_id: ownerUserId,
+          description: programTemplate.description,
+          goals: programTemplate.goals,
         }),
         ownerUserId,
       ]
@@ -422,7 +533,7 @@ async function ensureDemoWorkspaceProgramsAndProjects(
       const projectTitle = `${program.name} - ${projectTemplate.name}`;
 
       const existingProject = await pool.query(
-        `SELECT d.id
+        `SELECT d.id, d.properties
          FROM documents d
          JOIN document_associations da
            ON da.document_id = d.id
@@ -435,6 +546,25 @@ async function ensureDemoWorkspaceProgramsAndProjects(
       );
 
       if (existingProject.rows[0]) {
+        await ensureDocumentProperties(
+          pool,
+          existingProject.rows[0].id as string,
+          existingProject.rows[0].properties as Record<string, unknown> | undefined,
+          {
+            color: projectTemplate.color,
+            emoji: projectTemplate.emoji,
+            description: projectTemplate.description,
+            impact: projectTemplate.impact,
+            confidence: projectTemplate.confidence,
+            ease: projectTemplate.ease,
+            plan: projectTemplate.plan,
+            success_criteria: projectTemplate.successCriteria,
+            monetary_impact_expected: projectTemplate.monetaryImpactExpected,
+            owner_id: ownerUserId,
+            has_design_review: projectTemplate.hasDesignReview,
+            design_review_notes: projectTemplate.designReviewNotes,
+          }
+        );
         projects.push({
           id: existingProject.rows[0].id,
           title: projectTitle,
@@ -455,10 +585,12 @@ async function ensureDemoWorkspaceProgramsAndProjects(
           JSON.stringify({
             color: projectTemplate.color,
             emoji: projectTemplate.emoji,
+            description: projectTemplate.description,
             impact: projectTemplate.impact,
             confidence: projectTemplate.confidence,
             ease: projectTemplate.ease,
             plan: projectTemplate.plan,
+            success_criteria: projectTemplate.successCriteria,
             monetary_impact_expected: projectTemplate.monetaryImpactExpected,
             owner_id: ownerUserId,
             has_design_review: projectTemplate.hasDesignReview,
@@ -512,6 +644,7 @@ export async function populateDemoWorkspaceData(
       issuesCreated: 0,
       weeklyPlansCreated: 0,
       weeklyRetrosCreated: 0,
+      weeklyReviewsCreated: 0,
       standupsCreated: 0,
     };
   }
@@ -528,20 +661,16 @@ export async function populateDemoWorkspaceData(
   let sprintsCreated = 0;
 
   for (const project of base.projects) {
-    const offsets =
-      project.templateName === 'Core Features'
-        ? Array.from({ length: PAST_WEEKS_TO_SEED + 2 }, (_, index) => index - PAST_WEEKS_TO_SEED)
-        : [0, 1];
+    const sprintNumbers = buildDemoProjectSprintNumbers(
+      currentWeekNumber,
+      project.templateName,
+      PAST_WEEKS_TO_SEED
+    );
     const projectSprintMap = new Map<number, { id: string; programId: string }>();
 
-    for (const offset of offsets) {
-      const sprintNumber = currentWeekNumber + offset;
-      if (sprintNumber <= 0) {
-        continue;
-      }
-
+    for (const sprintNumber of sprintNumbers) {
       const existingSprint = await pool.query(
-        `SELECT d.id
+        `SELECT d.id, d.properties
          FROM documents d
          JOIN document_associations da
            ON da.document_id = d.id
@@ -554,7 +683,32 @@ export async function populateDemoWorkspaceData(
         [workspaceId, project.id, sprintNumber]
       );
 
+      const desiredSprintProperties = {
+        sprint_number: sprintNumber,
+        owner_id: ownerUserId,
+        project_id: project.id,
+        assignee_ids: [ownerPersonDocId],
+        plan: `${project.title} focus for week ${sprintNumber}.`,
+        success_criteria: [
+          `Move ${project.templateName.toLowerCase()} work forward with visible weekly progress.`,
+          'Keep the sprint scoped enough to review and close cleanly.',
+        ],
+        confidence:
+          sprintNumber < currentWeekNumber ? 92 : sprintNumber === currentWeekNumber ? 78 : 61,
+        ...(sprintNumber < currentWeekNumber
+          ? { status: 'completed' }
+          : sprintNumber === currentWeekNumber
+            ? { status: 'active' }
+            : {}),
+      };
+
       if (existingSprint.rows[0]) {
+        await ensureDocumentProperties(
+          pool,
+          existingSprint.rows[0].id as string,
+          existingSprint.rows[0].properties as Record<string, unknown> | undefined,
+          desiredSprintProperties
+        );
         projectSprintMap.set(sprintNumber, {
           id: existingSprint.rows[0].id,
           programId: project.programId,
@@ -569,16 +723,7 @@ export async function populateDemoWorkspaceData(
         [
           workspaceId,
           `Week ${sprintNumber}`,
-          JSON.stringify({
-            sprint_number: sprintNumber,
-            owner_id: ownerUserId,
-            project_id: project.id,
-            assignee_ids: [ownerPersonDocId],
-            plan: `${project.title} focus for week ${sprintNumber}.`,
-            success_criteria: `Move ${project.templateName.toLowerCase()} work forward with visible weekly progress.`,
-            confidence: offset < 0 ? 92 : offset === 0 ? 78 : 61,
-            ...(offset < 0 ? { status: 'completed' } : offset === 0 ? { status: 'active' } : {}),
-          }),
+          JSON.stringify(desiredSprintProperties),
           ownerUserId,
         ]
       );
@@ -704,6 +849,93 @@ export async function populateDemoWorkspaceData(
       }
       issuesCreated++;
     }
+
+    const foundationSprintRecord = projectSprints.get(2) ?? null;
+    if (foundationSprintRecord) {
+      for (const [issueIndex, issueTemplate] of DEMO_FOUNDATION_WEEK_2_ISSUES.entries()) {
+        const issueTitle = `${project.title}: ${issueTemplate.titleSuffix}`;
+        const issueType = inferSeedIssueType({
+          title: issueTitle,
+          projectTemplateName: project.templateName,
+        });
+        const issueContent = createIssueTemplateContent({
+          title: issueTitle,
+          issueType,
+          projectLabel: project.templateName,
+          mode: 'filled',
+        });
+        const existingIssue = await pool.query(
+          `SELECT d.id, d.properties, d.content
+           FROM documents d
+           JOIN document_associations da
+             ON da.document_id = d.id
+            AND da.related_id = $2
+            AND da.relationship_type = 'project'
+           WHERE d.workspace_id = $1
+             AND d.document_type = 'issue'
+             AND d.title = $3
+           LIMIT 1`,
+          [workspaceId, project.id, issueTitle]
+        );
+
+        const issueState = resolveDemoWeekIssueState(currentWeekNumber, 2, issueIndex);
+
+        if (existingIssue.rows[0]) {
+          const issueId = existingIssue.rows[0].id as string;
+          await ensureIssueType(
+            pool,
+            issueId,
+            existingIssue.rows[0].properties as Record<string, unknown> | undefined,
+            issueType
+          );
+          await ensureIssueContent(
+            pool,
+            issueId,
+            existingIssue.rows[0].content as Record<string, unknown> | undefined,
+            issueContent
+          );
+          await ensureIssuePlanningProperties(
+            pool,
+            issueId,
+            existingIssue.rows[0].properties as Record<string, unknown> | undefined,
+            issueTemplate.estimate
+          );
+          await createAssociation(pool, issueId, project.id, 'project');
+          await createAssociation(pool, issueId, project.programId, 'program');
+          await createAssociation(pool, issueId, foundationSprintRecord.id, 'sprint');
+          continue;
+        }
+
+        const nextTicketNumber = (maxTickets.get(project.programId) ?? 0) + 1;
+        maxTickets.set(project.programId, nextTicketNumber);
+
+        const createdIssue = await pool.query(
+          `INSERT INTO documents (workspace_id, document_type, title, content, properties, ticket_number, visibility, created_by)
+           VALUES ($1, 'issue', $2, $3, $4, $5, 'workspace', $6)
+           RETURNING id`,
+          [
+            workspaceId,
+            issueTitle,
+            JSON.stringify(issueContent),
+            JSON.stringify({
+              state: issueState,
+              priority: issueTemplate.priority,
+              issue_type: issueType,
+              source: 'internal',
+              assignee_id: ownerUserId,
+              ...buildIssuePlanningProperties(issueTemplate.estimate),
+            }),
+            nextTicketNumber,
+            ownerUserId,
+          ]
+        );
+
+        await createAssociation(pool, createdIssue.rows[0].id, project.id, 'project');
+        await createAssociation(pool, createdIssue.rows[0].id, project.programId, 'program');
+        await createAssociation(pool, createdIssue.rows[0].id, foundationSprintRecord.id, 'sprint');
+        issuesCreated++;
+      }
+    }
   }
 
   for (const projectSprintMap of sprintMap.values()) {
@@ -732,6 +964,127 @@ export async function populateDemoWorkspaceData(
 
   let weeklyPlansCreated = 0;
   let weeklyRetrosCreated = 0;
+  let weeklyReviewsCreated = 0;
+
+  if (ownerPersonDocId) {
+    for (const project of base.projects) {
+      const foundationSprintRecord = sprintMap.get(project.id)?.get(2) ?? null;
+      if (!foundationSprintRecord) {
+        continue;
+      }
+
+      const foundationWeekDocuments = [
+        {
+          type: 'weekly_plan' as const,
+          weekNumber: 2,
+          title: `Week 2 Plan - ${project.title}`,
+          content: buildListDocumentContent(
+            DEMO_PLAN_ITEMS.map((item) => `${project.templateName}: ${item}`)
+          ),
+          submittedAt: buildSprintSnapshotDate(workspaceSprintStartDate, 2).toISOString(),
+        },
+        ...(currentWeekNumber > 2
+          ? [
+              {
+                type: 'weekly_retro' as const,
+                weekNumber: 2,
+                title: `Week 2 Retro - ${project.title}`,
+                content: buildListDocumentContent(
+                  DEMO_RETRO_ITEMS.map((item) => `${project.templateName}: ${item}`)
+                ),
+                submittedAt: buildSprintSnapshotDate(workspaceSprintStartDate, 2).toISOString(),
+              },
+            ]
+          : []),
+      ];
+
+      for (const weeklyDocument of foundationWeekDocuments) {
+        const existing = await pool.query(
+          `SELECT id
+           FROM documents
+           WHERE workspace_id = $1
+             AND document_type = $2
+             AND (properties->>'person_id') = $3
+             AND (properties->>'project_id') = $4
+             AND (properties->>'week_number')::int = $5
+           LIMIT 1`,
+          [
+            workspaceId,
+            weeklyDocument.type,
+            ownerPersonDocId,
+            project.id,
+            weeklyDocument.weekNumber,
+          ]
+        );
+
+        if (!existing.rows[0]) {
+          const created = await pool.query(
+            `INSERT INTO documents (workspace_id, document_type, title, content, properties, visibility, created_by)
+             VALUES ($1, $2, $3, $4, $5, 'workspace', $6)
+             RETURNING id`,
+            [
+              workspaceId,
+              weeklyDocument.type,
+              weeklyDocument.title,
+              JSON.stringify(weeklyDocument.content),
+              JSON.stringify({
+                person_id: ownerPersonDocId,
+                project_id: project.id,
+                week_number: weeklyDocument.weekNumber,
+                submitted_at: weeklyDocument.submittedAt,
+              }),
+              ownerUserId,
+            ]
+          );
+
+          await createAssociation(pool, created.rows[0].id, project.id, 'project');
+
+          if (weeklyDocument.type === 'weekly_plan') {
+            weeklyPlansCreated++;
+          } else {
+            weeklyRetrosCreated++;
+          }
+        }
+      }
+
+      if (currentWeekNumber > 2) {
+        const existingReview = await pool.query(
+          `SELECT d.id
+           FROM documents d
+           JOIN document_associations da
+             ON da.document_id = d.id
+            AND da.related_id = $2
+            AND da.relationship_type = 'sprint'
+           WHERE d.workspace_id = $1
+             AND d.document_type = 'weekly_review'
+           LIMIT 1`,
+          [workspaceId, foundationSprintRecord.id]
+        );
+
+        if (!existingReview.rows[0]) {
+          const reviewResult = await pool.query(
+            `INSERT INTO documents (workspace_id, document_type, title, content, properties, created_by, visibility)
+             VALUES ($1, 'weekly_review', $2, $3, $4, $5, 'workspace')
+             RETURNING id`,
+            [
+              workspaceId,
+              `Week 2 Review - ${project.title}`,
+              JSON.stringify(buildReviewDocumentContent(project.title, 2)),
+              JSON.stringify({
+                sprint_id: foundationSprintRecord.id,
+                owner_id: ownerUserId,
+                plan_validated: true,
+              }),
+              ownerUserId,
+            ]
+          );
+
+          await createAssociation(pool, reviewResult.rows[0].id, foundationSprintRecord.id, 'sprint');
+          weeklyReviewsCreated++;
+        }
+      }
+    }
+  }
 
   if (primaryProject) {
     const weeklyDocuments = [
@@ -872,6 +1225,65 @@ export async function populateDemoWorkspaceData(
     standupsCreated++;
   }
 
+  if (currentWeekNumber > 2) {
+    for (const project of base.projects) {
+      const foundationSprintRecord = sprintMap.get(project.id)?.get(2) ?? null;
+      if (!foundationSprintRecord) {
+        continue;
+      }
+
+      for (const dayOffset of [1, 2]) {
+        const standupDate = buildSprintSnapshotDate(workspaceSprintStartDate, 2);
+        standupDate.setUTCDate(standupDate.getUTCDate() + dayOffset);
+        const isoDate = toIsoDate(standupDate);
+        const existingStandup = await pool.query(
+          `SELECT d.id
+           FROM documents d
+           JOIN document_associations da
+             ON da.document_id = d.id
+            AND da.related_id = $4
+            AND da.relationship_type = 'sprint'
+           WHERE d.workspace_id = $1
+             AND d.document_type = 'standup'
+             AND (properties->>'author_id') = $2
+             AND (properties->>'date') = $3
+           LIMIT 1`,
+          [workspaceId, ownerUserId, isoDate, foundationSprintRecord.id]
+        );
+
+        if (existingStandup.rows[0]) {
+          continue;
+        }
+
+        const createdStandup = await pool.query(
+          `INSERT INTO documents (workspace_id, document_type, title, content, properties, visibility, created_by, created_at)
+           VALUES ($1, 'standup', $2, $3, $4, 'workspace', $5, $6)
+           RETURNING id`,
+          [
+            workspaceId,
+            `Standup ${isoDate} - ${project.title}`,
+            JSON.stringify(
+              buildListDocumentContent([
+                `Yesterday: moved ${project.templateName.toLowerCase()} work forward.`,
+                'Today: finishing the next scoped issue in the sprint.',
+                'Blockers: no blockers beyond normal review handoff.',
+              ])
+            ),
+            JSON.stringify({
+              author_id: ownerUserId,
+              date: isoDate,
+            }),
+            ownerUserId,
+            `${isoDate}T14:00:00.000Z`,
+          ]
+        );
+
+        await createAssociation(pool, createdStandup.rows[0].id, foundationSprintRecord.id, 'sprint');
+        standupsCreated++;
+      }
+    }
+  }
+
   return {
     programsCreated: base.programsCreated,
     projectsCreated: base.projectsCreated,
@@ -879,6 +1291,7 @@ export async function populateDemoWorkspaceData(
     issuesCreated,
     weeklyPlansCreated,
     weeklyRetrosCreated,
+    weeklyReviewsCreated,
     standupsCreated,
   };
 }
@@ -977,6 +1390,7 @@ export async function backfillDemoWorkspaceDataForSetupWorkspaces(pool: pg.Pool)
       populated.issuesCreated > 0 ||
       populated.weeklyPlansCreated > 0 ||
       populated.weeklyRetrosCreated > 0 ||
+      populated.weeklyReviewsCreated > 0 ||
       populated.standupsCreated > 0
     ) {
       workspacesUpdated++;
@@ -988,6 +1402,7 @@ export async function backfillDemoWorkspaceDataForSetupWorkspaces(pool: pg.Pool)
           `${populated.issuesCreated} issues, ` +
           `${populated.weeklyPlansCreated} plans, ` +
           `${populated.weeklyRetrosCreated} retros, ` +
+          `${populated.weeklyReviewsCreated} reviews, ` +
           `${populated.standupsCreated} standups`
       );
     }
