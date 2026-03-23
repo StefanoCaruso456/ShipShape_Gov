@@ -29,6 +29,8 @@ import {
   createFleetGraphLogger,
   invokeFleetGraph,
 } from './fleetgraph-runner.js';
+import { recordFleetGraphLangSmithChildRun } from './fleetgraph-langsmith.js';
+import { personalizeFleetGraphProactiveFinding } from './fleetgraph-proactive-personalization.js';
 import { resolveFleetGraphEventRecipients } from './fleetgraph-proactive-targeting.js';
 import { persistFleetGraphProactiveFinding } from './fleetgraph-proactive.js';
 import { recordFleetGraphProactiveDelivery } from './fleetgraph-telemetry.js';
@@ -796,6 +798,20 @@ export async function processPendingFleetGraphProactiveEvents(options?: {
           });
 
           for (const recipient of recipients) {
+            const personalized = await personalizeFleetGraphProactiveFinding(
+              {
+                baseSummary: result.finding.summary,
+                recommendedNextStep: result.reasoning?.recommendedNextStep ?? null,
+                workPersona: recipient.workPersona ?? null,
+                audienceRole: recipient.audienceRole,
+                deliverySource: 'event',
+                deliveryReason: recipient.deliveryReason,
+                triggerKind: match.triggerKind,
+                parentLangSmithRunId: result.telemetry.langsmithRunId,
+              },
+              logger
+            );
+
             const persisted = await persistFleetGraphProactiveFinding({
               workspaceId: event.workspaceId,
               weekId: match.weekId,
@@ -807,7 +823,7 @@ export async function processPendingFleetGraphProactiveEvents(options?: {
               deliverySource: 'event',
               deliveryReason: recipient.deliveryReason,
               title: null,
-              summary: result.finding.summary,
+              summary: personalized.summary,
               severity: findingSeverity,
               route: match.route,
               surface: 'document',
@@ -817,7 +833,17 @@ export async function processPendingFleetGraphProactiveEvents(options?: {
               payload: {
                 ...match.payload,
                 finding: result.finding,
+                reasoning: result.reasoning ?? null,
+                reasoningSource: result.reasoningSource ?? null,
                 derivedSignals: result.derivedSignals,
+                personalization: {
+                  workPersona: recipient.workPersona ?? null,
+                  audienceRole: recipient.audienceRole,
+                  source: personalized.source,
+                  applied: personalized.applied,
+                  baseSummary: result.finding.summary,
+                  personalizedSummary: personalized.summary,
+                },
                 proactiveEvent: {
                   eventId: event.id,
                   eventKind: event.eventKind,
@@ -866,6 +892,51 @@ export async function processPendingFleetGraphProactiveEvents(options?: {
               },
               logger
             );
+
+            try {
+              await recordFleetGraphLangSmithChildRun({
+                parentRunId: result.telemetry.langsmithRunId,
+                name: 'fleetgraph.proactive.delivery',
+                runType: 'tool',
+                inputs: {
+                  targetUserId: recipient.userId,
+                  audienceRole: recipient.audienceRole,
+                  audienceScope: recipient.audienceScope,
+                  deliverySource: 'event',
+                  deliveryReason: recipient.deliveryReason,
+                  triggerKind: match.triggerKind,
+                },
+                outputs: {
+                  findingId: persisted.finding.id,
+                  shouldNotify: persisted.shouldNotify,
+                  route: match.route,
+                },
+                metadata: {
+                  target_user_id: recipient.userId,
+                  audience_role: recipient.audienceRole,
+                  audience_scope: recipient.audienceScope,
+                  delivery_source: 'event',
+                  trigger_kind: match.triggerKind,
+                  work_persona: recipient.workPersona ?? null,
+                },
+                tags: [
+                  'fleetgraph',
+                  'proactive',
+                  'delivery',
+                  'source:event',
+                  `audience:${recipient.audienceRole}`,
+                ],
+              });
+            } catch (error) {
+              logger.warn('Failed to record FleetGraph proactive delivery trace', {
+                eventId: event.id,
+                findingId: persisted.finding.id,
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : 'Unknown proactive delivery trace failure',
+              });
+            }
           }
         }
 

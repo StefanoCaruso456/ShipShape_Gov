@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { WORK_PERSONA_LABELS, WORK_PERSONAS, type WorkPersona } from '@ship/shared';
 import { Editor } from '@/components/Editor';
 import { useAuth } from '@/hooks/useAuth';
 import { useDocuments } from '@/contexts/DocumentsContext';
@@ -19,6 +20,7 @@ interface PersonDocument {
   properties?: {
     email?: string | null;
     role?: string | null;
+    work_persona?: WorkPersona | null;
     reports_to?: string | null;
     user_id?: string | null;
     [key: string]: unknown;
@@ -174,6 +176,7 @@ export function PersonEditorPage() {
           }}
           metricsVisible={metricsVisible}
           sprintMetrics={sprintMetrics}
+          currentUserId={user?.id ?? null}
         />
       }
     />
@@ -184,15 +187,26 @@ interface PersonSidebarProps {
   person: PersonDocument;
   people: { id: string; user_id: string; name: string; email?: string }[];
   isAdmin: boolean;
+  currentUserId: string | null;
   onUpdateProperties: (updates: Record<string, unknown>) => Promise<void>;
   metricsVisible: boolean;
   sprintMetrics: SprintMetricsResponse | null;
 }
 
-function PersonSidebar({ person, people, isAdmin, onUpdateProperties, metricsVisible, sprintMetrics }: PersonSidebarProps) {
+function PersonSidebar({
+  person,
+  people,
+  isAdmin,
+  currentUserId,
+  onUpdateProperties,
+  metricsVisible,
+  sprintMetrics,
+}: PersonSidebarProps) {
   const props = person.properties || {};
   const reportsTo = (props.reports_to as string) || null;
   const personUserId = (props.user_id as string) || null;
+  const workPersona = (props.work_persona as WorkPersona | null | undefined) ?? null;
+  const canEditWorkPersona = isAdmin || (personUserId !== null && personUserId === currentUserId);
   const [roleDraft, setRoleDraft] = useState(typeof props.role === 'string' ? props.role : '');
   const [isSavingRole, setIsSavingRole] = useState(false);
 
@@ -210,9 +224,10 @@ function PersonSidebar({ person, people, isAdmin, onUpdateProperties, metricsVis
 
   const saveRole = useCallback(async () => {
     const normalizedRole = roleDraft.trim() || null;
-    const currentRole = typeof props.role === 'string' && props.role.trim().length > 0
-      ? props.role.trim()
-      : null;
+    const currentRole =
+      typeof props.role === 'string' && props.role.trim().length > 0
+        ? props.role.trim()
+        : null;
 
     if (normalizedRole === currentRole) {
       setRoleDraft(normalizedRole ?? '');
@@ -249,19 +264,19 @@ function PersonSidebar({ person, people, isAdmin, onUpdateProperties, metricsVis
         <input
           type="text"
           value={roleDraft}
-          onChange={(e) => setRoleDraft(e.target.value)}
+          onChange={(event) => setRoleDraft(event.target.value)}
           onBlur={() => {
             void saveRole();
           }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              e.currentTarget.blur();
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              event.currentTarget.blur();
             }
 
-            if (e.key === 'Escape') {
+            if (event.key === 'Escape') {
               setRoleDraft(typeof props.role === 'string' ? props.role : '');
-              e.currentTarget.blur();
+              event.currentTarget.blur();
             }
           }}
           placeholder="Add role..."
@@ -269,6 +284,31 @@ function PersonSidebar({ person, people, isAdmin, onUpdateProperties, metricsVis
           disabled={isSavingRole}
           className="w-full rounded bg-border px-2 py-1 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:cursor-wait disabled:opacity-60"
         />
+      </PropertyRow>
+
+      <PropertyRow label="Work Persona">
+        {canEditWorkPersona ? (
+          <select
+            className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm text-foreground outline-none focus:border-ring"
+            value={workPersona ?? ''}
+            onChange={(event) =>
+              onUpdateProperties({
+                work_persona: event.target.value ? event.target.value : null,
+              })
+            }
+          >
+            <option value="">Not set</option>
+            {WORK_PERSONAS.map((persona) => (
+              <option key={persona} value={persona}>
+                {WORK_PERSONA_LABELS[persona]}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="text-sm text-foreground">
+            {workPersona ? WORK_PERSONA_LABELS[workPersona] : <span className="text-muted">Not set</span>}
+          </div>
+        )}
       </PropertyRow>
 
       <PropertyRow label="Reports To" tooltip="Official supervisor — determines performance evaluation authority">

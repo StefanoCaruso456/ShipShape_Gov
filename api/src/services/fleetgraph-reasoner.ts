@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RunTree } from 'langsmith';
 import type { FleetGraphReasoningService, FleetGraphReasoning, FleetGraphLogger } from '@ship/fleetgraph';
 import { estimateAiCost, finishAiSpan, startAiSpan } from './ai-telemetry.js';
 
@@ -71,6 +72,7 @@ function buildSystemPrompt(): string {
     'Use only the evidence you are given.',
     'Explain why the sprint is or is not at risk and, when relevant, whether the current evidence points more to scope drift, blocked work, dependency risk, workload pressure, staffing pressure, or overcommitment relative to recent delivery history.',
     'Prefer concise, grounded reasoning over generic management advice.',
+    'If workPersona is provided, keep the explanation and recommended next step legible for that persona without changing the underlying facts.',
     'For sprint reasoning, answerMode must be "execution".',
     'Return JSON only with keys: answerMode, summary, evidence, whyNow, recommendedNextStep, confidence.',
     'Do not invent facts, names, statuses, or blockers that are not in the evidence.',
@@ -134,6 +136,94 @@ function extractUsage(payload: Record<string, unknown>) {
   );
 }
 
+function buildReasoningTraceInputs(
+  input: Parameters<FleetGraphReasoningService['reasonAboutSprint']>[0]
+): Record<string, unknown> {
+  return {
+    activeViewRoute: input.activeViewRoute,
+    question: input.question,
+    questionTheme: input.questionTheme,
+    workPersona: input.workPersona,
+    findingSummary: input.findingSummary,
+    derivedSignals: {
+      severity: input.derivedSignals.severity,
+      summary: input.derivedSignals.summary,
+      reasons: input.derivedSignals.reasons,
+      signalKinds: input.derivedSignals.signals.map((signal) => signal.kind),
+      metrics: input.derivedSignals.metrics,
+    },
+    fetched: {
+      entity: input.fetched.entity && typeof input.fetched.entity === 'object'
+        ? {
+            id:
+              'id' in input.fetched.entity && typeof input.fetched.entity.id === 'string'
+                ? input.fetched.entity.id
+                : null,
+            title:
+              'title' in input.fetched.entity && typeof input.fetched.entity.title === 'string'
+                ? input.fetched.entity.title
+                : null,
+          }
+        : null,
+      accountability:
+        input.fetched.accountability && typeof input.fetched.accountability === 'object'
+          ? {
+              project:
+                'project' in input.fetched.accountability
+                  ? (input.fetched.accountability as { project?: unknown }).project
+                  : null,
+              issues:
+                'issues' in input.fetched.accountability
+                  ? (input.fetched.accountability as { issues?: unknown }).issues
+                  : null,
+            }
+          : null,
+      planning:
+        input.fetched.planning && typeof input.fetched.planning === 'object'
+          ? {
+              scopeChanges:
+                'scopeChanges' in input.fetched.planning
+                  ? (input.fetched.planning as { scopeChanges?: unknown }).scopeChanges
+                  : null,
+              dependencySignals:
+                'dependencySignals' in input.fetched.planning
+                  ? (input.fetched.planning as { dependencySignals?: unknown }).dependencySignals
+                  : null,
+              workload:
+                'workload' in input.fetched.planning
+                  ? (input.fetched.planning as { workload?: unknown }).workload
+                  : null,
+            }
+          : null,
+    },
+  };
+}
+
+function serializeTraceError(error: unknown): string {
+  return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+}
+
+async function finalizeReasoningTraceRun(
+  runTree: RunTree | null,
+  input: {
+    outputs?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+    error?: unknown;
+  }
+): Promise<void> {
+  if (!runTree) {
+    return;
+  }
+
+  await runTree.end(
+    input.outputs,
+    input.error ? serializeTraceError(input.error) : undefined,
+    undefined,
+    input.metadata
+  );
+  await runTree.patchRun();
+}
+
 export function createFleetGraphReasoner(
   logger: FleetGraphLogger
 ): FleetGraphReasoningService | null {
@@ -143,10 +233,31 @@ export function createFleetGraphReasoner(
   }
 
   return {
-    async reasonAboutSprint(input): Promise<FleetGraphReasoning | null> {
+    async reasonAboutSprint(input, options): Promise<FleetGraphReasoning | null> {
       const systemPrompt = buildSystemPrompt();
       const userPrompt = buildUserPrompt(input);
       const startedAt = Date.now();
+      const reasoningRun = options?.runnableConfig
+        ? RunTree.fromRunnableConfig(options.runnableConfig, {
+            name: 'fleetgraph.reasoning.model',
+            run_type: 'llm',
+            inputs: buildReasoningTraceInputs(input),
+            extra: {
+              metadata: {
+                feature: 'fleetgraph_reasoning',
+                provider: 'openai',
+                model: getOpenAiModel(),
+                ...(options.traceMetadata ?? {}),
+              },
+            },
+            tags: [
+              'fleetgraph',
+              'reasoning',
+              'model',
+              input.workPersona ? `persona:${input.workPersona}` : 'persona:none',
+            ],
+          })
+        : null;
       const span = startAiSpan({
         operation: 'fleetgraph.reasoning',
         provider: 'openai',
@@ -156,6 +267,9 @@ export function createFleetGraphReasoner(
         userPrompt,
         maxTokens: REASONING_MAX_TOKENS,
       });
+
+      await reasoningRun?.postRun();
+      let reasoningTraceFinished = false;
 
       try {
         const response = await fetch(OPENAI_API_URL, {
@@ -186,6 +300,7 @@ export function createFleetGraphReasoner(
         });
 
         const payload = (await response.json()) as Record<string, unknown>;
+        const usage = extractUsage(payload);
         if (!response.ok) {
           const message =
             typeof payload.error === 'object' &&
@@ -195,13 +310,24 @@ export function createFleetGraphReasoner(
               : `FleetGraph reasoning request failed with status ${response.status}`;
           finishAiSpan(span, {
             latencyMs: Date.now() - startedAt,
-            usage: extractUsage(payload),
+            usage,
             error: new Error(message),
             metadata: {
               feature: 'fleetgraph_reasoning',
               response_status: response.status,
             },
           });
+          await finalizeReasoningTraceRun(reasoningRun, {
+            outputs: {
+              fallback: 'request_failure',
+            },
+            metadata: {
+              response_status: response.status,
+              usage,
+            },
+            error: message,
+          });
+          reasoningTraceFinished = true;
           const enrichedError = new Error(message) as Error & {
             fleetgraphTelemetryFinished?: boolean;
           };
@@ -214,13 +340,23 @@ export function createFleetGraphReasoner(
           logger.warn('FleetGraph reasoning response was empty; falling back');
           finishAiSpan(span, {
             latencyMs: Date.now() - startedAt,
-            usage: extractUsage(payload),
+            usage,
             responseText: null,
             metadata: {
               feature: 'fleetgraph_reasoning',
               fallback: 'empty_response',
             },
           });
+          await finalizeReasoningTraceRun(reasoningRun, {
+            outputs: {
+              fallback: 'empty_response',
+            },
+            metadata: {
+              usage,
+              response_status: response.status,
+            },
+          });
+          reasoningTraceFinished = true;
           return null;
         }
 
@@ -228,13 +364,22 @@ export function createFleetGraphReasoner(
           const parsed = reasoningSchema.parse(JSON.parse(stripCodeFences(content)));
           finishAiSpan(span, {
             latencyMs: Date.now() - startedAt,
-            usage: extractUsage(payload),
+            usage,
             responseText: content,
             metadata: {
               feature: 'fleetgraph_reasoning',
               fallback: false,
             },
           });
+          await finalizeReasoningTraceRun(reasoningRun, {
+            outputs: parsed,
+            metadata: {
+              usage,
+              response_status: response.status,
+              fallback: false,
+            },
+          });
+          reasoningTraceFinished = true;
           return parsed;
         } catch (error) {
           logger.warn('FleetGraph reasoning response could not be parsed; falling back', {
@@ -242,7 +387,7 @@ export function createFleetGraphReasoner(
           });
           finishAiSpan(span, {
             latencyMs: Date.now() - startedAt,
-            usage: extractUsage(payload),
+            usage,
             responseText: content,
             error,
             metadata: {
@@ -250,6 +395,17 @@ export function createFleetGraphReasoner(
               fallback: 'parse_failure',
             },
           });
+          await finalizeReasoningTraceRun(reasoningRun, {
+            outputs: {
+              fallback: 'parse_failure',
+            },
+            metadata: {
+              usage,
+              response_status: response.status,
+            },
+            error,
+          });
+          reasoningTraceFinished = true;
           return null;
         }
       } catch (error) {
@@ -268,6 +424,14 @@ export function createFleetGraphReasoner(
               feature: 'fleetgraph_reasoning',
               fallback: 'request_failure',
             },
+          });
+        }
+        if (!reasoningTraceFinished) {
+          await finalizeReasoningTraceRun(reasoningRun, {
+            outputs: {
+              fallback: 'request_failure',
+            },
+            error,
           });
         }
         throw error;

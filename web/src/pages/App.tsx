@@ -45,7 +45,12 @@ import { ActionItemsModal } from '@/components/ActionItemsModal';
 import { AccountabilityBanner } from '@/components/AccountabilityBanner';
 import { ProjectContextSidebar } from '@/components/sidebars/ProjectContextSidebar';
 import { FleetGraphOnDemandPanel } from '@/components/fleetgraph/FleetGraphOnDemandPanel';
-import { buildAnalyticsPath, parseAnalyticsView } from '@/lib/analytics-route';
+import {
+  buildAnalyticsPath,
+  parseAnalyticsHistoryScope,
+  parseAnalyticsView,
+  parseAnalyticsWeekNumber,
+} from '@/lib/analytics-route';
 import type { FleetGraphProactiveFinding } from '@ship/shared';
 
 type Mode = 'docs' | 'issues' | 'projects' | 'programs' | 'sprints' | 'team' | 'settings' | 'dashboard' | 'analytics' | 'project-context';
@@ -155,7 +160,7 @@ export function AppLayout() {
     }
 
     markFleetGraphFindingSeen(finding.id);
-    const toastCopy = buildFleetGraphProactiveFindingToastCopy(finding);
+    const toastCopy = buildFleetGraphProactiveFindingToastCopy(finding, user?.workPersona ?? null);
     void reportFleetGraphFeedback(
       buildFleetGraphProactiveFindingFeedback(finding, 'proactive_toast_shown')
     ).catch(() => {});
@@ -174,7 +179,7 @@ export function AppLayout() {
         },
       }
     );
-  }, [currentWorkspace, hasSeenFleetGraphFinding, markFleetGraphFindingSeen, navigate, showToast]);
+  }, [currentWorkspace, hasSeenFleetGraphFinding, markFleetGraphFindingSeen, navigate, showToast, user?.workPersona]);
 
   const handleFleetGraphFindingEvent = useCallback((event: { data: Record<string, unknown> }) => {
     const data = event.data as Partial<FleetGraphProactiveFinding>;
@@ -274,15 +279,20 @@ export function AppLayout() {
   // Get current document type and ID for /documents/:id routes
   const { currentDocumentType, currentDocumentId, currentDocumentProjectId } = useCurrentDocument();
   const inlineWeekId = getInlineWeekIdFromPath(location.pathname);
-  const analyticsView = parseAnalyticsView(new URLSearchParams(location.search).get('view')) as AnalyticsView;
+  const analyticsSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const analyticsView = parseAnalyticsView(analyticsSearchParams.get('view')) as AnalyticsView;
+  const analyticsHistoryScope = parseAnalyticsHistoryScope(analyticsSearchParams.get('historyScope'));
+  const analyticsHistoryStartWeek = parseAnalyticsWeekNumber(analyticsSearchParams.get('historyStartWeek'));
+  const analyticsHistoryEndWeek = parseAnalyticsWeekNumber(analyticsSearchParams.get('historyEndWeek'));
 
   const analyticsSprints = useMemo<AnalyticsSidebarSprint[]>(
     () => analyticsSprintsData.map((sprint) => ({
       id: sprint.id,
       title: sprint.title,
+      subtitle: sprint.subtitle,
       programName: sprint.programName,
-      sprintNumber: sprint.sprintNumber,
       status: sprint.status,
+      statusLabel: sprint.statusLabel,
     })),
     [analyticsSprintsData]
   );
@@ -378,7 +388,15 @@ export function AppLayout() {
       case 'analytics': {
         const sprintId = resolvePreferredAnalyticsSprintId();
         setLeftSidebarCollapsed(false);
-        navigate(sprintId ? buildAnalyticsPath(sprintId, analyticsView) : '/analytics');
+        navigate(
+          sprintId
+            ? buildAnalyticsPath(sprintId, analyticsView, {
+                historyScope: analyticsHistoryScope,
+                historyStartWeek: analyticsHistoryStartWeek,
+                historyEndWeek: analyticsHistoryEndWeek,
+              })
+            : '/analytics'
+        );
         break;
       }
       case 'docs': navigate('/docs'); break;

@@ -1,3 +1,5 @@
+import type { WorkPersona } from './user.js';
+
 // Document types
 
 // Document visibility for private/workspace documents
@@ -186,6 +188,7 @@ export interface WeekProperties {
 export interface PersonProperties {
   email?: string | null;
   role?: string | null;
+  work_persona?: WorkPersona | null;
   capacity_hours?: number | null;
   reports_to?: string | null;
   [key: string]: unknown;

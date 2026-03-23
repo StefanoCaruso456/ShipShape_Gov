@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import type { WorkPersona } from '@ship/shared';
 import { apiGet } from '@/lib/api';
 
 export interface TeamMember {
@@ -6,6 +7,9 @@ export interface TeamMember {
   user_id: string | null;
   name: string;
   email?: string;
+  role?: string | null;
+  workPersona?: WorkPersona | null;
+  reportsTo?: string | null;
   isPending?: boolean;
 }
 

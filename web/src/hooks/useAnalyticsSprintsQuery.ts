@@ -12,6 +12,7 @@ export interface AnalyticsSprintSummary {
   programName: string;
   sprintNumber: number;
   status: Sprint['status'];
+  statusLabel: string;
 }
 
 async function fetchProgramSprints(programId: string): Promise<SprintsResponse> {
@@ -35,34 +36,84 @@ function hasAnalyticsSignal(week: Sprint) {
   );
 }
 
+function getStatusRank(status: Sprint['status']) {
+  switch (status) {
+    case 'active':
+      return 0;
+    case 'planning':
+      return 1;
+    default:
+      return 2;
+  }
+}
+
+function getStatusLabel(status: Sprint['status']) {
+  switch (status) {
+    case 'active':
+      return 'Active';
+    case 'planning':
+      return 'Planning';
+    default:
+      return 'Completed';
+  }
+}
+
+function getWeekSignalScore(week: Sprint) {
+  return (
+    week.issue_count +
+    week.completed_count +
+    week.started_count +
+    (week.total_estimate_hours ?? 0) +
+    (week.has_plan ? 1 : 0) +
+    (week.has_retro ? 1 : 0)
+  );
+}
+
+function dedupeWeeksBySprintNumber(weeks: Sprint[]) {
+  const bySprintNumber = new Map<number, Sprint>();
+
+  for (const week of weeks) {
+    const existing = bySprintNumber.get(week.sprint_number);
+    if (!existing) {
+      bySprintNumber.set(week.sprint_number, week);
+      continue;
+    }
+
+    const statusDelta = getStatusRank(week.status) - getStatusRank(existing.status);
+    if (statusDelta < 0) {
+      bySprintNumber.set(week.sprint_number, week);
+      continue;
+    }
+
+    if (statusDelta === 0 && getWeekSignalScore(week) > getWeekSignalScore(existing)) {
+      bySprintNumber.set(week.sprint_number, week);
+    }
+  }
+
+  return Array.from(bySprintNumber.values());
+}
+
 function getProgramAnalyticsWeeks(weeks: Sprint[]) {
-  const relevantWeeks = weeks.filter(hasAnalyticsSignal);
-  const activeOrPlanning = relevantWeeks
-    .filter((week) => week.status !== 'completed')
+  const relevantWeeks = dedupeWeeksBySprintNumber(weeks.filter(hasAnalyticsSignal));
+  const activeWeeks = relevantWeeks
+    .filter((week) => week.status === 'active')
     .sort((left, right) => right.sprint_number - left.sprint_number);
+  const planningWeeks = relevantWeeks
+    .filter((week) => week.status === 'planning')
+    .sort((left, right) => right.sprint_number - left.sprint_number)
+    .slice(0, 1);
   const recentCompleted = relevantWeeks
     .filter((week) => week.status === 'completed')
     .sort((left, right) => right.sprint_number - left.sprint_number)
-    .slice(0, 6);
+    .slice(0, 3);
 
   const included = new Map<string, Sprint>();
-  for (const week of [...activeOrPlanning, ...recentCompleted]) {
+  for (const week of [...activeWeeks, ...planningWeeks, ...recentCompleted]) {
     included.set(week.id, week);
   }
 
   return Array.from(included.values()).sort((left, right) => {
-    const statusRank = (status: Sprint['status']) => {
-      switch (status) {
-        case 'active':
-          return 0;
-        case 'planning':
-          return 1;
-        default:
-          return 2;
-      }
-    };
-
-    const statusDelta = statusRank(left.status) - statusRank(right.status);
+    const statusDelta = getStatusRank(left.status) - getStatusRank(right.status);
     if (statusDelta !== 0) {
       return statusDelta;
     }
@@ -94,28 +145,18 @@ export function useAnalyticsSprintsQuery() {
         summaries.push({
           id: week.id,
           title: week.name,
-          subtitle: `${program.name} • Week ${week.sprint_number} • ${week.status}`,
+          subtitle: `${program.name} • Week ${week.sprint_number}`,
           programId: program.id,
           programName: program.name,
           sprintNumber: week.sprint_number,
           status: week.status,
+          statusLabel: getStatusLabel(week.status),
         });
       }
     });
 
     return summaries.sort((left, right) => {
-      const statusRank = (status: Sprint['status']) => {
-        switch (status) {
-          case 'active':
-            return 0;
-          case 'planning':
-            return 1;
-          default:
-            return 2;
-        }
-      };
-
-      const statusDelta = statusRank(left.status) - statusRank(right.status);
+      const statusDelta = getStatusRank(left.status) - getStatusRank(right.status);
       if (statusDelta !== 0) {
         return statusDelta;
       }

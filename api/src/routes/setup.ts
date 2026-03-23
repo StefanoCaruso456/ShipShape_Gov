@@ -135,6 +135,7 @@ router.post('/initialize', async (req: Request, res: Response): Promise<void> =>
           id: user.id,
           email: user.email,
           name: user.name,
+          workPersona: null,
           isSuperAdmin: user.is_super_admin,
         },
         message: 'Setup complete! You can now log in.',

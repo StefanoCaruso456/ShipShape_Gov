@@ -500,6 +500,8 @@ Current verification for this repo state:
 - `pnpm --filter @ship/web test -- src/lib/fleetgraph.test.ts src/pages/Dashboard.test.tsx src/components/fleetgraph/FleetGraphOnDemandPanel.test.tsx src/hooks/useFleetGraphPageContext.test.ts` passed
 - `pnpm --filter @ship/fleetgraph build`, `pnpm --filter @ship/web build`, and `pnpm --filter @ship/api build` passed
 - `pnpm fleetgraph:verify-requirements` passed and refreshed the requirement audit
+- A fresh local manual FleetGraph trace capture was not rerun in this workspace because no local Ship API was listening on `http://localhost:3000` and the API test harness had no reachable PostgreSQL on `127.0.0.1:5432`; the trace links above are the captured evidence bundle currently recorded in [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-evidence/summary.md).
+- Public deployment verification should be rerun after merge/deploy; see the latest status in [summary.md](/Users/stefanocaruso/Desktop/Gauntlet/ShipShape/audit-results/fleetgraph-requirements/summary.md).
 
 ## Observability
 

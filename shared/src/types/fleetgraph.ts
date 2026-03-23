@@ -1,5 +1,4 @@
 import type { DocumentType } from './document.js';
-
 import type { WorkPersona } from './user.js';
 
 export type FleetGraphViewSurface =

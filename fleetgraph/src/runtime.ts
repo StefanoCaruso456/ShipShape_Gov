@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import type Anthropic from '@anthropic-ai/sdk';
 import type { RunnableConfig } from '@langchain/core/runnables';
+import type { WorkPersona } from '@ship/shared';
 import type {
   FleetGraphActionMemoryRecord,
   FleetGraphEvidenceToolName,
@@ -33,6 +34,7 @@ export interface FleetGraphReasoningService {
     activeViewRoute: string | null;
     question: string | null;
     questionTheme: string | null;
+    workPersona: WorkPersona | null;
     findingSummary: string | null;
     derivedSignals: {
       severity: string;
@@ -47,6 +49,9 @@ export interface FleetGraphReasoningService {
       }>;
     };
     fetched: Record<string, unknown>;
+  }, options?: {
+    runnableConfig?: RunnableConfig;
+    traceMetadata?: Record<string, unknown>;
   }): Promise<FleetGraphReasoning | null>;
 }
 

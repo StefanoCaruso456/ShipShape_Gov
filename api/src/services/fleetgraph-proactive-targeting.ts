@@ -3,6 +3,7 @@ import type {
   FleetGraphProactiveAudienceScope,
   FleetGraphProactiveFinding,
   FleetGraphProactiveTriggerKind,
+  WorkPersona,
 } from '@ship/shared';
 import { pool } from '../db/client.js';
 
@@ -52,6 +53,7 @@ export interface FleetGraphAudienceRecipient {
   audienceRole: FleetGraphProactiveAudienceRole;
   audienceScope: FleetGraphProactiveAudienceScope;
   deliveryReason: string;
+  workPersona?: WorkPersona | null;
 }
 
 interface FleetGraphAudienceCandidate extends FleetGraphAudienceRecipient {
@@ -580,19 +582,30 @@ async function filterToValidUserRecipients(
   }
 
   const result = await db.query(
-    `SELECT id::text AS id
+    `SELECT id::text AS id, work_persona
      FROM users
      WHERE id = ANY($1::uuid[])`,
     [candidateUserIds]
   );
 
-  const validUserIds = new Set(
-    result.rows
-      .map((row) => (typeof row.id === 'string' ? row.id : null))
-      .filter((userId): userId is string => userId !== null)
-  );
+  const validUsers = new Map<string, WorkPersona | null>();
+  for (const row of result.rows) {
+    if (typeof row.id !== 'string') {
+      continue;
+    }
 
-  return recipients.filter((recipient) => validUserIds.has(recipient.userId));
+    validUsers.set(
+      row.id,
+      typeof row.work_persona === 'string' ? row.work_persona as WorkPersona : null
+    );
+  }
+
+  return recipients
+    .filter((recipient) => validUsers.has(recipient.userId))
+    .map((recipient) => ({
+      ...recipient,
+      workPersona: validUsers.get(recipient.userId) ?? null,
+    }));
 }
 
 export function buildSweepAudienceRecipients(

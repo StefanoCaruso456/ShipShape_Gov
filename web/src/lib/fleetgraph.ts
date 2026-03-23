@@ -6,6 +6,7 @@ import type {
   FleetGraphOnDemandResumeRequest,
   FleetGraphOnDemandResponse,
   FleetGraphProactiveFinding,
+  WorkPersona,
 } from '@ship/shared';
 import { apiGet, apiPost } from '@/lib/api';
 import type { DocumentResponse } from '@/lib/document-tabs';
@@ -228,6 +229,42 @@ function normalizeRoute(route: string): string {
   return route.trim();
 }
 
+function getFleetGraphProactiveActionLabel(finding: FleetGraphProactiveFinding): string {
+  if (finding.surface === 'my_week') {
+    return 'Open My Week';
+  }
+
+  if (finding.surface === 'project') {
+    return 'Open Project';
+  }
+
+  if (finding.surface === 'program') {
+    return 'Open Program';
+  }
+
+  if (finding.surface === 'issue') {
+    return 'Open Issue';
+  }
+
+  if (finding.tab === 'plan') {
+    return 'Open Plan';
+  }
+
+  if (finding.tab === 'retro' || finding.tab === 'review') {
+    return 'Open Review';
+  }
+
+  if (finding.tab === 'issues') {
+    return 'Open Issues';
+  }
+
+  if (finding.tab === 'details') {
+    return 'Open Details';
+  }
+
+  return 'Open Surface';
+}
+
 export function resolveFleetGraphActiveView({
   currentDocumentId,
   currentDocumentProjectId,
@@ -249,20 +286,72 @@ export function resolveFleetGraphActiveView({
   });
 }
 
-export function buildFleetGraphProactiveFindingToastCopy(
+function describePersonaFollowUp(
+  workPersona: WorkPersona,
   finding: FleetGraphProactiveFinding
+): string {
+  const personaLabel = (() => {
+    switch (workPersona) {
+      case 'product_manager':
+        return 'product';
+      case 'engineer':
+        return 'engineering';
+      case 'engineering_manager':
+        return 'engineering manager';
+      case 'designer':
+        return 'design';
+      case 'qa':
+        return 'QA';
+      case 'ops_platform':
+        return 'ops/platform';
+      case 'stakeholder':
+        return 'stakeholder';
+      case 'other':
+      default:
+        return 'team';
+    }
+  })();
+
+  if (finding.audienceScope === 'team' || finding.audienceRole === 'team_member') {
+    return `${personaLabel} coordination`;
+  }
+
+  if (finding.audienceRole === 'accountable') {
+    return `${personaLabel} decision`;
+  }
+
+  if (finding.audienceRole === 'manager') {
+    return `${personaLabel} support`;
+  }
+
+  return `${personaLabel} follow-up`;
+}
+
+export function buildFleetGraphProactiveFindingToastCopy(
+  finding: FleetGraphProactiveFinding,
+  workPersona?: WorkPersona | null
 ): { message: string; actionLabel: string } {
   const title = finding.title ?? 'Current week';
   const prefix =
-    finding.severity === 'action'
-      ? 'FleetGraph flagged'
-      : finding.severity === 'warning'
-        ? 'FleetGraph noticed'
-        : 'FleetGraph surfaced';
+    finding.audienceRole === 'accountable'
+      ? 'FleetGraph escalated'
+      : finding.severity === 'action'
+        ? 'FleetGraph flagged'
+        : finding.severity === 'warning'
+          ? 'FleetGraph noticed'
+          : 'FleetGraph surfaced';
+  const personaLead = workPersona ? describePersonaFollowUp(workPersona, finding) : null;
+  const headline = personaLead ?? title;
+  const deliveryReason =
+    finding.audienceRole === 'accountable' &&
+    typeof finding.deliveryReason === 'string' &&
+    finding.deliveryReason.trim().length > 0
+      ? ` ${finding.deliveryReason.trim()}`
+      : '';
 
   return {
-    message: `${prefix} ${title}: ${finding.summary}`,
-    actionLabel: 'Open',
+    message: `${prefix} ${headline}: ${finding.summary}${deliveryReason}`,
+    actionLabel: getFleetGraphProactiveActionLabel(finding),
   };
 }
 
@@ -271,7 +360,7 @@ export function buildFleetGraphProactiveFindingFeedback(
   eventName: 'proactive_toast_shown' | 'proactive_toast_clicked'
 ): FleetGraphFeedbackEventRequest {
   return {
-    event_name: eventName === 'proactive_toast_clicked' ? 'route_clicked' : 'drawer_opened',
+    event_name: eventName,
     surface: {
       route: finding.route,
       activeViewSurface: finding.surface,
@@ -283,12 +372,21 @@ export function buildFleetGraphProactiveFindingFeedback(
     route_action:
       eventName === 'proactive_toast_clicked'
         ? {
-            label: 'Open',
+            label: getFleetGraphProactiveActionLabel(finding),
             route: finding.route,
             featured: true,
             intent: 'inspect',
           }
         : null,
+    finding_context: {
+      finding_id: finding.id,
+      delivery_source: finding.deliverySource,
+      audience_role: finding.audienceRole,
+      audience_scope: finding.audienceScope,
+      delivery_reason: finding.deliveryReason,
+      severity: finding.severity,
+      signal_kinds: finding.signalKinds,
+    },
   };
 }
 

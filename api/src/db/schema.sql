@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT,  -- NULL if using PIV-only auth
   name TEXT NOT NULL,
+  work_persona TEXT CHECK (work_persona IN ('product_manager', 'engineer', 'engineering_manager', 'designer', 'qa', 'ops_platform', 'stakeholder', 'other')),
   is_super_admin BOOLEAN DEFAULT FALSE,
   last_workspace_id UUID REFERENCES workspaces(id) ON DELETE SET NULL,
   x509_subject_dn TEXT,           -- PIV certificate X.509 Subject DN

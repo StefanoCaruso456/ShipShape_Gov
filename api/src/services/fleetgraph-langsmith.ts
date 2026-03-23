@@ -1,7 +1,7 @@
 import type { RunnableConfig } from '@langchain/core/runnables';
 import { RunCollectorCallbackHandler } from '@langchain/core/tracers/run_collector';
 import { LangChainTracer } from '@langchain/core/tracers/tracer_langchain';
-import { Client } from 'langsmith';
+import { Client, RunTree } from 'langsmith';
 import type { Run } from 'langsmith/schemas';
 
 interface FleetGraphLangSmithTraceMetadata {
@@ -13,6 +13,17 @@ interface FleetGraphLangSmithTraceMetadata {
 export interface FleetGraphLangSmithSession {
   collector: RunCollectorCallbackHandler;
   callbacks: NonNullable<RunnableConfig['callbacks']>;
+}
+
+export interface FleetGraphLangSmithChildRunInput {
+  parentRunId: string | null;
+  name: string;
+  runType: 'chain' | 'tool' | 'llm';
+  inputs: Record<string, unknown>;
+  outputs?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  tags?: string[];
+  error?: string | null;
 }
 
 let clientSingleton: Client | null | undefined;
@@ -70,6 +81,30 @@ function getRootRun(collector: RunCollectorCallbackHandler | null): Run | null {
 
 function getLangSmithProjectName(): string | undefined {
   return getEnv('LANGCHAIN_PROJECT') ?? getEnv('LANGSMITH_PROJECT');
+}
+
+function createParentRunTree(parentRun: Run, client: Client): RunTree {
+  return new RunTree({
+    name: parentRun.name,
+    id: parentRun.id,
+    trace_id: parentRun.trace_id,
+    dotted_order: parentRun.dotted_order,
+    client,
+    tracingEnabled: true,
+    project_name: getLangSmithProjectName(),
+    tags: parentRun.tags ?? [],
+    extra: {
+      metadata:
+        (parentRun.extra &&
+        typeof parentRun.extra === 'object' &&
+        'metadata' in parentRun.extra &&
+        parentRun.extra.metadata &&
+        typeof parentRun.extra.metadata === 'object')
+          ? parentRun.extra.metadata as Record<string, unknown>
+          : {},
+    },
+    serialized: {},
+  });
 }
 
 function sleep(ms: number): Promise<void> {
@@ -176,4 +211,38 @@ export async function resolveFleetGraphLangSmithTrace(
     runUrl,
     shareUrl,
   };
+}
+
+export async function recordFleetGraphLangSmithChildRun(
+  input: FleetGraphLangSmithChildRunInput
+): Promise<void> {
+  if (!input.parentRunId) {
+    return;
+  }
+
+  const client = getLangSmithClient();
+  if (!client) {
+    return;
+  }
+
+  const parentRun = await client.readRun(input.parentRunId).catch(() => null);
+  if (!parentRun) {
+    return;
+  }
+
+  const parentRunTree = createParentRunTree(parentRun, client);
+  const childRun = parentRunTree.createChild({
+    name: input.name,
+    run_type: input.runType,
+    inputs: input.inputs,
+    extra: {
+      metadata: input.metadata ?? {},
+    },
+    tags: input.tags,
+    serialized: {},
+  });
+
+  await childRun.postRun();
+  await childRun.end(input.outputs, input.error ?? undefined);
+  await childRun.patchRun();
 }
