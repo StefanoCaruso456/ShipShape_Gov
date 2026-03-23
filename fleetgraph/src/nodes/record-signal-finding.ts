@@ -25,8 +25,7 @@ export async function recordSignalFindingNode(
     state.derivedSignals.reasons[0] ??
     'FleetGraph detected sprint conditions that need attention.';
 
-  const nextTarget: RecordSignalFindingTargets =
-    state.mode === 'on_demand' ? 'reasonAboutSprint' : 'completeRun';
+  const nextTarget: RecordSignalFindingTargets = 'reasonAboutSprint';
 
   return createFleetGraphCommand(
     started.context,
@@ -42,7 +41,7 @@ export async function recordSignalFindingNode(
         nextTarget,
         state.mode === 'on_demand'
           ? 'recorded deterministic sprint finding before the reasoning layer'
-          : 'recorded deterministic sprint finding for downstream proactive output'
+          : 'recorded deterministic sprint finding before proactive persona-aware reasoning and delivery'
       ),
     }
   );

@@ -1,6 +1,9 @@
 import type { FleetGraphRuntimeContext } from '../runtime.js';
-import type {
-  FleetGraphActiveViewContext,
+import type { RunnableConfig } from '@langchain/core/runnables';
+import {
+  WORK_PERSONA_LABELS,
+  type FleetGraphActiveViewContext,
+  type WorkPersona,
 } from '@ship/shared';
 import type {
   FleetGraphDerivedSignals,
@@ -17,12 +20,83 @@ interface ReasonAboutSprintArgs {
   finding: FleetGraphFinding | null;
   fetched: FleetGraphFetchedPayloads;
   derivedSignals: FleetGraphDerivedSignals;
+  actorWorkPersona: WorkPersona | null;
   forceDeterministic?: boolean;
 }
 
 export interface FleetGraphReasoningResult {
   reasoning: FleetGraphReasoning;
   source: FleetGraphReasoningSource;
+}
+
+function toSentenceClause(text: string): string {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (!normalized) {
+    return '';
+  }
+
+  const withoutPeriod = normalized.endsWith('.') ? normalized.slice(0, -1) : normalized;
+  return withoutPeriod.charAt(0).toLowerCase() + withoutPeriod.slice(1);
+}
+
+function buildPersonaSummaryAngle(workPersona: WorkPersona | null): string | null {
+  switch (workPersona) {
+    case 'engineer':
+      return 'From an engineer lens, the key question is what unblock or state change will let execution move today.';
+    case 'product_manager':
+      return 'From a PM lens, the key question is whether the current commitment still fits the week.';
+    case 'engineering_manager':
+      return 'From an engineering manager lens, the key question is whether ownership and unblock paths are clear enough for the team to recover.';
+    case 'designer':
+      return 'From a design lens, the key question is whether a missing decision or artifact is holding delivery open.';
+    case 'qa':
+      return 'From a QA lens, the key question is whether verification can move without hidden blockers.';
+    case 'ops_platform':
+      return 'From an ops/platform lens, the key question is whether a platform dependency is slowing the sprint.';
+    case 'stakeholder':
+      return 'From a stakeholder lens, the key question is whether the week can still land the promised outcome.';
+    case 'other':
+      return 'From this role lens, the key question is what needs to move first to keep the week on track.';
+    default:
+      return null;
+  }
+}
+
+function buildPersonaRecommendedNextStep(
+  workPersona: WorkPersona | null,
+  recommendedNextStep: string | null
+): string | null {
+  const clause = toSentenceClause(
+    recommendedNextStep ??
+      'confirm the unblock owner, update the active work state, and surface any dependency that still has no committed path today'
+  );
+
+  if (!clause) {
+    return null;
+  }
+
+  switch (workPersona) {
+    case 'engineer':
+      return `As the engineer closest to the work, ${clause}.`;
+    case 'product_manager':
+      return `As the PM, ${clause}.`;
+    case 'engineering_manager':
+      return `As the engineering manager, ${clause}.`;
+    case 'designer':
+      return `As the designer on point, ${clause}.`;
+    case 'qa':
+      return `As QA, ${clause}.`;
+    case 'ops_platform':
+      return `As the ops/platform owner, ${clause}.`;
+    case 'stakeholder':
+      return `As the stakeholder on this commitment, ${clause}.`;
+    case 'other': {
+      const label = WORK_PERSONA_LABELS.other.toLowerCase();
+      return `As the ${label} owner for this work, ${clause}.`;
+    }
+    default:
+      return recommendedNextStep ?? null;
+  }
 }
 
 function buildStableSummary(
@@ -296,17 +370,22 @@ function buildPlanningQuestionSummary(
 }
 
 function buildReasoningFallback(args: ReasonAboutSprintArgs): FleetGraphReasoning {
-  const { activeView, finding, fetched, derivedSignals } = args;
+  const { activeView, finding, fetched, derivedSignals, actorWorkPersona } = args;
   const projectName = fetched.accountability?.project?.name ?? null;
   const routeLabel = activeView?.tab ? `${activeView.tab} tab` : 'current view';
   const hasSignals = derivedSignals.signals.length > 0;
   const questionTheme = inferFleetGraphQuestionTheme(args.question);
   const planningQuestionSummary = buildPlanningQuestionSummary(args, questionTheme);
+  const personaSummaryAngle = hasSignals ? buildPersonaSummaryAngle(actorWorkPersona) : null;
 
-  const summary = planningQuestionSummary?.summary ??
+  const baseSummary = planningQuestionSummary?.summary ??
     (hasSignals
       ? (finding?.summary ?? derivedSignals.summary ?? 'FleetGraph sees sprint risk signals that need attention.')
       : buildStableSummary(fetched, derivedSignals));
+  const summary =
+    personaSummaryAngle && !baseSummary.includes(personaSummaryAngle)
+      ? `${baseSummary} ${personaSummaryAngle}`
+      : baseSummary;
 
   const evidence = planningQuestionSummary?.evidence ??
     (hasSignals
@@ -343,6 +422,11 @@ function buildReasoningFallback(args: ReasonAboutSprintArgs): FleetGraphReasonin
       'Keep the current execution rhythm and close in-progress work before adding new scope.';
   }
 
+  recommendedNextStep = buildPersonaRecommendedNextStep(
+    actorWorkPersona,
+    recommendedNextStep
+  );
+
   return {
     answerMode: 'execution',
     summary,
@@ -355,13 +439,15 @@ function buildReasoningFallback(args: ReasonAboutSprintArgs): FleetGraphReasonin
 
 export async function reasonAboutSprint(
   args: ReasonAboutSprintArgs,
-  runtime: FleetGraphRuntimeContext
+  runtime: FleetGraphRuntimeContext,
+  config?: RunnableConfig
 ): Promise<FleetGraphReasoningResult> {
   if (!args.forceDeterministic && runtime.reasoner) {
     try {
       const reasoning = await runtime.reasoner.reasonAboutSprint({
         activeViewRoute: args.activeView?.route ?? null,
         question: args.question,
+        workPersona: args.actorWorkPersona,
         findingSummary: args.finding?.summary ?? args.derivedSignals.summary,
         questionTheme: inferFleetGraphQuestionTheme(args.question),
         derivedSignals: {
@@ -384,6 +470,14 @@ export async function reasonAboutSprint(
           accountability: args.fetched.accountability,
           people: args.fetched.people,
           planning: args.fetched.planning,
+        },
+      }, {
+        runnableConfig: config,
+        traceMetadata: {
+          active_view_route: args.activeView?.route ?? null,
+          work_persona: args.actorWorkPersona,
+          signal_kinds: args.derivedSignals.signals.map((signal) => signal.kind),
+          signal_severity: args.derivedSignals.severity,
         },
       });
 
