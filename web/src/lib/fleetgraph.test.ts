@@ -6,6 +6,7 @@ import {
   buildFleetGraphProactiveFindingToastCopy,
   extractFleetGraphProjectIdFromDocument,
   resolveFleetGraphActiveView,
+  shouldSurfaceFleetGraphBackfillToast,
 } from './fleetgraph';
 import type { FleetGraphProactiveFinding } from '@ship/shared';
 
@@ -396,7 +397,8 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
     };
 
     expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
-      message: 'FleetGraph noticed Week 12: A blocker was logged on a critical issue.',
+      message:
+        'FleetGraph noticed Week 12 (Assigned issue follow-up): A blocker was logged on a critical issue.',
       actionLabel: 'Open Issue',
       toastType: 'info',
     });
@@ -427,7 +429,7 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
 
     expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
       message:
-        'FleetGraph escalated Week 13: Review follow-up is overdue. Escalated to you as the owner manager because follow-up support is needed after approval feedback.',
+        'FleetGraph escalated Week 13 (Manager support): Review follow-up is overdue. Escalated to you as the owner manager because follow-up support is needed after approval feedback.',
       actionLabel: 'Open Review',
       toastType: 'info',
     });
@@ -456,7 +458,8 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
     };
 
     expect(buildFleetGraphProactiveFindingToastCopy(finding, 'engineer')).toEqual({
-      message: 'FleetGraph noticed engineering issue follow-up: An issue was reopened after completion.',
+      message:
+        'FleetGraph noticed Week 14 (Engineering issue follow-up): An issue was reopened after completion.',
       actionLabel: 'Open Issue',
       toastType: 'info',
     });
@@ -487,7 +490,7 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
 
     expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
       message:
-        'FleetGraph escalated Week 15: Scope growth needs a tradeoff decision. Escalated to you as accountable because this risk may need a tradeoff or unblock decision.',
+        'FleetGraph escalated Week 15 (Decision needed): Scope growth needs a tradeoff decision. Escalated to you as accountable because this risk may need a tradeoff or unblock decision.',
       actionLabel: 'Open Issues',
       toastType: 'info',
     });
@@ -518,9 +521,48 @@ describe('buildFleetGraphProactiveFindingToastCopy', () => {
 
     expect(buildFleetGraphProactiveFindingToastCopy(finding)).toEqual({
       message:
-        'FleetGraph shared Week 16: A blocker on shared work needs team coordination. Shared with the sprint team because this affects shared sprint coordination or commitments.',
+        'FleetGraph shared Week 16 (Team coordination): A blocker on shared work needs team coordination. Shared with the sprint team because this affects shared sprint coordination or commitments.',
       actionLabel: 'Open Issues',
       toastType: 'info',
     });
+  });
+});
+
+describe('shouldSurfaceFleetGraphBackfillToast', () => {
+  const finding: FleetGraphProactiveFinding = {
+    id: 'finding-6',
+    workspaceId: 'workspace-1',
+    weekId: 'week-6',
+    projectId: null,
+    programId: null,
+    title: 'Week 17',
+    summary: 'A recent notification.',
+    severity: 'warning',
+    route: '/documents/week-6/issues',
+    surface: 'document',
+    tab: 'issues',
+    audienceRole: 'responsible_owner',
+    audienceScope: 'individual',
+    deliverySource: 'sweep',
+    deliveryReason: null,
+    signalKinds: ['blocked_work'],
+    lastDetectedAt: '2026-03-22T10:00:00.000Z',
+    lastNotifiedAt: '2026-03-22T10:00:00.000Z',
+  };
+
+  it('keeps recent backfilled findings eligible for popup surfacing', () => {
+    expect(
+      shouldSurfaceFleetGraphBackfillToast(finding, {
+        now: Date.parse('2026-03-22T10:20:00.000Z'),
+      })
+    ).toBe(true);
+  });
+
+  it('filters stale backfilled findings so old unresolved items do not replay as fresh popups', () => {
+    expect(
+      shouldSurfaceFleetGraphBackfillToast(finding, {
+        now: Date.parse('2026-03-22T10:45:00.000Z'),
+      })
+    ).toBe(false);
   });
 });

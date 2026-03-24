@@ -102,6 +102,98 @@ describe('buildSweepAudienceRecipients', () => {
       },
     ]);
   });
+
+  it('escalates ownership-gap sweep findings to the accountable role and sprint team', () => {
+    const recipients = buildSweepAudienceRecipients({
+      context: baseContext,
+      severity: 'warning',
+      signalKinds: ['issue_unassigned_in_active_sprint'],
+    });
+
+    expect(recipients).toEqual([
+      {
+        userId: '00000000-0000-0000-0000-000000000101',
+        audienceRole: 'responsible_owner',
+        audienceScope: 'individual',
+        deliveryReason:
+          'Sent to you because you own the sprint or workstream that needs a clear coordinator.',
+      },
+      {
+        userId: '00000000-0000-0000-0000-000000000104',
+        audienceRole: 'accountable',
+        audienceScope: 'individual',
+        deliveryReason:
+          'Escalated to you as accountable because the sprint is missing clear ownership.',
+      },
+      {
+        userId: '00000000-0000-0000-0000-000000000111',
+        audienceRole: 'team_member',
+        audienceScope: 'team',
+        deliveryReason:
+          'Shared with the sprint team because the sprint needs a clear coordination owner.',
+      },
+      {
+        userId: '00000000-0000-0000-0000-000000000112',
+        audienceRole: 'team_member',
+        audienceScope: 'team',
+        deliveryReason:
+          'Shared with the sprint team because the sprint needs a clear coordination owner.',
+      },
+    ]);
+  });
+
+  it('escalates fully stalled sweep findings to owner, accountable, and manager for action severity', () => {
+    const recipients = buildSweepAudienceRecipients({
+      context: baseContext,
+      severity: 'action',
+      signalKinds: ['no_completed_work'],
+    });
+
+    expect(recipients).toEqual([
+      {
+        userId: '00000000-0000-0000-0000-000000000101',
+        audienceRole: 'responsible_owner',
+        audienceScope: 'individual',
+        deliveryReason: 'Sent to you because you own the sprint or workstream that appears stalled.',
+      },
+      {
+        userId: '00000000-0000-0000-0000-000000000104',
+        audienceRole: 'accountable',
+        audienceScope: 'individual',
+        deliveryReason:
+          'Escalated to you as accountable because this risk may need a tradeoff or unblock decision.',
+      },
+      {
+        userId: '00000000-0000-0000-0000-000000000102',
+        audienceRole: 'manager',
+        audienceScope: 'individual',
+        deliveryReason:
+          'Escalated to you as the owner manager because the sprint appears stalled or needs support.',
+      },
+    ]);
+  });
+
+  it('dedupes to the highest-priority role when the same user qualifies multiple ways', () => {
+    const recipients = buildSweepAudienceRecipients({
+      context: {
+        ...baseContext,
+        weekOwnerUserId: '00000000-0000-0000-0000-000000000104',
+        sprintTeamUserIds: ['00000000-0000-0000-0000-000000000104'],
+      },
+      severity: 'warning',
+      signalKinds: ['issue_unassigned_in_active_sprint'],
+    });
+
+    expect(recipients).toEqual([
+      {
+        userId: '00000000-0000-0000-0000-000000000104',
+        audienceRole: 'responsible_owner',
+        audienceScope: 'individual',
+        deliveryReason:
+          'Sent to you because you own the sprint or workstream that needs a clear coordinator.',
+      },
+    ]);
+  });
 });
 
 describe('buildEventAudienceRecipients', () => {

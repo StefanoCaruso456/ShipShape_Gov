@@ -26,6 +26,7 @@ import {
   buildFleetGraphProactiveFindingToastCopy,
   listFleetGraphProactiveFindings,
   reportFleetGraphFeedback,
+  shouldSurfaceFleetGraphBackfillToast,
 } from '@/lib/fleetgraph';
 import { CommandPalette } from '@/components/CommandPalette';
 import { SessionTimeoutModal } from '@/components/SessionTimeoutModal';
@@ -218,6 +219,10 @@ export function AppLayout() {
         }
 
         findings.forEach((finding) => {
+          if (!shouldSurfaceFleetGraphBackfillToast(finding)) {
+            return;
+          }
+
           showFleetGraphFindingToast(finding);
         });
       })

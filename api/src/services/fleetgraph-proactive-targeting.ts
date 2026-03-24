@@ -117,12 +117,16 @@ const SIGNALS_FOR_ACCOUNTABLE = new Set([
   'workload_concentration',
   'work_not_started',
   'low_recent_activity',
+  'no_completed_work',
   'missing_review',
+  'issue_unassigned_in_active_sprint',
+  'issue_missing_project_context_in_active_sprint',
 ]);
 
 const SIGNALS_FOR_MANAGER = new Set([
   'work_not_started',
   'low_recent_activity',
+  'no_completed_work',
   'blocked_work',
   'dependency_risk',
   'throughput_gap',
@@ -138,6 +142,8 @@ const SIGNALS_FOR_TEAM = new Set([
   'throughput_gap',
   'staffing_pressure',
   'workload_concentration',
+  'issue_unassigned_in_active_sprint',
+  'issue_missing_project_context_in_active_sprint',
 ]);
 
 const TRIGGERS_FOR_ACCOUNTABLE = new Set<FleetGraphProactiveTriggerKind>([

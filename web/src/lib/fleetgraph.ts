@@ -286,10 +286,7 @@ export function resolveFleetGraphActiveView({
   });
 }
 
-function describePersonaFollowUp(
-  workPersona: WorkPersona,
-  finding: FleetGraphProactiveFinding
-): string {
+function describePersonaFollowUp(workPersona: WorkPersona, finding: FleetGraphProactiveFinding): string {
   const personaLabel = (() => {
     switch (workPersona) {
       case 'product_manager':
@@ -349,6 +346,49 @@ function getFleetGraphProactiveFindingToastPrefix(
       : 'FleetGraph surfaced';
 }
 
+function describeRoleHeadline(finding: FleetGraphProactiveFinding): string {
+  switch (finding.audienceRole) {
+    case 'accountable':
+      return 'Decision needed';
+    case 'manager':
+      return 'Manager support';
+    case 'team_member':
+      return 'Team coordination';
+    case 'issue_assignee':
+      return 'Assigned issue follow-up';
+    case 'responsible_owner':
+    default:
+      return 'Owner follow-up';
+  }
+}
+
+function capitalizeLabel(value: string): string {
+  if (!value) {
+    return value;
+  }
+
+  return `${value[0]?.toUpperCase() ?? ''}${value.slice(1)}`;
+}
+
+const DEFAULT_FLEETGRAPH_BACKFILL_TOAST_WINDOW_MS = 30 * 60 * 1000;
+
+export function shouldSurfaceFleetGraphBackfillToast(
+  finding: FleetGraphProactiveFinding,
+  options?: {
+    now?: number;
+    maxAgeMs?: number;
+  }
+): boolean {
+  const lastNotifiedAtMs = Date.parse(finding.lastNotifiedAt);
+  if (!Number.isFinite(lastNotifiedAtMs)) {
+    return false;
+  }
+
+  const now = options?.now ?? Date.now();
+  const maxAgeMs = options?.maxAgeMs ?? DEFAULT_FLEETGRAPH_BACKFILL_TOAST_WINDOW_MS;
+  return lastNotifiedAtMs <= now && now - lastNotifiedAtMs <= maxAgeMs;
+}
+
 export function buildFleetGraphProactiveFindingToastCopy(
   finding: FleetGraphProactiveFinding,
   workPersona?: WorkPersona | null
@@ -356,7 +396,7 @@ export function buildFleetGraphProactiveFindingToastCopy(
   const title = finding.title ?? 'Current week';
   const prefix = getFleetGraphProactiveFindingToastPrefix(finding);
   const personaLead = workPersona ? describePersonaFollowUp(workPersona, finding) : null;
-  const headline = personaLead ?? title;
+  const headline = personaLead ? capitalizeLabel(personaLead) : describeRoleHeadline(finding);
   const deliveryReason =
     (finding.audienceRole === 'accountable' ||
       finding.audienceRole === 'manager' ||
@@ -368,7 +408,7 @@ export function buildFleetGraphProactiveFindingToastCopy(
       : '';
 
   return {
-    message: `${prefix} ${headline}: ${finding.summary}${deliveryReason}`,
+    message: `${prefix} ${title} (${headline}): ${finding.summary}${deliveryReason}`,
     actionLabel: getFleetGraphProactiveActionLabel(finding),
     toastType: 'info',
   };
