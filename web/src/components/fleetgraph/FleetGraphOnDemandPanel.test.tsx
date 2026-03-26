@@ -429,6 +429,33 @@ describe("FleetGraphOnDemandPanel", () => {
     ).toBeInTheDocument();
   });
 
+  it("submits a typed question when Enter is pressed in the composer", async () => {
+    mockUseFleetGraphActiveView.mockReturnValue(activeView);
+    mockUseFleetGraphPageContext.mockReturnValue(null);
+    mockInvokeFleetGraphOnDemand.mockResolvedValue(baseResponse);
+
+    renderPanel();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open FleetGraph" }));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Do we need to rebalance scope this week?" },
+    });
+    fireEvent.keyDown(screen.getByRole("textbox"), {
+      key: "Enter",
+      code: "Enter",
+      charCode: 13,
+    });
+
+    await waitFor(() => {
+      expect(mockInvokeFleetGraphOnDemand).toHaveBeenCalledWith({
+        active_view: activeView,
+        page_context: null,
+        question: "Do we need to rebalance scope this week?",
+        question_source: "typed",
+      });
+    });
+  });
+
   it("uses page context on non-sprint pages instead of showing an unavailable state", async () => {
     mockUseFleetGraphActiveView.mockReturnValue(null);
     mockUseFleetGraphPageContext.mockReturnValue(programsPageContext);
