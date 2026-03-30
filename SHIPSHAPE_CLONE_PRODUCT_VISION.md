@@ -4,6 +4,11 @@
 
 This document describes the product vision for a full-featured clone of ShipShape. It is written so an application-building factory can recreate the product without access to the original repository.
 
+Companion diagram docs:
+
+- `SHIPSHAPE_CLONE_SYSTEM_ARCHITECTURE_DIAGRAMS.md`
+- `SHIPSHAPE_CLONE_USER_FLOW_DIAGRAMS.md`
+
 The product is not a generic project tracker. It is a planning, execution, learning, and accountability system built around a single idea:
 
 - work, plans, reviews, and knowledge should live in one connected workspace

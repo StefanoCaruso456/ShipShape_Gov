@@ -4,6 +4,11 @@
 
 This document defines the recommended architecture, data model, APIs, realtime systems, infrastructure, and delivery plan for implementing a clone of ShipShape without referencing repository source code.
 
+Companion diagram docs:
+
+- `SHIPSHAPE_CLONE_SYSTEM_ARCHITECTURE_DIAGRAMS.md`
+- `SHIPSHAPE_CLONE_USER_FLOW_DIAGRAMS.md`
+
 ## Technical Goals
 
 1. Preserve the unified document architecture.

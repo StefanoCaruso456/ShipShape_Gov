@@ -4,6 +4,11 @@
 
 This PRD defines the functional requirements for a ShipShape clone that preserves the behavior, workflows, and information architecture of the audited product without requiring access to repository source code.
 
+Companion diagram docs:
+
+- `SHIPSHAPE_CLONE_SYSTEM_ARCHITECTURE_DIAGRAMS.md`
+- `SHIPSHAPE_CLONE_USER_FLOW_DIAGRAMS.md`
+
 ## Product Summary
 
 ShipShape is a multi-workspace collaboration and execution platform built around a unified document model. It combines:
