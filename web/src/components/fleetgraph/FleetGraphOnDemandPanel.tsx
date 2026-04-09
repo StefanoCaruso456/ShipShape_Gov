@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type FormEvent,
   type KeyboardEvent,
 } from "react";
 import { Link } from "react-router-dom";
@@ -1459,6 +1460,7 @@ export function FleetGraphOnDemandPanel({
   const [draftQuestion, setDraftQuestion] = useState("");
   const [turns, setTurns] = useState<FleetGraphChatTurn[]>([]);
   const [activeTurnId, setActiveTurnId] = useState<string | null>(null);
+  const composerFormRef = useRef<HTMLFormElement | null>(null);
   const historyRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const previousOpenRef = useRef(open);
@@ -1741,18 +1743,43 @@ export function FleetGraphOnDemandPanel({
     [activeView, reportFeedback],
   );
 
+  const handleComposerSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      void submitQuestion();
+    },
+    [submitQuestion],
+  );
+
   const handleComposerKeyDown = useCallback(
-    async (event: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        await submitQuestion();
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (
+        event.key !== "Enter" ||
+        event.shiftKey ||
+        event.nativeEvent.isComposing ||
+        event.defaultPrevented
+      ) {
+        return;
       }
+
+      event.preventDefault();
+
+      if (composerFormRef.current) {
+        composerFormRef.current.requestSubmit();
+        return;
+      }
+
+      void submitQuestion();
     },
     [submitQuestion],
   );
 
   const composer = hasUsableContext ? (
-    <div className="rounded-[28px] border border-white/10 bg-white/5 p-3 shadow-inner shadow-black/20">
+    <form
+      ref={composerFormRef}
+      onSubmit={handleComposerSubmit}
+      className="rounded-[28px] border border-white/10 bg-white/5 p-3 shadow-inner shadow-black/20"
+    >
       <textarea
         ref={textareaRef}
         value={draftQuestion}
@@ -1760,6 +1787,7 @@ export function FleetGraphOnDemandPanel({
         onKeyDown={handleComposerKeyDown}
         placeholder="Ask about this page, next steps, or what needs attention..."
         disabled={!!activeTurnId}
+        enterKeyHint="send"
         rows={3}
         className="max-h-40 min-h-[72px] w-full resize-none bg-transparent text-sm leading-6 text-foreground outline-none placeholder:text-muted disabled:cursor-not-allowed disabled:text-muted"
       />
@@ -1769,10 +1797,7 @@ export function FleetGraphOnDemandPanel({
           FleetGraph uses the current page as context.
         </div>
         <button
-          type="button"
-          onClick={() => {
-            void submitQuestion();
-          }}
+          type="submit"
           disabled={!draftQuestion.trim() || !!activeTurnId}
           className={cn(
             "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-colors",
@@ -1785,7 +1810,7 @@ export function FleetGraphOnDemandPanel({
           <SendIcon className="h-4 w-4" />
         </button>
       </div>
-    </div>
+    </form>
   ) : (
     <div className="rounded-[28px] border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/20">
       <div className="text-[11px] uppercase tracking-[0.18em] text-muted">
